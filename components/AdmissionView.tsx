@@ -12,7 +12,8 @@ import {
   ShieldCheck,
   Building,
   UserCheck,
-  ExternalLink
+  ExternalLink,
+  AlertCircle
 } from 'lucide-react';
 import { AdmissionTab } from '../types';
 import QuestionnaireForm from './QuestionnaireForm';
@@ -131,61 +132,164 @@ const FileUploadCard = ({ title, desc, uploaded }: { title: string, desc: string
   </div>
 );
 
-const EntrepriseForm = ({ onNext }: { onNext: () => void }) => (
-  <div className="bg-gradient-to-br from-emerald-50 to-white rounded-3xl p-6 md:p-10 shadow-xl border border-emerald-100 relative overflow-hidden">
-    <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500"></div>
+const EntrepriseForm = ({ onNext }: { onNext: () => void }) => {
+  const [formData, setFormData] = useState({
+    raisonSociale: '',
+    siret: '',
+    codeNaf: '',
+    adresse: '',
+    maitreNom: '',
+    maitrePrenom: '',
+    maitreFonction: '',
+    maitreEmail: ''
+  });
+
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    if (errors[name]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
+  };
+
+  const validate = () => {
+    const newErrors: Record<string, string> = {};
+    const siretRegex = /^\d{14}$/; // 14 chiffres exactement (sans espaces pour simplifier la validation ici)
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    // Entreprise
+    if (!formData.raisonSociale.trim()) newErrors.raisonSociale = "La raison sociale est requise";
+    if (!formData.siret.trim()) newErrors.siret = "Le SIRET est requis";
+    else if (!siretRegex.test(formData.siret.replace(/\s/g, ''))) newErrors.siret = "Le SIRET doit contenir 14 chiffres";
     
-    <div className="flex items-center gap-6 mb-10 pb-8 border-b border-emerald-100">
-      <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-emerald-500/20">
-        <Building size={32} />
+    if (!formData.codeNaf.trim()) newErrors.codeNaf = "Le code APE/NAF est requis";
+    if (!formData.adresse.trim()) newErrors.adresse = "L'adresse du siège est requise";
+
+    // Maître d'apprentissage
+    if (!formData.maitreNom.trim()) newErrors.maitreNom = "Le nom est requis";
+    if (!formData.maitrePrenom.trim()) newErrors.maitrePrenom = "Le prénom est requis";
+    if (!formData.maitreFonction.trim()) newErrors.maitreFonction = "La fonction est requise";
+    if (!formData.maitreEmail.trim()) newErrors.maitreEmail = "L'email est requis";
+    else if (!emailRegex.test(formData.maitreEmail)) newErrors.maitreEmail = "Format d'email invalide";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = () => {
+    if (validate()) {
+      onNext();
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  // Helper interne pour les inputs
+  const FormInput = ({ label, name, value, placeholder, required = true, hint }: any) => (
+    <div>
+      <label className="block text-sm font-semibold text-slate-700 mb-2">
+        {label} {required && <span className="text-red-500">*</span>}
+      </label>
+      <input 
+        type="text" 
+        name={name}
+        value={value}
+        onChange={handleChange}
+        className={`w-full px-4 py-3 bg-white border rounded-xl transition-all focus:ring-4 focus:outline-none ${
+          errors[name] 
+            ? 'border-red-300 focus:border-red-500 focus:ring-red-500/10' 
+            : 'border-slate-200 focus:border-emerald-500 focus:ring-emerald-500/10'
+        }`} 
+        placeholder={placeholder} 
+      />
+      {errors[name] && (
+        <p className="mt-1.5 text-xs text-red-500 font-medium flex items-center gap-1">
+          <AlertCircle size={12}/> {errors[name]}
+        </p>
+      )}
+      {!errors[name] && hint && (
+        <p className="mt-1.5 text-xs text-slate-400">{hint}</p>
+      )}
+    </div>
+  );
+
+  return (
+    <div className="bg-gradient-to-br from-emerald-50 to-white rounded-3xl p-6 md:p-10 shadow-xl border border-emerald-100 relative overflow-hidden animate-fade-in">
+      <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500"></div>
+      
+      <div className="flex items-center gap-6 mb-10 pb-8 border-b border-emerald-100">
+        <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-emerald-500/20">
+          <Building size={32} />
+        </div>
+        <div>
+          <h2 className="text-2xl font-bold text-slate-900 mb-1">Fiche de Renseignement Entreprise</h2>
+          <p className="text-slate-500">Informations pour le contrat d'apprentissage</p>
+        </div>
       </div>
-      <div>
-        <h2 className="text-2xl font-bold text-slate-900 mb-1">Fiche de Renseignement Entreprise</h2>
-        <p className="text-slate-500">Informations pour le contrat d'apprentissage</p>
+
+      <div className="space-y-8">
+        {/* 1. Entreprise */}
+        <div className={`bg-white/80 p-6 rounded-2xl border shadow-sm transition-colors ${
+           Object.keys(errors).some(k => ['raisonSociale','siret','codeNaf','adresse'].includes(k)) 
+           ? 'border-red-200' 
+           : 'border-emerald-100'
+        }`}>
+          <div className="flex items-center gap-3 mb-5">
+            <span className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm">1</span>
+            <h3 className="font-bold text-slate-800">Identification de l'entreprise</h3>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="col-span-2">
+              <FormInput label="Raison sociale" name="raisonSociale" value={formData.raisonSociale} placeholder="Nom de l'entreprise" />
+            </div>
+            <FormInput label="SIRET" name="siret" value={formData.siret} placeholder="14 chiffres" hint="Sans espaces" />
+            <FormInput label="Code APE/NAF" name="codeNaf" value={formData.codeNaf} placeholder="Ex: 4711D" />
+            <div className="col-span-2">
+              <FormInput label="Adresse du siège" name="adresse" value={formData.adresse} placeholder="Adresse complète (Rue, CP, Ville)" />
+            </div>
+          </div>
+        </div>
+
+        {/* 2. Maître d'apprentissage */}
+        <div className={`bg-white/80 p-6 rounded-2xl border shadow-sm transition-colors ${
+           Object.keys(errors).some(k => ['maitreNom','maitrePrenom','maitreFonction','maitreEmail'].includes(k)) 
+           ? 'border-red-200' 
+           : 'border-emerald-100'
+        }`}>
+          <div className="flex items-center gap-3 mb-5">
+            <span className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm">2</span>
+            <h3 className="font-bold text-slate-800">Maître d'apprentissage</h3>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <FormInput label="Nom" name="maitreNom" value={formData.maitreNom} placeholder="Nom" />
+            <FormInput label="Prénom" name="maitrePrenom" value={formData.maitrePrenom} placeholder="Prénom" />
+            <FormInput label="Fonction" name="maitreFonction" value={formData.maitreFonction} placeholder="Fonction dans l'entreprise" />
+            <FormInput label="Email" name="maitreEmail" value={formData.maitreEmail} placeholder="email@entreprise.com" />
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-3 pt-6 border-t border-emerald-100">
+          <button className="px-6 py-3 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50 transition-colors">
+            Enregistrer brouillon
+          </button>
+          <button 
+            onClick={handleSubmit}
+            className="px-8 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold hover:shadow-lg hover:shadow-emerald-500/25 transition-all flex items-center gap-2"
+          >
+            Valider et continuer
+            {Object.keys(errors).length > 0 && <AlertCircle size={18} />}
+          </button>
+        </div>
       </div>
     </div>
-
-    <div className="space-y-8">
-      {/* 1. Entreprise */}
-      <div className="bg-white/80 p-6 rounded-2xl border border-emerald-100 shadow-sm">
-        <div className="flex items-center gap-3 mb-5">
-          <span className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm">1</span>
-          <h3 className="font-bold text-slate-800">Identification de l'entreprise</h3>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div className="col-span-2"><label className="block text-sm font-semibold text-slate-700 mb-2">Raison sociale *</label><input type="text" className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl" placeholder="Nom de l'entreprise" /></div>
-          <div><label className="block text-sm font-semibold text-slate-700 mb-2">SIRET *</label><input type="text" className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl" placeholder="14 chiffres" /></div>
-          <div><label className="block text-sm font-semibold text-slate-700 mb-2">Code APE/NAF *</label><input type="text" className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl" placeholder="Ex: 4711D" /></div>
-          <div className="col-span-2"><label className="block text-sm font-semibold text-slate-700 mb-2">Adresse du siège *</label><input type="text" className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl" placeholder="Adresse complète" /></div>
-        </div>
-      </div>
-
-      {/* 2. Maître d'apprentissage */}
-      <div className="bg-white/80 p-6 rounded-2xl border border-emerald-100 shadow-sm">
-        <div className="flex items-center gap-3 mb-5">
-          <span className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm">2</span>
-          <h3 className="font-bold text-slate-800">Maître d'apprentissage</h3>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div><label className="block text-sm font-semibold text-slate-700 mb-2">Nom *</label><input type="text" className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl" /></div>
-          <div><label className="block text-sm font-semibold text-slate-700 mb-2">Prénom *</label><input type="text" className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl" /></div>
-          <div><label className="block text-sm font-semibold text-slate-700 mb-2">Fonction *</label><input type="text" className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl" /></div>
-          <div><label className="block text-sm font-semibold text-slate-700 mb-2">Email *</label><input type="email" className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl" /></div>
-        </div>
-      </div>
-
-      <div className="flex justify-end gap-3 pt-6 border-t border-emerald-100">
-        <button className="px-6 py-3 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50 transition-colors">Enregistrer brouillon</button>
-        <button 
-          onClick={onNext}
-          className="px-8 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold hover:shadow-lg hover:shadow-emerald-500/25 transition-all"
-        >
-          Valider et continuer
-        </button>
-      </div>
-    </div>
-  </div>
-);
+  );
+};
 
 // --- MAIN VIEW ---
 
