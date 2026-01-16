@@ -14,14 +14,17 @@ import {
   UserCheck,
   ExternalLink,
   AlertCircle,
-  FileCheck
+  FileCheck,
+  Printer,
+  X,
+  Eye,
+  Download
 } from 'lucide-react';
 import { AdmissionTab } from '../types';
 import QuestionnaireForm from './QuestionnaireForm';
 
 // --- CONFIGURATION ---
 
-// Liens Google Forms mis à jour pour chaque formation
 const FORMATION_FORMS: Record<string, string> = {
   mco: "https://docs.google.com/forms/d/e/1FAIpQLSdoGS2NZKs3sGRZ-dZ-3a8x9JZ32FQcpBQupMmD4CUQpEhnuw/viewform?embedded=true", 
   ndrc: "https://docs.google.com/forms/d/e/1FAIpQLSeDDzl2VDR__aY776N_7auk4uAZc04uC6mQNUsRNOr9D3eCmw/viewform?embedded=true",
@@ -29,7 +32,6 @@ const FORMATION_FORMS: Record<string, string> = {
   ntc: "https://docs.google.com/forms/d/e/1FAIpQLSfW-Gi40ZBpU9zymrYBZ05P8s2TSSL88OYwkp5lzPSNDXTnhA/viewform?embedded=true",
 };
 
-// Liste des documents requis
 const REQUIRED_DOCUMENTS = [
   { id: 'cv', title: "CV", desc: "Curriculum Vitae à jour" },
   { id: 'cni', title: "Carte d'Identité", desc: "Recto-verso de la CNI" },
@@ -38,7 +40,55 @@ const REQUIRED_DOCUMENTS = [
   { id: 'diplome', title: "Dernier Diplôme", desc: "Copie du dernier diplôme" },
 ];
 
-// URL par défaut si la clé n'existe pas
+// Documents administratifs à générer
+const ADMIN_DOCS = [
+  { 
+    id: 'atre', 
+    title: "Fiche ATRE", 
+    subtitle: "Autorisation de Travail et Renseignements", 
+    desc: "Information entreprise et tuteur",
+    type: 'form',
+    color: 'orange',
+    btnText: 'Compléter'
+  },
+  { 
+    id: 'renseignements', 
+    title: "Fiche de renseignements", 
+    subtitle: "Informations personnelles", 
+    desc: "Coordonnées et état civil",
+    type: 'form',
+    color: 'blue',
+    btnText: 'Compléter'
+  },
+  { 
+    id: 'reglement', 
+    title: "Règlement intérieur", 
+    subtitle: "Engagement étudiant", 
+    desc: "Document à lire et signer",
+    type: 'sign',
+    color: 'green',
+    btnText: 'Signer'
+  },
+  { 
+    id: 'connaissance', 
+    title: "Prise de connaissance", 
+    subtitle: "Attestation documents", 
+    desc: "Charte informatique, Livret d'accueil...",
+    type: 'sign',
+    color: 'purple',
+    btnText: 'Signer'
+  },
+  { 
+    id: 'livret', 
+    title: "Livret d'apprentissage", 
+    subtitle: "Suivi pédagogique", 
+    desc: "Document de liaison CFA/Entreprise",
+    type: 'generate',
+    color: 'cyan',
+    btnText: 'Générer'
+  },
+];
+
 const DEFAULT_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLScs38d38d38d38d38d38d38d38d38d38d38d38d38d38d3/viewform?embedded=true"; 
 
 // --- COMPONENTS ---
@@ -178,6 +228,7 @@ const FileUploadCard = ({ id, title, desc, fileName, onUpload }: { id: string, t
   );
 };
 
+// Formulaire Entreprise intégré
 const EntrepriseForm = ({ onNext }: { onNext: () => void }) => {
   const [formData, setFormData] = useState({
     raisonSociale: '',
@@ -206,7 +257,7 @@ const EntrepriseForm = ({ onNext }: { onNext: () => void }) => {
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
-    const siretRegex = /^\d{14}$/; // 14 chiffres exactement (sans espaces pour simplifier la validation ici)
+    const siretRegex = /^\d{14}$/; 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     // Entreprise
@@ -356,6 +407,14 @@ const AdmissionView = () => {
 
   // State for Admin (Step 5)
   const [adminCompleted, setAdminCompleted] = useState(false);
+  const [activeDocModal, setActiveDocModal] = useState<string | null>(null);
+  const [docsStatus, setDocsStatus] = useState<Record<string, 'pending' | 'completed'>>({
+    atre: 'pending',
+    renseignements: 'pending',
+    reglement: 'pending',
+    connaissance: 'pending',
+    livret: 'pending'
+  });
 
   // State for Evaluation
   const [scores, setScores] = useState<Record<string, number>>({
@@ -378,6 +437,15 @@ const AdmissionView = () => {
     setUploadedFiles(prev => ({ ...prev, [docId]: file }));
   };
 
+  // Doc Modal Handlers
+  const openDocModal = (docId: string) => setActiveDocModal(docId);
+  const closeDocModal = () => setActiveDocModal(null);
+  
+  const handleDocSubmit = (docId: string) => {
+    setDocsStatus(prev => ({ ...prev, [docId]: 'completed' }));
+    closeDocModal();
+  };
+
   // Score logic
   const totalScore = (Object.values(scores) as number[]).reduce((sum, score) => sum + score, 0);
   
@@ -397,6 +465,115 @@ const AdmissionView = () => {
   const uploadedCount = Object.keys(uploadedFiles).length;
   const uploadProgress = Math.round((uploadedCount / totalDocs) * 100);
   const allDocumentsUploaded = uploadedCount === totalDocs;
+
+  // Render content for specific modal
+  const renderDocModalContent = (docId: string) => {
+    switch(docId) {
+      case 'atre':
+        return (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">Nom de l'entreprise</label>
+                <input type="text" className="w-full px-4 py-2 border rounded-lg" placeholder="Entreprise" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">SIRET</label>
+                <input type="text" className="w-full px-4 py-2 border rounded-lg" placeholder="14 chiffres" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1">Adresse complète</label>
+              <input type="text" className="w-full px-4 py-2 border rounded-lg" placeholder="Adresse" />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">Nom du tuteur</label>
+                <input type="text" className="w-full px-4 py-2 border rounded-lg" placeholder="Nom" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">Email du tuteur</label>
+                <input type="email" className="w-full px-4 py-2 border rounded-lg" placeholder="Email" />
+              </div>
+            </div>
+          </div>
+        );
+      case 'renseignements':
+        return (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">Nom</label>
+                <input type="text" className="w-full px-4 py-2 border rounded-lg" placeholder="Nom" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">Prénom</label>
+                <input type="text" className="w-full px-4 py-2 border rounded-lg" placeholder="Prénom" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">Date de naissance</label>
+                <input type="date" className="w-full px-4 py-2 border rounded-lg" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">Lieu de naissance</label>
+                <input type="text" className="w-full px-4 py-2 border rounded-lg" placeholder="Ville" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1">NIR (Sécurité Sociale)</label>
+              <input type="text" className="w-full px-4 py-2 border rounded-lg" placeholder="Numéro à 15 chiffres" />
+            </div>
+          </div>
+        );
+      case 'reglement':
+      case 'connaissance':
+        return (
+          <div className="space-y-4">
+            <div className="p-4 bg-slate-50 border rounded-lg text-sm text-slate-600 h-40 overflow-y-auto mb-4">
+              <p className="font-bold mb-2">Conditions Générales et Règlement</p>
+              <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed non risus. Suspendisse lectus tortor, dignissim sit amet, adipiscing nec, ultricies sed, dolor.</p>
+              <p className="mt-2">Cras elementum ultrices diam. Maecenas ligula massa, varius a, semper congue, euismod non, mi. Proin porttitor, orci nec nonummy molestie, enim est eleifend mi, non fermentum diam nisl sit amet erat.</p>
+            </div>
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input type="checkbox" className="w-5 h-5 accent-blue-600" />
+              <span className="text-sm font-medium text-slate-700">Je reconnais avoir lu et accepté les conditions</span>
+            </label>
+            <div className="grid grid-cols-2 gap-4">
+                <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1">Signé à</label>
+                    <input type="text" className="w-full px-4 py-2 border rounded-lg" placeholder="Ville" />
+                </div>
+                <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1">Date</label>
+                    <input type="date" className="w-full px-4 py-2 border rounded-lg" defaultValue={new Date().toISOString().split('T')[0]} />
+                </div>
+            </div>
+          </div>
+        );
+      case 'livret':
+        return (
+          <div className="space-y-4">
+             <div className="grid grid-cols-2 gap-4">
+                <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1">Date de début</label>
+                    <input type="date" className="w-full px-4 py-2 border rounded-lg" />
+                </div>
+                <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1">Date de fin</label>
+                    <input type="date" className="w-full px-4 py-2 border rounded-lg" />
+                </div>
+            </div>
+            <div className="p-4 bg-blue-50 border border-blue-100 rounded-lg text-blue-800 text-sm">
+                Le livret sera généré automatiquement avec les informations de l'entreprise et de l'étudiant.
+            </div>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
     <div className="animate-fade-in max-w-6xl mx-auto pb-20">
@@ -720,24 +897,128 @@ const AdmissionView = () => {
 
       {/* --- TAB CONTENT: ADMINISTRATIF --- */}
       {activeTab === AdmissionTab.ADMINISTRATIF && (
-         <div key="admin" className="bg-white border border-slate-200 rounded-3xl p-16 text-center animate-slide-in">
-            <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-300">
-               <Briefcase size={40} />
+         <div key="admin" className="animate-slide-in space-y-6">
+            {/* Header Section */}
+            <div className="bg-white border border-slate-200 rounded-2xl p-6 flex items-center gap-5">
+               <div className="w-14 h-14 bg-gradient-to-br from-violet-500 to-violet-600 text-white rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-violet-500/20">
+                  <Printer size={28} />
+               </div>
+               <div>
+                  <h3 className="text-lg font-bold text-slate-800">Dossier administratif</h3>
+                  <p className="text-slate-500 text-sm">Ces documents seront complétés avec le chargé d'admission.</p>
+               </div>
             </div>
-            <h3 className="text-xl font-bold text-slate-800 mb-2">Dossier Administratif</h3>
-            <p className="text-slate-500 max-w-md mx-auto mb-8">Cette section permettra de générer les documents contractuels (CERFA, Convention, etc.) une fois toutes les étapes précédentes validées.</p>
-            <div className="flex justify-center gap-4">
-               <button className="px-6 py-3 bg-slate-100 text-slate-400 font-semibold rounded-xl cursor-not-allowed">Générer le dossier</button>
+
+            {/* Docs Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+               {ADMIN_DOCS.map((doc) => {
+                 const status = docsStatus[doc.id];
+                 const isCompleted = status === 'completed';
+                 
+                 // Dynamic colors based on doc config
+                 const colorStyles = {
+                   orange: 'from-orange-400 to-orange-600 shadow-orange-500/20 border-orange-200',
+                   blue: 'from-blue-500 to-blue-700 shadow-blue-500/20 border-blue-200',
+                   green: 'from-emerald-500 to-emerald-700 shadow-emerald-500/20 border-emerald-200',
+                   purple: 'from-purple-500 to-purple-700 shadow-purple-500/20 border-purple-200',
+                   cyan: 'from-cyan-500 to-cyan-700 shadow-cyan-500/20 border-cyan-200',
+                 }[doc.color];
+
+                 return (
+                   <div key={doc.id} className={`bg-white border border-slate-200 rounded-2xl p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group ${isCompleted ? 'ring-2 ring-emerald-500 border-emerald-500' : ''}`}>
+                      <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${colorStyles} flex items-center justify-center text-white mb-4 shadow-lg`}>
+                        {isCompleted ? <CheckCircle2 size={24} /> : <FileText size={24} />}
+                      </div>
+                      
+                      <h4 className="font-bold text-slate-800 text-lg mb-1">{doc.title}</h4>
+                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">{doc.subtitle}</p>
+                      <p className="text-sm text-slate-400 mb-6 leading-relaxed">{doc.desc}</p>
+
+                      <div className="flex items-center justify-between mt-auto">
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                          isCompleted 
+                            ? 'bg-emerald-100 text-emerald-700' 
+                            : 'bg-amber-100 text-amber-700'
+                        }`}>
+                          {isCompleted ? 'Complété' : 'À faire'}
+                        </span>
+                        
+                        <button 
+                          onClick={() => !isCompleted && openDocModal(doc.id)}
+                          disabled={isCompleted}
+                          className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2 ${
+                            isCompleted 
+                              ? 'bg-slate-100 text-slate-400 cursor-default' 
+                              : 'bg-slate-900 text-white hover:bg-slate-800 shadow-lg shadow-slate-900/10'
+                          }`}
+                        >
+                          {isCompleted ? 'Fait' : doc.btnText}
+                          {!isCompleted && <ArrowRight size={14} />}
+                        </button>
+                      </div>
+                   </div>
+                 );
+               })}
+            </div>
+
+            {/* Bottom Action */}
+            <div className="flex justify-center mt-8">
                <button 
                   onClick={() => {
-                    setAdminCompleted(true);
-                    setActiveTab(AdmissionTab.ENTRETIEN);
+                    if (Object.values(docsStatus).every(s => s === 'completed')) {
+                        setAdminCompleted(true);
+                        setActiveTab(AdmissionTab.ENTRETIEN);
+                    } else {
+                        alert("Veuillez compléter tous les documents avant de continuer.");
+                    }
                   }}
-                  className="px-6 py-3 bg-slate-900 text-white font-semibold rounded-xl hover:bg-slate-800"
+                  className={`px-8 py-4 rounded-xl font-bold text-white shadow-xl flex items-center gap-3 transition-all ${
+                    Object.values(docsStatus).every(s => s === 'completed')
+                      ? 'bg-gradient-to-r from-emerald-500 to-teal-600 hover:shadow-emerald-500/30 hover:-translate-y-1'
+                      : 'bg-slate-300 cursor-not-allowed'
+                  }`}
                >
-                  Passer à l'entretien
+                  <CheckCircle2 size={20} />
+                  Soumettre le dossier complet
                </button>
             </div>
+
+            {/* DOC MODAL */}
+            {activeDocModal && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={closeDocModal}></div>
+                <div className="bg-white rounded-2xl w-full max-w-lg relative z-10 overflow-hidden shadow-2xl animate-slide-in">
+                  
+                  {/* Modal Header */}
+                  <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
+                    <h3 className="font-bold text-slate-800 text-lg">
+                      {ADMIN_DOCS.find(d => d.id === activeDocModal)?.title}
+                    </h3>
+                    <button onClick={closeDocModal} className="p-2 hover:bg-slate-200 rounded-full transition-colors text-slate-500">
+                      <X size={20} />
+                    </button>
+                  </div>
+
+                  {/* Modal Body */}
+                  <div className="p-6 max-h-[70vh] overflow-y-auto">
+                    {renderDocModalContent(activeDocModal)}
+                  </div>
+
+                  {/* Modal Footer */}
+                  <div className="px-6 py-4 border-t border-slate-200 flex justify-end gap-3 bg-slate-50">
+                    <button onClick={closeDocModal} className="px-4 py-2 text-slate-600 font-medium hover:bg-slate-200 rounded-lg transition-colors">
+                      Annuler
+                    </button>
+                    <button 
+                      onClick={() => handleDocSubmit(activeDocModal)}
+                      className="px-6 py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors shadow-md"
+                    >
+                      Valider
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
          </div>
       )}
 
