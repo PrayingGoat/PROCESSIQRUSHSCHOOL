@@ -66,7 +66,7 @@ const FormationCard = ({ icon, title, desc, duration, color, selected, onClick }
   );
 };
 
-const EvalCriteriaRow = ({ title, desc, name }: { title: string, desc: string, name: string }) => (
+const EvalCriteriaRow = ({ title, desc, name, value, onChange }: { title: string, desc: string, name: string, value: number, onChange: (val: number) => void }) => (
   <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] border-b border-slate-200 last:border-0 last:rounded-b-xl">
     <div className="p-5 lg:border-r border-slate-200">
       <h4 className="font-bold text-slate-800 text-sm mb-2">{title}</h4>
@@ -75,7 +75,14 @@ const EvalCriteriaRow = ({ title, desc, name }: { title: string, desc: string, n
     <div className="flex items-center justify-center p-4 gap-0 bg-slate-50/50">
       {[1, 2, 3, 4, 5].map((val) => (
         <label key={val} className="cursor-pointer group relative">
-          <input type="radio" name={name} value={val} className="peer sr-only" />
+          <input 
+            type="radio" 
+            name={name} 
+            value={val} 
+            checked={value === val}
+            onChange={() => onChange(val)}
+            className="peer sr-only" 
+          />
           <div className="w-10 h-10 flex items-center justify-center border-y border-l last:border-r border-slate-200 bg-white font-bold text-slate-400 transition-all peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 hover:bg-blue-50">
             {val}
           </div>
@@ -110,7 +117,7 @@ const FileUploadCard = ({ title, desc, uploaded }: { title: string, desc: string
   </div>
 );
 
-const EntrepriseForm = () => (
+const EntrepriseForm = ({ onNext }: { onNext: () => void }) => (
   <div className="bg-gradient-to-br from-emerald-50 to-white rounded-3xl p-6 md:p-10 shadow-xl border border-emerald-100 relative overflow-hidden">
     <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500"></div>
     
@@ -155,7 +162,12 @@ const EntrepriseForm = () => (
 
       <div className="flex justify-end gap-3 pt-6 border-t border-emerald-100">
         <button className="px-6 py-3 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50 transition-colors">Enregistrer brouillon</button>
-        <button className="px-8 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold hover:shadow-lg hover:shadow-emerald-500/25 transition-all">Valider et continuer</button>
+        <button 
+          onClick={onNext}
+          className="px-8 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold hover:shadow-lg hover:shadow-emerald-500/25 transition-all"
+        >
+          Valider et continuer
+        </button>
       </div>
     </div>
   </div>
@@ -168,6 +180,12 @@ const AdmissionView = () => {
   const [selectedFormation, setSelectedFormation] = useState<string | null>(null);
   const [testStarted, setTestStarted] = useState(false);
   const [testCompleted, setTestCompleted] = useState(false);
+  const [scores, setScores] = useState<Record<string, number>>({
+    critere1: 0,
+    critere2: 0,
+    critere3: 0,
+    critere4: 0
+  });
 
   // Flow handlers
   const handleStartTest = () => setTestStarted(true);
@@ -175,7 +193,21 @@ const AdmissionView = () => {
     setTestStarted(false);
     setTestCompleted(true);
   };
-  const handleContinueToInterview = () => setActiveTab(AdmissionTab.ENTRETIEN);
+  const handleContinueToStudent = () => setActiveTab(AdmissionTab.QUESTIONNAIRE);
+
+  // Score logic
+  const totalScore = (Object.values(scores) as number[]).reduce((sum, score) => sum + score, 0);
+  
+  const getAppreciation = (score: number) => {
+    if (score === 0) return { text: "-", color: "bg-slate-100 text-slate-400" };
+    if (score >= 17) return { text: "EXCELLENT", color: "bg-emerald-100 text-emerald-700" };
+    if (score >= 14) return { text: "TRÈS SATISFAISANT", color: "bg-blue-100 text-blue-700" };
+    if (score >= 10) return { text: "SATISFAISANT", color: "bg-indigo-100 text-indigo-700" };
+    if (score >= 6) return { text: "PASSABLE", color: "bg-orange-100 text-orange-700" };
+    return { text: "INSUFFISANT", color: "bg-red-100 text-red-700" };
+  };
+
+  const appreciation = getAppreciation(totalScore);
 
   return (
     <div className="animate-fade-in max-w-6xl mx-auto pb-20">
@@ -204,19 +236,19 @@ const AdmissionView = () => {
           <StepItem step={1} label="Tests" isActive={activeTab === AdmissionTab.TESTS} isCompleted={activeTab !== AdmissionTab.TESTS} />
           <StepLine isCompleted={activeTab !== AdmissionTab.TESTS} />
           
-          <StepItem step={2} label="Entretien" isActive={activeTab === AdmissionTab.ENTRETIEN} isCompleted={activeTab !== AdmissionTab.TESTS && activeTab !== AdmissionTab.ENTRETIEN} />
-          <StepLine isCompleted={activeTab === AdmissionTab.DOCUMENTS || activeTab === AdmissionTab.QUESTIONNAIRE || activeTab === AdmissionTab.ENTREPRISE || activeTab === AdmissionTab.ADMINISTRATIF} />
+          <StepItem step={2} label="Étudiant" isActive={activeTab === AdmissionTab.QUESTIONNAIRE} isCompleted={activeTab !== AdmissionTab.TESTS && activeTab !== AdmissionTab.QUESTIONNAIRE} />
+          <StepLine isCompleted={activeTab === AdmissionTab.DOCUMENTS || activeTab === AdmissionTab.ENTREPRISE || activeTab === AdmissionTab.ADMINISTRATIF || activeTab === AdmissionTab.ENTRETIEN} />
           
-          <StepItem step={3} label="Documents" isActive={activeTab === AdmissionTab.DOCUMENTS} isCompleted={activeTab === AdmissionTab.QUESTIONNAIRE || activeTab === AdmissionTab.ENTREPRISE || activeTab === AdmissionTab.ADMINISTRATIF} />
-          <StepLine isCompleted={activeTab === AdmissionTab.QUESTIONNAIRE || activeTab === AdmissionTab.ENTREPRISE || activeTab === AdmissionTab.ADMINISTRATIF} />
+          <StepItem step={3} label="Documents" isActive={activeTab === AdmissionTab.DOCUMENTS} isCompleted={activeTab === AdmissionTab.ENTREPRISE || activeTab === AdmissionTab.ADMINISTRATIF || activeTab === AdmissionTab.ENTRETIEN} />
+          <StepLine isCompleted={activeTab === AdmissionTab.ENTREPRISE || activeTab === AdmissionTab.ADMINISTRATIF || activeTab === AdmissionTab.ENTRETIEN} />
           
-          <StepItem step={4} label="Étudiant" isActive={activeTab === AdmissionTab.QUESTIONNAIRE} isCompleted={activeTab === AdmissionTab.ENTREPRISE || activeTab === AdmissionTab.ADMINISTRATIF} />
-          <StepLine isCompleted={activeTab === AdmissionTab.ENTREPRISE || activeTab === AdmissionTab.ADMINISTRATIF} />
+          <StepItem step={4} label="Entreprise" isActive={activeTab === AdmissionTab.ENTREPRISE} isCompleted={activeTab === AdmissionTab.ADMINISTRATIF || activeTab === AdmissionTab.ENTRETIEN} />
+          <StepLine isCompleted={activeTab === AdmissionTab.ADMINISTRATIF || activeTab === AdmissionTab.ENTRETIEN} />
           
-          <StepItem step={5} label="Entreprise" isActive={activeTab === AdmissionTab.ENTREPRISE} isCompleted={activeTab === AdmissionTab.ADMINISTRATIF} />
-          <StepLine isCompleted={activeTab === AdmissionTab.ADMINISTRATIF} />
+          <StepItem step={5} label="Admin" isActive={activeTab === AdmissionTab.ADMINISTRATIF} isCompleted={activeTab === AdmissionTab.ENTRETIEN} />
+          <StepLine isCompleted={activeTab === AdmissionTab.ENTRETIEN} />
           
-          <StepItem step={6} label="Admin" isActive={activeTab === AdmissionTab.ADMINISTRATIF} isCompleted={false} />
+          <StepItem step={6} label="Entretien" isActive={activeTab === AdmissionTab.ENTRETIEN} isCompleted={false} />
         </div>
       </div>
 
@@ -224,11 +256,11 @@ const AdmissionView = () => {
       <div className="flex overflow-x-auto gap-2 mb-8 bg-white p-2 rounded-2xl border border-slate-200 no-scrollbar shadow-sm">
         {[
           { id: AdmissionTab.TESTS, label: 'Tests', icon: <PenTool size={18}/> },
-          { id: AdmissionTab.ENTRETIEN, label: 'Entretien', icon: <UserCheck size={18}/> },
-          { id: AdmissionTab.DOCUMENTS, label: 'Documents', icon: <Upload size={18}/> },
           { id: AdmissionTab.QUESTIONNAIRE, label: 'Fiche Étudiant', icon: <Info size={18}/> },
+          { id: AdmissionTab.DOCUMENTS, label: 'Documents', icon: <Upload size={18}/> },
           { id: AdmissionTab.ENTREPRISE, label: 'Fiche Entreprise', icon: <Building size={18}/> },
           { id: AdmissionTab.ADMINISTRATIF, label: 'Administratif', icon: <Briefcase size={18}/> },
+          { id: AdmissionTab.ENTRETIEN, label: 'Entretien', icon: <UserCheck size={18}/> },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -381,15 +413,105 @@ const AdmissionView = () => {
                  <h3 className="text-3xl font-bold text-emerald-900 mb-4">Test complété avec succès !</h3>
                  <p className="text-emerald-700/80 text-lg mb-10 max-w-lg mx-auto">Votre test a été enregistré. Vous pouvez maintenant passer à l'étape suivante de votre admission.</p>
                  <button 
-                    onClick={handleContinueToInterview}
+                    onClick={handleContinueToStudent}
                     className="px-8 py-4 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-colors inline-flex items-center gap-2 shadow-lg shadow-emerald-600/20"
                  >
-                    Continuer vers l'entretien
+                    Continuer vers la Fiche Étudiant
                     <ArrowRight size={20} />
                  </button>
               </div>
            )}
         </div>
+      )}
+
+      {/* --- TAB CONTENT: QUESTIONNAIRE (Fiche Etudiant) --- */}
+      {activeTab === AdmissionTab.QUESTIONNAIRE && (
+         <div className="animate-fade-in">
+            <QuestionnaireForm onNext={() => setActiveTab(AdmissionTab.DOCUMENTS)} />
+         </div>
+      )}
+
+      {/* --- TAB CONTENT: DOCUMENTS --- */}
+      {activeTab === AdmissionTab.DOCUMENTS && (
+         <div className="animate-fade-in space-y-6">
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-2xl p-6 flex items-center gap-5">
+               <div className="w-14 h-14 bg-white text-blue-600 rounded-2xl flex items-center justify-center shrink-0 shadow-sm">
+                  <Upload size={28} />
+               </div>
+               <div>
+                  <h3 className="text-lg font-bold text-slate-800">Documents à téléverser</h3>
+                  <p className="text-slate-500 text-sm">Complétez votre dossier avec les pièces justificatives.</p>
+               </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+               <FileUploadCard title="CV" desc="Curriculum Vitae à jour" uploaded={false} />
+               <FileUploadCard title="Carte d'Identité" desc="Recto-verso de la CNI" uploaded={true} />
+               <FileUploadCard title="Lettre de motivation" desc="Exposez vos motivations" uploaded={false} />
+               <FileUploadCard title="Carte Vitale" desc="Attestation de droits" uploaded={false} />
+               <FileUploadCard title="Dernier Diplôme" desc="Copie du dernier diplôme" uploaded={false} />
+            </div>
+
+            {/* NIR Tutorial */}
+            <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+               <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-5 flex items-center gap-4 cursor-pointer hover:bg-amber-100/50 transition-colors">
+                  <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-amber-500 shadow-sm border border-amber-100">
+                     <ShieldCheck size={20} />
+                  </div>
+                  <div className="flex-1">
+                     <h4 className="font-semibold text-slate-800">Besoin d'aide pour le NIR ?</h4>
+                     <p className="text-xs text-slate-500">Comment récupérer son numéro de sécurité sociale</p>
+                  </div>
+                  <ChevronDown className="text-slate-400" />
+               </div>
+            </div>
+
+            {/* Summary */}
+            <div className="bg-white border border-slate-200 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
+               <div className="w-full md:w-1/2">
+                  <div className="flex justify-between text-sm font-semibold mb-2">
+                     <span className="text-slate-800">1 / 5 documents</span>
+                     <span className="text-emerald-500">20%</span>
+                  </div>
+                  <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                     <div className="h-full bg-emerald-500 rounded-full w-[20%] transition-all duration-500"></div>
+                  </div>
+               </div>
+               <button 
+                  onClick={() => setActiveTab(AdmissionTab.ENTREPRISE)}
+                  className="w-full md:w-auto px-8 py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 hover:-translate-y-0.5 transition-all shadow-lg shadow-slate-900/10"
+               >
+                  Continuer vers la Fiche Entreprise
+               </button>
+            </div>
+         </div>
+      )}
+
+      {/* --- TAB CONTENT: ENTREPRISE --- */}
+      {activeTab === AdmissionTab.ENTREPRISE && (
+         <div className="animate-fade-in">
+            <EntrepriseForm onNext={() => setActiveTab(AdmissionTab.ADMINISTRATIF)} />
+         </div>
+      )}
+
+      {/* --- TAB CONTENT: ADMINISTRATIF --- */}
+      {activeTab === AdmissionTab.ADMINISTRATIF && (
+         <div className="bg-white border border-slate-200 rounded-3xl p-16 text-center animate-fade-in">
+            <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-300">
+               <Briefcase size={40} />
+            </div>
+            <h3 className="text-xl font-bold text-slate-800 mb-2">Dossier Administratif</h3>
+            <p className="text-slate-500 max-w-md mx-auto mb-8">Cette section permettra de générer les documents contractuels (CERFA, Convention, etc.) une fois toutes les étapes précédentes validées.</p>
+            <div className="flex justify-center gap-4">
+               <button className="px-6 py-3 bg-slate-100 text-slate-400 font-semibold rounded-xl cursor-not-allowed">Générer le dossier</button>
+               <button 
+                  onClick={() => setActiveTab(AdmissionTab.ENTRETIEN)}
+                  className="px-6 py-3 bg-slate-900 text-white font-semibold rounded-xl hover:bg-slate-800"
+               >
+                  Passer à l'entretien
+               </button>
+            </div>
+         </div>
       )}
 
       {/* --- TAB CONTENT: ENTRETIEN (Evaluation) --- */}
@@ -399,7 +521,7 @@ const AdmissionView = () => {
               <div className="bg-slate-50 border-b border-slate-200 p-8 flex justify-between items-center">
                  <div>
                     <h2 className="text-2xl font-bold text-slate-800">Grille d'évaluation / Entretien</h2>
-                    <p className="text-slate-500 text-sm mt-1">À remplir par le chargé d'admission</p>
+                    <p className="text-slate-500 text-sm mt-1">À remplir par le chargé d'admission (Étape Finale)</p>
                  </div>
                  <div className="text-right">
                     <div className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">RUSH</div>
@@ -450,21 +572,29 @@ const AdmissionView = () => {
                        title="Savoir-être et présentation" 
                        desc="Capacité à bien se connaître, points forts/faibles, présentation générale."
                        name="critere1"
+                       value={scores.critere1}
+                       onChange={(val) => setScores({...scores, critere1: val})}
                     />
                     <EvalCriteriaRow 
                        title="Cohérence du projet" 
                        desc="Logique de construction du projet, motivation, adéquation avec la formation."
                        name="critere2"
+                       value={scores.critere2}
+                       onChange={(val) => setScores({...scores, critere2: val})}
                     />
                     <EvalCriteriaRow 
                        title="Engagements & Expériences" 
                        desc="Activités extra-scolaires, curiosité, ouverture, maturité."
                        name="critere3"
+                       value={scores.critere3}
+                       onChange={(val) => setScores({...scores, critere3: val})}
                     />
                     <EvalCriteriaRow 
                        title="Expression" 
                        desc="Qualité d'expression orale, vocabulaire, dynamisme."
                        name="critere4"
+                       value={scores.critere4}
+                       onChange={(val) => setScores({...scores, critere4: val})}
                     />
                  </div>
 
@@ -476,100 +606,23 @@ const AdmissionView = () => {
                     </div>
                     <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-6 text-center flex flex-col justify-center">
                        <div className="text-sm font-bold text-indigo-400 uppercase mb-2">Note Globale</div>
-                       <div className="text-5xl font-black text-indigo-600 mb-2">16<span className="text-2xl text-indigo-300">/20</span></div>
-                       <div className="inline-block px-3 py-1 bg-indigo-200 text-indigo-800 rounded-full text-xs font-bold mx-auto">TRES SATISFAISANT</div>
+                       <div className="text-5xl font-black text-indigo-600 mb-2">{totalScore}<span className="text-2xl text-indigo-300">/20</span></div>
+                       <div className={`inline-block px-3 py-1 rounded-full text-xs font-bold mx-auto transition-colors ${appreciation.color}`}>{appreciation.text}</div>
                     </div>
                  </div>
 
                  <div className="flex justify-end gap-3 mt-8 pt-8 border-t border-slate-100">
-                    <button className="px-6 py-3 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50">Réinitialiser</button>
+                    <button 
+                      onClick={() => setScores({ critere1: 0, critere2: 0, critere3: 0, critere4: 0 })}
+                      className="px-6 py-3 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50"
+                    >
+                      Réinitialiser
+                    </button>
                     <button className="px-8 py-3 rounded-xl bg-indigo-600 text-white font-bold hover:shadow-lg hover:shadow-indigo-500/25 transition-all">Enregistrer l'évaluation</button>
                  </div>
               </div>
            </div>
         </div>
-      )}
-
-      {/* --- TAB CONTENT: DOCUMENTS --- */}
-      {activeTab === AdmissionTab.DOCUMENTS && (
-         <div className="animate-fade-in space-y-6">
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-2xl p-6 flex items-center gap-5">
-               <div className="w-14 h-14 bg-white text-blue-600 rounded-2xl flex items-center justify-center shrink-0 shadow-sm">
-                  <Upload size={28} />
-               </div>
-               <div>
-                  <h3 className="text-lg font-bold text-slate-800">Documents à téléverser</h3>
-                  <p className="text-slate-500 text-sm">Complétez votre dossier avec les pièces justificatives.</p>
-               </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-               <FileUploadCard title="CV" desc="Curriculum Vitae à jour" uploaded={false} />
-               <FileUploadCard title="Carte d'Identité" desc="Recto-verso de la CNI" uploaded={true} />
-               <FileUploadCard title="Lettre de motivation" desc="Exposez vos motivations" uploaded={false} />
-               <FileUploadCard title="Carte Vitale" desc="Attestation de droits" uploaded={false} />
-               <FileUploadCard title="Dernier Diplôme" desc="Copie du dernier diplôme" uploaded={false} />
-            </div>
-
-            {/* NIR Tutorial */}
-            <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-               <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-5 flex items-center gap-4 cursor-pointer hover:bg-amber-100/50 transition-colors">
-                  <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-amber-500 shadow-sm border border-amber-100">
-                     <ShieldCheck size={20} />
-                  </div>
-                  <div className="flex-1">
-                     <h4 className="font-semibold text-slate-800">Besoin d'aide pour le NIR ?</h4>
-                     <p className="text-xs text-slate-500">Comment récupérer son numéro de sécurité sociale</p>
-                  </div>
-                  <ChevronDown className="text-slate-400" />
-               </div>
-            </div>
-
-            {/* Summary */}
-            <div className="bg-white border border-slate-200 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
-               <div className="w-full md:w-1/2">
-                  <div className="flex justify-between text-sm font-semibold mb-2">
-                     <span className="text-slate-800">1 / 5 documents</span>
-                     <span className="text-emerald-500">20%</span>
-                  </div>
-                  <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                     <div className="h-full bg-emerald-500 rounded-full w-[20%] transition-all duration-500"></div>
-                  </div>
-               </div>
-               <button 
-                  onClick={() => setActiveTab(AdmissionTab.QUESTIONNAIRE)}
-                  className="w-full md:w-auto px-8 py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 hover:-translate-y-0.5 transition-all shadow-lg shadow-slate-900/10"
-               >
-                  Continuer vers la fiche étudiant
-               </button>
-            </div>
-         </div>
-      )}
-
-      {/* --- TAB CONTENT: QUESTIONNAIRE (Fiche Etudiant) --- */}
-      {activeTab === AdmissionTab.QUESTIONNAIRE && (
-         <div className="animate-fade-in">
-            <QuestionnaireForm />
-         </div>
-      )}
-
-      {/* --- TAB CONTENT: ENTREPRISE --- */}
-      {activeTab === AdmissionTab.ENTREPRISE && (
-         <div className="animate-fade-in">
-            <EntrepriseForm />
-         </div>
-      )}
-
-      {/* --- TAB CONTENT: ADMINISTRATIF --- */}
-      {activeTab === AdmissionTab.ADMINISTRATIF && (
-         <div className="bg-white border border-slate-200 rounded-3xl p-16 text-center animate-fade-in">
-            <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-300">
-               <Briefcase size={40} />
-            </div>
-            <h3 className="text-xl font-bold text-slate-800 mb-2">Dossier Administratif</h3>
-            <p className="text-slate-500 max-w-md mx-auto mb-8">Cette section permettra de générer les documents contractuels (CERFA, Convention, etc.) une fois toutes les étapes précédentes validées.</p>
-            <button className="px-6 py-3 bg-slate-100 text-slate-400 font-semibold rounded-xl cursor-not-allowed">Générer le dossier</button>
-         </div>
       )}
     </div>
   );

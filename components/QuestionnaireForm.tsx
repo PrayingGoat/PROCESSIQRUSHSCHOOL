@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import { User, Save, AlertCircle } from 'lucide-react';
 
+interface QuestionnaireFormProps {
+  onNext?: () => void;
+}
+
 const FormSection = ({ number, title, children, badge }: { number: number, title: string, children?: React.ReactNode, badge?: React.ReactNode }) => (
   <div className="mb-8 p-7 bg-white/60 border border-slate-200/60 rounded-2xl shadow-sm hover:bg-white/90 hover:shadow-md transition-all duration-300 group">
     <div className="flex items-center gap-3 mb-6">
@@ -71,7 +75,7 @@ const RadioGroup = ({ label, options, layout = "horizontal" }: { label: string, 
   </div>
 );
 
-const QuestionnaireForm = () => {
+const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
   const [isMinor, setIsMinor] = useState(false);
 
   const checkAge = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -214,7 +218,10 @@ const QuestionnaireForm = () => {
               <span className="font-medium text-slate-700">J'atteste sur l'honneur l'exactitude des informations fournies <span className="text-red-500">*</span></span>
             </label>
 
-            <button className="group flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-xl font-bold text-lg hover:shadow-lg hover:shadow-blue-500/30 hover:-translate-y-1 transition-all duration-300">
+            <button 
+              onClick={onNext}
+              className="group flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-xl font-bold text-lg hover:shadow-lg hover:shadow-blue-500/30 hover:-translate-y-1 transition-all duration-300"
+            >
               <Save size={20} className="group-hover:scale-110 transition-transform" />
               Enregistrer et continuer
             </button>
