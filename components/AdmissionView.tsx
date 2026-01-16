@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   CheckCircle2, 
   FileText, 
@@ -13,7 +13,8 @@ import {
   Building,
   UserCheck,
   ExternalLink,
-  AlertCircle
+  AlertCircle,
+  FileCheck
 } from 'lucide-react';
 import { AdmissionTab } from '../types';
 import QuestionnaireForm from './QuestionnaireForm';
@@ -27,6 +28,15 @@ const FORMATION_FORMS: Record<string, string> = {
   bachelor: "https://docs.google.com/forms/d/e/1FAIpQLSdzOg66p81XV9Ghb4dS6xP2r-BCw4qiGECU4F01Vs7VlrJNCQ/viewform?embedded=true",
   ntc: "https://docs.google.com/forms/d/e/1FAIpQLSfW-Gi40ZBpU9zymrYBZ05P8s2TSSL88OYwkp5lzPSNDXTnhA/viewform?embedded=true",
 };
+
+// Liste des documents requis
+const REQUIRED_DOCUMENTS = [
+  { id: 'cv', title: "CV", desc: "Curriculum Vitae à jour" },
+  { id: 'cni', title: "Carte d'Identité", desc: "Recto-verso de la CNI" },
+  { id: 'lettre', title: "Lettre de motivation", desc: "Exposez vos motivations" },
+  { id: 'vitale', title: "Carte Vitale", desc: "Attestation de droits" },
+  { id: 'diplome', title: "Dernier Diplôme", desc: "Copie du dernier diplôme" },
+];
 
 // URL par défaut si la clé n'existe pas
 const DEFAULT_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLScs38d38d38d38d38d38d38d38d38d38d38d38d38d38d3/viewform?embedded=true"; 
@@ -107,30 +117,66 @@ const EvalCriteriaRow = ({ title, desc, name, value, onChange }: { title: string
   </div>
 );
 
-const FileUploadCard = ({ title, desc, uploaded }: { title: string, desc: string, uploaded: boolean }) => (
-  <div className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center text-center transition-all cursor-pointer group ${
-    uploaded 
-      ? 'border-emerald-200 bg-emerald-50' 
-      : 'border-slate-200 bg-white hover:border-blue-400 hover:bg-blue-50'
-  }`}>
-    <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 transition-colors ${
-      uploaded 
-        ? 'bg-emerald-100 text-emerald-600' 
-        : 'bg-slate-100 text-slate-400 group-hover:bg-blue-100 group-hover:text-blue-500'
-    }`}>
-      {uploaded ? <CheckCircle2 size={24} /> : <Upload size={24} />}
+const FileUploadCard = ({ id, title, desc, fileName, onUpload }: { id: string, title: string, desc: string, fileName?: string, onUpload: (file: File) => void }) => {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const uploaded = !!fileName;
+
+  const handleClick = () => {
+    inputRef.current?.click();
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      onUpload(e.target.files[0]);
+    }
+  };
+
+  return (
+    <div 
+      onClick={handleClick}
+      className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center text-center transition-all cursor-pointer group relative overflow-hidden ${
+        uploaded 
+          ? 'border-emerald-300 bg-emerald-50/50' 
+          : 'border-slate-200 bg-white hover:border-blue-400 hover:bg-blue-50'
+      }`}
+    >
+      <input 
+        type="file" 
+        ref={inputRef} 
+        onChange={handleChange} 
+        className="hidden" 
+        accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+      />
+      
+      <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 transition-colors ${
+        uploaded 
+          ? 'bg-emerald-100 text-emerald-600' 
+          : 'bg-slate-100 text-slate-400 group-hover:bg-blue-100 group-hover:text-blue-500'
+      }`}>
+        {uploaded ? <CheckCircle2 size={24} /> : <Upload size={24} />}
+      </div>
+      
+      <h4 className={`font-bold mb-1 ${uploaded ? 'text-emerald-800' : 'text-slate-700'}`}>{title}</h4>
+      
+      {uploaded ? (
+        <p className="text-xs text-emerald-600 font-medium mb-4 flex items-center gap-1 max-w-full truncate px-2">
+          <FileCheck size={12} />
+          {fileName}
+        </p>
+      ) : (
+        <p className="text-xs text-slate-400 mb-4">{desc}</p>
+      )}
+
+      <button className={`px-4 py-2 rounded-lg text-xs font-bold transition-colors ${
+        uploaded 
+          ? 'bg-white text-emerald-600 border border-emerald-200 hover:bg-emerald-50' 
+          : 'bg-slate-900 text-white hover:bg-slate-800'
+      }`}>
+        {uploaded ? 'Remplacer' : 'Téléverser'}
+      </button>
     </div>
-    <h4 className={`font-bold mb-1 ${uploaded ? 'text-emerald-800' : 'text-slate-700'}`}>{title}</h4>
-    <p className={`text-xs mb-4 ${uploaded ? 'text-emerald-600' : 'text-slate-400'}`}>{desc}</p>
-    <button className={`px-4 py-2 rounded-lg text-xs font-bold transition-colors ${
-      uploaded 
-        ? 'bg-white text-emerald-600 border border-emerald-200 hover:bg-emerald-50' 
-        : 'bg-slate-900 text-white hover:bg-slate-800'
-    }`}>
-      {uploaded ? 'Modifier' : 'Téléverser'}
-    </button>
-  </div>
-);
+  );
+};
 
 const EntrepriseForm = ({ onNext }: { onNext: () => void }) => {
   const [formData, setFormData] = useState({
@@ -298,6 +344,11 @@ const AdmissionView = () => {
   const [selectedFormation, setSelectedFormation] = useState<string | null>(null);
   const [testStarted, setTestStarted] = useState(false);
   const [testCompleted, setTestCompleted] = useState(false);
+  
+  // State for Documents
+  const [uploadedFiles, setUploadedFiles] = useState<Record<string, File>>({});
+
+  // State for Evaluation
   const [scores, setScores] = useState<Record<string, number>>({
     critere1: 0,
     critere2: 0,
@@ -313,6 +364,11 @@ const AdmissionView = () => {
   };
   const handleContinueToStudent = () => setActiveTab(AdmissionTab.QUESTIONNAIRE);
 
+  // Document Handler
+  const handleFileUpload = (docId: string, file: File) => {
+    setUploadedFiles(prev => ({ ...prev, [docId]: file }));
+  };
+
   // Score logic
   const totalScore = (Object.values(scores) as number[]).reduce((sum, score) => sum + score, 0);
   
@@ -326,6 +382,11 @@ const AdmissionView = () => {
   };
 
   const appreciation = getAppreciation(totalScore);
+
+  // Progress Calculation for Documents
+  const totalDocs = REQUIRED_DOCUMENTS.length;
+  const uploadedCount = Object.keys(uploadedFiles).length;
+  const uploadProgress = Math.round((uploadedCount / totalDocs) * 100);
 
   return (
     <div className="animate-fade-in max-w-6xl mx-auto pb-20">
@@ -578,11 +639,16 @@ const AdmissionView = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-               <FileUploadCard title="CV" desc="Curriculum Vitae à jour" uploaded={false} />
-               <FileUploadCard title="Carte d'Identité" desc="Recto-verso de la CNI" uploaded={true} />
-               <FileUploadCard title="Lettre de motivation" desc="Exposez vos motivations" uploaded={false} />
-               <FileUploadCard title="Carte Vitale" desc="Attestation de droits" uploaded={false} />
-               <FileUploadCard title="Dernier Diplôme" desc="Copie du dernier diplôme" uploaded={false} />
+               {REQUIRED_DOCUMENTS.map((doc) => (
+                 <FileUploadCard 
+                    key={doc.id}
+                    id={doc.id}
+                    title={doc.title} 
+                    desc={doc.desc} 
+                    fileName={uploadedFiles[doc.id]?.name}
+                    onUpload={(file) => handleFileUpload(doc.id, file)}
+                 />
+               ))}
             </div>
 
             {/* NIR Tutorial */}
@@ -603,16 +669,23 @@ const AdmissionView = () => {
             <div className="bg-white border border-slate-200 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
                <div className="w-full md:w-1/2">
                   <div className="flex justify-between text-sm font-semibold mb-2">
-                     <span className="text-slate-800">1 / 5 documents</span>
-                     <span className="text-emerald-500">20%</span>
+                     <span className="text-slate-800">{uploadedCount} / {totalDocs} documents</span>
+                     <span className={`${uploadedCount === totalDocs ? 'text-emerald-500' : 'text-blue-500'}`}>{uploadProgress}%</span>
                   </div>
                   <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                     <div className="h-full bg-emerald-500 rounded-full w-[20%] transition-all duration-500"></div>
+                     <div 
+                       className={`h-full rounded-full transition-all duration-500 ease-out ${uploadedCount === totalDocs ? 'bg-emerald-500' : 'bg-blue-500'}`} 
+                       style={{ width: `${uploadProgress}%` }}
+                     ></div>
                   </div>
                </div>
                <button 
                   onClick={() => setActiveTab(AdmissionTab.ENTREPRISE)}
-                  className="w-full md:w-auto px-8 py-3 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 hover:-translate-y-0.5 transition-all shadow-lg shadow-slate-900/10"
+                  className={`w-full md:w-auto px-8 py-3 font-bold rounded-xl transition-all shadow-lg ${
+                    uploadedCount > 0 
+                      ? 'bg-slate-900 text-white hover:bg-slate-800 hover:-translate-y-0.5 shadow-slate-900/10'
+                      : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                  }`}
                >
                   Continuer vers la Fiche Entreprise
                </button>
