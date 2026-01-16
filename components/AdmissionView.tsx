@@ -49,12 +49,12 @@ const StepItem = ({ step, label, isActive, isCompleted }: { step: number, label:
       isCompleted 
         ? 'bg-emerald-500 border-emerald-500 text-white' 
         : isActive 
-          ? 'bg-blue-600 border-blue-600 text-white' 
+          ? 'bg-blue-600 border-blue-600 text-white scale-110 shadow-lg shadow-blue-500/30' 
           : 'bg-slate-50 border-slate-200 text-slate-400'
     }`}>
       {isCompleted ? <CheckCircle2 size={20} /> : step}
     </div>
-    <div className={`text-xs font-semibold uppercase tracking-wide ${isActive ? 'text-blue-600' : isCompleted ? 'text-emerald-600' : 'text-slate-400'}`}>
+    <div className={`text-xs font-semibold uppercase tracking-wide transition-colors duration-300 ${isActive ? 'text-blue-600' : isCompleted ? 'text-emerald-600' : 'text-slate-400'}`}>
       {label}
     </div>
   </div>
@@ -266,7 +266,7 @@ const EntrepriseForm = ({ onNext }: { onNext: () => void }) => {
   );
 
   return (
-    <div className="bg-gradient-to-br from-emerald-50 to-white rounded-3xl p-6 md:p-10 shadow-xl border border-emerald-100 relative overflow-hidden animate-fade-in">
+    <div className="bg-gradient-to-br from-emerald-50 to-white rounded-3xl p-6 md:p-10 shadow-xl border border-emerald-100 relative overflow-hidden animate-slide-in">
       <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500"></div>
       
       <div className="flex items-center gap-6 mb-10 pb-8 border-b border-emerald-100">
@@ -345,11 +345,17 @@ const AdmissionView = () => {
   const [testStarted, setTestStarted] = useState(false);
   const [testCompleted, setTestCompleted] = useState(false);
   
-  // State for Student Data
+  // State for Student Data (Step 2)
   const [studentData, setStudentData] = useState<any>(null);
 
-  // State for Documents
+  // State for Documents (Step 3)
   const [uploadedFiles, setUploadedFiles] = useState<Record<string, File>>({});
+
+  // State for Entreprise (Step 4)
+  const [entrepriseCompleted, setEntrepriseCompleted] = useState(false);
+
+  // State for Admin (Step 5)
+  const [adminCompleted, setAdminCompleted] = useState(false);
 
   // State for Evaluation
   const [scores, setScores] = useState<Record<string, number>>({
@@ -390,6 +396,7 @@ const AdmissionView = () => {
   const totalDocs = REQUIRED_DOCUMENTS.length;
   const uploadedCount = Object.keys(uploadedFiles).length;
   const uploadProgress = Math.round((uploadedCount / totalDocs) * 100);
+  const allDocumentsUploaded = uploadedCount === totalDocs;
 
   return (
     <div className="animate-fade-in max-w-6xl mx-auto pb-20">
@@ -406,7 +413,7 @@ const AdmissionView = () => {
               <p className="text-indigo-100 text-lg leading-relaxed opacity-90">Complétez votre dossier d'admission : tests, documents et formalités administratives.</p>
             </div>
             {/* 3D Icon placeholder */}
-            <div className="hidden md:flex w-24 h-24 bg-white/10 rounded-2xl items-center justify-center backdrop-blur-md border border-white/20 shadow-inner">
+            <div className="hidden md:flex w-24 h-24 bg-white/10 rounded-2xl items-center justify-center backdrop-blur-md border border-white/20 shadow-inner animate-pulse-slow">
                <GraduationCap size={48} className="text-indigo-100" />
             </div>
          </div>
@@ -415,20 +422,20 @@ const AdmissionView = () => {
       {/* Stepper */}
       <div className="bg-white border border-slate-200 rounded-2xl p-8 mb-8 flex items-center justify-center overflow-x-auto shadow-sm">
         <div className="flex items-center min-w-max">
-          <StepItem step={1} label="Tests" isActive={activeTab === AdmissionTab.TESTS} isCompleted={activeTab !== AdmissionTab.TESTS} />
-          <StepLine isCompleted={activeTab !== AdmissionTab.TESTS} />
+          <StepItem step={1} label="Tests" isActive={activeTab === AdmissionTab.TESTS} isCompleted={testCompleted} />
+          <StepLine isCompleted={testCompleted} />
           
-          <StepItem step={2} label="Étudiant" isActive={activeTab === AdmissionTab.QUESTIONNAIRE} isCompleted={activeTab !== AdmissionTab.TESTS && activeTab !== AdmissionTab.QUESTIONNAIRE} />
-          <StepLine isCompleted={activeTab === AdmissionTab.DOCUMENTS || activeTab === AdmissionTab.ENTREPRISE || activeTab === AdmissionTab.ADMINISTRATIF || activeTab === AdmissionTab.ENTRETIEN} />
+          <StepItem step={2} label="Étudiant" isActive={activeTab === AdmissionTab.QUESTIONNAIRE} isCompleted={!!studentData} />
+          <StepLine isCompleted={!!studentData} />
           
-          <StepItem step={3} label="Documents" isActive={activeTab === AdmissionTab.DOCUMENTS} isCompleted={activeTab === AdmissionTab.ENTREPRISE || activeTab === AdmissionTab.ADMINISTRATIF || activeTab === AdmissionTab.ENTRETIEN} />
-          <StepLine isCompleted={activeTab === AdmissionTab.ENTREPRISE || activeTab === AdmissionTab.ADMINISTRATIF || activeTab === AdmissionTab.ENTRETIEN} />
+          <StepItem step={3} label="Documents" isActive={activeTab === AdmissionTab.DOCUMENTS} isCompleted={allDocumentsUploaded} />
+          <StepLine isCompleted={allDocumentsUploaded} />
           
-          <StepItem step={4} label="Entreprise" isActive={activeTab === AdmissionTab.ENTREPRISE} isCompleted={activeTab === AdmissionTab.ADMINISTRATIF || activeTab === AdmissionTab.ENTRETIEN} />
-          <StepLine isCompleted={activeTab === AdmissionTab.ADMINISTRATIF || activeTab === AdmissionTab.ENTRETIEN} />
+          <StepItem step={4} label="Entreprise" isActive={activeTab === AdmissionTab.ENTREPRISE} isCompleted={entrepriseCompleted} />
+          <StepLine isCompleted={entrepriseCompleted} />
           
-          <StepItem step={5} label="Admin" isActive={activeTab === AdmissionTab.ADMINISTRATIF} isCompleted={activeTab === AdmissionTab.ENTRETIEN} />
-          <StepLine isCompleted={activeTab === AdmissionTab.ENTRETIEN} />
+          <StepItem step={5} label="Admin" isActive={activeTab === AdmissionTab.ADMINISTRATIF} isCompleted={adminCompleted} />
+          <StepLine isCompleted={adminCompleted} />
           
           <StepItem step={6} label="Entretien" isActive={activeTab === AdmissionTab.ENTRETIEN} isCompleted={false} />
         </div>
@@ -461,7 +468,7 @@ const AdmissionView = () => {
 
       {/* --- TAB CONTENT: TESTS --- */}
       {activeTab === AdmissionTab.TESTS && (
-        <div className="space-y-6 animate-fade-in">
+        <div key="tests" className="space-y-6 animate-slide-in">
            {/* Step 1: Selection */}
            {!selectedFormation && (
              <div className="bg-white border border-slate-200 rounded-3xl p-10 shadow-sm">
@@ -516,7 +523,7 @@ const AdmissionView = () => {
 
            {/* Step 2: Confirmation & Instructions */}
            {selectedFormation && !testStarted && !testCompleted && (
-              <div className="animate-fade-in">
+              <div className="animate-slide-in">
                 {/* Banner */}
                 <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-6 text-white flex justify-between items-center mb-6 shadow-lg shadow-blue-500/20">
                    <div className="flex items-center gap-4">
@@ -567,7 +574,7 @@ const AdmissionView = () => {
 
            {/* Step 3: Google Form Integration */}
            {testStarted && !testCompleted && (
-              <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden flex flex-col relative animate-fade-in shadow-lg">
+              <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden flex flex-col relative animate-slide-in shadow-lg">
                  {/* Toolbar */}
                  <div className="bg-slate-50 border-b border-slate-200 p-4 flex justify-between items-center sticky top-0 z-20">
                     <div className="flex items-center gap-3">
@@ -603,7 +610,7 @@ const AdmissionView = () => {
 
            {/* Step 4: Success */}
            {testCompleted && (
-              <div className="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-100 rounded-3xl p-16 text-center animate-fade-in">
+              <div className="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-100 rounded-3xl p-16 text-center animate-slide-in">
                  <div className="w-24 h-24 bg-emerald-500 text-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl shadow-emerald-500/20">
                     <CheckCircle2 size={48} />
                  </div>
@@ -623,7 +630,7 @@ const AdmissionView = () => {
 
       {/* --- TAB CONTENT: QUESTIONNAIRE (Fiche Etudiant) --- */}
       {activeTab === AdmissionTab.QUESTIONNAIRE && (
-         <div className="animate-fade-in">
+         <div key="questionnaire" className="animate-slide-in">
             <QuestionnaireForm 
               onNext={(data) => {
                 setStudentData(data);
@@ -635,7 +642,7 @@ const AdmissionView = () => {
 
       {/* --- TAB CONTENT: DOCUMENTS --- */}
       {activeTab === AdmissionTab.DOCUMENTS && (
-         <div className="animate-fade-in space-y-6">
+         <div key="documents" className="animate-slide-in space-y-6">
             <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-2xl p-6 flex items-center gap-5">
                <div className="w-14 h-14 bg-white text-blue-600 rounded-2xl flex items-center justify-center shrink-0 shadow-sm">
                   <Upload size={28} />
@@ -703,14 +710,17 @@ const AdmissionView = () => {
 
       {/* --- TAB CONTENT: ENTREPRISE --- */}
       {activeTab === AdmissionTab.ENTREPRISE && (
-         <div className="animate-fade-in">
-            <EntrepriseForm onNext={() => setActiveTab(AdmissionTab.ADMINISTRATIF)} />
+         <div key="entreprise" className="animate-slide-in">
+            <EntrepriseForm onNext={() => {
+              setEntrepriseCompleted(true);
+              setActiveTab(AdmissionTab.ADMINISTRATIF);
+            }} />
          </div>
       )}
 
       {/* --- TAB CONTENT: ADMINISTRATIF --- */}
       {activeTab === AdmissionTab.ADMINISTRATIF && (
-         <div className="bg-white border border-slate-200 rounded-3xl p-16 text-center animate-fade-in">
+         <div key="admin" className="bg-white border border-slate-200 rounded-3xl p-16 text-center animate-slide-in">
             <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-300">
                <Briefcase size={40} />
             </div>
@@ -719,7 +729,10 @@ const AdmissionView = () => {
             <div className="flex justify-center gap-4">
                <button className="px-6 py-3 bg-slate-100 text-slate-400 font-semibold rounded-xl cursor-not-allowed">Générer le dossier</button>
                <button 
-                  onClick={() => setActiveTab(AdmissionTab.ENTRETIEN)}
+                  onClick={() => {
+                    setAdminCompleted(true);
+                    setActiveTab(AdmissionTab.ENTRETIEN);
+                  }}
                   className="px-6 py-3 bg-slate-900 text-white font-semibold rounded-xl hover:bg-slate-800"
                >
                   Passer à l'entretien
@@ -730,7 +743,7 @@ const AdmissionView = () => {
 
       {/* --- TAB CONTENT: ENTRETIEN (Evaluation) --- */}
       {activeTab === AdmissionTab.ENTRETIEN && (
-        <div className="animate-fade-in">
+        <div key="entretien" className="animate-slide-in">
            <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm">
               <div className="bg-slate-50 border-b border-slate-200 p-8 flex justify-between items-center">
                  <div>

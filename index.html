@@ -39,6 +39,26 @@
         background-color: #334155;
         border-radius: 4px;
       }
+
+      /* Workflow Transition Animation */
+      @keyframes slideUpFade {
+        0% {
+          opacity: 0;
+          transform: translateY(15px) scale(0.98);
+        }
+        100% {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+
+      .animate-slide-in {
+        animation: slideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      }
+      
+      .animate-pulse-slow {
+        animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }
     </style>
   <script type="importmap">
 {
