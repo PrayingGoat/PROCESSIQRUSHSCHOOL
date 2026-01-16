@@ -9,13 +9,15 @@ export enum AppModule {
 
 export enum AdmissionTab {
   TESTS = 'tests',
+  ENTRETIEN = 'entretien',
   DOCUMENTS = 'documents',
-  QUESTIONNAIRE = 'questionnaire',
-  ADMINISTRATIF = 'administratif',
-  ENTRETIEN = 'entretien'
+  QUESTIONNAIRE = 'questionnaire', // Fiche Étudiant
+  ENTREPRISE = 'entreprise', // Fiche Entreprise
+  ADMINISTRATIF = 'administratif' // Documents générés
 }
 
 export enum RHTab {
+  FICHE_ENTREPRISE = 'fiche_entreprise',
   CERFA = 'cerfa',
   PEC = 'pec',
   RUPTURES = 'ruptures',
