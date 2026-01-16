@@ -1,9 +1,28 @@
 import React, { useState } from 'react';
-import { User, Save, AlertCircle } from 'lucide-react';
+import { User, Save, AlertCircle, ChevronDown } from 'lucide-react';
 
 interface QuestionnaireFormProps {
   onNext?: () => void;
 }
+
+const countryCodes = [
+  { code: 'FR', dial: '+33', flag: '🇫🇷' },
+  { code: 'BE', dial: '+32', flag: '🇧🇪' },
+  { code: 'CH', dial: '+41', flag: '🇨🇭' },
+  { code: 'LU', dial: '+352', flag: '🇱🇺' },
+  { code: 'GB', dial: '+44', flag: '🇬🇧' },
+  { code: 'ES', dial: '+34', flag: '🇪🇸' },
+  { code: 'IT', dial: '+39', flag: '🇮🇹' },
+  { code: 'DE', dial: '+49', flag: '🇩🇪' },
+  { code: 'MA', dial: '+212', flag: '🇲🇦' },
+  { code: 'TN', dial: '+216', flag: '🇹🇳' },
+  { code: 'DZ', dial: '+213', flag: '🇩🇿' },
+  { code: 'SN', dial: '+221', flag: '🇸🇳' },
+  { code: 'CI', dial: '+225', flag: '🇨🇮' },
+  { code: 'CM', dial: '+237', flag: '🇨🇲' },
+  { code: 'GP', dial: '+590', flag: '🇬🇵' },
+  { code: 'RE', dial: '+262', flag: '🇷🇪' },
+];
 
 const FormSection = ({ number, title, children, badge }: { number: number, title: string, children?: React.ReactNode, badge?: React.ReactNode }) => (
   <div className="mb-8 p-7 bg-white/60 border border-slate-200/60 rounded-2xl shadow-sm hover:bg-white/90 hover:shadow-md transition-all duration-300 group">
@@ -28,6 +47,8 @@ const InputField = ({ label, required, type = "text", placeholder, width = "full
     "two-thirds": "col-span-12 md:col-span-8",
   }[width];
 
+  const [dialCode, setDialCode] = useState('+33');
+
   return (
     <div className={widthClass}>
       <label className="block text-sm font-semibold text-slate-700 mb-2 group-focus-within:text-blue-600 transition-colors">
@@ -38,16 +59,24 @@ const InputField = ({ label, required, type = "text", placeholder, width = "full
           type={type} 
           placeholder={placeholder}
           onChange={onChange}
-          className="w-full px-4 py-3.5 bg-white border-2 border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all shadow-sm"
+          className={`w-full py-3.5 bg-white border-2 border-slate-200 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all shadow-sm ${type === 'tel' ? 'pl-28 pr-4' : 'px-4'}`}
         />
         {type === 'tel' && (
-           <div className="absolute left-0 top-0 bottom-0 px-3 bg-slate-50 border-r border-slate-200 rounded-l-xl flex items-center gap-1.5 text-slate-500 text-sm font-medium">
-             <span className="w-5 h-3.5 bg-slate-800 rounded-[2px] relative overflow-hidden">
-                <span className="absolute left-0 top-0 w-1/3 h-full bg-blue-700"></span>
-                <span className="absolute left-1/3 top-0 w-1/3 h-full bg-white"></span>
-                <span className="absolute right-0 top-0 w-1/3 h-full bg-red-600"></span>
-             </span>
-             +33
+           <div className="absolute left-0 top-0 bottom-0 w-28 bg-slate-50 border-r border-slate-200 rounded-l-xl flex items-center justify-center transition-colors hover:bg-slate-100">
+             <div className="relative w-full h-full">
+               <select
+                 value={dialCode}
+                 onChange={(e) => setDialCode(e.target.value)}
+                 className="w-full h-full bg-transparent border-none text-slate-700 text-sm font-medium focus:ring-0 cursor-pointer appearance-none pl-3 pr-8 outline-none text-center"
+               >
+                 {countryCodes.map((c) => (
+                   <option key={c.code} value={c.dial}>
+                      {c.flag} {c.dial}
+                   </option>
+                 ))}
+               </select>
+               <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+             </div>
            </div>
         )}
       </div>

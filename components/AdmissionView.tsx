@@ -11,10 +11,24 @@ import {
   ArrowRight,
   ShieldCheck,
   Building,
-  UserCheck
+  UserCheck,
+  ExternalLink
 } from 'lucide-react';
 import { AdmissionTab } from '../types';
 import QuestionnaireForm from './QuestionnaireForm';
+
+// --- CONFIGURATION ---
+
+// Liens Google Forms mis à jour pour chaque formation
+const FORMATION_FORMS: Record<string, string> = {
+  mco: "https://docs.google.com/forms/d/e/1FAIpQLSdoGS2NZKs3sGRZ-dZ-3a8x9JZ32FQcpBQupMmD4CUQpEhnuw/viewform?embedded=true", 
+  ndrc: "https://docs.google.com/forms/d/e/1FAIpQLSeDDzl2VDR__aY776N_7auk4uAZc04uC6mQNUsRNOr9D3eCmw/viewform?embedded=true",
+  bachelor: "https://docs.google.com/forms/d/e/1FAIpQLSdzOg66p81XV9Ghb4dS6xP2r-BCw4qiGECU4F01Vs7VlrJNCQ/viewform?embedded=true",
+  ntc: "https://docs.google.com/forms/d/e/1FAIpQLSfW-Gi40ZBpU9zymrYBZ05P8s2TSSL88OYwkp5lzPSNDXTnhA/viewform?embedded=true",
+};
+
+// URL par défaut si la clé n'existe pas
+const DEFAULT_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLScs38d38d38d38d38d38d38d38d38d38d38d38d38d38d3/viewform?embedded=true"; 
 
 // --- COMPONENTS ---
 
@@ -365,7 +379,7 @@ const AdmissionView = () => {
                          <ul className="space-y-3 text-slate-600">
                             <li className="flex items-center gap-3"><div className="w-1.5 h-1.5 rounded-full bg-amber-400"></div> Assurez-vous d'avoir une connexion internet stable</li>
                             <li className="flex items-center gap-3"><div className="w-1.5 h-1.5 rounded-full bg-amber-400"></div> Prévoyez environ 20-25 minutes sans interruption</li>
-                            <li className="flex items-center gap-3"><div className="w-1.5 h-1.5 rounded-full bg-amber-400"></div> Répondez sincèrement, il n'y a pas de mauvaises réponses</li>
+                            <li className="flex items-center gap-3"><div className="w-1.5 h-1.5 rounded-full bg-amber-400"></div> Une fois commencé, le test doit être terminé en une fois</li>
                          </ul>
                       </div>
                    </div>
@@ -378,28 +392,43 @@ const AdmissionView = () => {
                    >
                       Commencer le test
                    </button>
-                   <p className="mt-4 text-slate-400 text-sm">Le chronomètre démarrera automatiquement</p>
+                   <p className="mt-4 text-slate-400 text-sm">Le formulaire s'ouvrira directement dans la plateforme</p>
                 </div>
               </div>
            )}
 
-           {/* Step 3: Test Simulation (Iframe) */}
+           {/* Step 3: Google Form Integration */}
            {testStarted && !testCompleted && (
-              <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden h-[600px] flex flex-col relative animate-fade-in">
-                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-50 z-0">
-                    <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
-                    <p className="text-slate-500">Chargement du test...</p>
-                 </div>
-                 <div className="relative z-10 flex-1 bg-white p-10 flex flex-col items-center justify-center text-center">
-                    <h3 className="text-2xl font-bold text-slate-800 mb-4">Simulation du Test</h3>
-                    <p className="text-slate-500 max-w-md mb-8">Ceci est une simulation. Dans l'application réelle, un Google Form ou un Typeform serait intégré ici via une iframe.</p>
+              <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden flex flex-col relative animate-fade-in shadow-lg">
+                 {/* Toolbar */}
+                 <div className="bg-slate-50 border-b border-slate-200 p-4 flex justify-between items-center sticky top-0 z-20">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
+                            <PenTool size={16} />
+                        </div>
+                        <div>
+                            <h3 className="font-bold text-slate-800 text-sm">Test d'admission : {selectedFormation?.toUpperCase()}</h3>
+                            <p className="text-xs text-slate-500">Remplissez le formulaire ci-dessous</p>
+                        </div>
+                    </div>
                     <button 
                        onClick={handleFinishTest}
-                       className="px-8 py-3 bg-emerald-500 text-white rounded-xl font-bold hover:bg-emerald-600 transition-colors flex items-center gap-2"
+                       className="px-5 py-2 bg-emerald-500 text-white rounded-lg font-bold text-sm hover:bg-emerald-600 transition-colors flex items-center gap-2 shadow-sm"
                     >
-                       <CheckCircle2 size={20} />
-                       J'ai terminé le test
+                       <CheckCircle2 size={16} />
+                       J'ai envoyé mes réponses
                     </button>
+                 </div>
+
+                 {/* Form Iframe */}
+                 <div className="w-full h-[800px] bg-slate-100 relative">
+                     <iframe 
+                       src={selectedFormation ? (FORMATION_FORMS[selectedFormation] || DEFAULT_FORM_URL) : DEFAULT_FORM_URL}
+                       className="absolute inset-0 w-full h-full border-0"
+                       title="Formulaire de test"
+                     >
+                       Chargement du formulaire...
+                     </iframe>
                  </div>
               </div>
            )}
