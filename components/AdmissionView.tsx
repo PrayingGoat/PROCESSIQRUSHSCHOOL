@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   CheckCircle2, 
   FileText, 
@@ -9,17 +9,16 @@ import {
   Info,
   ChevronDown,
   ArrowRight,
-  ShieldCheck,
   Building,
   UserCheck,
-  ExternalLink,
   AlertCircle,
   FileCheck,
   Printer,
   X,
-  Eye,
+  Loader2,
   Download,
-  Loader2
+  RotateCcw,
+  Save
 } from 'lucide-react';
 import { AdmissionTab } from '../types';
 import QuestionnaireForm from './QuestionnaireForm';
@@ -143,32 +142,6 @@ const FormationCard = ({ icon, title, desc, duration, color, selected, onClick }
   );
 };
 
-const EvalCriteriaRow = ({ title, desc, name, value, onChange }: { title: string, desc: string, name: string, value: number, onChange: (val: number) => void }) => (
-  <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] border-b border-slate-200 last:border-0 last:rounded-b-xl">
-    <div className="p-5 lg:border-r border-slate-200">
-      <h4 className="font-bold text-slate-800 text-sm mb-2">{title}</h4>
-      <p className="text-xs text-slate-500 leading-relaxed">{desc}</p>
-    </div>
-    <div className="flex items-center justify-center p-4 gap-0 bg-slate-50/50">
-      {[1, 2, 3, 4, 5].map((val) => (
-        <label key={val} className="cursor-pointer group relative">
-          <input 
-            type="radio" 
-            name={name} 
-            value={val} 
-            checked={value === val}
-            onChange={() => onChange(val)}
-            className="peer sr-only" 
-          />
-          <div className="w-10 h-10 flex items-center justify-center border-y border-l last:border-r border-slate-200 bg-white font-bold text-slate-400 transition-all peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600 hover:bg-blue-50">
-            {val}
-          </div>
-        </label>
-      ))}
-    </div>
-  </div>
-);
-
 const FileUploadCard = ({ id, title, desc, fileName, uploading, onUpload }: { id: string, title: string, desc: string, fileName?: string, uploading?: boolean, onUpload: (file: File) => void }) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const uploaded = !!fileName;
@@ -236,6 +209,38 @@ const FileUploadCard = ({ id, title, desc, fileName, uploading, onUpload }: { id
   );
 };
 
+// --- ENTRETIEN SPECIFIC COMPONENTS ---
+
+const EvalCriteriaRowHTML = ({ title, desc, name, value, onChange }: { title: string, desc: string, name: string, value: number, onChange: (val: number) => void }) => {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] border-b border-slate-200 last:border-0 last:rounded-b-xl group hover:bg-slate-50/50 transition-colors">
+      <div className="p-6 md:border-r border-slate-200">
+        <h4 className="font-bold text-slate-800 text-base mb-2">{title}</h4>
+        <p className="text-sm text-slate-500 leading-relaxed">{desc}</p>
+      </div>
+      <div className="flex items-center justify-center p-4 bg-slate-50/30">
+        <div className="flex border border-slate-200 rounded-lg overflow-hidden bg-white shadow-sm">
+          {[1, 2, 3, 4, 5].map((val) => (
+            <label key={val} className="cursor-pointer relative border-r border-slate-100 last:border-0">
+              <input 
+                type="radio" 
+                name={name} 
+                value={val} 
+                checked={value === val}
+                onChange={() => onChange(val)}
+                className="peer sr-only" 
+              />
+              <div className="w-12 h-full min-h-[48px] flex items-center justify-center font-bold text-slate-400 transition-all hover:bg-blue-50 peer-checked:bg-indigo-600 peer-checked:text-white">
+                {val}
+              </div>
+            </label>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Formulaire Entreprise intégré
 const EntrepriseForm = ({ onNext }: { onNext: () => void }) => {
   const [formData, setFormData] = useState({
@@ -296,7 +301,6 @@ const EntrepriseForm = ({ onNext }: { onNext: () => void }) => {
         onNext();
       } catch (error: any) {
         console.error("Erreur soumission entreprise", error);
-        // Affiche le message d'erreur réel de l'API (ex: "Validation error")
         alert(`Erreur lors de l'enregistrement: ${error.message}`);
       } finally {
         setIsSubmitting(false);
@@ -418,7 +422,6 @@ const AdmissionView = () => {
   const [testCompleted, setTestCompleted] = useState(false);
   
   // State for Student Data (Step 2)
-  // studentData contiendra la réponse de l'API (donc l'ID du candidat)
   const [studentData, setStudentData] = useState<any>(null);
 
   // State for Documents (Step 3)
@@ -446,6 +449,15 @@ const AdmissionView = () => {
     critere3: 0,
     critere4: 0
   });
+  
+  const [interviewInfo, setInterviewInfo] = useState({
+    candidat: '',
+    heure: '',
+    charge: '',
+    date: new Date().toISOString().split('T')[0],
+    formation: '',
+    commentaires: ''
+  });
 
   // Flow handlers
   const handleStartTest = () => setTestStarted(true);
@@ -457,10 +469,7 @@ const AdmissionView = () => {
 
   // Document Handler
   const handleFileUpload = async (docId: string, file: File) => {
-    // Si nous n'avons pas d'ID étudiant, on ne peut pas uploader
-    // Note: Dans une vraie app, on gérerait le cas où l'utilisateur revient plus tard
     if (!studentData?.id && !studentData?.record_id) { 
-        // Fallback: si pas d'ID (mode démo sans backend), on simule juste l'état
         console.warn("Pas d'ID étudiant trouvé, mode simulation upload");
         setUploadedFiles(prev => ({ ...prev, [docId]: file }));
         return;
@@ -492,12 +501,12 @@ const AdmissionView = () => {
   const totalScore = (Object.values(scores) as number[]).reduce((sum, score) => sum + score, 0);
   
   const getAppreciation = (score: number) => {
-    if (score === 0) return { text: "-", color: "bg-slate-100 text-slate-400" };
-    if (score >= 17) return { text: "EXCELLENT", color: "bg-emerald-100 text-emerald-700" };
-    if (score >= 14) return { text: "TRÈS SATISFAISANT", color: "bg-blue-100 text-blue-700" };
-    if (score >= 10) return { text: "SATISFAISANT", color: "bg-indigo-100 text-indigo-700" };
-    if (score >= 6) return { text: "PASSABLE", color: "bg-orange-100 text-orange-700" };
-    return { text: "INSUFFISANT", color: "bg-red-100 text-red-700" };
+    if (score === 0) return { text: "-", color: "text-slate-400" };
+    if (score >= 17) return { text: "EXCELLENT", color: "text-emerald-600" };
+    if (score >= 14) return { text: "TRÈS SATISFAISANT", color: "text-blue-600" };
+    if (score >= 10) return { text: "SATISFAISANT", color: "text-cyan-600" };
+    if (score >= 6) return { text: "PASSABLE", color: "text-orange-600" };
+    return { text: "INSUFFISANT", color: "text-red-600" };
   };
 
   const appreciation = getAppreciation(totalScore);
@@ -510,9 +519,19 @@ const AdmissionView = () => {
 
   // Render content for specific modal
   const renderDocModalContent = (docId: string) => {
-    // ... (Content remains same as previous version)
     return <div className="p-4 text-center text-slate-500">Formulaire en cours de développement</div>;
   };
+  
+  // Sync candidate info to interview form if available
+  useEffect(() => {
+    if (studentData) {
+        setInterviewInfo(prev => ({
+            ...prev,
+            candidat: `${studentData.nom} ${studentData.prenom}`,
+            formation: studentData.formation?.toUpperCase() || ''
+        }));
+    }
+  }, [studentData]);
 
   return (
     <div className="animate-fade-in max-w-6xl mx-auto pb-20">
@@ -749,7 +768,7 @@ const AdmissionView = () => {
          <div key="questionnaire" className="animate-slide-in">
             <QuestionnaireForm 
               onNext={(data) => {
-                setStudentData(data); // Stocke les données ET l'ID retourné par l'API
+                setStudentData(data);
                 setActiveTab(AdmissionTab.DOCUMENTS);
               }} 
             />
@@ -786,7 +805,6 @@ const AdmissionView = () => {
                ))}
             </div>
 
-            {/* Summary */}
             <div className="bg-white border border-slate-200 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
                <div className="w-full md:w-1/2">
                   <div className="flex justify-between text-sm font-semibold mb-2">
@@ -824,12 +842,8 @@ const AdmissionView = () => {
          </div>
       )}
       
-      {/* Rest of the component (Admin Tab, Entretien Tab) remains same... */}
-      {/* Only change was adding the 'handleFileUpload' logic and passing state */}
-      
       {activeTab === AdmissionTab.ADMINISTRATIF && (
          <div key="admin" className="animate-slide-in space-y-6">
-            {/* Header Section */}
             <div className="bg-white border border-slate-200 rounded-2xl p-6 flex items-center gap-5">
                <div className="w-14 h-14 bg-gradient-to-br from-violet-500 to-violet-600 text-white rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-violet-500/20">
                   <Printer size={28} />
@@ -840,7 +854,6 @@ const AdmissionView = () => {
                </div>
             </div>
 
-            {/* Docs Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                {ADMIN_DOCS.map((doc) => {
                  const status = docsStatus[doc.id];
@@ -912,7 +925,6 @@ const AdmissionView = () => {
                </button>
             </div>
             
-             {/* DOC MODAL */}
             {activeDocModal && (
               <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                 <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={closeDocModal}></div>
@@ -947,31 +959,171 @@ const AdmissionView = () => {
       
       {activeTab === AdmissionTab.ENTRETIEN && (
           <div key="entretien" className="animate-slide-in">
-            {/* Same content as before */}
            <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm">
-              <div className="bg-slate-50 border-b border-slate-200 p-8 flex justify-between items-center">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center p-8 border-b-2 border-slate-50 gap-6">
                  <div>
-                    <h2 className="text-2xl font-bold text-slate-800">Grille d'évaluation / Entretien</h2>
+                    <h2 className="text-2xl font-bold text-slate-800">CR d'entretien / Grille d'évaluation</h2>
                     <p className="text-slate-500 text-sm mt-1">À remplir par le chargé d'admission (Étape Finale)</p>
                  </div>
-                 {/* ...rest of header */}
+                 <div className="flex flex-col items-center">
+                    <span className="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-indigo-600">RUSH</span>
+                    <span className="text-[0.65rem] font-bold text-slate-400 tracking-[0.2em] uppercase">SCHOOL</span>
+                 </div>
               </div>
+              
               <div className="p-8">
-                {/* ...rest of evaluation grid... I'm truncating here for brevity as no logic changed */}
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 p-6 bg-slate-50 rounded-2xl border border-slate-100">
-                     {/* ... fields ... */}
-                     <div>
-                       <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Candidat</label>
+                 {/* Informations candidat */}
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                     <div className="space-y-2">
+                       <label className="block text-sm font-semibold text-slate-600">Nom et Prénom du candidat :</label>
                        <input 
                          type="text" 
-                         className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 font-medium text-slate-800" 
-                         placeholder="Nom Prénom" 
-                         value={studentData ? `${studentData.nom.toUpperCase()} ${studentData.prenom}` : ''}
-                         readOnly
+                         className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all" 
+                         placeholder="Entrez le nom complet" 
+                         value={interviewInfo.candidat}
+                         onChange={(e) => setInterviewInfo({...interviewInfo, candidat: e.target.value})}
+                       />
+                    </div>
+                    <div className="space-y-2">
+                       <label className="block text-sm font-semibold text-slate-600">Heure d'entretien :</label>
+                       <input 
+                         type="time" 
+                         className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all" 
+                         value={interviewInfo.heure}
+                         onChange={(e) => setInterviewInfo({...interviewInfo, heure: e.target.value})}
+                       />
+                    </div>
+                    <div className="space-y-2">
+                       <label className="block text-sm font-semibold text-slate-600">Nom et Prénom chargé(e) d'admission :</label>
+                       <input 
+                         type="text" 
+                         className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all" 
+                         placeholder="Votre nom" 
+                         value={interviewInfo.charge}
+                         onChange={(e) => setInterviewInfo({...interviewInfo, charge: e.target.value})}
+                       />
+                    </div>
+                    <div className="space-y-2">
+                       <label className="block text-sm font-semibold text-slate-600">Date d'entretien :</label>
+                       <input 
+                         type="date" 
+                         className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all" 
+                         value={interviewInfo.date}
+                         onChange={(e) => setInterviewInfo({...interviewInfo, date: e.target.value})}
                        />
                     </div>
                  </div>
-                 {/* ... rest of component ... */}
+
+                 {/* Formation Selection */}
+                 <div className="bg-slate-50 p-6 rounded-xl mb-8 border border-slate-100">
+                    <label className="block text-sm font-bold text-slate-700 mb-4">Formation :</label>
+                    <div className="flex flex-wrap gap-3">
+                        {['TP NTC', 'BTS CI', 'BTS COM', 'BTS MCO', 'BTS NDRC', 'BACHELOR RDC'].map((fmt) => (
+                            <label key={fmt} className="cursor-pointer group relative">
+                                <input 
+                                    type="radio" 
+                                    name="formation-eval" 
+                                    value={fmt}
+                                    checked={interviewInfo.formation === fmt}
+                                    onChange={(e) => setInterviewInfo({...interviewInfo, formation: e.target.value})}
+                                    className="peer sr-only" 
+                                />
+                                <div className="px-4 py-2 bg-white border-2 border-slate-200 rounded-lg text-sm font-semibold text-slate-500 transition-all peer-checked:border-indigo-500 peer-checked:text-indigo-600 hover:border-slate-300 flex items-center gap-2">
+                                    <div className="w-4 h-4 rounded-full border-2 border-slate-300 peer-checked:border-indigo-500 peer-checked:bg-indigo-500 relative flex items-center justify-center">
+                                        <div className="w-1.5 h-1.5 bg-white rounded-full opacity-0 peer-checked:opacity-100"></div>
+                                    </div>
+                                    {fmt}
+                                </div>
+                            </label>
+                        ))}
+                    </div>
+                 </div>
+
+                 {/* Criteria Grid */}
+                 <div className="mb-8 border border-slate-200 rounded-xl overflow-hidden">
+                    <div className="hidden md:grid grid-cols-[1fr_repeat(5,80px)] bg-indigo-500 text-white font-bold text-sm">
+                        <div className="p-4">Critères</div>
+                        <div className="p-2 text-center border-l border-white/20 flex flex-col justify-center bg-indigo-600/30"><span className="text-xs font-normal opacity-80">Insuffisant</span>1 pt</div>
+                        <div className="p-2 text-center border-l border-white/20 flex flex-col justify-center"><span className="text-xs font-normal opacity-80">Passable</span>2 pts</div>
+                        <div className="p-2 text-center border-l border-white/20 flex flex-col justify-center bg-indigo-600/30"><span className="text-xs font-normal opacity-80">Satisfaisant</span>3 pts</div>
+                        <div className="p-2 text-center border-l border-white/20 flex flex-col justify-center"><span className="text-xs font-normal opacity-80">T.Satisfaisant</span>4 pts</div>
+                        <div className="p-2 text-center border-l border-white/20 flex flex-col justify-center bg-indigo-600/30"><span className="text-xs font-normal opacity-80">Excellent</span>5 pts</div>
+                    </div>
+
+                    <EvalCriteriaRowHTML 
+                      title="Savoir-être et présentation :" 
+                      desc="Capacité à bien se connaître : ses points forts, ses points de progression et la manière de s'améliorer, exposer une ou plusieurs réussites personnelles de son choix lors d'une activité (difficultés surmontées…), montrer comment il travaille sur sa culture générale, sa curiosité, son ouverture aux autres."
+                      name="critere1"
+                      value={scores.critere1}
+                      onChange={(val) => setScores(prev => ({...prev, critere1: val}))}
+                    />
+                    <EvalCriteriaRowHTML 
+                      title="Cohérence du projet académique et professionnel :" 
+                      desc="Capacité à expliquer la logique de construction de son projet d'orientation en fonction de ses appétences/compétences, capacité à exposer son projet professionnel, motivation à rejoindre le programme à travers des éléments concrets."
+                      name="critere2"
+                      value={scores.critere2}
+                      onChange={(val) => setScores(prev => ({...prev, critere2: val}))}
+                    />
+                    <EvalCriteriaRowHTML 
+                      title="Engagements et expérience péri ou extra-scolaires :" 
+                      desc="Capacité à mettre en avant ses activités/engagements extra scolaires, richesse, profondeur et variété des expériences, capacité à valoriser les compétences développées au cours de ses activités et bénéfices pour son projet professionnel, envie de participer à la vie associative de l'école et de quelle manière."
+                      name="critere3"
+                      value={scores.critere3}
+                      onChange={(val) => setScores(prev => ({...prev, critere3: val}))}
+                    />
+                    <EvalCriteriaRowHTML 
+                      title="Expression en Anglais :" 
+                      desc="Savoir répondre spontanément à quelques questions en anglais."
+                      name="critere4"
+                      value={scores.critere4}
+                      onChange={(val) => setScores(prev => ({...prev, critere4: val}))}
+                    />
+                 </div>
+
+                 {/* Comments & Global Score */}
+                 <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-8 mb-8">
+                    <div>
+                        <label className="block text-sm font-bold text-slate-700 mb-3">Commentaires :</label>
+                        <textarea 
+                          className="w-full h-40 p-4 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:outline-none resize-none text-sm leading-relaxed shadow-sm"
+                          placeholder="Vos observations sur le candidat, points forts, points faibles..."
+                          value={interviewInfo.commentaires}
+                          onChange={(e) => setInterviewInfo({...interviewInfo, commentaires: e.target.value})}
+                        ></textarea>
+                    </div>
+                    <div className="bg-gradient-to-br from-slate-50 to-indigo-50 border border-indigo-100 rounded-2xl p-6 flex flex-col items-center justify-center text-center shadow-sm">
+                        <label className="text-sm font-bold text-indigo-900 uppercase tracking-wider mb-2">Note globale</label>
+                        <div className="flex items-baseline gap-1 mb-2">
+                            <span className="text-5xl font-extrabold text-indigo-600">{totalScore}</span>
+                            <span className="text-xl font-bold text-slate-400">/ 20</span>
+                        </div>
+                        <div className={`text-sm font-bold px-3 py-1 rounded-full bg-white border shadow-sm ${appreciation.color.replace('text-', 'text-').replace('bg-', 'border-')}`}>
+                            {appreciation.text}
+                        </div>
+                    </div>
+                 </div>
+
+                 {/* Actions */}
+                 <div className="flex flex-wrap justify-end gap-3 pt-6 border-t border-slate-100">
+                    <button 
+                        onClick={() => {
+                            setScores({ critere1: 0, critere2: 0, critere3: 0, critere4: 0 });
+                            setInterviewInfo(prev => ({ ...prev, commentaires: '' }));
+                        }}
+                        className="px-5 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-600 font-semibold hover:bg-slate-50 transition-colors flex items-center gap-2"
+                    >
+                        <RotateCcw size={18} />
+                        Réinitialiser
+                    </button>
+                    <button className="px-5 py-2.5 rounded-xl bg-emerald-500 text-white font-bold hover:bg-emerald-600 shadow-lg shadow-emerald-500/20 transition-all flex items-center gap-2">
+                        <Save size={18} />
+                        Enregistrer
+                    </button>
+                    <button className="px-5 py-2.5 rounded-xl bg-indigo-600 text-white font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-600/20 transition-all flex items-center gap-2">
+                        <Download size={18} />
+                        Exporter PDF
+                    </button>
+                 </div>
               </div>
            </div>
           </div>
