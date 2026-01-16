@@ -525,10 +525,20 @@ const AdmissionView = () => {
   // Sync candidate info to interview form if available
   useEffect(() => {
     if (studentData) {
+        const formationMapping: Record<string, string> = {
+            'bts_mco': 'BTS MCO',
+            'bts_ndrc': 'BTS NDRC',
+            'bachelor': 'BACHELOR RDC',
+            'tp_ntc': 'TP NTC'
+        };
+
+        const rawFormation = studentData.formation || '';
+        const mappedFormation = formationMapping[rawFormation] || rawFormation.toUpperCase().replace('_', ' ');
+
         setInterviewInfo(prev => ({
             ...prev,
-            candidat: `${studentData.nom} ${studentData.prenom}`,
-            formation: studentData.formation?.toUpperCase() || ''
+            candidat: `${studentData.nom.toUpperCase()} ${studentData.prenom}`, // Norme: NOM Prénom
+            formation: mappedFormation
         }));
     }
   }, [studentData]);

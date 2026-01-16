@@ -1,14 +1,19 @@
 
 const BASE_URL = 'https://liantsoaxx08-apirushscholl.hf.space/api/v1/admission';
 
-// Fonction utilitaire pour convertir camelCase vers snake_case
-const toSnakeCase = (str: string) => str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+// Helper to format string (remove underscores, capitalize)
+const formatString = (str: string) => {
+  if (!str) return "";
+  // Replace underscores with spaces and capitalize first letter
+  return str.replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase());
+};
 
 const mapToBackendFormat = (data: any): any => {
   if (typeof data !== 'object' || data === null) return data;
   if (Array.isArray(data)) return data.map(mapToBackendFormat);
   return Object.keys(data).reduce((acc, key) => {
-    const snakeKey = toSnakeCase(key);
+    // Convert camelCase to snake_case for backend
+    const snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
     acc[snakeKey] = mapToBackendFormat(data[key]);
     return acc;
   }, {} as any);
@@ -30,15 +35,96 @@ export const api = {
   // CREATE (POST)
   async submitStudent(data: any) {
     try {
-      const payload = mapToBackendFormat(data);
+      // Helper pour nettoyer les téléphones
+      const cleanPhone = (p: any) => {
+        if (!p) return "";
+        let phone = p.toString().replace(/\D/g, '');
+        // Gestion du format international +33
+        if (phone.length === 11 && phone.startsWith('33')) {
+           return '0' + phone.substring(2);
+        }
+        // Gestion du format sans 0
+        if (phone.length === 9) {
+           return '0' + phone;
+        }
+        return phone;
+      };
+
+      // Conversion des booléens "oui"/"non" en true/false
+      const toBool = (val: string) => val === 'oui';
+
+      // Construction du payload STRICTEMENT selon la spec backend fournie
+      const payload = {
+        // Identité
+        prenom: data.prenom,
+        nom_naissance: data.nom,
+        nom_usage: data.nomUsage || "",
+        sexe: data.sexe,
+        date_naissance: data.dateNaissance,
+        nationalite: formatString(data.nationalite),
+        commune_naissance: data.villeNaissance,
+        departement: data.deptNaissance,
+        
+        // Coordonnées
+        adresse_residence: data.adresse,
+        code_postal: data.codePostal,
+        ville: data.ville,
+        email: data.email,
+        telephone: cleanPhone(data.telephone),
+        nir: data.nir ? data.nir.replace(/\s/g, '') : "",
+        
+        // Situation & Déclarations
+        situation: formatString(data.situation) || "Candidat", 
+        regime_social: data.regimeSocial === 'urssaf' ? "Sécurité Sociale" : (data.regimeSocial === 'msa' ? "MSA" : "Sécurité Sociale"), 
+        declare_inscription_sportif_haut_niveau: toBool(data.sportifHautNiveau),
+        declare_avoir_projet_creation_reprise_entreprise: toBool(data.projetEntreprise),
+        declare_travailleur_handicape: toBool(data.rqth),
+        
+        // Scolarité
+        dernier_diplome_prepare: formatString(data.diplome),
+        derniere_classe: data.classe || "",
+        bac: formatString(data.niveau) || "", 
+        
+        // Projet
+        formation_souhaitee: formatString(data.formation),
+        date_de_visite: data.dateVisite || new Date().toISOString().split('T')[0], // Fallback to today to avoid 500
+        date_de_reglement: data.dateReglement || new Date().toISOString().split('T')[0],
+        
+        entreprise_d_accueil: data.entrepriseAccueil === 'oui' ? (data.nomEntreprise || "Oui") : (data.entrepriseAccueil === 'en_cours' ? "En recherche" : "Non"),
+        
+        connaissance_rush_how: formatString(data.source) || "Autre", 
+        motivation_projet_professionnel: data.motivations || "Non renseigné" 
+      };
+
+      console.log("📤 Submitting payload:", payload);
+
       const response = await fetch(`${BASE_URL}/candidates`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify(payload),
       });
+
       if (!response.ok) {
-        const txt = await response.text();
-        throw new Error(txt || response.statusText);
+        let errorMessage = `Erreur ${response.status}: ${response.statusText}`;
+        try {
+          const errorData = await response.json();
+          // Gestion des erreurs Pydantic détaillées
+          if (Array.isArray(errorData.detail)) {
+            const details = errorData.detail
+              .map((err: any) => {
+                 const field = Array.isArray(err.loc) ? err.loc[err.loc.length - 1] : 'champ inconnu';
+                 return `${field}: ${err.msg}`;
+              })
+              .join(', ');
+            if (details) errorMessage = details;
+          } else if (typeof errorData.detail === 'string' && errorData.detail) {
+            errorMessage = errorData.detail;
+          }
+        } catch (e) {
+           const text = await response.text();
+           if (text) errorMessage = `Erreur ${response.status}: ${text}`;
+        }
+        throw new Error(errorMessage);
       }
       return await response.json();
     } catch (error) {
