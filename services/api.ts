@@ -1,81 +1,212 @@
 
 const BASE_URL = 'https://liantsoaxx08-apirushscholl.hf.space/api/v1/admission';
 
-// Fonction utilitaire pour convertir camelCase vers snake_case (standard Python/FastAPI)
+// Fonction utilitaire pour convertir camelCase vers snake_case
 const toSnakeCase = (str: string) => str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
 
 const mapToBackendFormat = (data: any): any => {
   if (typeof data !== 'object' || data === null) return data;
-  
-  if (Array.isArray(data)) {
-    return data.map(mapToBackendFormat);
-  }
-  
+  if (Array.isArray(data)) return data.map(mapToBackendFormat);
   return Object.keys(data).reduce((acc, key) => {
     const snakeKey = toSnakeCase(key);
-    // Récursion pour les objets imbriqués
     acc[snakeKey] = mapToBackendFormat(data[key]);
     return acc;
   }, {} as any);
 };
 
 export const api = {
-  /**
-   * Soumet le formulaire étudiant (Candidat)
-   * Doc: POST /api/v1/admission/candidates
-   */
+  // --- HEALTH ---
+  async checkHealth() {
+    try {
+      const response = await fetch(`${BASE_URL}/health`, { method: 'GET' });
+      return response.ok;
+    } catch (error) {
+      return false;
+    }
+  },
+
+  // --- CANDIDATES (CRUD) ---
+  
+  // CREATE (POST)
   async submitStudent(data: any) {
     try {
       const payload = mapToBackendFormat(data);
-      console.log('🚀 Submitting student to:', `${BASE_URL}/candidates`);
-      console.log('📦 Payload:', payload);
-
       const response = await fetch(`${BASE_URL}/candidates`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify(payload),
       });
-
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Erreur API (${response.status}): ${errorText || response.statusText}`);
+        const txt = await response.text();
+        throw new Error(txt || response.statusText);
       }
       return await response.json();
     } catch (error) {
-      console.error('❌ API Error (Student):', error);
+      console.error('❌ API Error (Submit Student):', error);
       throw error; 
     }
   },
 
-  /**
-   * Soumet le formulaire entreprise
-   * Doc: POST /api/v1/admission/entreprise
-   */
-  async submitCompany(data: any) {
+  // READ ALL (GET)
+  async getAllCandidates() {
+    try {
+      const response = await fetch(`${BASE_URL}/candidates`, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      });
+      if (!response.ok) throw new Error('Failed to fetch candidates');
+      return await response.json();
+    } catch (error) {
+      console.error('❌ API Error (Get All Candidates):', error);
+      return [];
+    }
+  },
+
+  // READ ONE (GET)
+  async getCandidateById(id: string) {
+    try {
+      const response = await fetch(`${BASE_URL}/candidates/${id}`, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      });
+      if (!response.ok) throw new Error('Candidate not found');
+      return await response.json();
+    } catch (error) {
+      console.error('❌ API Error (Get Candidate):', error);
+      throw error;
+    }
+  },
+
+  // UPDATE (PUT)
+  async updateCandidate(id: string, data: any) {
     try {
       const payload = mapToBackendFormat(data);
-      console.log('🚀 Submitting company to:', `${BASE_URL}/entreprise`);
-      console.log('📦 Payload:', payload);
-
-      const response = await fetch(`${BASE_URL}/entreprise`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
+      const response = await fetch(`${BASE_URL}/candidates/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify(payload),
+      });
+      if (!response.ok) throw new Error('Update failed');
+      return await response.json();
+    } catch (error) {
+      console.error('❌ API Error (Update Candidate):', error);
+      throw error;
+    }
+  },
+
+  // DELETE (DELETE)
+  async deleteCandidate(id: string) {
+    try {
+      const response = await fetch(`${BASE_URL}/candidates/${id}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) throw new Error('Delete failed');
+      return true;
+    } catch (error) {
+      console.error('❌ API Error (Delete Candidate):', error);
+      throw error;
+    }
+  },
+
+  // --- DOCUMENTS ---
+  async uploadDocument(recordId: string, docType: string, file: File) {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const endpointMap: Record<string, string> = {
+        'cv': 'cv',
+        'cni': 'cin',
+        'lettre': 'lettre-motivation',
+        'vitale': 'carte-vitale',
+        'diplome': 'dernier-diplome'
+      };
+
+      const endpointSuffix = endpointMap[docType] || docType;
+      const url = `${BASE_URL}/candidates/${recordId}/documents/${endpointSuffix}`;
+
+      console.log(`🚀 Uploading ${docType} to ${url}`);
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Accept': 'application/json' },
+        body: formData,
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Erreur API (${response.status}): ${errorText || response.statusText}`);
+        throw new Error(`Upload failed: ${response.statusText}`);
       }
       return await response.json();
     } catch (error) {
-      console.error('❌ API Error (Company):', error);
+      console.error(`❌ API Error (Upload ${docType}):`, error);
+      throw error;
+    }
+  },
+
+  // --- ENTREPRISE (CRUD) ---
+  
+  // CREATE (POST)
+  async submitCompany(data: any) {
+    try {
+      const payload = mapToBackendFormat(data);
+      const response = await fetch(`${BASE_URL}/entreprise`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) {
+        const txt = await response.text();
+        throw new Error(txt || response.statusText);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('❌ API Error (Submit Company):', error);
+      throw error;
+    }
+  },
+
+  // READ ALL (GET)
+  async getAllCompanies() {
+    try {
+      const response = await fetch(`${BASE_URL}/entreprise`, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      });
+      if (!response.ok) throw new Error('Failed to fetch companies');
+      return await response.json();
+    } catch (error) {
+      return [];
+    }
+  },
+
+  // READ ONE (GET)
+  async getCompanyById(id: string) {
+    try {
+      const response = await fetch(`${BASE_URL}/entreprise/${id}`, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      });
+      if (!response.ok) throw new Error('Company not found');
+      return await response.json();
+    } catch (error) {
+      console.error('❌ API Error (Get Company):', error);
+      throw error;
+    }
+  },
+
+  // UPDATE (PUT)
+  async updateCompany(id: string, data: any) {
+    try {
+      const payload = mapToBackendFormat(data);
+      const response = await fetch(`${BASE_URL}/entreprise/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) throw new Error('Update company failed');
+      return await response.json();
+    } catch (error) {
+      console.error('❌ API Error (Update Company):', error);
       throw error;
     }
   }

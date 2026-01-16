@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { RHTab, StatCardProps } from '../types';
 import { 
   FileText, 
@@ -12,8 +12,10 @@ import {
   Download, 
   Edit,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Loader2
 } from 'lucide-react';
+import { api } from '../services/api';
 
 const RHStatCard = ({ value, label, icon, colorClass }: { value: string, label: string, icon: React.ReactNode, colorClass: 'blue' | 'green' | 'orange' | 'purple' }) => {
   const styles = {
@@ -38,12 +40,40 @@ const RHStatCard = ({ value, label, icon, colorClass }: { value: string, label: 
 };
 
 const CerfaTable = () => {
-  const rows = [
-    { id: 'CERFA-2026-0124', user: 'Marie Lambert', email: 'm.lambert@email.com', avatar: 'ML', avatarColor: 'bg-blue-500', company: 'Carrefour', siret: '652 014 051', formation: 'BTS MCO', date: '12/01/2026', status: 'Validé', statusClass: 'bg-emerald-100 text-emerald-700' },
-    { id: 'CERFA-2026-0123', user: 'Thomas Durand', email: 't.durand@email.com', avatar: 'TD', avatarColor: 'bg-emerald-500', company: 'BNP Paribas', siret: '662 042 449', formation: 'BTS NDRC', date: '10/01/2026', status: 'En cours', statusClass: 'bg-amber-100 text-amber-700' },
-    { id: 'CERFA-2026-0122', user: 'Sophie Roux', email: 's.roux@email.com', avatar: 'SR', avatarColor: 'bg-purple-500', company: 'Decathlon', siret: '500 569 405', formation: 'Bachelor', date: '08/01/2026', status: 'Refusé', statusClass: 'bg-red-100 text-red-700' },
-    { id: 'CERFA-2026-0121', user: 'Jules Martin', email: 'j.martin@email.com', avatar: 'JM', avatarColor: 'bg-orange-500', company: 'Orange', siret: '380 129 866', formation: 'TP NTC', date: '05/01/2026', status: 'Brouillon', statusClass: 'bg-blue-100 text-blue-700' },
-  ];
+  const [candidates, setCandidates] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCandidates = async () => {
+      try {
+        const data = await api.getAllCandidates();
+        setCandidates(data);
+      } catch (err) {
+        console.error("Error fetching candidates", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCandidates();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64 bg-white border border-slate-200 rounded-xl">
+        <Loader2 className="animate-spin text-blue-500" size={32} />
+      </div>
+    );
+  }
+
+  // Placeholder rows if no data is returned (mock data fallback or empty state)
+  if (candidates.length === 0) {
+     return (
+        <div className="flex flex-col justify-center items-center h-64 bg-white border border-slate-200 rounded-xl">
+            <Users className="text-slate-300 mb-2" size={48} />
+            <p className="text-slate-500">Aucun candidat trouvé pour le moment.</p>
+        </div>
+     );
+  }
 
   return (
     <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
@@ -52,50 +82,48 @@ const CerfaTable = () => {
           <thead>
             <tr className="bg-slate-50 border-b border-slate-200">
               <th className="p-4 w-10"><input type="checkbox" className="rounded border-slate-300" /></th>
-              <th className="p-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">N° CERFA</th>
+              <th className="p-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">ID</th>
               <th className="p-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Étudiant</th>
-              <th className="p-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Entreprise</th>
               <th className="p-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Formation</th>
-              <th className="p-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Date</th>
+              <th className="p-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Date Naissance</th>
               <th className="p-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Statut</th>
               <th className="p-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {rows.map((row, idx) => (
-              <tr key={idx} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+            {candidates.map((row, idx) => (
+              <tr key={row.record_id || idx} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
                 <td className="p-4"><input type="checkbox" className="rounded border-slate-300" /></td>
                 <td className="p-4">
-                  <span className="font-mono text-sm font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded">{row.id}</span>
+                  <span className="font-mono text-xs font-semibold text-slate-400 bg-slate-50 px-2 py-1 rounded">
+                    {row.record_id ? row.record_id.substring(0, 8) : 'N/A'}
+                  </span>
                 </td>
                 <td className="p-4">
                   <div className="flex items-center gap-3">
-                    <div className={`w-9 h-9 rounded-lg ${row.avatarColor} text-white flex items-center justify-center text-xs font-bold`}>{row.avatar}</div>
+                    <div className={`w-9 h-9 rounded-lg bg-blue-500 text-white flex items-center justify-center text-xs font-bold`}>
+                        {(row.prenom?.[0] || '') + (row.nom?.[0] || '')}
+                    </div>
                     <div>
-                      <div className="text-sm font-semibold text-slate-800">{row.user}</div>
+                      <div className="text-sm font-semibold text-slate-800">{row.prenom} {row.nom}</div>
                       <div className="text-xs text-slate-500">{row.email}</div>
                     </div>
                   </div>
                 </td>
                 <td className="p-4">
-                  <div>
-                    <div className="text-sm font-medium text-slate-800">{row.company}</div>
-                    <div className="text-xs text-slate-500">SIRET: {row.siret}</div>
-                  </div>
+                  <span className="inline-block px-2.5 py-1 rounded-md bg-slate-100 text-slate-600 text-xs font-semibold">
+                    {row.formation || 'Non défini'}
+                  </span>
                 </td>
+                <td className="p-4 text-sm text-slate-600">{row.date_naissance}</td>
                 <td className="p-4">
-                  <span className="inline-block px-2.5 py-1 rounded-md bg-slate-100 text-slate-600 text-xs font-semibold">{row.formation}</span>
-                </td>
-                <td className="p-4 text-sm text-slate-600">{row.date}</td>
-                <td className="p-4">
-                  <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${row.statusClass}`}>
-                    {row.status}
+                  <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700`}>
+                    Inscrit
                   </span>
                 </td>
                 <td className="p-4">
                   <div className="flex gap-1">
                     <button className="p-1.5 hover:bg-blue-50 hover:text-blue-600 rounded text-slate-400 transition-colors"><Eye size={16} /></button>
-                    <button className="p-1.5 hover:bg-blue-50 hover:text-blue-600 rounded text-slate-400 transition-colors"><Download size={16} /></button>
                     <button className="p-1.5 hover:bg-blue-50 hover:text-blue-600 rounded text-slate-400 transition-colors"><Edit size={16} /></button>
                   </div>
                 </td>
@@ -105,14 +133,7 @@ const CerfaTable = () => {
         </table>
       </div>
       <div className="flex items-center justify-between p-4 border-t border-slate-200">
-        <span className="text-sm text-slate-500">Affichage 1-4 sur 24 CERFA</span>
-        <div className="flex gap-1">
-          <button className="w-8 h-8 flex items-center justify-center rounded border border-slate-200 text-slate-400 disabled:opacity-50" disabled><ChevronLeft size={16}/></button>
-          <button className="w-8 h-8 flex items-center justify-center rounded border border-blue-500 bg-blue-500 text-white font-medium">1</button>
-          <button className="w-8 h-8 flex items-center justify-center rounded border border-slate-200 text-slate-600 hover:border-blue-500 hover:text-blue-500">2</button>
-          <button className="w-8 h-8 flex items-center justify-center rounded border border-slate-200 text-slate-600 hover:border-blue-500 hover:text-blue-500">3</button>
-          <button className="w-8 h-8 flex items-center justify-center rounded border border-slate-200 text-slate-600 hover:border-blue-500 hover:text-blue-500"><ChevronRight size={16}/></button>
-        </div>
+        <span className="text-sm text-slate-500">Affichage de {candidates.length} résultats</span>
       </div>
     </div>
   );
@@ -140,7 +161,7 @@ const RHView = () => {
 
       {/* Stats Summary */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <RHStatCard value="24" label="CERFA en cours" icon={<FileText size={24} />} colorClass="blue" />
+        <RHStatCard value="24" label="Dossiers en cours" icon={<FileText size={24} />} colorClass="blue" />
         <RHStatCard value="18" label="Prises en charge" icon={<Euro size={24} />} colorClass="green" />
         <RHStatCard value="3" label="Ruptures ce mois" icon={<UserMinus size={24} />} colorClass="orange" />
         <RHStatCard value="156" label="Étudiants actifs" icon={<Users size={24} />} colorClass="purple" />
@@ -149,7 +170,7 @@ const RHView = () => {
       {/* Tabs */}
       <div className="flex overflow-x-auto gap-2 mb-6 bg-white p-1.5 rounded-xl border border-slate-200 w-fit no-scrollbar">
         {[
-          { id: RHTab.CERFA, label: 'CERFA', icon: <FileText size={16}/> },
+          { id: RHTab.CERFA, label: 'Dossiers', icon: <FileText size={16}/> },
           { id: RHTab.PEC, label: 'Prises en charge', icon: <Euro size={16}/> },
           { id: RHTab.RUPTURES, label: 'Ruptures', icon: <UserMinus size={16}/> },
           { id: RHTab.SUIVI, label: 'Suivi étudiants', icon: <Users size={16}/> },
@@ -193,7 +214,7 @@ const RHView = () => {
         </div>
         <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/20">
           <Plus size={18} />
-          {activeTab === RHTab.CERFA ? 'Nouveau CERFA' : 'Nouvelle entrée'}
+          {activeTab === RHTab.CERFA ? 'Nouveau Dossier' : 'Nouvelle entrée'}
         </button>
       </div>
 
