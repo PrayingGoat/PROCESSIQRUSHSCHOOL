@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { User, Save, AlertCircle, ChevronDown } from 'lucide-react';
 
 interface QuestionnaireFormProps {
-  onNext?: () => void;
+  onNext?: (data: any) => void;
 }
 
 const countryCodes = [
@@ -261,7 +261,7 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
   const handleSubmit = () => {
     if (validateForm()) {
         // Here we would typically save the data
-        if (onNext) onNext();
+        if (onNext) onNext(formData);
     } else {
         // Scroll to top or first error could be added here
         window.scrollTo({ top: 0, behavior: 'smooth' });

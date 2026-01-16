@@ -345,6 +345,9 @@ const AdmissionView = () => {
   const [testStarted, setTestStarted] = useState(false);
   const [testCompleted, setTestCompleted] = useState(false);
   
+  // State for Student Data
+  const [studentData, setStudentData] = useState<any>(null);
+
   // State for Documents
   const [uploadedFiles, setUploadedFiles] = useState<Record<string, File>>({});
 
@@ -621,7 +624,12 @@ const AdmissionView = () => {
       {/* --- TAB CONTENT: QUESTIONNAIRE (Fiche Etudiant) --- */}
       {activeTab === AdmissionTab.QUESTIONNAIRE && (
          <div className="animate-fade-in">
-            <QuestionnaireForm onNext={() => setActiveTab(AdmissionTab.DOCUMENTS)} />
+            <QuestionnaireForm 
+              onNext={(data) => {
+                setStudentData(data);
+                setActiveTab(AdmissionTab.DOCUMENTS);
+              }} 
+            />
          </div>
       )}
 
@@ -740,7 +748,13 @@ const AdmissionView = () => {
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 p-6 bg-slate-50 rounded-2xl border border-slate-100">
                     <div>
                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Candidat</label>
-                       <input type="text" className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 font-medium text-slate-800" placeholder="Nom Prénom" />
+                       <input 
+                         type="text" 
+                         className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 font-medium text-slate-800" 
+                         placeholder="Nom Prénom" 
+                         value={studentData ? `${studentData.nom.toUpperCase()} ${studentData.prenom}` : ''}
+                         readOnly
+                       />
                     </div>
                     <div>
                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Chargé d'admission</label>
@@ -748,14 +762,24 @@ const AdmissionView = () => {
                     </div>
                     <div>
                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Date</label>
-                       <input type="date" className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 font-medium text-slate-800" />
+                       <input 
+                         type="date" 
+                         className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 font-medium text-slate-800" 
+                         defaultValue={new Date().toISOString().split('T')[0]}
+                       />
                     </div>
                     <div>
                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Formation visée</label>
-                       <select className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 font-medium text-slate-800">
-                          <option>BTS MCO</option>
-                          <option>BTS NDRC</option>
-                          <option>Bachelor RDC</option>
+                       <select 
+                         className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 font-medium text-slate-800"
+                         value={studentData?.formation || ''}
+                         disabled={!studentData}
+                       >
+                          <option value="">Sélectionnez une formation</option>
+                          <option value="bts_mco">BTS MCO</option>
+                          <option value="bts_ndrc">BTS NDRC</option>
+                          <option value="bachelor">Bachelor RDC</option>
+                          <option value="tp_ntc">TP NTC</option>
                        </select>
                     </div>
                  </div>
