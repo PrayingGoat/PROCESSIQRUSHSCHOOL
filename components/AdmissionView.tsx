@@ -18,10 +18,12 @@ import {
   Printer,
   X,
   Eye,
-  Download
+  Download,
+  Loader2
 } from 'lucide-react';
 import { AdmissionTab } from '../types';
 import QuestionnaireForm from './QuestionnaireForm';
+import { api } from '../services/api';
 
 // --- CONFIGURATION ---
 
@@ -242,6 +244,7 @@ const EntrepriseForm = ({ onNext }: { onNext: () => void }) => {
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -279,9 +282,19 @@ const EntrepriseForm = ({ onNext }: { onNext: () => void }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (validate()) {
-      onNext();
+      setIsSubmitting(true);
+      try {
+        await api.submitCompany(formData);
+        onNext();
+      } catch (error: any) {
+        console.error("Erreur soumission entreprise", error);
+        // Affiche le message d'erreur réel de l'API (ex: "Validation error")
+        alert(`Erreur lors de l'enregistrement: ${error.message}`);
+      } finally {
+        setIsSubmitting(false);
+      }
     } else {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -377,10 +390,12 @@ const EntrepriseForm = ({ onNext }: { onNext: () => void }) => {
           </button>
           <button 
             onClick={handleSubmit}
-            className="px-8 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold hover:shadow-lg hover:shadow-emerald-500/25 transition-all flex items-center gap-2"
+            disabled={isSubmitting}
+            className="px-8 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold hover:shadow-lg hover:shadow-emerald-500/25 transition-all flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            Valider et continuer
-            {Object.keys(errors).length > 0 && <AlertCircle size={18} />}
+            {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : null}
+            {isSubmitting ? 'Validation...' : 'Valider et continuer'}
+            {Object.keys(errors).length > 0 && !isSubmitting && <AlertCircle size={18} />}
           </button>
         </div>
       </div>

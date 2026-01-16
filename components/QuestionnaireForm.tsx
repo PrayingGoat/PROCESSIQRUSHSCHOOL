@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { User, Save, AlertCircle, ChevronDown } from 'lucide-react';
+import { User, Save, AlertCircle, ChevronDown, Loader2 } from 'lucide-react';
+import { api } from '../services/api';
 
 interface QuestionnaireFormProps {
   onNext?: (data: any) => void;
@@ -172,6 +173,7 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isMinor, setIsMinor] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Calculate age when date changes
   useEffect(() => {
@@ -258,10 +260,19 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (validateForm()) {
-        // Here we would typically save the data
-        if (onNext) onNext(formData);
+        setIsSubmitting(true);
+        try {
+          await api.submitStudent(formData);
+          if (onNext) onNext(formData);
+        } catch (error: any) {
+          console.error("Erreur lors de la soumission", error);
+          // Affiche le message d'erreur réel de l'API (ex: "Validation error: field 'email' missing")
+          alert(`Erreur lors de la soumission: ${error.message}`);
+        } finally {
+          setIsSubmitting(false);
+        }
     } else {
         // Scroll to top or first error could be added here
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -421,10 +432,15 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
 
             <button 
               onClick={handleSubmit}
-              className="group flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-xl font-bold text-lg hover:shadow-lg hover:shadow-blue-500/30 hover:-translate-y-1 transition-all duration-300"
+              disabled={isSubmitting}
+              className={`group flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-xl font-bold text-lg hover:shadow-lg hover:shadow-blue-500/30 hover:-translate-y-1 transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed`}
             >
-              <Save size={20} className="group-hover:scale-110 transition-transform" />
-              Enregistrer et continuer
+              {isSubmitting ? (
+                <Loader2 size={20} className="animate-spin" />
+              ) : (
+                <Save size={20} className="group-hover:scale-110 transition-transform" />
+              )}
+              {isSubmitting ? 'Enregistrement...' : 'Enregistrer et continuer'}
             </button>
 
             {Object.keys(errors).length > 0 && (
