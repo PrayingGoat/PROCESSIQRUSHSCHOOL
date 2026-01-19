@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Save, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
+import { User, Save, AlertCircle, CheckCircle2, Loader2, ArrowRight } from 'lucide-react';
 import { api } from '../services/api';
 
 interface QuestionnaireFormProps {
@@ -7,15 +7,16 @@ interface QuestionnaireFormProps {
   onBack?: () => void;
 }
 
+// Updated FormSection to match EntrepriseForm card style
 const FormSection = ({ number, title, children }: { number: number, title: string, children?: React.ReactNode }) => (
-  <div className="mb-8">
-    <div className="flex items-center gap-3 mb-5 border-b border-slate-200 pb-3">
-      <div className="w-8 h-8 bg-emerald-800 text-white rounded-full flex items-center justify-center font-bold text-sm shadow-sm">
+  <div className="bg-white/80 p-6 md:p-8 rounded-2xl border border-blue-100 shadow-sm mb-6 transition-all hover:shadow-md">
+    <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
+      <div className="w-8 h-8 bg-blue-100 text-blue-700 rounded-lg flex items-center justify-center font-bold text-sm shadow-sm ring-1 ring-blue-500/10">
         {number}
       </div>
       <h3 className="text-lg font-bold text-slate-800">{title}</h3>
     </div>
-    <div className="space-y-5">
+    <div className="space-y-6">
       {children}
     </div>
   </div>
@@ -33,6 +34,7 @@ interface InputFieldProps {
   error?: string;
 }
 
+// Updated InputField to match FormInput style
 const InputField = ({ label, name, required, type = "text", placeholder, width = "full", value, onChange, error }: InputFieldProps) => {
   const widthClass = {
     "full": "col-span-12",
@@ -43,7 +45,7 @@ const InputField = ({ label, name, required, type = "text", placeholder, width =
 
   return (
     <div className={widthClass}>
-      <label className="block text-sm font-semibold text-slate-800 mb-2">
+      <label className="block text-sm font-semibold text-slate-700 mb-2">
         {label} {required && <span className="text-red-500">*</span>}
       </label>
       <input 
@@ -52,11 +54,17 @@ const InputField = ({ label, name, required, type = "text", placeholder, width =
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        className={`w-full px-4 py-3 bg-white/70 border-2 rounded-xl text-base text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-400 focus:bg-white transition-all shadow-sm ${
-          error ? 'border-red-300 focus:ring-red-400' : 'border-transparent'
+        className={`w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none ${
+          error 
+            ? 'border-red-300 focus:border-red-500 focus:ring-red-500/10' 
+            : 'border-slate-200 focus:border-blue-500 focus:ring-blue-500/10'
         }`}
       />
-      {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
+      {error && (
+        <p className="mt-1.5 text-xs text-red-500 font-medium flex items-center gap-1">
+          <AlertCircle size={12}/> {error}
+        </p>
+      )}
     </div>
   );
 };
@@ -82,20 +90,26 @@ const SelectField = ({ label, name, required, width = "full", value, onChange, e
 
   return (
     <div className={widthClass}>
-      <label className="block text-sm font-semibold text-slate-800 mb-2">
+      <label className="block text-sm font-semibold text-slate-700 mb-2">
         {label} {required && <span className="text-red-500">*</span>}
       </label>
       <select
         name={name}
         value={value}
         onChange={onChange}
-        className={`w-full px-4 py-3 bg-white/70 border-2 rounded-xl text-base text-slate-800 focus:ring-2 focus:ring-blue-400 focus:bg-white transition-all shadow-sm ${
-          error ? 'border-red-300 focus:ring-red-400' : 'border-transparent'
+        className={`w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 transition-all focus:ring-4 focus:outline-none cursor-pointer ${
+          error 
+            ? 'border-red-300 focus:border-red-500 focus:ring-red-500/10' 
+            : 'border-slate-200 focus:border-blue-500 focus:ring-blue-500/10'
         }`}
       >
         {children}
       </select>
-      {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
+      {error && (
+        <p className="mt-1.5 text-xs text-red-500 font-medium flex items-center gap-1">
+          <AlertCircle size={12}/> {error}
+        </p>
+      )}
     </div>
   );
 };
@@ -114,7 +128,7 @@ interface TextAreaFieldProps {
 const TextAreaField = ({ label, name, required, placeholder, rows = 4, value, onChange, error }: TextAreaFieldProps) => {
   return (
     <div className="col-span-12">
-      <label className="block text-sm font-semibold text-slate-800 mb-2">
+      <label className="block text-sm font-semibold text-slate-700 mb-2">
         {label} {required && <span className="text-red-500">*</span>}
       </label>
       <textarea
@@ -123,11 +137,17 @@ const TextAreaField = ({ label, name, required, placeholder, rows = 4, value, on
         onChange={onChange}
         placeholder={placeholder}
         rows={rows}
-        className={`w-full px-4 py-3 bg-white/70 border-2 rounded-xl text-base text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-400 focus:bg-white transition-all shadow-sm resize-none ${
-          error ? 'border-red-300 focus:ring-red-400' : 'border-transparent'
+        className={`w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none resize-none ${
+          error 
+            ? 'border-red-300 focus:border-red-500 focus:ring-red-500/10' 
+            : 'border-slate-200 focus:border-blue-500 focus:ring-blue-500/10'
         }`}
       />
-      {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
+      {error && (
+        <p className="mt-1.5 text-xs text-red-500 font-medium flex items-center gap-1">
+          <AlertCircle size={12}/> {error}
+        </p>
+      )}
     </div>
   );
 };
@@ -144,7 +164,7 @@ interface RadioGroupProps {
 
 const RadioGroup = ({ label, name, options, layout = "horizontal", value, onChange, error }: RadioGroupProps) => (
   <div className="col-span-12">
-    <label className="block text-sm font-semibold text-slate-800 mb-2">{label}</label>
+    <label className="block text-sm font-semibold text-slate-700 mb-3">{label}</label>
     <div className={`flex gap-3 ${layout === 'vertical' ? 'flex-col' : layout === 'grid' ? 'grid grid-cols-2 md:grid-cols-3' : 'flex-wrap'}`}>
       {options.map((opt, idx) => (
         <label key={idx} className="relative cursor-pointer group flex-1 min-w-[120px]">
@@ -156,22 +176,26 @@ const RadioGroup = ({ label, name, options, layout = "horizontal", value, onChan
             onChange={() => onChange(opt)}
             className="peer sr-only" 
           />
-          <div className={`flex items-center gap-3 px-4 py-3 bg-slate-200/50 rounded-xl border-2 transition-all ${
+          <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all ${
             value === opt 
-              ? 'bg-white/90 border-blue-500' 
-              : 'border-transparent hover:bg-white/60'
+              ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500' 
+              : 'bg-white border-slate-200 hover:border-blue-300 hover:bg-slate-50'
           }`}>
-            <span className={`w-7 h-7 rounded-md flex items-center justify-center text-xs font-bold transition-colors ${
-              value === opt ? 'bg-blue-500 text-white' : 'bg-slate-600 text-white'
+            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
+              value === opt ? 'bg-blue-500 text-white shadow-md' : 'bg-slate-100 text-slate-400'
             }`}>
               {String.fromCharCode(65 + idx)}
             </span>
-            <span className="font-medium text-slate-700">{opt}</span>
+            <span className={`font-medium ${value === opt ? 'text-blue-700' : 'text-slate-600'}`}>{opt}</span>
           </div>
         </label>
       ))}
     </div>
-    {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
+    {error && (
+      <p className="mt-1.5 text-xs text-red-500 font-medium flex items-center gap-1">
+        <AlertCircle size={12}/> {error}
+      </p>
+    )}
   </div>
 );
 
@@ -378,10 +402,16 @@ const QuestionnaireForm = ({ onNext, onBack }: QuestionnaireFormProps) => {
       const response = await api.submitStudent(apiData);
       
       if (response && response.success) {
-        // Store record_id in localStorage for later use
+        // Store data in localStorage for persistence across tabs/refreshes
         if (response.record_id) {
             localStorage.setItem('candidateRecordId', response.record_id);
-            localStorage.setItem('candidateName', `${formData.prenom} ${formData.nom_naissance}`);
+            // Save precise fields for name reconstruction
+            localStorage.setItem('candidateLastName', formData.nom_naissance);
+            localStorage.setItem('candidateFirstName', formData.prenom);
+            // Save formatted name just in case
+            localStorage.setItem('candidateName', `${formData.nom_naissance.toUpperCase()} ${formData.prenom}`);
+            // Save formation for interview pre-fill
+            localStorage.setItem('candidateFormation', formData.formation);
         }
         
         // Notify parent component
@@ -396,28 +426,30 @@ const QuestionnaireForm = ({ onNext, onBack }: QuestionnaireFormProps) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-[#B8D4CE] rounded-3xl p-6 md:p-10 max-w-4xl mx-auto shadow-xl shadow-[#B8D4CE]/20">
-      <div className="flex items-center gap-4 mb-8 pb-6 border-b-2 border-black/5">
-        <div className="w-14 h-14 bg-black/5 rounded-2xl flex items-center justify-center text-emerald-900">
+    <form onSubmit={handleSubmit} className="bg-gradient-to-br from-blue-50 to-white rounded-3xl p-6 md:p-10 shadow-xl border border-blue-100 relative overflow-hidden animate-slide-in">
+      {/* Decorative Top Bar */}
+      <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-500 via-indigo-500 to-violet-500"></div>
+
+      <div className="flex items-center gap-6 mb-10 pb-8 border-b border-blue-100">
+        <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-blue-500/20">
           <User size={32} />
         </div>
         <div>
           <h2 className="text-2xl font-bold text-slate-900 mb-1">Fiche d'inscription étudiant</h2>
-          <p className="text-slate-600">Complétez toutes les informations pour finaliser votre dossier</p>
+          <p className="text-slate-500">Complétez toutes les informations pour finaliser votre dossier</p>
         </div>
       </div>
 
       {submitError && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3">
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3 animate-fade-in">
           <AlertCircle className="text-red-500 shrink-0" size={20} />
-          <p className="text-red-700 text-sm">{submitError}</p>
+          <p className="text-red-700 text-sm font-medium">{submitError}</p>
         </div>
       )}
 
-      <div className="grid grid-cols-12 gap-5">
+      <div className="space-y-6">
         
         {/* Section 1 - Informations personnelles */}
-        <div className="col-span-12">
           <FormSection number={1} title="Informations personnelles">
             <div className="grid grid-cols-12 gap-5">
               <InputField 
@@ -502,10 +534,8 @@ const QuestionnaireForm = ({ onNext, onBack }: QuestionnaireFormProps) => {
               />
             </div>
           </FormSection>
-        </div>
 
         {/* Section 2 - Coordonnées */}
-        <div className="col-span-12">
           <FormSection number={2} title="Coordonnées">
             <div className="grid grid-cols-12 gap-5">
               <InputField 
@@ -570,10 +600,8 @@ const QuestionnaireForm = ({ onNext, onBack }: QuestionnaireFormProps) => {
               />
             </div>
           </FormSection>
-        </div>
 
         {/* Section 3 - Situation & Déclarations */}
-        <div className="col-span-12">
           <FormSection number={3} title="Situation & Déclarations">
             <div className="grid grid-cols-12 gap-5">
               <SelectField
@@ -605,9 +633,9 @@ const QuestionnaireForm = ({ onNext, onBack }: QuestionnaireFormProps) => {
                 <option value="msa">MSA (Mutualité Sociale Agricole)</option>
               </SelectField>
 
-              <div className="col-span-12 space-y-4">
-                <div className="bg-white/40 p-4 rounded-xl">
-                  <label className="block text-sm font-semibold text-slate-800 mb-3">
+              <div className="col-span-12 space-y-4 pt-2">
+                <div className="bg-slate-50/50 p-5 rounded-xl border border-slate-100">
+                  <label className="block text-sm font-semibold text-slate-800 mb-4">
                     Déclare être inscrit(e) sur la liste des sportifs de haut niveau
                   </label>
                   <div className="flex gap-3">
@@ -620,13 +648,13 @@ const QuestionnaireForm = ({ onNext, onBack }: QuestionnaireFormProps) => {
                         onChange={() => handleRadioChange('sportif_haut_niveau', 'oui')}
                         className="peer sr-only" 
                       />
-                      <div className={`flex items-center gap-3 px-4 py-3 bg-slate-200/50 rounded-xl border-2 transition-all ${
+                      <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all ${
                         formData.sportif_haut_niveau === 'oui' 
-                          ? 'bg-white/90 border-blue-500' 
-                          : 'border-transparent hover:bg-white/60'
+                          ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500' 
+                          : 'bg-white border-slate-200 hover:border-blue-300'
                       }`}>
-                        <span className={`w-7 h-7 rounded-md flex items-center justify-center text-xs font-bold ${
-                          formData.sportif_haut_niveau === 'oui' ? 'bg-blue-500 text-white' : 'bg-slate-600 text-white'
+                        <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                          formData.sportif_haut_niveau === 'oui' ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-400'
                         }`}>A</span>
                         <span className="font-medium text-slate-700">Oui</span>
                       </div>
@@ -640,13 +668,13 @@ const QuestionnaireForm = ({ onNext, onBack }: QuestionnaireFormProps) => {
                         onChange={() => handleRadioChange('sportif_haut_niveau', 'non')}
                         className="peer sr-only" 
                       />
-                      <div className={`flex items-center gap-3 px-4 py-3 bg-slate-200/50 rounded-xl border-2 transition-all ${
+                      <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all ${
                         formData.sportif_haut_niveau === 'non' 
-                          ? 'bg-white/90 border-blue-500' 
-                          : 'border-transparent hover:bg-white/60'
+                          ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500' 
+                          : 'bg-white border-slate-200 hover:border-blue-300'
                       }`}>
-                        <span className={`w-7 h-7 rounded-md flex items-center justify-center text-xs font-bold ${
-                          formData.sportif_haut_niveau === 'non' ? 'bg-blue-500 text-white' : 'bg-slate-600 text-white'
+                        <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                          formData.sportif_haut_niveau === 'non' ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-400'
                         }`}>B</span>
                         <span className="font-medium text-slate-700">Non</span>
                       </div>
@@ -654,8 +682,8 @@ const QuestionnaireForm = ({ onNext, onBack }: QuestionnaireFormProps) => {
                   </div>
                 </div>
 
-                <div className="bg-white/40 p-4 rounded-xl">
-                  <label className="block text-sm font-semibold text-slate-800 mb-3">
+                <div className="bg-slate-50/50 p-5 rounded-xl border border-slate-100">
+                  <label className="block text-sm font-semibold text-slate-800 mb-4">
                     Déclare avoir un projet de création ou de reprise d'entreprise
                   </label>
                   <div className="flex gap-3">
@@ -668,13 +696,13 @@ const QuestionnaireForm = ({ onNext, onBack }: QuestionnaireFormProps) => {
                         onChange={() => handleRadioChange('projet_entreprise', 'oui')}
                         className="peer sr-only" 
                       />
-                      <div className={`flex items-center gap-3 px-4 py-3 bg-slate-200/50 rounded-xl border-2 transition-all ${
+                      <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all ${
                         formData.projet_entreprise === 'oui' 
-                          ? 'bg-white/90 border-blue-500' 
-                          : 'border-transparent hover:bg-white/60'
+                          ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500' 
+                          : 'bg-white border-slate-200 hover:border-blue-300'
                       }`}>
-                        <span className={`w-7 h-7 rounded-md flex items-center justify-center text-xs font-bold ${
-                          formData.projet_entreprise === 'oui' ? 'bg-blue-500 text-white' : 'bg-slate-600 text-white'
+                        <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                          formData.projet_entreprise === 'oui' ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-400'
                         }`}>A</span>
                         <span className="font-medium text-slate-700">Oui</span>
                       </div>
@@ -688,13 +716,13 @@ const QuestionnaireForm = ({ onNext, onBack }: QuestionnaireFormProps) => {
                         onChange={() => handleRadioChange('projet_entreprise', 'non')}
                         className="peer sr-only" 
                       />
-                      <div className={`flex items-center gap-3 px-4 py-3 bg-slate-200/50 rounded-xl border-2 transition-all ${
+                      <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all ${
                         formData.projet_entreprise === 'non' 
-                          ? 'bg-white/90 border-blue-500' 
-                          : 'border-transparent hover:bg-white/60'
+                          ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500' 
+                          : 'bg-white border-slate-200 hover:border-blue-300'
                       }`}>
-                        <span className={`w-7 h-7 rounded-md flex items-center justify-center text-xs font-bold ${
-                          formData.projet_entreprise === 'non' ? 'bg-blue-500 text-white' : 'bg-slate-600 text-white'
+                        <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                          formData.projet_entreprise === 'non' ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-400'
                         }`}>B</span>
                         <span className="font-medium text-slate-700">Non</span>
                       </div>
@@ -702,8 +730,8 @@ const QuestionnaireForm = ({ onNext, onBack }: QuestionnaireFormProps) => {
                   </div>
                 </div>
 
-                <div className="bg-white/40 p-4 rounded-xl">
-                  <label className="block text-sm font-semibold text-slate-800 mb-3">
+                <div className="bg-slate-50/50 p-5 rounded-xl border border-slate-100">
+                  <label className="block text-sm font-semibold text-slate-800 mb-4">
                     Déclare bénéficier de la reconnaissance travailleur handicapé (RQTH)
                   </label>
                   <div className="flex gap-3">
@@ -716,13 +744,13 @@ const QuestionnaireForm = ({ onNext, onBack }: QuestionnaireFormProps) => {
                         onChange={() => handleRadioChange('rqth', 'oui')}
                         className="peer sr-only" 
                       />
-                      <div className={`flex items-center gap-3 px-4 py-3 bg-slate-200/50 rounded-xl border-2 transition-all ${
+                      <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all ${
                         formData.rqth === 'oui' 
-                          ? 'bg-white/90 border-blue-500' 
-                          : 'border-transparent hover:bg-white/60'
+                          ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500' 
+                          : 'bg-white border-slate-200 hover:border-blue-300'
                       }`}>
-                        <span className={`w-7 h-7 rounded-md flex items-center justify-center text-xs font-bold ${
-                          formData.rqth === 'oui' ? 'bg-blue-500 text-white' : 'bg-slate-600 text-white'
+                        <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                          formData.rqth === 'oui' ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-400'
                         }`}>A</span>
                         <span className="font-medium text-slate-700">Oui</span>
                       </div>
@@ -736,13 +764,13 @@ const QuestionnaireForm = ({ onNext, onBack }: QuestionnaireFormProps) => {
                         onChange={() => handleRadioChange('rqth', 'non')}
                         className="peer sr-only" 
                       />
-                      <div className={`flex items-center gap-3 px-4 py-3 bg-slate-200/50 rounded-xl border-2 transition-all ${
+                      <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all ${
                         formData.rqth === 'non' 
-                          ? 'bg-white/90 border-blue-500' 
-                          : 'border-transparent hover:bg-white/60'
+                          ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500' 
+                          : 'bg-white border-slate-200 hover:border-blue-300'
                       }`}>
-                        <span className={`w-7 h-7 rounded-md flex items-center justify-center text-xs font-bold ${
-                          formData.rqth === 'non' ? 'bg-blue-500 text-white' : 'bg-slate-600 text-white'
+                        <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                          formData.rqth === 'non' ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-400'
                         }`}>B</span>
                         <span className="font-medium text-slate-700">Non</span>
                       </div>
@@ -752,10 +780,8 @@ const QuestionnaireForm = ({ onNext, onBack }: QuestionnaireFormProps) => {
               </div>
             </div>
           </FormSection>
-        </div>
 
         {/* Section 4 - Parcours scolaire */}
-        <div className="col-span-12">
           <FormSection number={4} title="Parcours scolaire">
             <div className="grid grid-cols-12 gap-5">
               <SelectField
@@ -827,10 +853,8 @@ const QuestionnaireForm = ({ onNext, onBack }: QuestionnaireFormProps) => {
               />
             </div>
           </FormSection>
-        </div>
 
         {/* Section 5 - Formation souhaitée */}
-        <div className="col-span-12">
           <FormSection number={5} title="Formation souhaitée">
             <div className="grid grid-cols-12 gap-5">
               <SelectField
@@ -888,10 +912,8 @@ const QuestionnaireForm = ({ onNext, onBack }: QuestionnaireFormProps) => {
               )}
             </div>
           </FormSection>
-        </div>
 
         {/* Section 6 - Informations complémentaires */}
-        <div className="col-span-12">
           <FormSection number={6} title="Informations complémentaires">
             <div className="grid grid-cols-12 gap-5">
               <SelectField
@@ -920,11 +942,10 @@ const QuestionnaireForm = ({ onNext, onBack }: QuestionnaireFormProps) => {
               />
             </div>
           </FormSection>
-        </div>
 
         {/* Submit */}
-        <div className="col-span-12 mt-8 pt-8 border-t-2 border-black/5 flex flex-col items-center gap-6">
-          <label className="flex items-center gap-3 cursor-pointer">
+        <div className="mt-8 pt-8 border-t border-blue-100 flex flex-col items-center gap-6">
+          <label className="flex items-center gap-3 cursor-pointer select-none">
             <input 
               type="checkbox" 
               checked={attestation}
@@ -934,23 +955,23 @@ const QuestionnaireForm = ({ onNext, onBack }: QuestionnaireFormProps) => {
                   setErrors(prev => ({ ...prev, attestation: '' }));
                 }
               }}
-              className="w-5 h-5 accent-blue-500 rounded" 
+              className="w-5 h-5 accent-blue-600 rounded cursor-pointer" 
             />
-            <span className="font-medium text-slate-800">
+            <span className="font-medium text-slate-700">
               J'atteste sur l'honneur l'exactitude des informations fournies <span className="text-red-500">*</span>
             </span>
           </label>
           {errors.attestation && (
-            <p className="text-red-500 text-sm -mt-4">{errors.attestation}</p>
+            <p className="text-red-500 text-sm -mt-4 font-medium animate-pulse">{errors.attestation}</p>
           )}
 
           <button 
             type="submit"
             disabled={isSubmitting}
-            className={`flex items-center gap-2.5 px-10 py-4 rounded-2xl font-bold text-lg transition-all shadow-lg ${
+            className={`flex items-center gap-2.5 px-10 py-4 rounded-xl font-bold text-lg transition-all shadow-lg hover:shadow-xl ${
               isSubmitting 
-                ? 'bg-slate-400 cursor-not-allowed' 
-                : 'bg-slate-900 text-white hover:bg-slate-800 hover:-translate-y-1 shadow-slate-900/20'
+                ? 'bg-slate-300 cursor-not-allowed text-slate-500' 
+                : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:-translate-y-1 shadow-blue-500/25'
             }`}
           >
             {isSubmitting ? (
@@ -962,6 +983,7 @@ const QuestionnaireForm = ({ onNext, onBack }: QuestionnaireFormProps) => {
               <>
                 <Save size={20} />
                 Enregistrer et continuer
+                <ArrowRight size={20} />
               </>
             )}
           </button>

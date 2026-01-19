@@ -312,7 +312,12 @@ export const api = {
   // CREATE (POST)
   async submitCompany(data: any) {
     try {
-      const payload = mapToBackendFormat(data);
+      // Direct pass-through since the frontend is now sending the exact nested structure required by the backend.
+      // We do NOT use mapToBackendFormat here because the structure is already complex and nested correctly.
+      const payload = data;
+      
+      console.log("📤 Submitting Company payload:", payload);
+
       const response = await fetch(`${BASE_URL}/entreprise`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },

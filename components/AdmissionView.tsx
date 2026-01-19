@@ -18,7 +18,8 @@ import {
   Loader2,
   Download,
   RotateCcw,
-  Save
+  Save,
+  User
 } from 'lucide-react';
 import { AdmissionTab } from '../types';
 import QuestionnaireForm from './QuestionnaireForm';
@@ -253,89 +254,160 @@ const EvalCriteriaRowHTML = ({ title, desc, name, value, onChange }: { title: st
 interface FormInputProps {
   label: string;
   name: string;
-  value: string;
+  value: string | number;
+  type?: string;
   placeholder?: string;
   required?: boolean;
   hint?: string;
   error?: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
+  width?: "full" | "half" | "third" | "two-thirds";
 }
 
-const FormInput = ({ label, name, value, placeholder, required = true, hint, error, onChange }: FormInputProps) => (
-  <div>
-    <label className="block text-sm font-semibold text-slate-700 mb-2">
-      {label} {required && <span className="text-red-500">*</span>}
-    </label>
-    <input 
-      type="text" 
-      name={name}
-      value={value}
-      onChange={onChange}
-      className={`w-full px-4 py-3 bg-white border rounded-xl transition-all focus:ring-4 focus:outline-none ${
-        error 
-          ? 'border-red-300 focus:border-red-500 focus:ring-red-500/10' 
-          : 'border-slate-200 focus:border-emerald-500 focus:ring-emerald-500/10'
-      }`} 
-      placeholder={placeholder} 
-    />
-    {error && (
-      <p className="mt-1.5 text-xs text-red-500 font-medium flex items-center gap-1">
-        <AlertCircle size={12}/> {error}
-      </p>
-    )}
-    {!error && hint && (
-      <p className="mt-1.5 text-xs text-slate-400">{hint}</p>
-    )}
-  </div>
-);
+const FormInput = ({ label, name, value, type="text", placeholder, required = false, hint, error, onChange, width = "full" }: FormInputProps) => {
+    const widthClass = {
+        "full": "col-span-12",
+        "half": "col-span-12 md:col-span-6",
+        "third": "col-span-12 md:col-span-4",
+        "two-thirds": "col-span-12 md:col-span-8",
+    }[width];
 
-// Formulaire Entreprise intégré
+    return (
+        <div className={widthClass}>
+            <label className="block text-sm font-semibold text-slate-700 mb-2">
+            {label} {required && <span className="text-red-500">*</span>}
+            </label>
+            <input 
+            type={type} 
+            name={name}
+            value={value}
+            onChange={onChange}
+            className={`w-full px-4 py-3 bg-white border rounded-xl transition-all focus:ring-4 focus:outline-none ${
+                error 
+                ? 'border-red-300 focus:border-red-500 focus:ring-red-500/10' 
+                : 'border-slate-200 focus:border-emerald-500 focus:ring-emerald-500/10'
+            }`} 
+            placeholder={placeholder} 
+            />
+            {error && (
+            <p className="mt-1.5 text-xs text-red-500 font-medium flex items-center gap-1">
+                <AlertCircle size={12}/> {error}
+            </p>
+            )}
+            {!error && hint && (
+            <p className="mt-1.5 text-xs text-slate-400">{hint}</p>
+            )}
+        </div>
+    );
+};
+
+// Formulaire Entreprise intégré et complet
 const EntrepriseForm = ({ onNext }: { onNext: () => void }) => {
   const [formData, setFormData] = useState({
-    raisonSociale: '',
-    siret: '',
-    codeNaf: '',
-    adresse: '',
-    maitreNom: '',
-    maitrePrenom: '',
-    maitreFonction: '',
-    maitreEmail: ''
+    identification: {
+        raison_sociale: "",
+        nom_entreprise: "", // Enseigne
+        siret: "",
+        code_ape_naf: "",
+        type_employeur: "Prive",
+        employeur_specifique: "Aucun",
+        nombre_salaries: 0,
+        code_idcc: "",
+        convention_collective: ""
+    },
+    adresse: {
+        numero: "",
+        voie: "", // Type de voie
+        nom_rue: "",
+        complement: "",
+        code_postal: "",
+        ville: "",
+        telephone: "",
+        email: ""
+    },
+    representant_legal: {
+        nom: "",
+        titre: "Monsieur",
+        telephone_direct: "",
+        email: ""
+    },
+    maitre_apprentissage: {
+        nom: "",
+        prenom: "",
+        date_naissance: "",
+        numero_securite_sociale: "",
+        fonction: "",
+        diplome_plus_eleve: "",
+        niveau_diplome: "",
+        annees_experience: 0,
+        telephone: "",
+        email: "",
+        deja_maitre_apprentissage: "Non"
+    },
+    opco: {
+        nom_opco: "",
+        adresse: "",
+        code_postal: "",
+        ville: ""
+    },
+    contrat: {
+        nature_contrat: "Contrat d'apprentissage",
+        type_contrat: "CDD",
+        type_derogation: "Aucune",
+        date_debut: "",
+        date_fin: "",
+        nombre_mois: 12,
+        duree_hebdomadaire: "35h",
+        poste_occupe: "",
+        lieu_execution: "",
+        base_calcul_salaire: "SMIC",
+        montant_salaire_brut: 0,
+        numero_bon_commande: ""
+    },
+    contact_taxe: {
+        fonction_contact: "",
+        telephone_contact: "",
+        email_contact: ""
+    },
+    formation_missions: {
+        formation_alternant: ""
+    }
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    if (errors[name]) {
-      setErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[name];
-        return newErrors;
-      });
+  // Helper pour mettre à jour les objets imbriqués
+  const updateField = (section: keyof typeof formData, field: string, value: any) => {
+    setFormData(prev => ({
+        ...prev,
+        [section]: {
+            ...prev[section],
+            [field]: value
+        }
+    }));
+    // Clear error
+    if (errors[`${section}.${field}`]) {
+        setErrors(prev => {
+            const newErr = { ...prev };
+            delete newErr[`${section}.${field}`];
+            return newErr;
+        });
     }
   };
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
-    const siretRegex = /^\d{14}$/; 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    // Entreprise
-    if (!formData.raisonSociale.trim()) newErrors.raisonSociale = "La raison sociale est requise";
-    if (!formData.siret.trim()) newErrors.siret = "Le SIRET est requis";
-    else if (!siretRegex.test(formData.siret.replace(/\s/g, ''))) newErrors.siret = "Le SIRET doit contenir 14 chiffres";
     
-    if (!formData.codeNaf.trim()) newErrors.codeNaf = "Le code APE/NAF est requis";
-    if (!formData.adresse.trim()) newErrors.adresse = "L'adresse du siège est requise";
-
-    // Maître d'apprentissage
-    if (!formData.maitreNom.trim()) newErrors.maitreNom = "Le nom est requis";
-    if (!formData.maitrePrenom.trim()) newErrors.maitrePrenom = "Le prénom est requis";
-    if (!formData.maitreFonction.trim()) newErrors.maitreFonction = "La fonction est requise";
-    if (!formData.maitreEmail.trim()) newErrors.maitreEmail = "L'email est requis";
-    else if (!emailRegex.test(formData.maitreEmail)) newErrors.maitreEmail = "Format d'email invalide";
+    // Simple validation rules (can be expanded)
+    if (!formData.identification.raison_sociale) newErrors['identification.raison_sociale'] = 'Requis';
+    if (!formData.identification.siret) newErrors['identification.siret'] = 'Requis';
+    if (!formData.adresse.code_postal) newErrors['adresse.code_postal'] = 'Requis';
+    if (!formData.adresse.ville) newErrors['adresse.ville'] = 'Requis';
+    if (!formData.adresse.email) newErrors['adresse.email'] = 'Requis';
+    if (!formData.representant_legal.nom) newErrors['representant_legal.nom'] = 'Requis';
+    if (!formData.maitre_apprentissage.nom) newErrors['maitre_apprentissage.nom'] = 'Requis';
+    if (!formData.contrat.date_debut) newErrors['contrat.date_debut'] = 'Requis';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -345,16 +417,26 @@ const EntrepriseForm = ({ onNext }: { onNext: () => void }) => {
     if (validate()) {
       setIsSubmitting(true);
       try {
-        await api.submitCompany(formData);
+        const recordId = localStorage.getItem('candidateRecordId');
+        if (!recordId) throw new Error("ID étudiant introuvable. Veuillez remplir la fiche étudiant d'abord.");
+
+        // Attach record_id
+        const payload = {
+            ...formData,
+            record_id_etudiant: recordId
+        };
+
+        await api.submitCompany(payload);
         onNext();
       } catch (error: any) {
         console.error("Erreur soumission entreprise", error);
-        alert(`Erreur lors de l'enregistrement: ${error.message}`);
+        alert(`Erreur: ${error.message}`);
       } finally {
         setIsSubmitting(false);
       }
     } else {
       window.scrollTo({ top: 0, behavior: 'smooth' });
+      alert("Veuillez remplir les champs obligatoires marqués en rouge.");
     }
   };
 
@@ -368,49 +450,117 @@ const EntrepriseForm = ({ onNext }: { onNext: () => void }) => {
         </div>
         <div>
           <h2 className="text-2xl font-bold text-slate-900 mb-1">Fiche de Renseignement Entreprise</h2>
-          <p className="text-slate-500">Informations pour le contrat d'apprentissage</p>
+          <p className="text-slate-500">Veuillez compléter l'ensemble des informations contractuelles.</p>
         </div>
       </div>
 
       <div className="space-y-8">
-        {/* 1. Entreprise */}
-        <div className={`bg-white/80 p-6 rounded-2xl border shadow-sm transition-colors ${
-           Object.keys(errors).some(k => ['raisonSociale','siret','codeNaf','adresse'].includes(k)) 
-           ? 'border-red-200' 
-           : 'border-emerald-100'
-        }`}>
-          <div className="flex items-center gap-3 mb-5">
-            <span className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm">1</span>
-            <h3 className="font-bold text-slate-800">Identification de l'entreprise</h3>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div className="col-span-2">
-              <FormInput label="Raison sociale" name="raisonSociale" value={formData.raisonSociale} onChange={handleChange} error={errors.raisonSociale} placeholder="Nom de l'entreprise" />
+        
+        {/* 1. Identification */}
+        <div className="bg-white/80 p-6 rounded-2xl border border-emerald-100 shadow-sm">
+            <div className="flex items-center gap-3 mb-5 border-b border-slate-100 pb-3">
+                <span className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm">1</span>
+                <h3 className="font-bold text-slate-800">Identification de l'entreprise</h3>
             </div>
-            <FormInput label="SIRET" name="siret" value={formData.siret} onChange={handleChange} error={errors.siret} placeholder="14 chiffres" hint="Sans espaces" />
-            <FormInput label="Code APE/NAF" name="codeNaf" value={formData.codeNaf} onChange={handleChange} error={errors.codeNaf} placeholder="Ex: 4711D" />
-            <div className="col-span-2">
-              <FormInput label="Adresse du siège" name="adresse" value={formData.adresse} onChange={handleChange} error={errors.adresse} placeholder="Adresse complète (Rue, CP, Ville)" />
+            <div className="grid grid-cols-12 gap-5">
+                <FormInput width="half" label="Raison Sociale" name="raison_sociale" value={formData.identification.raison_sociale} onChange={(e) => updateField('identification', 'raison_sociale', e.target.value)} required error={errors['identification.raison_sociale']} />
+                <FormInput width="half" label="Nom commercial / Enseigne" name="nom_entreprise" value={formData.identification.nom_entreprise} onChange={(e) => updateField('identification', 'nom_entreprise', e.target.value)} />
+                <FormInput width="half" label="SIRET" name="siret" value={formData.identification.siret} onChange={(e) => updateField('identification', 'siret', e.target.value)} required error={errors['identification.siret']} placeholder="14 chiffres" />
+                <FormInput width="half" label="Code APE/NAF" name="code_ape_naf" value={formData.identification.code_ape_naf} onChange={(e) => updateField('identification', 'code_ape_naf', e.target.value)} placeholder="Ex: 8559A" />
+                <FormInput width="third" label="Effectif total" name="nombre_salaries" type="number" value={formData.identification.nombre_salaries} onChange={(e) => updateField('identification', 'nombre_salaries', parseInt(e.target.value) || 0)} />
+                <FormInput width="two-thirds" label="Convention Collective" name="convention_collective" value={formData.identification.convention_collective} onChange={(e) => updateField('identification', 'convention_collective', e.target.value)} />
+                <FormInput width="full" label="Code IDCC" name="code_idcc" value={formData.identification.code_idcc} onChange={(e) => updateField('identification', 'code_idcc', e.target.value)} placeholder="Identifiant de la convention collective" />
             </div>
-          </div>
         </div>
 
-        {/* 2. Maître d'apprentissage */}
-        <div className={`bg-white/80 p-6 rounded-2xl border shadow-sm transition-colors ${
-           Object.keys(errors).some(k => ['maitreNom','maitrePrenom','maitreFonction','maitreEmail'].includes(k)) 
-           ? 'border-red-200' 
-           : 'border-emerald-100'
-        }`}>
-          <div className="flex items-center gap-3 mb-5">
-            <span className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm">2</span>
-            <h3 className="font-bold text-slate-800">Maître d'apprentissage</h3>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <FormInput label="Nom" name="maitreNom" value={formData.maitreNom} onChange={handleChange} error={errors.maitreNom} placeholder="Nom" />
-            <FormInput label="Prénom" name="maitrePrenom" value={formData.maitrePrenom} onChange={handleChange} error={errors.maitrePrenom} placeholder="Prénom" />
-            <FormInput label="Fonction" name="maitreFonction" value={formData.maitreFonction} onChange={handleChange} error={errors.maitreFonction} placeholder="Fonction dans l'entreprise" />
-            <FormInput label="Email" name="maitreEmail" value={formData.maitreEmail} onChange={handleChange} error={errors.maitreEmail} placeholder="email@entreprise.com" />
-          </div>
+        {/* 2. Adresse */}
+        <div className="bg-white/80 p-6 rounded-2xl border border-emerald-100 shadow-sm">
+            <div className="flex items-center gap-3 mb-5 border-b border-slate-100 pb-3">
+                <span className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm">2</span>
+                <h3 className="font-bold text-slate-800">Adresse de l'établissement</h3>
+            </div>
+            <div className="grid grid-cols-12 gap-5">
+                <FormInput width="third" label="N°" name="numero" value={formData.adresse.numero} onChange={(e) => updateField('adresse', 'numero', e.target.value)} />
+                <FormInput width="third" label="Voie" name="voie" value={formData.adresse.voie} onChange={(e) => updateField('adresse', 'voie', e.target.value)} placeholder="Rue, Avenue..." />
+                <FormInput width="third" label="Nom de la voie" name="nom_rue" value={formData.adresse.nom_rue} onChange={(e) => updateField('adresse', 'nom_rue', e.target.value)} required />
+                <FormInput width="full" label="Complément" name="complement" value={formData.adresse.complement} onChange={(e) => updateField('adresse', 'complement', e.target.value)} />
+                <FormInput width="third" label="Code Postal" name="code_postal" value={formData.adresse.code_postal} onChange={(e) => updateField('adresse', 'code_postal', e.target.value)} required error={errors['adresse.code_postal']} />
+                <FormInput width="two-thirds" label="Ville" name="ville" value={formData.adresse.ville} onChange={(e) => updateField('adresse', 'ville', e.target.value)} required error={errors['adresse.ville']} />
+                <FormInput width="half" label="Téléphone" name="telephone" value={formData.adresse.telephone} onChange={(e) => updateField('adresse', 'telephone', e.target.value)} />
+                <FormInput width="half" label="Email entreprise" name="email" value={formData.adresse.email} onChange={(e) => updateField('adresse', 'email', e.target.value)} required error={errors['adresse.email']} />
+            </div>
+        </div>
+
+        {/* 3. Représentant Légal */}
+        <div className="bg-white/80 p-6 rounded-2xl border border-emerald-100 shadow-sm">
+            <div className="flex items-center gap-3 mb-5 border-b border-slate-100 pb-3">
+                <span className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm">3</span>
+                <h3 className="font-bold text-slate-800">Représentant Légal (Signataire)</h3>
+            </div>
+            <div className="grid grid-cols-12 gap-5">
+                <div className="col-span-12 md:col-span-2">
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">Titre</label>
+                    <select 
+                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-emerald-500"
+                        value={formData.representant_legal.titre}
+                        onChange={(e) => updateField('representant_legal', 'titre', e.target.value)}
+                    >
+                        <option value="Monsieur">Monsieur</option>
+                        <option value="Madame">Madame</option>
+                    </select>
+                </div>
+                <FormInput width="half" label="Nom et Prénom" name="nom" value={formData.representant_legal.nom} onChange={(e) => updateField('representant_legal', 'nom', e.target.value)} required error={errors['representant_legal.nom']} placeholder="NOM Prénom" />
+                <FormInput width="half" label="Email" name="email" value={formData.representant_legal.email} onChange={(e) => updateField('representant_legal', 'email', e.target.value)} required />
+                <FormInput width="full" label="Téléphone direct" name="telephone_direct" value={formData.representant_legal.telephone_direct} onChange={(e) => updateField('representant_legal', 'telephone_direct', e.target.value)} />
+            </div>
+        </div>
+
+        {/* 4. Maître d'apprentissage */}
+        <div className="bg-white/80 p-6 rounded-2xl border border-emerald-100 shadow-sm">
+            <div className="flex items-center gap-3 mb-5 border-b border-slate-100 pb-3">
+                <span className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm">4</span>
+                <h3 className="font-bold text-slate-800">Maître d'apprentissage</h3>
+            </div>
+            <div className="grid grid-cols-12 gap-5">
+                <FormInput width="half" label="Nom" name="nom" value={formData.maitre_apprentissage.nom} onChange={(e) => updateField('maitre_apprentissage', 'nom', e.target.value)} required error={errors['maitre_apprentissage.nom']} />
+                <FormInput width="half" label="Prénom" name="prenom" value={formData.maitre_apprentissage.prenom} onChange={(e) => updateField('maitre_apprentissage', 'prenom', e.target.value)} required />
+                <FormInput width="third" label="Date de naissance" type="date" name="date_naissance" value={formData.maitre_apprentissage.date_naissance} onChange={(e) => updateField('maitre_apprentissage', 'date_naissance', e.target.value)} required />
+                <FormInput width="two-thirds" label="Numéro Sécurité Sociale" name="numero_securite_sociale" value={formData.maitre_apprentissage.numero_securite_sociale} onChange={(e) => updateField('maitre_apprentissage', 'numero_securite_sociale', e.target.value)} />
+                <FormInput width="half" label="Fonction / Emploi" name="fonction" value={formData.maitre_apprentissage.fonction} onChange={(e) => updateField('maitre_apprentissage', 'fonction', e.target.value)} required />
+                <FormInput width="half" label="Diplôme le plus élevé" name="diplome_plus_eleve" value={formData.maitre_apprentissage.diplome_plus_eleve} onChange={(e) => updateField('maitre_apprentissage', 'diplome_plus_eleve', e.target.value)} />
+                <FormInput width="third" label="Années d'expérience" type="number" name="annees_experience" value={formData.maitre_apprentissage.annees_experience} onChange={(e) => updateField('maitre_apprentissage', 'annees_experience', parseInt(e.target.value) || 0)} />
+                <FormInput width="third" label="Email" name="email" value={formData.maitre_apprentissage.email} onChange={(e) => updateField('maitre_apprentissage', 'email', e.target.value)} required />
+                <FormInput width="third" label="Téléphone" name="telephone" value={formData.maitre_apprentissage.telephone} onChange={(e) => updateField('maitre_apprentissage', 'telephone', e.target.value)} />
+            </div>
+        </div>
+
+        {/* 5. Contrat */}
+        <div className="bg-white/80 p-6 rounded-2xl border border-emerald-100 shadow-sm">
+            <div className="flex items-center gap-3 mb-5 border-b border-slate-100 pb-3">
+                <span className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm">5</span>
+                <h3 className="font-bold text-slate-800">Le Contrat</h3>
+            </div>
+            <div className="grid grid-cols-12 gap-5">
+                <FormInput width="third" label="Date de début" type="date" name="date_debut" value={formData.contrat.date_debut} onChange={(e) => updateField('contrat', 'date_debut', e.target.value)} required error={errors['contrat.date_debut']} />
+                <FormInput width="third" label="Date de fin" type="date" name="date_fin" value={formData.contrat.date_fin} onChange={(e) => updateField('contrat', 'date_fin', e.target.value)} required />
+                <FormInput width="third" label="Durée (mois)" type="number" name="nombre_mois" value={formData.contrat.nombre_mois} onChange={(e) => updateField('contrat', 'nombre_mois', parseInt(e.target.value) || 0)} />
+                <FormInput width="half" label="Salaire Brut Mensuel (€)" type="number" name="montant_salaire_brut" value={formData.contrat.montant_salaire_brut} onChange={(e) => updateField('contrat', 'montant_salaire_brut', parseFloat(e.target.value) || 0)} />
+                <FormInput width="half" label="Durée hebdo (ex: 35h)" name="duree_hebdomadaire" value={formData.contrat.duree_hebdomadaire} onChange={(e) => updateField('contrat', 'duree_hebdomadaire', e.target.value)} />
+                <FormInput width="full" label="Lieu d'exécution (si différent du siège)" name="lieu_execution" value={formData.contrat.lieu_execution} onChange={(e) => updateField('contrat', 'lieu_execution', e.target.value)} />
+            </div>
+        </div>
+
+        {/* 6. OPCO */}
+        <div className="bg-white/80 p-6 rounded-2xl border border-emerald-100 shadow-sm">
+             <div className="flex items-center gap-3 mb-5 border-b border-slate-100 pb-3">
+                <span className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm">6</span>
+                <h3 className="font-bold text-slate-800">OPCO (Opérateur de Compétences)</h3>
+            </div>
+            <div className="grid grid-cols-12 gap-5">
+                 <FormInput width="full" label="Nom de l'OPCO" name="nom_opco" value={formData.opco.nom_opco} onChange={(e) => updateField('opco', 'nom_opco', e.target.value)} placeholder="Ex: AKTO, ATLAS..." />
+                 <FormInput width="half" label="Code Postal" name="code_postal" value={formData.opco.code_postal} onChange={(e) => updateField('opco', 'code_postal', e.target.value)} />
+                 <FormInput width="half" label="Ville" name="ville" value={formData.opco.ville} onChange={(e) => updateField('opco', 'ville', e.target.value)} />
+            </div>
         </div>
 
         <div className="flex justify-end gap-3 pt-6 border-t border-emerald-100">
@@ -424,7 +574,6 @@ const EntrepriseForm = ({ onNext }: { onNext: () => void }) => {
           >
             {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : null}
             {isSubmitting ? 'Validation...' : 'Valider et continuer'}
-            {Object.keys(errors).length > 0 && !isSubmitting && <AlertCircle size={18} />}
           </button>
         </div>
       </div>
@@ -472,7 +621,7 @@ const AdmissionView = () => {
   const [interviewInfo, setInterviewInfo] = useState({
     candidat: '',
     heure: '',
-    charge: '',
+    charge: 'Arsène POPHILLAT', // Default to current user
     date: new Date().toISOString().split('T')[0],
     formation: '',
     commentaires: ''
@@ -489,7 +638,7 @@ const AdmissionView = () => {
   // Document Handler
   const handleFileUpload = async (docId: string, file: File) => {
     // Check if we have an ID (record_id or id)
-    const recordId = studentData?.record_id || studentData?.id || studentData?.data?.id || studentData?.data?.record_id;
+    const recordId = studentData?.record_id || studentData?.id || studentData?.data?.id || studentData?.data?.record_id || localStorage.getItem('candidateRecordId');
 
     if (!recordId) { 
         console.warn("Pas d'ID étudiant trouvé, mode simulation upload");
@@ -544,31 +693,59 @@ const AdmissionView = () => {
   
   // Sync candidate info to interview form if available
   useEffect(() => {
-    if (studentData) {
-        // Handle potentially nested data from API response wrapper
-        const candidate = studentData.data || studentData;
+    // Only run when entering the interview tab
+    if (activeTab === AdmissionTab.ENTRETIEN) {
         
+        // 1. Retrieve raw data sources
+        let rawNom = "";
+        let rawPrenom = "";
+        let rawFormation = "";
+
+        // Try from studentData state first (if coming from flow)
+        if (studentData) {
+            const d = studentData.data || studentData;
+            rawNom = d.nom_naissance || d.nom || "";
+            rawPrenom = d.prenom || "";
+            rawFormation = d.formation_souhaitee || d.formation || "";
+        }
+
+        // If missing, try localStorage (refresh resilience)
+        if (!rawNom) rawNom = localStorage.getItem('candidateLastName') || "";
+        if (!rawPrenom) rawPrenom = localStorage.getItem('candidateFirstName') || "";
+        if (!rawFormation) rawFormation = localStorage.getItem('candidateFormation') || "";
+
+        // 2. Process Name
+        let formattedName = "";
+        if (rawNom || rawPrenom) {
+            const n = rawNom.trim().toUpperCase();
+            const p = rawPrenom.trim();
+            const pFormatted = p ? p.charAt(0).toUpperCase() + p.slice(1) : "";
+            formattedName = `${n} ${pFormatted}`.trim();
+        } else {
+             // Fallback for older localStorage data
+             formattedName = localStorage.getItem('candidateName') || "";
+        }
+
+        // 3. Process Formation
         const formationMapping: Record<string, string> = {
             'bts_mco': 'BTS MCO',
             'bts_ndrc': 'BTS NDRC',
             'bachelor': 'BACHELOR RDC',
+            'bachelor_rdc': 'BACHELOR RDC',
             'tp_ntc': 'TP NTC'
         };
+        const mappedFormation = formationMapping[rawFormation.toLowerCase()] || rawFormation;
 
-        const rawFormation = candidate.formation_souhaitee || candidate.formation || '';
-        const mappedFormation = formationMapping[rawFormation] || (rawFormation.toUpperCase ? rawFormation.toUpperCase().replace('_', ' ') : rawFormation);
-        
-        const nom = candidate.nom_naissance || candidate.nom || "";
-        const prenom = candidate.prenom || "";
-        const nomUpper = nom.toUpperCase ? nom.toUpperCase() : nom;
-
+        // 4. Update State
         setInterviewInfo(prev => ({
             ...prev,
-            candidat: `${nomUpper} ${prenom}`, // Norme: NOM Prénom
-            formation: mappedFormation
+            candidat: formattedName || prev.candidat,
+            formation: mappedFormation || prev.formation,
+            // Keep existing charge or default
+            charge: prev.charge || "Arsène POPHILLAT" 
         }));
     }
-  }, [studentData]);
+  }, [activeTab, studentData]);
 
   return (
     <div className="animate-fade-in max-w-6xl mx-auto pb-20">
