@@ -142,7 +142,16 @@ const FormationCard = ({ icon, title, desc, duration, color, selected, onClick }
   );
 };
 
-const FileUploadCard = ({ id, title, desc, fileName, uploading, onUpload }: { id: string, title: string, desc: string, fileName?: string, uploading?: boolean, onUpload: (file: File) => void }) => {
+interface FileUploadCardProps {
+  id: string;
+  title: string;
+  desc: string;
+  fileName?: string;
+  uploading?: boolean;
+  onUpload: (file: File) => void;
+}
+
+const FileUploadCard: React.FC<FileUploadCardProps> = ({ id, title, desc, fileName, uploading, onUpload }) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const uploaded = !!fileName;
 
@@ -241,6 +250,45 @@ const EvalCriteriaRowHTML = ({ title, desc, name, value, onChange }: { title: st
   );
 };
 
+interface FormInputProps {
+  label: string;
+  name: string;
+  value: string;
+  placeholder?: string;
+  required?: boolean;
+  hint?: string;
+  error?: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+}
+
+const FormInput = ({ label, name, value, placeholder, required = true, hint, error, onChange }: FormInputProps) => (
+  <div>
+    <label className="block text-sm font-semibold text-slate-700 mb-2">
+      {label} {required && <span className="text-red-500">*</span>}
+    </label>
+    <input 
+      type="text" 
+      name={name}
+      value={value}
+      onChange={onChange}
+      className={`w-full px-4 py-3 bg-white border rounded-xl transition-all focus:ring-4 focus:outline-none ${
+        error 
+          ? 'border-red-300 focus:border-red-500 focus:ring-red-500/10' 
+          : 'border-slate-200 focus:border-emerald-500 focus:ring-emerald-500/10'
+      }`} 
+      placeholder={placeholder} 
+    />
+    {error && (
+      <p className="mt-1.5 text-xs text-red-500 font-medium flex items-center gap-1">
+        <AlertCircle size={12}/> {error}
+      </p>
+    )}
+    {!error && hint && (
+      <p className="mt-1.5 text-xs text-slate-400">{hint}</p>
+    )}
+  </div>
+);
+
 // Formulaire Entreprise intégré
 const EntrepriseForm = ({ onNext }: { onNext: () => void }) => {
   const [formData, setFormData] = useState({
@@ -310,35 +358,6 @@ const EntrepriseForm = ({ onNext }: { onNext: () => void }) => {
     }
   };
 
-  // Helper interne pour les inputs
-  const FormInput = ({ label, name, value, placeholder, required = true, hint }: any) => (
-    <div>
-      <label className="block text-sm font-semibold text-slate-700 mb-2">
-        {label} {required && <span className="text-red-500">*</span>}
-      </label>
-      <input 
-        type="text" 
-        name={name}
-        value={value}
-        onChange={handleChange}
-        className={`w-full px-4 py-3 bg-white border rounded-xl transition-all focus:ring-4 focus:outline-none ${
-          errors[name] 
-            ? 'border-red-300 focus:border-red-500 focus:ring-red-500/10' 
-            : 'border-slate-200 focus:border-emerald-500 focus:ring-emerald-500/10'
-        }`} 
-        placeholder={placeholder} 
-      />
-      {errors[name] && (
-        <p className="mt-1.5 text-xs text-red-500 font-medium flex items-center gap-1">
-          <AlertCircle size={12}/> {errors[name]}
-        </p>
-      )}
-      {!errors[name] && hint && (
-        <p className="mt-1.5 text-xs text-slate-400">{hint}</p>
-      )}
-    </div>
-  );
-
   return (
     <div className="bg-gradient-to-br from-emerald-50 to-white rounded-3xl p-6 md:p-10 shadow-xl border border-emerald-100 relative overflow-hidden animate-slide-in">
       <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500"></div>
@@ -366,12 +385,12 @@ const EntrepriseForm = ({ onNext }: { onNext: () => void }) => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div className="col-span-2">
-              <FormInput label="Raison sociale" name="raisonSociale" value={formData.raisonSociale} placeholder="Nom de l'entreprise" />
+              <FormInput label="Raison sociale" name="raisonSociale" value={formData.raisonSociale} onChange={handleChange} error={errors.raisonSociale} placeholder="Nom de l'entreprise" />
             </div>
-            <FormInput label="SIRET" name="siret" value={formData.siret} placeholder="14 chiffres" hint="Sans espaces" />
-            <FormInput label="Code APE/NAF" name="codeNaf" value={formData.codeNaf} placeholder="Ex: 4711D" />
+            <FormInput label="SIRET" name="siret" value={formData.siret} onChange={handleChange} error={errors.siret} placeholder="14 chiffres" hint="Sans espaces" />
+            <FormInput label="Code APE/NAF" name="codeNaf" value={formData.codeNaf} onChange={handleChange} error={errors.codeNaf} placeholder="Ex: 4711D" />
             <div className="col-span-2">
-              <FormInput label="Adresse du siège" name="adresse" value={formData.adresse} placeholder="Adresse complète (Rue, CP, Ville)" />
+              <FormInput label="Adresse du siège" name="adresse" value={formData.adresse} onChange={handleChange} error={errors.adresse} placeholder="Adresse complète (Rue, CP, Ville)" />
             </div>
           </div>
         </div>
@@ -387,10 +406,10 @@ const EntrepriseForm = ({ onNext }: { onNext: () => void }) => {
             <h3 className="font-bold text-slate-800">Maître d'apprentissage</h3>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <FormInput label="Nom" name="maitreNom" value={formData.maitreNom} placeholder="Nom" />
-            <FormInput label="Prénom" name="maitrePrenom" value={formData.maitrePrenom} placeholder="Prénom" />
-            <FormInput label="Fonction" name="maitreFonction" value={formData.maitreFonction} placeholder="Fonction dans l'entreprise" />
-            <FormInput label="Email" name="maitreEmail" value={formData.maitreEmail} placeholder="email@entreprise.com" />
+            <FormInput label="Nom" name="maitreNom" value={formData.maitreNom} onChange={handleChange} error={errors.maitreNom} placeholder="Nom" />
+            <FormInput label="Prénom" name="maitrePrenom" value={formData.maitrePrenom} onChange={handleChange} error={errors.maitrePrenom} placeholder="Prénom" />
+            <FormInput label="Fonction" name="maitreFonction" value={formData.maitreFonction} onChange={handleChange} error={errors.maitreFonction} placeholder="Fonction dans l'entreprise" />
+            <FormInput label="Email" name="maitreEmail" value={formData.maitreEmail} onChange={handleChange} error={errors.maitreEmail} placeholder="email@entreprise.com" />
           </div>
         </div>
 

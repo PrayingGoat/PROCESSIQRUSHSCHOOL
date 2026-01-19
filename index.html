@@ -28,19 +28,65 @@
       }
     </script>
     <style>
+      :root {
+            --bg-main: #F8FAFC;
+            --bg-white: #FFFFFF;
+            --sidebar-bg: #0f172a;
+            --sidebar-text: #e2e8f0;
+            --sidebar-muted: #94a3b8;
+            --border-color: #E2E8F0;
+            --text-primary: #1E293B;
+            --text-secondary: #64748B;
+            --text-muted: #94A3B8;
+            --primary: #3B82F6;
+            --primary-light: #EFF6FF;
+            --primary-dark: #2563EB;
+            --success: #86EFAC;
+            --success-light: #E6FFFA;
+            --success-bg: #F0FFF4;
+            --warning: #F59E0B;
+            --warning-light: #FEF3C7;
+            --warning-bg: #FFFBEB;
+            --danger: #A78BFA;
+            --danger-light: #EDE9FE;
+            --purple: #A78BFA;
+            --purple-light: #EDE9FE;
+            --purple-bg: #F5F3FF;
+            --orange: #F97316;
+            --orange-light: #FED7AA;
+            --orange-bg: #FFF7ED;
+            --cyan: #06B6D4;
+            --cyan-light: #A5F3FC;
+            --cyan-bg: #ECFEFF;
+            --indigo: #6366F1;
+            --sidebar-width: 260px;
+            --header-height: 64px;
+        }
+
       body {
-        background-color: #F8FAFC;
+        background-color: var(--bg-main);
+        color: var(--text-primary);
+        font-family: 'Inter', sans-serif;
       }
-      /* Custom scrollbar for sidebar */
-      aside::-webkit-scrollbar {
-        width: 4px;
+      
+      /* Custom scrollbar */
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
       }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background-color: #cbd5e1;
+        border-radius: 3px;
+      }
+      
       aside::-webkit-scrollbar-thumb {
         background-color: #334155;
-        border-radius: 4px;
       }
 
-      /* Workflow Transition Animation */
+      /* Animations */
       @keyframes slideUpFade {
         0% {
           opacity: 0;
@@ -58,6 +104,19 @@
       
       .animate-pulse-slow {
         animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }
+
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: .7; }
+      }
+
+      .no-scrollbar::-webkit-scrollbar {
+          display: none;
+      }
+      .no-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
       }
     </style>
   <script type="importmap">

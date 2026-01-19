@@ -1,33 +1,32 @@
 import React, { useState, useEffect } from 'react';
-import { RHTab, StatCardProps } from '../types';
+import { ViewId } from '../types';
 import { 
   FileText, 
   Euro, 
   UserMinus, 
   Users, 
   Search, 
-  Filter, 
   Plus, 
   Eye, 
   Download, 
   Edit,
-  ChevronLeft,
-  ChevronRight,
-  Loader2
+  Loader2,
+  Building,
+  History
 } from 'lucide-react';
 import { api } from '../services/api';
 
-const RHStatCard = ({ value, label, icon, colorClass }: { value: string, label: string, icon: React.ReactNode, colorClass: 'blue' | 'green' | 'orange' | 'purple' }) => {
+const RHStatCard = ({ value, label, icon, colorClass }: { value: string | number, label: string, icon: React.ReactNode, colorClass: 'blue' | 'green' | 'orange' | 'purple' }) => {
   const styles = {
-    blue: { bg: 'bg-white', iconBg: 'bg-blue-50', iconColor: 'text-blue-500' },
-    green: { bg: 'bg-white', iconBg: 'bg-emerald-50', iconColor: 'text-emerald-500' },
-    orange: { bg: 'bg-white', iconBg: 'bg-amber-50', iconColor: 'text-amber-500' },
-    purple: { bg: 'bg-white', iconBg: 'bg-violet-50', iconColor: 'text-violet-500' },
+    blue: { bg: 'bg-white', iconBg: 'bg-[#EFF6FF]', iconColor: 'text-[#3B82F6]', border: 'border-[#E2E8F0]' },
+    green: { bg: 'bg-white', iconBg: 'bg-[#E6FFFA]', iconColor: 'text-[#10B981]', border: 'border-[#E2E8F0]' },
+    orange: { bg: 'bg-white', iconBg: 'bg-[#FFFBEB]', iconColor: 'text-[#F59E0B]', border: 'border-[#E2E8F0]' },
+    purple: { bg: 'bg-white', iconBg: 'bg-[#F3E8FF]', iconColor: 'text-[#A78BFA]', border: 'border-[#E2E8F0]' },
   };
   const style = styles[colorClass];
 
   return (
-    <div className={`${style.bg} border border-slate-200 rounded-xl p-5 flex items-center gap-4 hover:-translate-y-0.5 hover:shadow-md transition-all`}>
+    <div className={`${style.bg} border ${style.border} rounded-xl p-5 flex items-center gap-4 hover:-translate-y-0.5 hover:shadow-md transition-all`}>
       <div className={`w-12 h-12 rounded-xl ${style.iconBg} ${style.iconColor} flex items-center justify-center shrink-0`}>
         {icon}
       </div>
@@ -39,92 +38,47 @@ const RHStatCard = ({ value, label, icon, colorClass }: { value: string, label: 
   );
 };
 
-const CerfaTable = () => {
-  const [candidates, setCandidates] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchCandidates = async () => {
-      try {
-        const data = await api.getAllCandidates();
-        setCandidates(data);
-      } catch (err) {
-        console.error("Error fetching candidates", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchCandidates();
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64 bg-white border border-slate-200 rounded-xl">
-        <Loader2 className="animate-spin text-blue-500" size={32} />
-      </div>
-    );
-  }
-
-  // Placeholder rows if no data is returned (mock data fallback or empty state)
-  if (candidates.length === 0) {
-     return (
-        <div className="flex flex-col justify-center items-center h-64 bg-white border border-slate-200 rounded-xl">
-            <Users className="text-slate-300 mb-2" size={48} />
-            <p className="text-slate-500">Aucun candidat trouvé pour le moment.</p>
-        </div>
-     );
-  }
-
+const CerfaTable = ({ data }: { data: any[] }) => {
   return (
     <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-slate-50 border-b border-slate-200">
-              <th className="p-4 w-10"><input type="checkbox" className="rounded border-slate-300" /></th>
-              <th className="p-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">ID</th>
-              <th className="p-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Étudiant</th>
-              <th className="p-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Formation</th>
-              <th className="p-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Date Naissance</th>
-              <th className="p-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Statut</th>
-              <th className="p-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
+              <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Formation</th>
+              <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Référent</th>
+              <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Étudiant</th>
+              <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Entreprise</th>
+              <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Statut</th>
+              <th className="p-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {candidates.map((row, idx) => (
-              <tr key={row.record_id || idx} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                <td className="p-4"><input type="checkbox" className="rounded border-slate-300" /></td>
+            {data.length === 0 ? (
+                <tr>
+                    <td colSpan={6} className="p-8 text-center text-slate-500">Aucun dossier trouvé</td>
+                </tr>
+            ) : data.map((row, idx) => (
+              <tr key={row.id || idx} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
                 <td className="p-4">
-                  <span className="font-mono text-xs font-semibold text-slate-400 bg-slate-50 px-2 py-1 rounded">
-                    {row.record_id ? row.record_id.substring(0, 8) : 'N/A'}
+                  <span className="inline-block px-2.5 py-1 rounded-md bg-blue-50 text-blue-600 text-xs font-bold">
+                    {row.formation_souhaitee || 'Non renseigné'}
                   </span>
                 </td>
+                <td className="p-4 text-sm text-slate-600">RH</td>
                 <td className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-9 h-9 rounded-lg bg-blue-500 text-white flex items-center justify-center text-xs font-bold`}>
-                        {(row.prenom?.[0] || '') + (row.nom?.[0] || '')}
-                    </div>
-                    <div>
-                      <div className="text-sm font-semibold text-slate-800">{row.prenom} {row.nom}</div>
-                      <div className="text-xs text-slate-500">{row.email}</div>
-                    </div>
-                  </div>
+                    <div className="font-semibold text-slate-800">{row.prenom} {row.nom_naissance}</div>
                 </td>
+                <td className="p-4 text-sm text-slate-600">{row.entreprise_d_accueil || 'Aucune'}</td>
                 <td className="p-4">
-                  <span className="inline-block px-2.5 py-1 rounded-md bg-slate-100 text-slate-600 text-xs font-semibold">
-                    {row.formation || 'Non défini'}
+                  <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${row.entreprise_d_accueil && row.entreprise_d_accueil !== 'Non' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                    {row.entreprise_d_accueil && row.entreprise_d_accueil !== 'Non' ? 'En cours' : 'À placer'}
                   </span>
                 </td>
-                <td className="p-4 text-sm text-slate-600">{row.date_naissance}</td>
-                <td className="p-4">
-                  <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700`}>
-                    Inscrit
-                  </span>
-                </td>
-                <td className="p-4">
-                  <div className="flex gap-1">
-                    <button className="p-1.5 hover:bg-blue-50 hover:text-blue-600 rounded text-slate-400 transition-colors"><Eye size={16} /></button>
-                    <button className="p-1.5 hover:bg-blue-50 hover:text-blue-600 rounded text-slate-400 transition-colors"><Edit size={16} /></button>
+                <td className="p-4 text-center">
+                  <div className="flex justify-center gap-2">
+                    <button className="p-1.5 border border-slate-200 rounded hover:border-blue-500 hover:text-blue-500 transition-colors"><Eye size={16} /></button>
+                    <button className="p-1.5 border border-slate-200 rounded hover:border-blue-500 hover:text-blue-500 transition-colors"><Edit size={16} /></button>
                   </div>
                 </td>
               </tr>
@@ -132,104 +86,179 @@ const CerfaTable = () => {
           </tbody>
         </table>
       </div>
-      <div className="flex items-center justify-between p-4 border-t border-slate-200">
-        <span className="text-sm text-slate-500">Affichage de {candidates.length} résultats</span>
-      </div>
     </div>
   );
 };
 
-const RHView = () => {
-  const [activeTab, setActiveTab] = useState<RHTab>(RHTab.CERFA);
+interface RHViewProps {
+    activeSubView: ViewId;
+}
+
+const RHView: React.FC<RHViewProps> = ({ activeSubView }) => {
+  const [candidates, setCandidates] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+        try {
+            const data = await api.getAllCandidates();
+            setCandidates(data);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
+    fetchData();
+  }, []);
+
+  if (loading) {
+      return (
+          <div className="flex h-full items-center justify-center">
+              <Loader2 className="animate-spin text-blue-500" size={48} />
+          </div>
+      )
+  }
+  
+  // Render specific section based on activeSubView
+  const renderSection = () => {
+      switch(activeSubView) {
+          case 'rh-cerfa':
+              return (
+                  <div>
+                     <div className="bg-gradient-to-br from-[#6B5B73] to-[#8B7B93] rounded-2xl p-7 mb-6 relative overflow-hidden text-white">
+                        <div className="flex justify-between items-center relative z-10">
+                             <div className="flex items-center gap-5">
+                                 <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md">
+                                     <FileText size={28} />
+                                 </div>
+                                 <div>
+                                     <h1 className="text-2xl font-bold">Gestion des CERFA</h1>
+                                     <p className="text-white/80">Suivi complet des contrats d'apprentissage</p>
+                                 </div>
+                             </div>
+                             <div className="flex gap-3">
+                                 <button className="flex items-center gap-2 px-4 py-2 bg-white/15 border border-white/30 rounded-lg hover:bg-white/25 transition-all text-sm font-medium">
+                                     <History size={16} /> Historique
+                                 </button>
+                                 <button className="flex items-center gap-2 px-4 py-2 bg-white text-[#6B5B73] rounded-lg hover:bg-slate-100 transition-all text-sm font-bold">
+                                     <Plus size={16} /> Nouveau CERFA
+                                 </button>
+                             </div>
+                        </div>
+                     </div>
+
+                     {/* Stats Grid */}
+                     <div className="grid grid-cols-5 gap-4 mb-6">
+                        <div className="bg-white border border-slate-200 p-5 rounded-2xl flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#6B5B73] to-[#8B7B93] flex items-center justify-center text-white"><FileText size={20}/></div>
+                            <div><div className="text-2xl font-bold text-slate-800">{candidates.length}</div><div className="text-xs text-slate-500">Total CERFA</div></div>
+                        </div>
+                        <div className="bg-white border border-slate-200 p-5 rounded-2xl flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#10B981] to-[#34D399] flex items-center justify-center text-white"><Euro size={20}/></div>
+                            <div><div className="text-2xl font-bold text-slate-800">0</div><div className="text-xs text-slate-500">PEC Accordées</div></div>
+                        </div>
+                        <div className="bg-white border border-slate-200 p-5 rounded-2xl flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#F59E0B] to-[#FBBF24] flex items-center justify-center text-white"><Loader2 size={20}/></div>
+                            <div><div className="text-2xl font-bold text-slate-800">{candidates.length}</div><div className="text-xs text-slate-500">En cours</div></div>
+                        </div>
+                        <div className="bg-white border border-slate-200 p-5 rounded-2xl flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#3B82F6] to-[#60A5FA] flex items-center justify-center text-white"><Building size={20}/></div>
+                            <div><div className="text-2xl font-bold text-slate-800">0</div><div className="text-xs text-slate-500">Entreprises</div></div>
+                        </div>
+                        <div className="bg-white border border-slate-200 p-5 rounded-2xl flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#EF4444] to-[#F87171] flex items-center justify-center text-white"><Edit size={20}/></div>
+                            <div><div className="text-2xl font-bold text-slate-800">0</div><div className="text-xs text-slate-500">Modifs</div></div>
+                        </div>
+                     </div>
+
+                     <div className="mb-4 flex flex-wrap gap-4 bg-white p-4 rounded-2xl border border-slate-200">
+                         <div className="flex items-center gap-2 bg-slate-50 px-3 py-2 rounded-lg border border-slate-200 min-w-[250px]">
+                             <Search size={16} className="text-slate-400" />
+                             <input type="text" placeholder="Rechercher..." className="bg-transparent outline-none text-sm w-full" />
+                         </div>
+                         <select className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
+                           <option>Toutes formations</option>
+                           <option>BTS MCO</option>
+                           <option>BTS NDRC</option>
+                         </select>
+                         <select className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer">
+                           <option>Tous statuts</option>
+                           <option>Signé</option>
+                           <option>En cours</option>
+                         </select>
+                     </div>
+
+                     <CerfaTable data={candidates} />
+                  </div>
+              );
+          case 'rh-fiche':
+              return (
+                  <div className="flex flex-col items-center justify-center h-[60vh] bg-white border border-slate-200 rounded-2xl p-10 text-center">
+                      <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mb-6">
+                          <Building size={40} className="text-emerald-500" />
+                      </div>
+                      <h2 className="text-xl font-bold text-slate-800 mb-2">Fiches Entreprises</h2>
+                      <p className="text-slate-500 max-w-md">Gestion des informations entreprises et maîtres d'apprentissage. Fonctionnalité complète en cours d'intégration.</p>
+                      <button className="mt-6 px-6 py-3 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-all">
+                          Nouvelle Fiche
+                      </button>
+                  </div>
+              );
+          case 'rh-pec':
+              return (
+                  <div className="flex flex-col items-center justify-center h-[60vh] bg-white border border-slate-200 rounded-2xl p-10 text-center">
+                      <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mb-6">
+                          <Euro size={40} className="text-blue-500" />
+                      </div>
+                      <h2 className="text-xl font-bold text-slate-800 mb-2">Prises en Charge (PEC)</h2>
+                      <p className="text-slate-500 max-w-md">Suivi des financements OPCO. Fonctionnalité complète en cours d'intégration.</p>
+                  </div>
+              );
+          case 'rh-ruptures':
+              return (
+                  <div className="flex flex-col items-center justify-center h-[60vh] bg-white border border-slate-200 rounded-2xl p-10 text-center">
+                      <div className="w-20 h-20 bg-orange-50 rounded-full flex items-center justify-center mb-6">
+                          <UserMinus size={40} className="text-orange-500" />
+                      </div>
+                      <h2 className="text-xl font-bold text-slate-800 mb-2">Gestion des Ruptures</h2>
+                      <p className="text-slate-500 max-w-md">Traitement des ruptures de contrat et démissions. Fonctionnalité complète en cours d'intégration.</p>
+                  </div>
+              );
+          default:
+              // Fallback to Dashboard summary if logic fails
+              return (
+                  <div>
+                    {/* Header Info */}
+                    <div className="flex items-center justify-between mb-8">
+                        <div>
+                        <h1 className="text-2xl font-bold text-slate-800 mb-1">Ressources Humaines</h1>
+                        <div className="flex items-center gap-2 text-sm text-slate-500">
+                            <Users size={16} />
+                            <span>Gestion administrative des alternants</span>
+                        </div>
+                        </div>
+                        <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors">
+                        <Download size={16} />
+                        Exporter
+                        </button>
+                    </div>
+
+                    {/* Stats Summary */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                        <RHStatCard value={candidates.length} label="Dossiers en cours" icon={<FileText size={24} />} colorClass="blue" />
+                        <RHStatCard value="0" label="Prises en charge" icon={<Euro size={24} />} colorClass="green" />
+                        <RHStatCard value="0" label="Ruptures ce mois" icon={<UserMinus size={24} />} colorClass="orange" />
+                        <RHStatCard value={candidates.length} label="Étudiants actifs" icon={<Users size={24} />} colorClass="purple" />
+                    </div>
+                  </div>
+              );
+      }
+  }
 
   return (
     <div className="animate-fade-in">
-      {/* Header Info */}
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800 mb-1">Ressources Humaines</h1>
-          <div className="flex items-center gap-2 text-sm text-slate-500">
-            <Users size={16} />
-            <span>Gestion administrative des alternants</span>
-          </div>
-        </div>
-        <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors">
-          <Download size={16} />
-          Exporter
-        </button>
-      </div>
-
-      {/* Stats Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <RHStatCard value="24" label="Dossiers en cours" icon={<FileText size={24} />} colorClass="blue" />
-        <RHStatCard value="18" label="Prises en charge" icon={<Euro size={24} />} colorClass="green" />
-        <RHStatCard value="3" label="Ruptures ce mois" icon={<UserMinus size={24} />} colorClass="orange" />
-        <RHStatCard value="156" label="Étudiants actifs" icon={<Users size={24} />} colorClass="purple" />
-      </div>
-
-      {/* Tabs */}
-      <div className="flex overflow-x-auto gap-2 mb-6 bg-white p-1.5 rounded-xl border border-slate-200 w-fit no-scrollbar">
-        {[
-          { id: RHTab.CERFA, label: 'Dossiers', icon: <FileText size={16}/> },
-          { id: RHTab.PEC, label: 'Prises en charge', icon: <Euro size={16}/> },
-          { id: RHTab.RUPTURES, label: 'Ruptures', icon: <UserMinus size={16}/> },
-          { id: RHTab.SUIVI, label: 'Suivi étudiants', icon: <Users size={16}/> },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all whitespace-nowrap ${
-              activeTab === tab.id 
-                ? 'bg-slate-800 text-white' 
-                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
-            }`}
-          >
-            {tab.icon}
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Toolbar */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-        <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-            <input 
-              type="text" 
-              placeholder="Rechercher..." 
-              className="pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full md:w-64"
-            />
-          </div>
-          <div className="flex gap-2">
-            <select className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option>Tous les statuts</option>
-              <option>Validé</option>
-              <option>En cours</option>
-            </select>
-            <button className="p-2 bg-white border border-slate-200 rounded-lg text-slate-500 hover:bg-slate-50">
-              <Filter size={18} />
-            </button>
-          </div>
-        </div>
-        <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/20">
-          <Plus size={18} />
-          {activeTab === RHTab.CERFA ? 'Nouveau Dossier' : 'Nouvelle entrée'}
-        </button>
-      </div>
-
-      {/* Content */}
-      {activeTab === RHTab.CERFA && <CerfaTable />}
-      
-      {activeTab !== RHTab.CERFA && (
-        <div className="bg-white border border-slate-200 rounded-xl p-12 flex flex-col items-center justify-center text-center">
-           <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4 text-slate-300">
-              <Users size={32} />
-           </div>
-           <h3 className="text-lg font-bold text-slate-800 mb-2">Section en construction</h3>
-           <p className="text-slate-500 max-w-sm">La vue {activeTab} est en cours de développement. Revenez plus tard.</p>
-        </div>
-      )}
+        {renderSection()}
     </div>
   );
 };

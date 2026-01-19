@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AppModule } from './types';
+import { AppModule, ViewId } from './types';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import DashboardView from './components/DashboardView';
@@ -8,73 +8,49 @@ import RHView from './components/RHView';
 import StudentView from './components/StudentView';
 
 const App = () => {
-  const [activeModule, setActiveModule] = useState<AppModule>(AppModule.COMMERCIAL);
+  const [activeView, setActiveView] = useState<ViewId>('commercial-dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [activeSidebarItem, setActiveSidebarItem] = useState('dashboard');
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
-  // Fonction centrale de navigation
-  const handleNavigation = (item: string) => {
-    setActiveSidebarItem(item);
-
-    // Mapping entre l'item de la sidebar et le module à afficher
-    if (item === 'dashboard') {
-      setActiveModule(AppModule.COMMERCIAL);
-    } else if (item === 'admission') {
-      setActiveModule(AppModule.ADMISSION);
-    } else if (item === 'etudiant') {
-      setActiveModule(AppModule.STUDENT);
-    } else if (item.startsWith('rh')) {
-      setActiveModule(AppModule.RH);
-    }
+  // Derive active module from active view
+  const getActiveModule = (view: ViewId): AppModule => {
+    if (view.startsWith('commercial')) return AppModule.COMMERCIAL;
+    if (view.startsWith('admission')) return AppModule.ADMISSION;
+    if (view.startsWith('rh')) return AppModule.RH;
+    if (view === 'etudiant') return AppModule.STUDENT;
+    if (view === 'parametres') return AppModule.PARAMETRES;
+    return AppModule.COMMERCIAL;
   };
 
-  // Helper pour obtenir le titre et le sous-titre du header
-  const getHeaderInfo = () => {
-    switch (activeSidebarItem) {
-      case 'dashboard':
-        return { title: 'Commercial', subtitle: 'Vue d\'ensemble et statistiques' };
-      case 'admission':
-        return { title: 'Admissions', subtitle: 'Gestion des candidatures et tests' };
-      case 'etudiant':
-        return { title: 'Espace Étudiant', subtitle: 'Dossier personnel et suivi' };
-      case 'rh':
-        return { title: 'Ressources Humaines', subtitle: 'Vue générale' };
-      case 'rh-fiche':
-        return { title: 'Ressources Humaines', subtitle: 'Fiches Entreprises' };
-      case 'rh-cerfa':
-        return { title: 'Ressources Humaines', subtitle: 'Gestion des CERFA' };
-      case 'rh-pec':
-        return { title: 'Ressources Humaines', subtitle: 'Prises en charge (OPCO)' };
-      case 'rh-ruptures':
-        return { title: 'Ressources Humaines', subtitle: 'Suivi des ruptures' };
-      case 'parametres':
-        return { title: 'Paramètres', subtitle: 'Configuration de l\'application' };
-      default:
-        return { title: 'Commercial', subtitle: 'Tableau de bord' };
-    }
-  };
-
-  const headerInfo = getHeaderInfo();
+  const activeModule = getActiveModule(activeView);
 
   const renderContent = () => {
     switch (activeModule) {
       case AppModule.COMMERCIAL:
-        return <DashboardView />;
+        return <DashboardView activeSubView={activeView} />;
       case AppModule.ADMISSION:
         return <AdmissionView />;
       case AppModule.RH:
-        return <RHView />;
+        return <RHView activeSubView={activeView} />;
       case AppModule.STUDENT:
         return <StudentView />;
+      case AppModule.PARAMETRES:
+        return (
+            <div className="p-8">
+                <div className="bg-white border border-slate-200 rounded-2xl p-6">
+                    <h2 className="text-xl font-bold mb-4">Paramètres</h2>
+                    <p className="text-slate-500">Configuration de l'application (Section en construction)</p>
+                </div>
+            </div>
+        );
       default:
-        return <DashboardView />;
+        return <DashboardView activeSubView={activeView} />;
     }
   };
 
   return (
-    <div className="flex min-h-screen bg-[#F8FAFC] font-sans text-slate-600">
+    <div className="flex min-h-screen bg-[#F8FAFC] font-sans text-[#1E293B]">
       {/* Sidebar Overlay for Mobile */}
       {sidebarOpen && (
         <div 
@@ -86,19 +62,18 @@ const App = () => {
       {/* Sidebar */}
       <Sidebar 
         isOpen={sidebarOpen} 
-        activeItem={activeSidebarItem} 
-        setActiveItem={handleNavigation} 
+        activeView={activeView} 
+        setActiveView={setActiveView} 
       />
 
       {/* Main Content Wrapper */}
       <div className="flex-1 flex flex-col md:ml-[260px] min-w-0 transition-all duration-300">
         <Header 
           toggleSidebar={toggleSidebar}
-          title={headerInfo.title}
-          subtitle={headerInfo.subtitle}
+          activeModule={activeModule}
         />
 
-        <main className="flex-1 p-6 md:p-10 overflow-y-auto">
+        <main className="flex-1 p-8 md:p-10 overflow-y-auto">
           {renderContent()}
         </main>
       </div>

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { User, Save, AlertCircle, ChevronDown, Loader2 } from 'lucide-react';
 import { api } from '../services/api';
@@ -18,7 +17,12 @@ const SectionHeader = ({ number, title }: { number: number, title: string }) => 
   </div>
 );
 
-const FormSection = ({ children, className = "" }: { children: React.ReactNode, className?: string }) => (
+interface FormSectionProps {
+  children?: React.ReactNode;
+  className?: string;
+}
+
+const FormSection: React.FC<FormSectionProps> = ({ children, className = "" }) => (
   <div className={`mb-8 p-8 bg-slate-50/50 border border-slate-200 rounded-2xl transition-all duration-300 hover:bg-white hover:shadow-md ${className}`}>
     {children}
   </div>
