@@ -1,527 +1,993 @@
-import React, { useState, useEffect } from 'react';
-import { User, Save, AlertCircle, ChevronDown, Loader2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { User, Save, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 import { api } from '../services/api';
 
 interface QuestionnaireFormProps {
-  onNext?: (data: any) => void;
+  onNext: (data: any) => void;
+  onBack?: () => void;
 }
 
-// --- COMPONENTS ---
-
-const SectionHeader = ({ number, title }: { number: number, title: string }) => (
-  <div className="flex items-center gap-4 mb-6">
-    <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-700 text-white rounded-xl flex items-center justify-center font-bold text-sm shadow-lg shadow-blue-500/25 transition-transform duration-300 hover:scale-110">
-      {number}
+const FormSection = ({ number, title, children }: { number: number, title: string, children?: React.ReactNode }) => (
+  <div className="mb-8">
+    <div className="flex items-center gap-3 mb-5 border-b border-slate-200 pb-3">
+      <div className="w-8 h-8 bg-emerald-800 text-white rounded-full flex items-center justify-center font-bold text-sm shadow-sm">
+        {number}
+      </div>
+      <h3 className="text-lg font-bold text-slate-800">{title}</h3>
     </div>
-    <h3 className="text-xl font-bold text-slate-800 tracking-tight">{title}</h3>
+    <div className="space-y-5">
+      {children}
+    </div>
   </div>
 );
 
-interface FormSectionProps {
-  children?: React.ReactNode;
-  className?: string;
+interface InputFieldProps {
+  label: string;
+  name: string;
+  required?: boolean;
+  type?: string;
+  placeholder?: string;
+  width?: "full" | "half" | "third" | "two-thirds";
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  error?: string;
 }
 
-const FormSection: React.FC<FormSectionProps> = ({ children, className = "" }) => (
-  <div className={`mb-8 p-8 bg-slate-50/50 border border-slate-200 rounded-2xl transition-all duration-300 hover:bg-white hover:shadow-md ${className}`}>
-    {children}
-  </div>
-);
-
-const InputField = ({ label, name, value, required, type = "text", placeholder, width = "full", hint, error, onChange }: any) => {
+const InputField = ({ label, name, required, type = "text", placeholder, width = "full", value, onChange, error }: InputFieldProps) => {
   const widthClass = {
     "full": "col-span-12",
     "half": "col-span-12 md:col-span-6",
     "third": "col-span-12 md:col-span-4",
     "two-thirds": "col-span-12 md:col-span-8",
-  }[width as string] || "col-span-12";
+  }[width];
 
   return (
     <div className={widthClass}>
-      <label className="block text-sm font-bold text-slate-700 mb-2 transition-colors focus-within:text-blue-600">
-        {label} {required && <span className="text-purple-500">*</span>}
+      <label className="block text-sm font-semibold text-slate-800 mb-2">
+        {label} {required && <span className="text-red-500">*</span>}
       </label>
-      <div className="relative">
-        <input 
-          type={type} 
-          name={name}
-          value={value}
-          placeholder={placeholder}
-          onChange={onChange}
-          className={`w-full px-4 py-3.5 bg-white border-2 rounded-xl text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-4 transition-all shadow-sm ${
-            error 
-              ? 'border-red-300 focus:border-red-500 focus:ring-red-500/10' 
-              : 'border-slate-200 focus:border-blue-500 focus:ring-blue-500/10 hover:border-slate-300'
-          }`}
-        />
-      </div>
-      {error && <p className="mt-1.5 text-xs text-red-500 font-medium flex items-center gap-1"><AlertCircle size={12}/> {error}</p>}
-      {!error && hint && <p className="mt-1.5 text-xs text-slate-400 flex items-center gap-1"><AlertCircle size={12}/> {hint}</p>}
+      <input 
+        type={type} 
+        name={name}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        className={`w-full px-4 py-3 bg-white/70 border-2 rounded-xl text-base text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-400 focus:bg-white transition-all shadow-sm ${
+          error ? 'border-red-300 focus:ring-red-400' : 'border-transparent'
+        }`}
+      />
+      {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
     </div>
   );
 };
 
-const SelectField = ({ label, name, value, required, options, width = "full", error, onChange }: any) => {
+interface SelectFieldProps {
+  label: string;
+  name: string;
+  required?: boolean;
+  width?: "full" | "half" | "third" | "two-thirds";
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  error?: string;
+  children: React.ReactNode;
+}
+
+const SelectField = ({ label, name, required, width = "full", value, onChange, error, children }: SelectFieldProps) => {
   const widthClass = {
     "full": "col-span-12",
     "half": "col-span-12 md:col-span-6",
     "third": "col-span-12 md:col-span-4",
-  }[width as string] || "col-span-12";
+    "two-thirds": "col-span-12 md:col-span-8",
+  }[width];
 
   return (
     <div className={widthClass}>
-      <label className="block text-sm font-bold text-slate-700 mb-2">
-        {label} {required && <span className="text-purple-500">*</span>}
+      <label className="block text-sm font-semibold text-slate-800 mb-2">
+        {label} {required && <span className="text-red-500">*</span>}
       </label>
-      <div className="relative">
-        <select 
-          name={name}
-          value={value}
-          onChange={onChange}
-          className={`w-full px-4 py-3.5 bg-white border-2 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-4 transition-all appearance-none cursor-pointer ${
-            error 
-              ? 'border-red-300 focus:border-red-500 focus:ring-red-500/10' 
-              : 'border-slate-200 focus:border-blue-500 focus:ring-blue-500/10 hover:border-slate-300'
-          }`}
-        >
-          <option value="">Sélectionnez</option>
-          {options.map((opt: any) => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
-          ))}
-        </select>
-        <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-      </div>
-      {error && <p className="mt-1.5 text-xs text-red-500 font-medium">{error}</p>}
+      <select
+        name={name}
+        value={value}
+        onChange={onChange}
+        className={`w-full px-4 py-3 bg-white/70 border-2 rounded-xl text-base text-slate-800 focus:ring-2 focus:ring-blue-400 focus:bg-white transition-all shadow-sm ${
+          error ? 'border-red-300 focus:ring-red-400' : 'border-transparent'
+        }`}
+      >
+        {children}
+      </select>
+      {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
     </div>
   );
 };
 
-const RadioGroup = ({ label, name, options, value, error, onChange, layout = "horizontal" }: any) => (
+interface TextAreaFieldProps {
+  label: string;
+  name: string;
+  required?: boolean;
+  placeholder?: string;
+  rows?: number;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+  error?: string;
+}
+
+const TextAreaField = ({ label, name, required, placeholder, rows = 4, value, onChange, error }: TextAreaFieldProps) => {
+  return (
+    <div className="col-span-12">
+      <label className="block text-sm font-semibold text-slate-800 mb-2">
+        {label} {required && <span className="text-red-500">*</span>}
+      </label>
+      <textarea
+        name={name}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        rows={rows}
+        className={`w-full px-4 py-3 bg-white/70 border-2 rounded-xl text-base text-slate-800 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-400 focus:bg-white transition-all shadow-sm resize-none ${
+          error ? 'border-red-300 focus:ring-red-400' : 'border-transparent'
+        }`}
+      />
+      {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
+    </div>
+  );
+};
+
+interface RadioGroupProps {
+  label: string;
+  name: string;
+  options: string[];
+  layout?: "horizontal" | "vertical" | "grid";
+  value: string;
+  onChange: (value: string) => void;
+  error?: string;
+}
+
+const RadioGroup = ({ label, name, options, layout = "horizontal", value, onChange, error }: RadioGroupProps) => (
   <div className="col-span-12">
-    <label className="block text-sm font-bold text-slate-700 mb-3">{label}</label>
-    <div className={`flex gap-3 ${layout === 'grid' ? 'grid grid-cols-2 md:grid-cols-3' : 'flex-wrap'}`}>
-      {options.map((opt: any, idx: number) => (
-        <label key={opt.value} className={`relative cursor-pointer group ${layout === 'grid' ? '' : 'flex-1 min-w-[140px]'}`}>
+    <label className="block text-sm font-semibold text-slate-800 mb-2">{label}</label>
+    <div className={`flex gap-3 ${layout === 'vertical' ? 'flex-col' : layout === 'grid' ? 'grid grid-cols-2 md:grid-cols-3' : 'flex-wrap'}`}>
+      {options.map((opt, idx) => (
+        <label key={idx} className="relative cursor-pointer group flex-1 min-w-[120px]">
           <input 
             type="radio" 
             name={name} 
-            value={opt.value}
-            checked={value === opt.value}
-            onChange={onChange}
+            value={opt}
+            checked={value === opt}
+            onChange={() => onChange(opt)}
             className="peer sr-only" 
           />
-          <div className={`flex items-center gap-3 px-5 py-4 bg-white border-2 rounded-xl transition-all shadow-sm ${
-            error && !value ? 'border-red-200' : 'border-slate-200 hover:border-slate-300'
-          } peer-checked:border-blue-500 peer-checked:bg-blue-50/30 peer-checked:shadow-blue-500/10 peer-checked:-translate-y-0.5`}>
-            <span className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold transition-all shadow-sm ${
-              value === opt.value 
-                ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-blue-500/30 scale-105' 
-                : 'bg-slate-100 text-slate-500'
+          <div className={`flex items-center gap-3 px-4 py-3 bg-slate-200/50 rounded-xl border-2 transition-all ${
+            value === opt 
+              ? 'bg-white/90 border-blue-500' 
+              : 'border-transparent hover:bg-white/60'
+          }`}>
+            <span className={`w-7 h-7 rounded-md flex items-center justify-center text-xs font-bold transition-colors ${
+              value === opt ? 'bg-blue-500 text-white' : 'bg-slate-600 text-white'
             }`}>
               {String.fromCharCode(65 + idx)}
             </span>
-            <span className={`font-semibold text-sm ${value === opt.value ? 'text-blue-700' : 'text-slate-700'}`}>
-              {opt.label}
-            </span>
+            <span className="font-medium text-slate-700">{opt}</span>
           </div>
         </label>
       ))}
     </div>
-    {error && <p className="mt-1.5 text-xs text-red-500 font-medium">{error}</p>}
+    {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
   </div>
 );
 
-// --- MAIN FORM ---
-
-const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
+const QuestionnaireForm = ({ onNext, onBack }: QuestionnaireFormProps) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [attestation, setAttestation] = useState(false);
+  
+  // Form data state - TOUS LES CHAMPS DU FORMULAIRE HTML
   const [formData, setFormData] = useState({
-    // 1. Infos perso
+    // Section 1: Informations personnelles
     prenom: '',
-    nom: '',
-    nomUsage: '',
+    nom_naissance: '',
+    nom_usage: '',
     sexe: '',
-    dateNaissance: '',
-    nir: '',
+    date_naissance: '',
     nationalite: '',
-    villeNaissance: '',
-    deptNaissance: '',
+    commune_naissance: '',
+    departement: '',
     
-    // 2. Représentants (si mineur - UI only)
-    repNom: '',
-    repPrenom: '',
-    repEmail: '',
-    repTelephone: '',
-    repLien: '',
-
-    // 3. Coordonnées
-    adresse: '',
-    codePostal: '',
+    // Section 2: Coordonnées
+    adresse_residence: '',
+    code_postal: '',
     ville: '',
     email: '',
     telephone: '',
-
-    // 4. Situation & Déclarations
-    situation: '',
-    regimeSocial: '',
-    sportifHautNiveau: 'non',
-    projetEntreprise: 'non',
-    rqth: 'non',
-
-    // 5. Parcours
-    diplome: '', // Dernier diplôme préparé
-    classe: '', // Dernière classe
-    niveau: '', // Diplôme obtenu (Bac, etc.)
-    intituleDiplome: '',
-
-    // 6. Formation & Infos
-    formation: '',
-    dateVisite: '',
-    dateReglement: '',
-    entrepriseAccueil: 'non',
-    nomEntreprise: '',
-    source: '',
-    motivations: '',
+    nir: '',
     
-    attestation: false
+    // Section 3: Situation & Déclarations
+    situation_avant: '',
+    regime_social: '',
+    sportif_haut_niveau: 'non',
+    projet_entreprise: 'non',
+    rqth: 'non',
+    
+    // Section 4: Parcours scolaire
+    dernier_diplome_prepare: '',
+    derniere_classe: '',
+    intitule_diplome: '',
+    bac: '',
+    
+    // Section 5: Formation souhaitée
+    formation: '',
+    date_visite: '',
+    date_reglement: '',
+    entreprise_accueil: '',
+    nom_entreprise: '',
+    
+    // Section 6: Informations complémentaires
+    source: '',
+    motivations: ''
   });
 
+  // Validation errors
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [isMinor, setIsMinor] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Check minor status
-  useEffect(() => {
-    if (formData.dateNaissance) {
-        const birthDate = new Date(formData.dateNaissance);
-        const today = new Date();
-        let age = today.getFullYear() - birthDate.getFullYear();
-        const m = today.getMonth() - birthDate.getMonth();
-        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-            age--;
-        }
-        setIsMinor(age < 18);
-    }
-  }, [formData.dateNaissance]);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value, type } = e.target;
-    const val = type === 'checkbox' ? (e.target as HTMLInputElement).checked : value;
-    
-    setFormData(prev => ({ ...prev, [name]: val }));
-    
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    // Clear error when user starts typing
     if (errors[name]) {
-      setErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[name];
-        return newErrors;
-      });
+      setErrors(prev => ({ ...prev, [name]: '' }));
     }
   };
 
-  const validateForm = () => {
+  const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
+    }
+  };
+
+  const handleRadioChange = (name: string, value: string) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
+    }
+  };
+
+  const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    // Required fields validation - Section 1
+    if (!formData.prenom.trim()) newErrors.prenom = 'Le prénom est requis';
+    if (!formData.nom_naissance.trim()) newErrors.nom_naissance = 'Le nom de naissance est requis';
+    if (!formData.sexe) newErrors.sexe = 'Le sexe est requis';
+    if (!formData.date_naissance) newErrors.date_naissance = 'La date de naissance est requise';
+    if (!formData.nationalite) newErrors.nationalite = 'La nationalité est requise';
+    if (!formData.commune_naissance.trim()) newErrors.commune_naissance = 'La commune de naissance est requise';
+    if (!formData.departement.trim()) newErrors.departement = 'Le département est requis';
     
-    // Required fields check
-    const required = [
-        'prenom', 'nom', 'sexe', 'dateNaissance', 'nationalite', 'villeNaissance', 'deptNaissance',
-        'adresse', 'codePostal', 'ville', 'email', 'telephone',
-        'situation', 'diplome', 'classe', 'niveau', 'formation', 'dateVisite'
-    ];
+    // Required fields validation - Section 2
+    if (!formData.adresse_residence.trim()) newErrors.adresse_residence = "L'adresse de résidence est requise";
+    if (!formData.code_postal.trim()) newErrors.code_postal = 'Le code postal est requis';
+    if (!formData.ville.trim()) newErrors.ville = 'La ville est requise';
+    if (!formData.email.trim()) newErrors.email = "L'email est requis";
+    if (!formData.telephone.trim()) newErrors.telephone = 'Le téléphone est requis';
+    
+    // Required fields validation - Section 3
+    if (!formData.situation_avant) newErrors.situation_avant = 'La situation avant le contrat est requise';
+    
+    // Required fields validation - Section 4
+    if (!formData.dernier_diplome_prepare) newErrors.dernier_diplome_prepare = 'Le dernier diplôme préparé est requis';
+    if (!formData.derniere_classe) newErrors.derniere_classe = 'La dernière classe suivie est requise';
+    if (!formData.bac) newErrors.bac = 'Le niveau de diplôme est requis';
+    
+    // Required fields validation - Section 5
+    if (!formData.formation) newErrors.formation = 'La formation est requise';
 
-    required.forEach(field => {
-        // @ts-ignore
-        if (!formData[field]) newErrors[field] = "Ce champ est requis";
-    });
-
-    if (formData.email && !emailRegex.test(formData.email)) newErrors.email = "Email invalide";
-    if (formData.codePostal && !/^\d{5}$/.test(formData.codePostal)) newErrors.codePostal = "Code postal invalide";
-    if (formData.telephone && formData.telephone.replace(/\D/g, '').length < 9) newErrors.telephone = "Téléphone invalide";
-
-    if (formData.entrepriseAccueil === 'oui' && !formData.nomEntreprise.trim()) {
-        newErrors.nomEntreprise = "Le nom de l'entreprise est requis";
+    // Email format validation
+    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = "Format d'email invalide";
     }
 
-    if (isMinor) {
-        if (!formData.repNom) newErrors.repNom = "Requis pour les mineurs";
-        if (!formData.repPrenom) newErrors.repPrenom = "Requis pour les mineurs";
-        if (!formData.repEmail) newErrors.repEmail = "Requis pour les mineurs";
-        if (!formData.repTelephone) newErrors.repTelephone = "Requis pour les mineurs";
+    // Phone format validation (French format)
+    if (formData.telephone && !/^(\+33|0)[1-9](\d{2}){4}$/.test(formData.telephone.replace(/\s/g, ''))) {
+      newErrors.telephone = 'Format de téléphone invalide (ex: 0612345678)';
     }
 
-    if (!formData.attestation) newErrors.attestation = "Vous devez attester l'exactitude des informations";
+    // Code postal validation
+    if (formData.code_postal && !/^\d{5}$/.test(formData.code_postal)) {
+      newErrors.code_postal = 'Le code postal doit contenir 5 chiffres';
+    }
+
+    // Age validation (minimum 16 years)
+    if (formData.date_naissance) {
+      const birthDate = new Date(formData.date_naissance);
+      const today = new Date();
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+      if (age < 16) {
+        newErrors.date_naissance = 'Vous devez avoir au moins 16 ans';
+      }
+    }
+
+    // Attestation validation
+    if (!attestation) {
+      newErrors.attestation = "Vous devez attester l'exactitude des informations";
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async () => {
-    if (validateForm()) {
-        setIsSubmitting(true);
-        try {
-          await api.submitStudent(formData);
-          if (onNext) onNext(formData);
-        } catch (error: any) {
-          console.error("Submission error", error);
-          alert(`Erreur: ${error.message}`);
-        } finally {
-          setIsSubmitting(false);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitError(null);
+
+    if (!validateForm()) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // Prepare data for API
+      const apiData = {
+        prenom: formData.prenom,
+        nom_naissance: formData.nom_naissance,
+        nom_usage: formData.nom_usage || undefined,
+        sexe: formData.sexe,
+        date_naissance: formData.date_naissance,
+        nationalite: formData.nationalite,
+        commune_naissance: formData.commune_naissance,
+        departement: formData.departement,
+        adresse_residence: formData.adresse_residence,
+        code_postal: formData.code_postal,
+        ville: formData.ville,
+        email: formData.email,
+        telephone: formData.telephone.replace(/\s/g, ''),
+        nir: formData.nir || undefined,
+        
+        // Section 3: Situation & Déclarations
+        situation: formData.situation_avant || undefined,
+        regime_social: formData.regime_social || undefined,
+        declare_inscription_sportif_haut_niveau: formData.sportif_haut_niveau === 'oui',
+        declare_avoir_projet_creation_reprise_entreprise: formData.projet_entreprise === 'oui',
+        declare_travailleur_handicape: formData.rqth === 'oui',
+        
+        // Section 4: Parcours scolaire
+        dernier_diplome_prepare: formData.dernier_diplome_prepare || undefined,
+        derniere_classe: formData.derniere_classe || undefined,
+        bac: formData.bac,
+        
+        // Section 5: Formation souhaitée
+        formation_souhaitee: formData.formation || undefined,
+        date_de_visite: formData.date_visite || undefined,
+        date_de_reglement: formData.date_reglement || undefined,
+        entreprise_d_accueil: formData.entreprise_accueil === 'Oui' ? (formData.nom_entreprise || "Oui") : (formData.entreprise_accueil === 'En recherche' ? "En recherche" : "Non"),
+        
+        // Section 6: Informations complémentaires
+        connaissance_rush_how: formData.source || undefined,
+        motivation_projet_professionnel: formData.motivations || undefined
+      };
+
+      const response = await api.submitStudent(apiData);
+      
+      if (response && response.success) {
+        // Store record_id in localStorage for later use
+        if (response.record_id) {
+            localStorage.setItem('candidateRecordId', response.record_id);
+            localStorage.setItem('candidateName', `${formData.prenom} ${formData.nom_naissance}`);
         }
-    } else {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        
+        // Notify parent component
+        onNext(response);
+      }
+    } catch (error) {
+      console.error('Erreur lors de la soumission:', error);
+      setSubmitError(error instanceof Error ? error.message : 'Une erreur est survenue lors de l\'enregistrement');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  // --- PROGRESS BAR ---
-  const sections = 6;
-  const filledCount = Object.values(formData).filter(v => v !== '' && v !== false && v !== 'non').length;
-  const progress = Math.min(100, Math.round((filledCount / 25) * 100));
-
   return (
-    <div className="bg-white rounded-3xl p-8 md:p-12 max-w-5xl mx-auto shadow-2xl border border-slate-100 relative overflow-hidden">
-      
-      {/* Header with Progress */}
-      <div className="mb-12">
-        <div className="flex items-center justify-between mb-6 pb-6 border-b border-slate-100">
-            <div className="flex items-center gap-5">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-blue-500/20">
-                    <User size={32} />
-                </div>
-                <div>
-                    <h2 className="text-2xl font-bold text-slate-800">Fiche d'inscription étudiant</h2>
-                    <p className="text-slate-500">Dossier d'admission 2025-2026</p>
-                </div>
-            </div>
-            <div className="hidden md:block text-right">
-                <div className="text-sm font-bold text-blue-600 mb-1">{progress}% complété</div>
-                <div className="w-32 h-2 bg-slate-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-blue-600 rounded-full transition-all duration-500" style={{ width: `${progress}%` }}></div>
-                </div>
-            </div>
+    <form onSubmit={handleSubmit} className="bg-[#B8D4CE] rounded-3xl p-6 md:p-10 max-w-4xl mx-auto shadow-xl shadow-[#B8D4CE]/20">
+      <div className="flex items-center gap-4 mb-8 pb-6 border-b-2 border-black/5">
+        <div className="w-14 h-14 bg-black/5 rounded-2xl flex items-center justify-center text-emerald-900">
+          <User size={32} />
+        </div>
+        <div>
+          <h2 className="text-2xl font-bold text-slate-900 mb-1">Fiche d'inscription étudiant</h2>
+          <p className="text-slate-600">Complétez toutes les informations pour finaliser votre dossier</p>
         </div>
       </div>
 
-      <div className="space-y-2">
+      {submitError && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3">
+          <AlertCircle className="text-red-500 shrink-0" size={20} />
+          <p className="text-red-700 text-sm">{submitError}</p>
+        </div>
+      )}
+
+      <div className="grid grid-cols-12 gap-5">
         
-        {/* SECTION 1: INFOS PERSO */}
-        <FormSection>
-            <SectionHeader number={1} title="Informations personnelles" />
+        {/* Section 1 - Informations personnelles */}
+        <div className="col-span-12">
+          <FormSection number={1} title="Informations personnelles">
             <div className="grid grid-cols-12 gap-5">
-                <InputField label="Prénom" name="prenom" value={formData.prenom} onChange={handleChange} error={errors.prenom} required width="half" placeholder="Votre prénom" />
-                <InputField label="Nom de naissance" name="nom" value={formData.nom} onChange={handleChange} error={errors.nom} required width="half" placeholder="Votre nom" />
-                <InputField label="Nom d'usage" name="nomUsage" value={formData.nomUsage} onChange={handleChange} width="full" placeholder="Si différent" />
-                
-                <RadioGroup label="Sexe" name="sexe" value={formData.sexe} onChange={handleChange} error={errors.sexe} 
-                    options={[{ label: 'Féminin', value: 'feminin' }, { label: 'Masculin', value: 'masculin' }]} 
-                />
-                
-                <InputField label="Date de naissance" name="dateNaissance" value={formData.dateNaissance} onChange={handleChange} error={errors.dateNaissance} required width="half" type="date" />
-                <InputField label="NIR (Sécurité Sociale)" name="nir" value={formData.nir} onChange={handleChange} width="half" placeholder="1 85 12 75..." hint="15 chiffres" />
-                
-                <SelectField label="Nationalité" name="nationalite" value={formData.nationalite} onChange={handleChange} error={errors.nationalite} required width="half"
-                    options={[
-                        { label: 'Française', value: 'francaise' },
-                        { label: 'Union Européenne', value: 'ue' },
-                        { label: 'Hors UE', value: 'hors_ue' }
-                    ]}
-                />
-                <InputField label="Commune de naissance" name="villeNaissance" value={formData.villeNaissance} onChange={handleChange} error={errors.villeNaissance} required width="half" />
-                <InputField label="Département de naissance" name="deptNaissance" value={formData.deptNaissance} onChange={handleChange} error={errors.deptNaissance} required width="full" placeholder="Ex: 75" />
+              <InputField 
+                label="Prénom" 
+                name="prenom"
+                required 
+                width="half" 
+                placeholder="Votre prénom"
+                value={formData.prenom}
+                onChange={handleInputChange}
+                error={errors.prenom}
+              />
+              <InputField 
+                label="Nom de naissance" 
+                name="nom_naissance"
+                required 
+                width="half" 
+                placeholder="Votre nom de naissance"
+                value={formData.nom_naissance}
+                onChange={handleInputChange}
+                error={errors.nom_naissance}
+              />
+              <InputField 
+                label="Nom d'usage" 
+                name="nom_usage"
+                width="full" 
+                placeholder="Si différent du nom de naissance"
+                value={formData.nom_usage}
+                onChange={handleInputChange}
+              />
+              <RadioGroup 
+                label="Sexe *" 
+                name="sexe"
+                options={["Féminin", "Masculin"]}
+                value={formData.sexe}
+                onChange={(value) => handleRadioChange('sexe', value)}
+                error={errors.sexe}
+              />
+              <InputField 
+                label="Date de naissance" 
+                name="date_naissance"
+                required 
+                width="half" 
+                type="date"
+                value={formData.date_naissance}
+                onChange={handleInputChange}
+                error={errors.date_naissance}
+              />
+              <SelectField
+                label="Nationalité"
+                name="nationalite"
+                required
+                width="half"
+                value={formData.nationalite}
+                onChange={handleSelectChange}
+                error={errors.nationalite}
+              >
+                <option value="">Sélectionnez</option>
+                <option value="francaise">Française</option>
+                <option value="ue">Union Européenne</option>
+                <option value="hors_ue">Etranger hors Union Européenne</option>
+              </SelectField>
+              <InputField 
+                label="Commune de naissance" 
+                name="commune_naissance"
+                required 
+                width="half" 
+                placeholder="Ville de naissance"
+                value={formData.commune_naissance}
+                onChange={handleInputChange}
+                error={errors.commune_naissance}
+              />
+              <InputField 
+                label="Département de naissance" 
+                name="departement"
+                required 
+                width="half" 
+                placeholder="Ex: 75 - Paris"
+                value={formData.departement}
+                onChange={handleInputChange}
+                error={errors.departement}
+              />
             </div>
-        </FormSection>
-
-        {/* SECTION 2: MINEUR (Conditionnel) */}
-        {isMinor && (
-            <div className="mb-8 p-8 bg-amber-50 border border-amber-200 rounded-2xl animate-fade-in">
-                <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-4">
-                        <div className="w-9 h-9 bg-gradient-to-br from-amber-500 to-orange-600 text-white rounded-xl flex items-center justify-center font-bold text-sm shadow-lg shadow-amber-500/25">2</div>
-                        <h3 className="text-xl font-bold text-slate-800">Représentant légal</h3>
-                    </div>
-                    <span className="px-3 py-1 bg-amber-200 text-amber-800 rounded-full text-xs font-bold uppercase tracking-wider">Mineur</span>
-                </div>
-                
-                <div className="bg-white p-6 rounded-xl border border-amber-100 shadow-sm">
-                    <h4 className="font-bold text-slate-700 mb-4 border-b border-slate-100 pb-2">Responsable légal principal</h4>
-                    <div className="grid grid-cols-12 gap-5">
-                        <InputField label="Nom" name="repNom" value={formData.repNom} onChange={handleChange} error={errors.repNom} required width="half" />
-                        <InputField label="Prénom" name="repPrenom" value={formData.repPrenom} onChange={handleChange} error={errors.repPrenom} required width="half" />
-                        <InputField label="Email" name="repEmail" value={formData.repEmail} onChange={handleChange} error={errors.repEmail} required width="half" type="email" />
-                        <InputField label="Téléphone" name="repTelephone" value={formData.repTelephone} onChange={handleChange} error={errors.repTelephone} required width="half" type="tel" />
-                        <SelectField label="Lien de parenté" name="repLien" value={formData.repLien} onChange={handleChange} width="full"
-                            options={[
-                                { label: 'Père', value: 'pere' }, { label: 'Mère', value: 'mere' }, { label: 'Tuteur', value: 'tuteur' }
-                            ]}
-                        />
-                    </div>
-                </div>
-            </div>
-        )}
-
-        {/* SECTION 3: COORDONNÉES */}
-        <FormSection>
-            <SectionHeader number={isMinor ? 3 : 2} title="Coordonnées" />
-            <div className="grid grid-cols-12 gap-5">
-                <InputField label="Adresse" name="adresse" value={formData.adresse} onChange={handleChange} error={errors.adresse} required width="full" placeholder="N° et Rue" />
-                <InputField label="Code Postal" name="codePostal" value={formData.codePostal} onChange={handleChange} error={errors.codePostal} required width="third" />
-                <InputField label="Ville" name="ville" value={formData.ville} onChange={handleChange} error={errors.ville} required width="two-thirds" />
-                <InputField label="Email personnel" name="email" value={formData.email} onChange={handleChange} error={errors.email} required width="half" type="email" />
-                <InputField label="Téléphone mobile" name="telephone" value={formData.telephone} onChange={handleChange} error={errors.telephone} required width="half" type="tel" />
-            </div>
-        </FormSection>
-
-        {/* SECTION 4: SITUATION */}
-        <FormSection>
-            <SectionHeader number={isMinor ? 4 : 3} title="Situation & Déclarations" />
-            <div className="grid grid-cols-12 gap-5">
-                <SelectField label="Situation actuelle" name="situation" value={formData.situation} onChange={handleChange} error={errors.situation} required width="full"
-                    options={[
-                        { label: 'Scolaire', value: 'scolaire' },
-                        { label: 'Etudiant', value: 'etudiant' },
-                        { label: 'Apprenti', value: 'apprenti' },
-                        { label: 'Demandeur d\'emploi', value: 'demandeur_emploi' },
-                        { label: 'Salarié', value: 'salarie' }
-                    ]}
-                />
-                <SelectField label="Régime social" name="regimeSocial" value={formData.regimeSocial} onChange={handleChange} width="full"
-                    options={[
-                        { label: 'Sécurité Sociale (URSSAF)', value: 'urssaf' },
-                        { label: 'MSA', value: 'msa' }
-                    ]}
-                />
-                
-                <div className="col-span-12 space-y-4 mt-2">
-                    <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
-                        <RadioGroup label="Inscrit sur la liste des sportifs de haut niveau ?" name="sportifHautNiveau" value={formData.sportifHautNiveau} onChange={handleChange} 
-                            options={[{ label: 'Oui', value: 'oui' }, { label: 'Non', value: 'non' }]} 
-                        />
-                    </div>
-                    <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
-                        <RadioGroup label="Projet de création ou reprise d'entreprise ?" name="projetEntreprise" value={formData.projetEntreprise} onChange={handleChange} 
-                            options={[{ label: 'Oui', value: 'oui' }, { label: 'Non', value: 'non' }]} 
-                        />
-                    </div>
-                    <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
-                        <RadioGroup label="Reconnaissance travailleur handicapé (RQTH) ?" name="rqth" value={formData.rqth} onChange={handleChange} 
-                            options={[{ label: 'Oui', value: 'oui' }, { label: 'Non', value: 'non' }]} 
-                        />
-                    </div>
-                </div>
-            </div>
-        </FormSection>
-
-        {/* SECTION 5: PARCOURS SCOLAIRE */}
-        <FormSection>
-            <SectionHeader number={isMinor ? 5 : 4} title="Parcours scolaire" />
-            <div className="grid grid-cols-12 gap-5">
-                <SelectField label="Dernier diplôme préparé" name="diplome" value={formData.diplome} onChange={handleChange} error={errors.diplome} required width="full"
-                    options={[
-                        { label: 'BAC Général', value: 'bac_general' },
-                        { label: 'BAC Techno', value: 'bac_techno' },
-                        { label: 'BAC Pro', value: 'bac_pro' },
-                        { label: 'BTS / DUT', value: 'bts' },
-                        { label: 'Licence', value: 'licence' },
-                        { label: 'Master', value: 'master' },
-                        { label: 'Autre', value: 'autre' }
-                    ]}
-                />
-                <InputField label="Dernière classe suivie" name="classe" value={formData.classe} onChange={handleChange} required width="half" placeholder="Ex: Terminale" />
-                <InputField label="Intitulé exact du diplôme" name="intituleDiplome" value={formData.intituleDiplome} onChange={handleChange} width="half" placeholder="Ex: Spécialité Maths" />
-                
-                <RadioGroup label="Diplôme le plus élevé obtenu" name="niveau" value={formData.niveau} onChange={handleChange} error={errors.niveau} layout="grid"
-                    options={[
-                        { label: 'Aucun', value: 'aucun' },
-                        { label: 'CAP/BEP', value: 'cap_bep' },
-                        { label: 'BAC', value: 'bac' },
-                        { label: 'BAC +2', value: 'bac2' },
-                        { label: 'BAC +3/4', value: 'bac3_4' },
-                        { label: 'BAC +5', value: 'bac5' }
-                    ]}
-                />
-            </div>
-        </FormSection>
-
-        {/* SECTION 6: FORMATION & INFOS */}
-        <FormSection>
-            <SectionHeader number={isMinor ? 6 : 5} title="Formation souhaitée" />
-            <div className="grid grid-cols-12 gap-5">
-                <SelectField label="Formation visée" name="formation" value={formData.formation} onChange={handleChange} error={errors.formation} required width="full"
-                    options={[
-                        { label: 'BTS MCO - Management Commercial', value: 'bts_mco' },
-                        { label: 'BTS NDRC - Négociation Client', value: 'bts_ndrc' },
-                        { label: 'BACHELOR RDC', value: 'bachelor' },
-                        { label: 'TP NTC - Négociateur', value: 'tp_ntc' }
-                    ]}
-                />
-                <InputField label="Date de visite / JPO" name="dateVisite" value={formData.dateVisite} onChange={handleChange} required width="half" type="date" />
-                <InputField label="Date règlement" name="dateReglement" value={formData.dateReglement} onChange={handleChange} width="half" type="date" />
-                
-                <div className="col-span-12 p-5 bg-blue-50 rounded-xl border border-blue-100 mt-2">
-                    <RadioGroup label="Avez-vous déjà une entreprise d'accueil ?" name="entrepriseAccueil" value={formData.entrepriseAccueil} onChange={handleChange} 
-                        options={[
-                            { label: 'Oui', value: 'oui' }, 
-                            { label: 'En recherche', value: 'en_cours' },
-                            { label: 'Non', value: 'non' }
-                        ]} 
-                    />
-                    {formData.entrepriseAccueil === 'oui' && (
-                        <div className="mt-4 animate-fade-in">
-                            <InputField label="Nom de l'entreprise" name="nomEntreprise" value={formData.nomEntreprise} onChange={handleChange} width="full" error={errors.nomEntreprise} />
-                        </div>
-                    )}
-                </div>
-
-                <div className="col-span-12 mt-4">
-                    <label className="block text-sm font-bold text-slate-700 mb-2">Motivations</label>
-                    <textarea 
-                        name="motivations" 
-                        value={formData.motivations}
-                        onChange={handleChange}
-                        rows={4}
-                        className="w-full px-4 py-3 bg-white border-2 border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all resize-none"
-                        placeholder="Décrivez brièvement votre projet..."
-                    ></textarea>
-                </div>
-            </div>
-        </FormSection>
-
-        {/* Validation */}
-        <div className="mt-12 pt-8 border-t-2 border-slate-100 flex flex-col items-center gap-6">
-            <label className={`flex items-center gap-3 cursor-pointer p-5 rounded-xl border-2 transition-all w-full md:w-auto ${
-                errors.attestation ? 'border-red-200 bg-red-50' : 'border-slate-200 hover:border-blue-300 hover:bg-slate-50'
-            }`}>
-                <input 
-                    type="checkbox" 
-                    name="attestation"
-                    checked={formData.attestation}
-                    onChange={handleChange}
-                    className="w-5 h-5 accent-blue-600 rounded cursor-pointer" 
-                />
-                <span className="font-semibold text-slate-700">
-                    J'atteste sur l'honneur l'exactitude des informations fournies
-                </span>
-            </label>
-            {errors.attestation && <p className="text-red-500 text-sm font-bold">{errors.attestation}</p>}
-
-            <button 
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-              className="group flex items-center justify-center gap-3 px-10 py-4 bg-slate-900 text-white rounded-2xl font-bold text-lg hover:bg-slate-800 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 disabled:opacity-70 disabled:cursor-not-allowed w-full md:w-auto"
-            >
-              {isSubmitting ? <Loader2 size={24} className="animate-spin" /> : <Save size={24} />}
-              {isSubmitting ? 'Enregistrement...' : 'Enregistrer et continuer'}
-            </button>
-            
-            {Object.keys(errors).length > 0 && (
-                <div className="flex items-center gap-2 text-red-500 font-bold bg-red-50 px-4 py-2 rounded-lg animate-bounce">
-                    <AlertCircle size={20} />
-                    Veuillez corriger les erreurs ci-dessus
-                </div>
-            )}
+          </FormSection>
         </div>
 
+        {/* Section 2 - Coordonnées */}
+        <div className="col-span-12">
+          <FormSection number={2} title="Coordonnées">
+            <div className="grid grid-cols-12 gap-5">
+              <InputField 
+                label="Adresse de résidence" 
+                name="adresse_residence"
+                required 
+                width="full" 
+                placeholder="Numéro et nom de rue"
+                value={formData.adresse_residence}
+                onChange={handleInputChange}
+                error={errors.adresse_residence}
+              />
+              <InputField 
+                label="Code postal" 
+                name="code_postal"
+                required 
+                width="third" 
+                placeholder="Ex: 75001"
+                value={formData.code_postal}
+                onChange={handleInputChange}
+                error={errors.code_postal}
+              />
+              <InputField 
+                label="Ville" 
+                name="ville"
+                required 
+                width="two-thirds" 
+                placeholder="Ville de résidence"
+                value={formData.ville}
+                onChange={handleInputChange}
+                error={errors.ville}
+              />
+              <InputField 
+                label="E-mail" 
+                name="email"
+                required 
+                width="half" 
+                type="email" 
+                placeholder="votre@email.com"
+                value={formData.email}
+                onChange={handleInputChange}
+                error={errors.email}
+              />
+              <InputField 
+                label="Téléphone" 
+                name="telephone"
+                required 
+                width="half" 
+                type="tel" 
+                placeholder="06 12 34 56 78"
+                value={formData.telephone}
+                onChange={handleInputChange}
+                error={errors.telephone}
+              />
+              <InputField 
+                label="NIR (Numéro de Sécurité Sociale)" 
+                name="nir"
+                width="full" 
+                placeholder="1 85 12 75 108 123 45"
+                value={formData.nir}
+                onChange={handleInputChange}
+              />
+            </div>
+          </FormSection>
+        </div>
+
+        {/* Section 3 - Situation & Déclarations */}
+        <div className="col-span-12">
+          <FormSection number={3} title="Situation & Déclarations">
+            <div className="grid grid-cols-12 gap-5">
+              <SelectField
+                label="Situation avant le contrat"
+                name="situation_avant"
+                required
+                width="full"
+                value={formData.situation_avant}
+                onChange={handleSelectChange}
+                error={errors.situation_avant}
+              >
+                <option value="">Sélectionnez votre situation</option>
+                <option value="lyceen">Lycéen(ne)</option>
+                <option value="etudiant">Étudiant(e)</option>
+                <option value="demandeur_emploi">Demandeur d'emploi</option>
+                <option value="salarie">Salarié(e)</option>
+                <option value="service_civique">Service civique</option>
+                <option value="stagiaire">Stagiaire</option>
+                <option value="autre">Autre</option>
+              </SelectField>
+
+              <SelectField
+                label="Régime social"
+                name="regime_social"
+                width="full"
+                value={formData.regime_social}
+                onChange={handleSelectChange}
+              >
+                <option value="">Sélectionnez</option>
+                <option value="urssaf">URSSAF</option>
+                <option value="msa">MSA (Mutualité Sociale Agricole)</option>
+              </SelectField>
+
+              <div className="col-span-12 space-y-4">
+                <div className="bg-white/40 p-4 rounded-xl">
+                  <label className="block text-sm font-semibold text-slate-800 mb-3">
+                    Déclare être inscrit(e) sur la liste des sportifs de haut niveau
+                  </label>
+                  <div className="flex gap-3">
+                    <label className="relative cursor-pointer group flex-1">
+                      <input 
+                        type="radio" 
+                        name="sportif_haut_niveau" 
+                        value="oui"
+                        checked={formData.sportif_haut_niveau === 'oui'}
+                        onChange={() => handleRadioChange('sportif_haut_niveau', 'oui')}
+                        className="peer sr-only" 
+                      />
+                      <div className={`flex items-center gap-3 px-4 py-3 bg-slate-200/50 rounded-xl border-2 transition-all ${
+                        formData.sportif_haut_niveau === 'oui' 
+                          ? 'bg-white/90 border-blue-500' 
+                          : 'border-transparent hover:bg-white/60'
+                      }`}>
+                        <span className={`w-7 h-7 rounded-md flex items-center justify-center text-xs font-bold ${
+                          formData.sportif_haut_niveau === 'oui' ? 'bg-blue-500 text-white' : 'bg-slate-600 text-white'
+                        }`}>A</span>
+                        <span className="font-medium text-slate-700">Oui</span>
+                      </div>
+                    </label>
+                    <label className="relative cursor-pointer group flex-1">
+                      <input 
+                        type="radio" 
+                        name="sportif_haut_niveau" 
+                        value="non"
+                        checked={formData.sportif_haut_niveau === 'non'}
+                        onChange={() => handleRadioChange('sportif_haut_niveau', 'non')}
+                        className="peer sr-only" 
+                      />
+                      <div className={`flex items-center gap-3 px-4 py-3 bg-slate-200/50 rounded-xl border-2 transition-all ${
+                        formData.sportif_haut_niveau === 'non' 
+                          ? 'bg-white/90 border-blue-500' 
+                          : 'border-transparent hover:bg-white/60'
+                      }`}>
+                        <span className={`w-7 h-7 rounded-md flex items-center justify-center text-xs font-bold ${
+                          formData.sportif_haut_niveau === 'non' ? 'bg-blue-500 text-white' : 'bg-slate-600 text-white'
+                        }`}>B</span>
+                        <span className="font-medium text-slate-700">Non</span>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="bg-white/40 p-4 rounded-xl">
+                  <label className="block text-sm font-semibold text-slate-800 mb-3">
+                    Déclare avoir un projet de création ou de reprise d'entreprise
+                  </label>
+                  <div className="flex gap-3">
+                    <label className="relative cursor-pointer group flex-1">
+                      <input 
+                        type="radio" 
+                        name="projet_entreprise" 
+                        value="oui"
+                        checked={formData.projet_entreprise === 'oui'}
+                        onChange={() => handleRadioChange('projet_entreprise', 'oui')}
+                        className="peer sr-only" 
+                      />
+                      <div className={`flex items-center gap-3 px-4 py-3 bg-slate-200/50 rounded-xl border-2 transition-all ${
+                        formData.projet_entreprise === 'oui' 
+                          ? 'bg-white/90 border-blue-500' 
+                          : 'border-transparent hover:bg-white/60'
+                      }`}>
+                        <span className={`w-7 h-7 rounded-md flex items-center justify-center text-xs font-bold ${
+                          formData.projet_entreprise === 'oui' ? 'bg-blue-500 text-white' : 'bg-slate-600 text-white'
+                        }`}>A</span>
+                        <span className="font-medium text-slate-700">Oui</span>
+                      </div>
+                    </label>
+                    <label className="relative cursor-pointer group flex-1">
+                      <input 
+                        type="radio" 
+                        name="projet_entreprise" 
+                        value="non"
+                        checked={formData.projet_entreprise === 'non'}
+                        onChange={() => handleRadioChange('projet_entreprise', 'non')}
+                        className="peer sr-only" 
+                      />
+                      <div className={`flex items-center gap-3 px-4 py-3 bg-slate-200/50 rounded-xl border-2 transition-all ${
+                        formData.projet_entreprise === 'non' 
+                          ? 'bg-white/90 border-blue-500' 
+                          : 'border-transparent hover:bg-white/60'
+                      }`}>
+                        <span className={`w-7 h-7 rounded-md flex items-center justify-center text-xs font-bold ${
+                          formData.projet_entreprise === 'non' ? 'bg-blue-500 text-white' : 'bg-slate-600 text-white'
+                        }`}>B</span>
+                        <span className="font-medium text-slate-700">Non</span>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="bg-white/40 p-4 rounded-xl">
+                  <label className="block text-sm font-semibold text-slate-800 mb-3">
+                    Déclare bénéficier de la reconnaissance travailleur handicapé (RQTH)
+                  </label>
+                  <div className="flex gap-3">
+                    <label className="relative cursor-pointer group flex-1">
+                      <input 
+                        type="radio" 
+                        name="rqth" 
+                        value="oui"
+                        checked={formData.rqth === 'oui'}
+                        onChange={() => handleRadioChange('rqth', 'oui')}
+                        className="peer sr-only" 
+                      />
+                      <div className={`flex items-center gap-3 px-4 py-3 bg-slate-200/50 rounded-xl border-2 transition-all ${
+                        formData.rqth === 'oui' 
+                          ? 'bg-white/90 border-blue-500' 
+                          : 'border-transparent hover:bg-white/60'
+                      }`}>
+                        <span className={`w-7 h-7 rounded-md flex items-center justify-center text-xs font-bold ${
+                          formData.rqth === 'oui' ? 'bg-blue-500 text-white' : 'bg-slate-600 text-white'
+                        }`}>A</span>
+                        <span className="font-medium text-slate-700">Oui</span>
+                      </div>
+                    </label>
+                    <label className="relative cursor-pointer group flex-1">
+                      <input 
+                        type="radio" 
+                        name="rqth" 
+                        value="non"
+                        checked={formData.rqth === 'non'}
+                        onChange={() => handleRadioChange('rqth', 'non')}
+                        className="peer sr-only" 
+                      />
+                      <div className={`flex items-center gap-3 px-4 py-3 bg-slate-200/50 rounded-xl border-2 transition-all ${
+                        formData.rqth === 'non' 
+                          ? 'bg-white/90 border-blue-500' 
+                          : 'border-transparent hover:bg-white/60'
+                      }`}>
+                        <span className={`w-7 h-7 rounded-md flex items-center justify-center text-xs font-bold ${
+                          formData.rqth === 'non' ? 'bg-blue-500 text-white' : 'bg-slate-600 text-white'
+                        }`}>B</span>
+                        <span className="font-medium text-slate-700">Non</span>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </FormSection>
+        </div>
+
+        {/* Section 4 - Parcours scolaire */}
+        <div className="col-span-12">
+          <FormSection number={4} title="Parcours scolaire">
+            <div className="grid grid-cols-12 gap-5">
+              <SelectField
+                label="Dernier diplôme ou titre préparé"
+                name="dernier_diplome_prepare"
+                required
+                width="full"
+                value={formData.dernier_diplome_prepare}
+                onChange={handleSelectChange}
+                error={errors.dernier_diplome_prepare}
+              >
+                <option value="">Sélectionnez</option>
+                <optgroup label="Niveau bac +5 et plus">
+                  <option value="doctorat">Doctorat</option>
+                  <option value="master">Master</option>
+                  <option value="ingenieur">Diplôme d'ingénieur</option>
+                  <option value="ecole_commerce">Diplôme d'école de commerce</option>
+                  <option value="autre_bac5">Autre diplôme de niveau bac+5 ou plus</option>
+                </optgroup>
+                <optgroup label="Niveau bac +3 et 4">
+                  <option value="licence_pro">Licence professionnelle</option>
+                  <option value="licence_generale">Licence générale</option>
+                  <option value="but">Bachelor universitaire de technologie BUT</option>
+                  <option value="autre_bac3_4">Autre diplôme de niveau bac +3 ou 4</option>
+                </optgroup>
+                <optgroup label="Niveau bac +2">
+                  <option value="bts">Brevet de Technicien Supérieur</option>
+                  <option value="dut">Diplôme Universitaire de technologie</option>
+                  <option value="autre_bac2">Autre diplôme de niveau bac+2</option>
+                </optgroup>
+                <optgroup label="Niveau bac">
+                  <option value="bac_pro">Baccalauréat professionnel</option>
+                  <option value="bac_general">Baccalauréat général</option>
+                  <option value="bac_techno">Baccalauréat technologique</option>
+                  <option value="specialisation_pro">Diplôme de spécialisation professionnelle</option>
+                  <option value="autre_bac">Autre diplôme de niveau bac</option>
+                </optgroup>
+                <optgroup label="Niveau CAP/BEP">
+                  <option value="cap">CAP</option>
+                  <option value="bep">BEP</option>
+                  <option value="certificat_specialisation">Certificat de spécialisation</option>
+                  <option value="autre_cap_bep">Autre diplôme de niveau CAP/BEP</option>
+                </optgroup>
+                <optgroup label="Aucun diplôme ni titre">
+                  <option value="brevet">Diplôme national du Brevet</option>
+                  <option value="cfg">Certificat de formation générale</option>
+                  <option value="aucun">Aucun diplôme ni titre professionnel</option>
+                </optgroup>
+              </SelectField>
+
+              <SelectField
+                label="Dernière année ou classe suivie"
+                name="derniere_classe"
+                required
+                width="full"
+                value={formData.derniere_classe}
+                onChange={handleSelectChange}
+                error={errors.derniere_classe}
+              >
+                <option value="">Sélectionnez</option>
+                <option value="derniere_annee_obtenu">Dernière année du cycle de formation - diplôme obtenu</option>
+                <option value="1ere_annee_validee">1ère année du cycle validée (année non diplômante)</option>
+                <option value="1ere_annee_non_validee">1ère année du cycle non validée (échec/interruption)</option>
+                <option value="2e_annee_validee">2è année du cycle validée (année non diplômante)</option>
+                <option value="2e_annee_non_validee">2è année du cycle non validée (échec/interruption)</option>
+                <option value="3e_annee_validee">3è année du cycle validée (année non diplômante)</option>
+                <option value="3e_annee_non_validee">3è année du cycle non validée (échec/interruption)</option>
+                <option value="1er_cycle_secondaire">1er cycle de l'enseignement secondaire achevé (collège)</option>
+                <option value="interrompu_3e">Études interrompues en classe de 3è</option>
+                <option value="interrompu_4e">Études interrompues en classe de 4è</option>
+              </SelectField>
+
+              <InputField 
+                label="Intitulé précis du dernier diplôme ou titre préparé" 
+                name="intitule_diplome"
+                width="full" 
+                placeholder="Ex: BTS Management Commercial Opérationnel"
+                value={formData.intitule_diplome}
+                onChange={handleInputChange}
+              />
+
+              <RadioGroup 
+                label="Diplôme ou titre le plus élevé obtenu *" 
+                name="bac"
+                options={["Aucun", "CAP/BEP", "BAC", "BAC +2", "BAC +3/4", "BAC +5+"]} 
+                layout="grid"
+                value={formData.bac}
+                onChange={(value) => handleRadioChange('bac', value)}
+                error={errors.bac}
+              />
+            </div>
+          </FormSection>
+        </div>
+
+        {/* Section 5 - Formation souhaitée */}
+        <div className="col-span-12">
+          <FormSection number={5} title="Formation souhaitée">
+            <div className="grid grid-cols-12 gap-5">
+              <SelectField
+                label="Formation"
+                name="formation"
+                required
+                width="full"
+                value={formData.formation}
+                onChange={handleSelectChange}
+                error={errors.formation}
+              >
+                <option value="">Sélectionnez une formation</option>
+                <option value="bts_mco">BTS MCO - Management Commercial Opérationnel</option>
+                <option value="bts_ndrc">BTS NDRC - Négociation et Digitalisation de la Relation Client</option>
+                <option value="bachelor_rdc">BACHELOR RDC - Responsable Développement Commercial</option>
+                <option value="tp_ntc">TP NTC - Négociateur Technico-Commercial</option>
+              </SelectField>
+
+              <InputField 
+                label="Date de visite / JPO" 
+                name="date_visite"
+                width="half" 
+                type="date"
+                value={formData.date_visite}
+                onChange={handleInputChange}
+              />
+
+              <InputField 
+                label="Date d'envoi du règlement" 
+                name="date_reglement"
+                width="half" 
+                type="date"
+                value={formData.date_reglement}
+                onChange={handleInputChange}
+              />
+
+              <RadioGroup 
+                label="Avez-vous déjà une entreprise d'accueil ?" 
+                name="entreprise_accueil"
+                options={["Oui", "En recherche", "Non"]} 
+                layout="horizontal"
+                value={formData.entreprise_accueil}
+                onChange={(value) => handleRadioChange('entreprise_accueil', value)}
+              />
+
+              {formData.entreprise_accueil === "Oui" && (
+                <InputField 
+                  label="Nom de l'entreprise" 
+                  name="nom_entreprise"
+                  width="full" 
+                  placeholder="Nom de l'entreprise d'accueil"
+                  value={formData.nom_entreprise}
+                  onChange={handleInputChange}
+                />
+              )}
+            </div>
+          </FormSection>
+        </div>
+
+        {/* Section 6 - Informations complémentaires */}
+        <div className="col-span-12">
+          <FormSection number={6} title="Informations complémentaires">
+            <div className="grid grid-cols-12 gap-5">
+              <SelectField
+                label="Comment avez-vous connu Rush School ?"
+                name="source"
+                width="full"
+                value={formData.source}
+                onChange={handleSelectChange}
+              >
+                <option value="">Sélectionnez</option>
+                <option value="reseaux_sociaux">Réseaux sociaux</option>
+                <option value="google">Recherche Google</option>
+                <option value="parcoursup">Parcoursup</option>
+                <option value="salon">Salon / Forum</option>
+                <option value="bouche_oreille">Bouche à oreille</option>
+                <option value="autre">Autre</option>
+              </SelectField>
+
+              <TextAreaField
+                label="Motivations et projet professionnel"
+                name="motivations"
+                placeholder="Décrivez brièvement vos motivations et votre projet professionnel..."
+                rows={4}
+                value={formData.motivations}
+                onChange={handleInputChange}
+              />
+            </div>
+          </FormSection>
+        </div>
+
+        {/* Submit */}
+        <div className="col-span-12 mt-8 pt-8 border-t-2 border-black/5 flex flex-col items-center gap-6">
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input 
+              type="checkbox" 
+              checked={attestation}
+              onChange={(e) => {
+                setAttestation(e.target.checked);
+                if (errors.attestation) {
+                  setErrors(prev => ({ ...prev, attestation: '' }));
+                }
+              }}
+              className="w-5 h-5 accent-blue-500 rounded" 
+            />
+            <span className="font-medium text-slate-800">
+              J'atteste sur l'honneur l'exactitude des informations fournies <span className="text-red-500">*</span>
+            </span>
+          </label>
+          {errors.attestation && (
+            <p className="text-red-500 text-sm -mt-4">{errors.attestation}</p>
+          )}
+
+          <button 
+            type="submit"
+            disabled={isSubmitting}
+            className={`flex items-center gap-2.5 px-10 py-4 rounded-2xl font-bold text-lg transition-all shadow-lg ${
+              isSubmitting 
+                ? 'bg-slate-400 cursor-not-allowed' 
+                : 'bg-slate-900 text-white hover:bg-slate-800 hover:-translate-y-1 shadow-slate-900/20'
+            }`}
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="animate-spin" size={20} />
+                Enregistrement en cours...
+              </>
+            ) : (
+              <>
+                <Save size={20} />
+                Enregistrer et continuer
+              </>
+            )}
+          </button>
+        </div>
       </div>
-    </div>
+    </form>
   );
 };
 

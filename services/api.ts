@@ -50,50 +50,120 @@ export const api = {
         return phone;
       };
 
-      // Conversion des booléens "oui"/"non" en true/false
-      const toBool = (val: string) => val === 'oui';
+      // --- MAPPINGS ---
+      const mapSexe = (v: string) => {
+          if (v === 'feminin' || v === 'Féminin') return 'Femme';
+          if (v === 'masculin' || v === 'Masculin') return 'Homme';
+          return v; 
+      };
 
-      // Construction du payload STRICTEMENT selon la spec backend fournie
+      const mapNationalite = (v: string) => {
+          if (v === 'francaise') return 'Française';
+          if (v === 'ue') return 'Union Européenne';
+          if (v === 'hors_ue') return 'Hors Union Européenne';
+          return formatString(v);
+      };
+
+      const mapSituation = (v: string) => {
+          const map: Record<string, string> = {
+              'scolaire': 'Scolaire',
+              'etudiant': 'Etudiant',
+              'apprenti': 'Apprenti',
+              'demandeur_emploi': "Demandeur d'emploi",
+              'salarie': 'Salarié',
+              'lyceen': 'Lycéen(ne)',
+              'stagiaire': 'Stagiaire',
+              'service_civique': 'Service civique'
+          };
+          return map[v] || formatString(v);
+      };
+
+      const mapDiplome = (v: string) => {
+          const map: Record<string, string> = {
+              'bac_general': 'BAC Général',
+              'bac_techno': 'BAC Technologique',
+              'bac_pro': 'BAC Professionnel',
+              'bts': 'BTS / DUT',
+              'licence': 'Licence',
+              'master': 'Master',
+              'autre': 'Autre',
+              'doctorat': 'Doctorat',
+              'ingenieur': "Diplôme d'ingénieur",
+              'ecole_commerce': "Diplôme d'école de commerce",
+              'but': "Bachelor universitaire de technologie BUT"
+          };
+          return map[v] || formatString(v);
+      };
+      
+      const mapNiveau = (v: string) => {
+           // The new form sends "BAC", "BAC +2" strings directly.
+           // Only map if it's a code
+           const map: Record<string, string> = {
+              'aucun': 'Aucun',
+              'cap_bep': 'CAP / BEP',
+              'bac': 'BAC',
+              'bac2': 'BAC +2',
+              'bac3_4': 'BAC +3/4',
+              'bac5': 'BAC +5',
+              'bac5+': 'BAC +5+'
+           };
+           return map[v] || v;
+      };
+
+      const mapFormation = (v: string) => {
+          const map: Record<string, string> = {
+              'bts_mco': 'BTS MCO',
+              'bts_ndrc': 'BTS NDRC',
+              'bachelor': 'BACHELOR RDC',
+              'bachelor_rdc': 'BACHELOR RDC',
+              'tp_ntc': 'TP NTC'
+          };
+          return map[v] || formatString(v);
+      };
+
+      // Construction du payload STRICTEMENT selon la spec backend
+      // Note: The input `data` comes from QuestionnaireForm.tsx and uses snake_case keys (mostly).
       const payload = {
         // Identité
         prenom: data.prenom,
-        nom_naissance: data.nom,
-        nom_usage: data.nomUsage || "",
-        sexe: data.sexe,
-        date_naissance: data.dateNaissance,
-        nationalite: formatString(data.nationalite),
-        commune_naissance: data.villeNaissance,
-        departement: data.deptNaissance,
+        nom_naissance: data.nom_naissance || data.nom,
+        nom_usage: data.nom_usage || data.nomUsage || "",
+        sexe: mapSexe(data.sexe),
+        date_naissance: data.date_naissance || data.dateNaissance,
+        nationalite: mapNationalite(data.nationalite),
+        commune_naissance: data.commune_naissance || data.villeNaissance,
+        departement: data.departement || data.deptNaissance,
         
         // Coordonnées
-        adresse_residence: data.adresse,
-        code_postal: data.codePostal,
+        adresse_residence: data.adresse_residence || data.adresse,
+        code_postal: data.code_postal || data.codePostal,
         ville: data.ville,
         email: data.email,
         telephone: cleanPhone(data.telephone),
         nir: data.nir ? data.nir.replace(/\s/g, '') : "",
         
         // Situation & Déclarations
-        situation: formatString(data.situation) || "Candidat", 
-        regime_social: data.regimeSocial === 'urssaf' ? "Sécurité Sociale" : (data.regimeSocial === 'msa' ? "MSA" : "Sécurité Sociale"), 
-        declare_inscription_sportif_haut_niveau: toBool(data.sportifHautNiveau),
-        declare_avoir_projet_creation_reprise_entreprise: toBool(data.projetEntreprise),
-        declare_travailleur_handicape: toBool(data.rqth),
+        situation: mapSituation(data.situation), // apiData already has 'situation' mapped from 'situation_avant'
+        regime_social: (data.regime_social === 'urssaf' || data.regimeSocial === 'urssaf') ? "Sécurité Sociale" : (data.regime_social === 'msa' || data.regimeSocial === 'msa' ? "MSA" : "Sécurité Sociale"), 
+        
+        declare_inscription_sportif_haut_niveau: typeof data.declare_inscription_sportif_haut_niveau === 'boolean' ? data.declare_inscription_sportif_haut_niveau : (data.sportifHautNiveau === 'oui'),
+        declare_avoir_projet_creation_reprise_entreprise: typeof data.declare_avoir_projet_creation_reprise_entreprise === 'boolean' ? data.declare_avoir_projet_creation_reprise_entreprise : (data.projetEntreprise === 'oui'),
+        declare_travailleur_handicape: typeof data.declare_travailleur_handicape === 'boolean' ? data.declare_travailleur_handicape : (data.rqth === 'oui'),
         
         // Scolarité
-        dernier_diplome_prepare: formatString(data.diplome),
-        derniere_classe: data.classe || "",
-        bac: formatString(data.niveau) || "", 
+        dernier_diplome_prepare: mapDiplome(data.dernier_diplome_prepare || data.diplome),
+        derniere_classe: data.derniere_classe || data.classe || "",
+        bac: mapNiveau(data.bac || data.niveau) || "", 
         
         // Projet
-        formation_souhaitee: formatString(data.formation),
-        date_de_visite: data.dateVisite || new Date().toISOString().split('T')[0], // Fallback to today to avoid 500
-        date_de_reglement: data.dateReglement || new Date().toISOString().split('T')[0],
+        formation_souhaitee: mapFormation(data.formation_souhaitee || data.formation),
+        date_de_visite: data.date_de_visite || data.dateVisite || new Date().toISOString().split('T')[0],
+        date_de_reglement: data.date_de_reglement || data.dateReglement || new Date().toISOString().split('T')[0],
         
-        entreprise_d_accueil: data.entrepriseAccueil === 'oui' ? (data.nomEntreprise || "Oui") : (data.entrepriseAccueil === 'en_cours' ? "En recherche" : "Non"),
+        entreprise_d_accueil: data.entreprise_d_accueil || (data.entrepriseAccueil === 'oui' ? (data.nomEntreprise || "Oui") : (data.entrepriseAccueil === 'en_cours' ? "En recherche" : "Non")),
         
-        connaissance_rush_how: formatString(data.source) || "Autre", 
-        motivation_projet_professionnel: data.motivations || "Non renseigné" 
+        connaissance_rush_how: formatString(data.connaissance_rush_how || data.source) || "Autre", 
+        motivation_projet_professionnel: data.motivation_projet_professionnel || data.motivations || "Non renseigné" 
       };
 
       console.log("📤 Submitting payload:", payload);
@@ -126,7 +196,19 @@ export const api = {
         }
         throw new Error(errorMessage);
       }
-      return await response.json();
+      
+      const json = await response.json();
+      
+      // Ensure we return the expected structure for the form (success, record_id)
+      if (json && (json.id || json.record_id)) {
+          return {
+              success: true,
+              record_id: json.record_id || json.id,
+              data: json
+          };
+      }
+      
+      return json;
     } catch (error) {
       console.error('❌ API Error (Submit Student):', error);
       throw error; 
