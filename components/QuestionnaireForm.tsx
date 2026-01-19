@@ -590,7 +590,7 @@ const QuestionnaireForm = ({ onNext, onBack }: QuestionnaireFormProps) => {
                 <option value="Scolaire : (Bac / brevet...)">Scolaire : (Bac / brevet...)</option>
                 <option value="contrat_pro">Contrat pro</option>
                 <option value="Salarié : (CDD/CDI)e">Salarié : (CDD/CDI)</option>
-                <option value="Contrat d'apprentissage">Contrat d'apprentissage</option>
+                <option value="Contrat d'apprentissage">Contrat apprentissage</option>
               </SelectField>
 
               <SelectField
