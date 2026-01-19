@@ -488,13 +488,14 @@ const AdmissionView = () => {
 
   // Document Handler
   const handleFileUpload = async (docId: string, file: File) => {
-    if (!studentData?.id && !studentData?.record_id) { 
+    // Check if we have an ID (record_id or id)
+    const recordId = studentData?.record_id || studentData?.id || studentData?.data?.id || studentData?.data?.record_id;
+
+    if (!recordId) { 
         console.warn("Pas d'ID étudiant trouvé, mode simulation upload");
         setUploadedFiles(prev => ({ ...prev, [docId]: file }));
         return;
     }
-
-    const recordId = studentData.record_id || studentData.id;
 
     try {
         setUploadingState(prev => ({ ...prev, [docId]: true }));
@@ -544,6 +545,9 @@ const AdmissionView = () => {
   // Sync candidate info to interview form if available
   useEffect(() => {
     if (studentData) {
+        // Handle potentially nested data from API response wrapper
+        const candidate = studentData.data || studentData;
+        
         const formationMapping: Record<string, string> = {
             'bts_mco': 'BTS MCO',
             'bts_ndrc': 'BTS NDRC',
@@ -551,12 +555,16 @@ const AdmissionView = () => {
             'tp_ntc': 'TP NTC'
         };
 
-        const rawFormation = studentData.formation || '';
-        const mappedFormation = formationMapping[rawFormation] || rawFormation.toUpperCase().replace('_', ' ');
+        const rawFormation = candidate.formation_souhaitee || candidate.formation || '';
+        const mappedFormation = formationMapping[rawFormation] || (rawFormation.toUpperCase ? rawFormation.toUpperCase().replace('_', ' ') : rawFormation);
+        
+        const nom = candidate.nom_naissance || candidate.nom || "";
+        const prenom = candidate.prenom || "";
+        const nomUpper = nom.toUpperCase ? nom.toUpperCase() : nom;
 
         setInterviewInfo(prev => ({
             ...prev,
-            candidat: `${studentData.nom.toUpperCase()} ${studentData.prenom}`, // Norme: NOM Prénom
+            candidat: `${nomUpper} ${prenom}`, // Norme: NOM Prénom
             formation: mappedFormation
         }));
     }
@@ -814,7 +822,7 @@ const AdmissionView = () => {
                <div>
                   <h3 className="text-lg font-bold text-slate-800">Documents à téléverser</h3>
                   <p className="text-slate-500 text-sm">Complétez votre dossier avec les pièces justificatives.</p>
-                  {!studentData?.id && !studentData?.record_id && (
+                  {!studentData?.id && !studentData?.record_id && !studentData?.data?.id && (
                      <p className="text-amber-600 text-xs font-bold mt-1">⚠️ Veuillez d'abord remplir la fiche étudiant</p>
                   )}
                </div>

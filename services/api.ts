@@ -52,8 +52,9 @@ export const api = {
 
       // --- MAPPINGS ---
       const mapSexe = (v: string) => {
-          if (v === 'feminin' || v === 'Féminin') return 'Femme';
-          if (v === 'masculin' || v === 'Masculin') return 'Homme';
+          // Normalisation pour envoyer strictement Féminin ou Masculin
+          if (v === 'feminin' || v === 'Féminin' || v === 'Femme') return 'Féminin';
+          if (v === 'masculin' || v === 'Masculin' || v === 'Homme') return 'Masculin';
           return v; 
       };
 
@@ -66,33 +67,27 @@ export const api = {
 
       const mapSituation = (v: string) => {
           const map: Record<string, string> = {
-              'scolaire': 'Scolaire',
-              'etudiant': 'Etudiant',
-              'apprenti': 'Apprenti',
-              'demandeur_emploi': "Demandeur d'emploi",
-              'salarie': 'Salarié',
-              'lyceen': 'Lycéen(ne)',
-              'stagiaire': 'Stagiaire',
-              'service_civique': 'Service civique'
+              'scolaire': 'Scolaire : (Bac / brevet...)',
+              'etudiant': 'Etudiant : (Etude supérieur)',
+              'contrat_pro': 'Contrat pro',
+              'salarie': 'Salarié : (CDD/CDI)',
+              'apprentissage': "Contrat d'apprentissage"
           };
-          return map[v] || formatString(v);
+          // Try exact match first, then formatted, then pass through
+          return map[v] || v || formatString(v);
       };
 
       const mapDiplome = (v: string) => {
           const map: Record<string, string> = {
-              'bac_general': 'BAC Général',
-              'bac_techno': 'BAC Technologique',
-              'bac_pro': 'BAC Professionnel',
-              'bts': 'BTS / DUT',
-              'licence': 'Licence',
-              'master': 'Master',
-              'autre': 'Autre',
-              'doctorat': 'Doctorat',
-              'ingenieur': "Diplôme d'ingénieur",
-              'ecole_commerce': "Diplôme d'école de commerce",
-              'but': "Bachelor universitaire de technologie BUT"
+              'bac_techno': 'Baccalauréat Technologique',
+              'bac_general': 'Baccalauréat général',
+              'bac_pro': 'Baccalauréat pro',
+              'brevet': 'Brevet',
+              'cap': 'CAP',
+              'bts': 'BTS',
+              'aucun': 'Aucun diplôme'
           };
-          return map[v] || formatString(v);
+          return map[v] || v || formatString(v);
       };
       
       const mapNiveau = (v: string) => {
@@ -152,6 +147,7 @@ export const api = {
         
         // Scolarité
         dernier_diplome_prepare: mapDiplome(data.dernier_diplome_prepare || data.diplome),
+        intitule_diplome: data.intitule_diplome || "",
         derniere_classe: data.derniere_classe || data.classe || "",
         bac: mapNiveau(data.bac || data.niveau) || "", 
         

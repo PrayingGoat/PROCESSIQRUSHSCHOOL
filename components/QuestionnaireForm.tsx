@@ -369,7 +369,10 @@ const QuestionnaireForm = ({ onNext, onBack }: QuestionnaireFormProps) => {
         
         // Section 6: Informations complémentaires
         connaissance_rush_how: formData.source || undefined,
-        motivation_projet_professionnel: formData.motivations || undefined
+        motivation_projet_professionnel: formData.motivations || undefined,
+        
+        // New field from previous update
+        intitule_diplome: formData.intitule_diplome || undefined
       };
 
       const response = await api.submitStudent(apiData);
@@ -583,13 +586,11 @@ const QuestionnaireForm = ({ onNext, onBack }: QuestionnaireFormProps) => {
                 error={errors.situation_avant}
               >
                 <option value="">Sélectionnez votre situation</option>
-                <option value="lyceen">Lycéen(ne)</option>
-                <option value="etudiant">Étudiant(e)</option>
-                <option value="demandeur_emploi">Demandeur d'emploi</option>
-                <option value="salarie">Salarié(e)</option>
-                <option value="service_civique">Service civique</option>
-                <option value="stagiaire">Stagiaire</option>
-                <option value="autre">Autre</option>
+                <option value="Etudiant : (Etude supérieur)">Etudiant : (Etude supérieur)</option>
+                <option value="Scolaire : (Bac / brevet...)">Scolaire : (Bac / brevet...)</option>
+                <option value="contrat_pro">Contrat pro</option>
+                <option value="Salarié : (CDD/CDI)e">Salarié : (CDD/CDI)</option>
+                <option value="Contrat d'apprentissage">Contrat d'apprentissage</option>
               </SelectField>
 
               <SelectField
@@ -767,42 +768,13 @@ const QuestionnaireForm = ({ onNext, onBack }: QuestionnaireFormProps) => {
                 error={errors.dernier_diplome_prepare}
               >
                 <option value="">Sélectionnez</option>
-                <optgroup label="Niveau bac +5 et plus">
-                  <option value="doctorat">Doctorat</option>
-                  <option value="master">Master</option>
-                  <option value="ingenieur">Diplôme d'ingénieur</option>
-                  <option value="ecole_commerce">Diplôme d'école de commerce</option>
-                  <option value="autre_bac5">Autre diplôme de niveau bac+5 ou plus</option>
-                </optgroup>
-                <optgroup label="Niveau bac +3 et 4">
-                  <option value="licence_pro">Licence professionnelle</option>
-                  <option value="licence_generale">Licence générale</option>
-                  <option value="but">Bachelor universitaire de technologie BUT</option>
-                  <option value="autre_bac3_4">Autre diplôme de niveau bac +3 ou 4</option>
-                </optgroup>
-                <optgroup label="Niveau bac +2">
-                  <option value="bts">Brevet de Technicien Supérieur</option>
-                  <option value="dut">Diplôme Universitaire de technologie</option>
-                  <option value="autre_bac2">Autre diplôme de niveau bac+2</option>
-                </optgroup>
-                <optgroup label="Niveau bac">
-                  <option value="bac_pro">Baccalauréat professionnel</option>
-                  <option value="bac_general">Baccalauréat général</option>
-                  <option value="bac_techno">Baccalauréat technologique</option>
-                  <option value="specialisation_pro">Diplôme de spécialisation professionnelle</option>
-                  <option value="autre_bac">Autre diplôme de niveau bac</option>
-                </optgroup>
-                <optgroup label="Niveau CAP/BEP">
-                  <option value="cap">CAP</option>
-                  <option value="bep">BEP</option>
-                  <option value="certificat_specialisation">Certificat de spécialisation</option>
-                  <option value="autre_cap_bep">Autre diplôme de niveau CAP/BEP</option>
-                </optgroup>
-                <optgroup label="Aucun diplôme ni titre">
-                  <option value="brevet">Diplôme national du Brevet</option>
-                  <option value="cfg">Certificat de formation générale</option>
-                  <option value="aucun">Aucun diplôme ni titre professionnel</option>
-                </optgroup>
+                <option value="bac_techno">Baccalauréat Technologique</option>
+                <option value="bac_general">Baccalauréat général</option>
+                <option value="bac_pro">Baccalauréat pro</option>
+                <option value="brevet">Brevet</option>
+                <option value="cap">CAP</option>
+                <option value="bts">BTS</option>
+                <option value="aucun">Aucun diplôme</option>
               </SelectField>
 
               <SelectField
@@ -827,19 +799,27 @@ const QuestionnaireForm = ({ onNext, onBack }: QuestionnaireFormProps) => {
                 <option value="interrompu_4e">Études interrompues en classe de 4è</option>
               </SelectField>
 
-              <InputField 
+              <SelectField 
                 label="Intitulé précis du dernier diplôme ou titre préparé" 
                 name="intitule_diplome"
                 width="full" 
-                placeholder="Ex: BTS Management Commercial Opérationnel"
                 value={formData.intitule_diplome}
-                onChange={handleInputChange}
-              />
+                onChange={handleSelectChange}
+              >
+                <option value="">Sélectionnez</option>
+                <option value="Baccalauréat Technologique">Baccalauréat Technologique</option>
+                <option value="Baccalauréat général">Baccalauréat général</option>
+                <option value="Baccalauréat pro">Baccalauréat pro</option>
+                <option value="Brevet">Brevet</option>
+                <option value="CAP">CAP</option>
+                <option value="BTS">BTS</option>
+                <option value="Aucun diplôme">Aucun diplôme</option>
+              </SelectField>
 
               <RadioGroup 
                 label="Diplôme ou titre le plus élevé obtenu *" 
                 name="bac"
-                options={["Aucun", "CAP/BEP", "BAC", "BAC +2", "BAC +3/4", "BAC +5+"]} 
+                options={["BAC", "BAC+1", "BAC+2", "BAC+3", "BAC+4", "BAC+5"]} 
                 layout="grid"
                 value={formData.bac}
                 onChange={(value) => handleRadioChange('bac', value)}
