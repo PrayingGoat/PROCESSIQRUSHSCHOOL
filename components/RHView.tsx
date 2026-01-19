@@ -39,6 +39,20 @@ const RHStatCard = ({ value, label, icon, colorClass }: { value: string | number
 };
 
 const CerfaTable = ({ data }: { data: any[] }) => {
+  // Helper to normalize data inside the table loop
+  const getC = (c: any) => {
+    // Correctly handle the nested 'fields' structure
+    const d = c.fields || c.data || c || {};
+    return {
+        id: c.id || d.id || d.record_id,
+        // Match exact keys from API response
+        prenom: d['Prénom'] || d.prenom || d.firstname || "",
+        nom: d['NOM de naissance'] || d.nom_naissance || d.nom || d.lastname || "",
+        formation: d['Formation'] || d.formation_souhaitee || d.formation || "",
+        entreprise: d['Entreprise daccueil'] || d.entreprise_d_accueil || d.entreprise || ""
+    };
+  };
+
   return (
     <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
       <div className="overflow-x-auto">
@@ -58,21 +72,23 @@ const CerfaTable = ({ data }: { data: any[] }) => {
                 <tr>
                     <td colSpan={6} className="p-8 text-center text-slate-500">Aucun dossier trouvé</td>
                 </tr>
-            ) : data.map((row, idx) => (
+            ) : data.map((raw, idx) => {
+              const row = getC(raw);
+              return (
               <tr key={row.id || idx} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
                 <td className="p-4">
                   <span className="inline-block px-2.5 py-1 rounded-md bg-blue-50 text-blue-600 text-xs font-bold">
-                    {row.formation_souhaitee || 'Non renseigné'}
+                    {row.formation || 'Non renseigné'}
                   </span>
                 </td>
                 <td className="p-4 text-sm text-slate-600">RH</td>
                 <td className="p-4">
-                    <div className="font-semibold text-slate-800">{row.prenom} {row.nom_naissance}</div>
+                    <div className="font-semibold text-slate-800">{row.prenom} {row.nom}</div>
                 </td>
-                <td className="p-4 text-sm text-slate-600">{row.entreprise_d_accueil || 'Aucune'}</td>
+                <td className="p-4 text-sm text-slate-600">{row.entreprise || 'Aucune'}</td>
                 <td className="p-4">
-                  <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${row.entreprise_d_accueil && row.entreprise_d_accueil !== 'Non' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
-                    {row.entreprise_d_accueil && row.entreprise_d_accueil !== 'Non' ? 'En cours' : 'À placer'}
+                  <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${row.entreprise && row.entreprise !== 'Non' && row.entreprise !== 'En recherche' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                    {row.entreprise && row.entreprise !== 'Non' && row.entreprise !== 'En recherche' ? 'En cours' : 'À placer'}
                   </span>
                 </td>
                 <td className="p-4 text-center">
@@ -82,7 +98,7 @@ const CerfaTable = ({ data }: { data: any[] }) => {
                   </div>
                 </td>
               </tr>
-            ))}
+            )})}
           </tbody>
         </table>
       </div>

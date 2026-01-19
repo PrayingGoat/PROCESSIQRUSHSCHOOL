@@ -111,9 +111,28 @@ const DashboardView: React.FC<DashboardViewProps> = ({ activeSubView }) => {
     fetchData();
   }, []);
 
+  // Normalizer to handle different field names (nom vs nom_naissance) or nested data in 'fields'
+  const getC = (c: any) => {
+    // Check if data is inside 'fields' (Airtable style) or 'data' or root
+    const d = c.fields || c.data || c || {};
+    
+    return {
+        id: c.id || d.id || d.record_id,
+        // Using bracket notation for fields with spaces or accents as per API response
+        prenom: d['Prénom'] || d.prenom || d.firstname || "",
+        nom: d['NOM de naissance'] || d.nom_naissance || d.nom || d.lastname || "",
+        email: d['E-mail'] || d.email || "",
+        formation: d['Formation'] || d.formation_souhaitee || d.formation || "",
+        situation: d['Situation avant le contrat'] || d.situation || d.situation_actuelle || "En recherche",
+        ville: d['Commune de naissance'] || d.ville || d.commune_naissance || "",
+        entreprise: d['Entreprise daccueil'] || d.entreprise_d_accueil || d.entreprise || "En recherche"
+    };
+  };
+
   // Filter helpers
-  const isPlaced = (c: any) => {
-      const ent = c.entreprise_d_accueil;
+  const isPlaced = (rawCandidate: any) => {
+      const c = getC(rawCandidate);
+      const ent = c.entreprise;
       return ent && ent !== 'Non' && ent !== 'En recherche' && ent !== 'En cours' && ent !== 'null';
   };
 
@@ -121,7 +140,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ activeSubView }) => {
   const studentsPlaced = candidates.filter(c => isPlaced(c));
 
   // Compute companies count (unique names)
-  const uniqueCompanies = new Set(studentsPlaced.map(c => c.entreprise_d_accueil)).size;
+  const uniqueCompanies = new Set(studentsPlaced.map(raw => getC(raw).entreprise)).size;
 
   if (loading) {
       return (
@@ -187,21 +206,23 @@ const DashboardView: React.FC<DashboardViewProps> = ({ activeSubView }) => {
                                 <tr>
                                     <td colSpan={5} className="p-8 text-center text-slate-500">Aucun étudiant à placer</td>
                                 </tr>
-                            ) : studentsToPlace.map((c: any) => (
-                                <tr key={c.id} className="hover:bg-[#f8fafc] transition-colors border-b border-[#f1f5f9]">
+                            ) : studentsToPlace.map((raw: any) => {
+                                const c = getC(raw);
+                                return (
+                                <tr key={c.id || Math.random()} className="hover:bg-[#f8fafc] transition-colors border-b border-[#f1f5f9]">
                                     <td className="p-4">
                                         <div className="flex items-center gap-3.5">
-                                            <div className="w-11 h-11 rounded-[14px] bg-gradient-to-br from-[#3B82F6] to-[#1D4ED8] flex items-center justify-center text-white font-bold">
-                                                {(c.prenom || '?').charAt(0)}{(c.nom_naissance || '?').charAt(0)}
+                                            <div className="w-11 h-11 rounded-[14px] bg-gradient-to-br from-[#3B82F6] to-[#1D4ED8] flex items-center justify-center text-white font-bold uppercase">
+                                                {(c.prenom || '?').charAt(0)}{(c.nom || '?').charAt(0)}
                                             </div>
                                             <div>
-                                                <div className="font-semibold text-[#1e293b]">{c.prenom || 'Prénom inconnu'} {c.nom_naissance || 'Nom inconnu'}</div>
+                                                <div className="font-semibold text-[#1e293b]">{c.prenom || 'Prénom inconnu'} {c.nom || 'Nom inconnu'}</div>
                                                 <div className="text-xs text-[#64748b]">{c.email || 'Email non renseigné'}</div>
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="p-4"><span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#EFF6FF] text-[#1D4ED8]">{c.formation_souhaitee || 'Non renseigné'}</span></td>
-                                    <td className="p-4"><span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#EDE9FE] text-[#5B21B6]">{c.situation || 'En recherche'}</span></td>
+                                    <td className="p-4"><span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#EFF6FF] text-[#1D4ED8]">{c.formation || 'Non renseigné'}</span></td>
+                                    <td className="p-4"><span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#EDE9FE] text-[#5B21B6]">{c.situation}</span></td>
                                     <td className="p-4 text-[#334155] text-[0.9rem]">{c.ville || 'Non renseigné'}</td>
                                     <td className="p-4 text-center">
                                         <div className="flex justify-center gap-2">
@@ -210,7 +231,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ activeSubView }) => {
                                         </div>
                                     </td>
                                 </tr>
-                            ))}
+                            )})}
                         </tbody>
                     </table>
                   </div>
@@ -275,21 +296,23 @@ const DashboardView: React.FC<DashboardViewProps> = ({ activeSubView }) => {
                                 <tr>
                                     <td colSpan={5} className="p-8 text-center text-slate-500">Aucun étudiant en alternance</td>
                                 </tr>
-                            ) : studentsPlaced.map((c: any) => (
-                                <tr key={c.id} className="hover:bg-[#f8fafc] transition-colors border-b border-[#f1f5f9]">
+                            ) : studentsPlaced.map((raw: any) => {
+                                const c = getC(raw);
+                                return (
+                                <tr key={c.id || Math.random()} className="hover:bg-[#f8fafc] transition-colors border-b border-[#f1f5f9]">
                                     <td className="p-4">
                                         <div className="flex items-center gap-3.5">
-                                            <div className="w-11 h-11 rounded-[14px] bg-gradient-to-br from-[#EC4899] to-[#BE185D] flex items-center justify-center text-white font-bold">
-                                                {(c.prenom || '?').charAt(0)}{(c.nom_naissance || '?').charAt(0)}
+                                            <div className="w-11 h-11 rounded-[14px] bg-gradient-to-br from-[#EC4899] to-[#BE185D] flex items-center justify-center text-white font-bold uppercase">
+                                                {(c.prenom || '?').charAt(0)}{(c.nom || '?').charAt(0)}
                                             </div>
                                             <div>
-                                                <div className="font-semibold text-[#1e293b]">{c.prenom || 'Prénom inconnu'} {c.nom_naissance || 'Nom inconnu'}</div>
+                                                <div className="font-semibold text-[#1e293b]">{c.prenom || 'Prénom inconnu'} {c.nom || 'Nom inconnu'}</div>
                                                 <div className="text-xs text-[#64748b]">{c.email || 'Email non renseigné'}</div>
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="p-4"><span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#EFF6FF] text-[#1D4ED8]">{c.formation_souhaitee}</span></td>
-                                    <td className="p-4 text-[#334155] font-semibold">{c.entreprise_d_accueil}</td>
+                                    <td className="p-4"><span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#EFF6FF] text-[#1D4ED8]">{c.formation}</span></td>
+                                    <td className="p-4 text-[#334155] font-semibold">{c.entreprise}</td>
                                     <td className="p-4"><span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-[#E6FFFA] text-[#6EE7B7]">✓ Validé</span></td>
                                     <td className="p-4 text-center">
                                         <div className="flex justify-center gap-2">
@@ -298,7 +321,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ activeSubView }) => {
                                         </div>
                                     </td>
                                 </tr>
-                            ))}
+                            )})}
                         </tbody>
                     </table>
                   </div>
