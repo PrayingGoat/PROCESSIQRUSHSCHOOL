@@ -1,5 +1,5 @@
 import React from 'react';
-import { Menu, Search, Bell, HelpCircle } from 'lucide-react';
+import { Menu, Search, Bell } from 'lucide-react';
 import { AppModule } from '../types';
 
 interface HeaderProps {
@@ -9,62 +9,63 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ toggleSidebar, activeModule }) => {
   return (
-    <header className="h-16 bg-white border-b border-slate-200 sticky top-0 z-30 px-4 md:px-8 flex items-center justify-between shadow-sm/50">
-      
-      {/* Left: Mobile Toggle & Title */}
-      <div className="flex items-center gap-4">
-        <button onClick={toggleSidebar} className="p-2 -ml-2 text-slate-500 hover:bg-slate-100 rounded-lg md:hidden transition-colors">
-          <Menu size={24} />
+    <header className="header">
+      <div className="flex items-center gap-4 md:hidden mr-4">
+        <button onClick={toggleSidebar} className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg">
+          <Menu size={20} />
         </button>
-        
-        {/* Module Tabs (Desktop) */}
-        <div className="hidden md:flex items-center gap-1">
-          <div className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all duration-200 flex items-center gap-2 ${activeModule === AppModule.ADMISSION ? 'bg-blue-50 text-blue-700 ring-1 ring-blue-200 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}>
-            <span className={`w-2 h-2 rounded-full ${activeModule === AppModule.ADMISSION ? 'bg-blue-500' : 'bg-slate-300'}`}></span>
-            Admissions
-          </div>
-          <div className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all duration-200 flex items-center gap-2 ${activeModule === AppModule.COMMERCIAL ? 'bg-indigo-50 text-indigo-700 ring-1 ring-indigo-200 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}>
-             <span className={`w-2 h-2 rounded-full ${activeModule === AppModule.COMMERCIAL ? 'bg-indigo-500' : 'bg-slate-300'}`}></span>
-            Commercial
-          </div>
-          <div className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all duration-200 flex items-center gap-2 ${activeModule === AppModule.RH ? 'bg-purple-50 text-purple-700 ring-1 ring-purple-200 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}>
-             <span className={`w-2 h-2 rounded-full ${activeModule === AppModule.RH ? 'bg-purple-500' : 'bg-slate-300'}`}></span>
-            RH
-          </div>
-           <div className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all duration-200 flex items-center gap-2 ${activeModule === AppModule.STUDENT ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200 shadow-sm' : 'text-slate-500 hover:bg-slate-50'}`}>
-             <span className={`w-2 h-2 rounded-full ${activeModule === AppModule.STUDENT ? 'bg-emerald-500' : 'bg-slate-300'}`}></span>
-            Étudiant
-          </div>
-        </div>
       </div>
 
-      {/* Right: Actions & Profile */}
-      <div className="flex items-center gap-3 md:gap-5">
-        
-        <div className="hidden md:flex items-center gap-1 bg-slate-100 rounded-full px-3 py-1.5 border border-slate-200 focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-400 transition-all w-64">
-             <Search size={16} className="text-slate-400" />
-             <input type="text" placeholder="Rechercher..." className="bg-transparent border-none text-sm focus:outline-none text-slate-700 placeholder:text-slate-400 w-full" />
-        </div>
+      <div className="header-tabs hidden md:flex">
+        <button className={`header-tab ${activeModule === AppModule.ADMISSION ? 'active' : ''}`}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+            <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+          </svg>
+          Admissions
+        </button>
+        <button className={`header-tab ${activeModule === AppModule.COMMERCIAL ? 'active' : ''}`}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+            <line x1="8" y1="21" x2="16" y2="21"/>
+            <line x1="12" y1="17" x2="12" y2="21"/>
+          </svg>
+          Commercial
+        </button>
+        <button className={`header-tab ${activeModule === AppModule.RH ? 'active' : ''}`}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+          RH
+        </button>
+        <button className={`header-tab ${activeModule === AppModule.STUDENT ? 'active' : ''}`}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+          Étudiant
+        </button>
+      </div>
 
-        <div className="flex items-center gap-2 border-r border-slate-200 pr-4 mr-1">
-             <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors relative">
-                <Bell size={20} />
-                <span className="absolute top-2 right-2.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
-             </button>
-             <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors hidden sm:block">
-                <HelpCircle size={20} />
-             </button>
+      <div className="header-actions">
+        <button className="header-icon-btn">
+          <Search size={20} />
+        </button>
+        <button className="header-icon-btn">
+          <Bell size={20} />
+        </button>
+        <div className="header-lang">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="2" y1="12" x2="22" y2="12"/>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+          </svg>
+          FR
         </div>
-
-        <div className="flex items-center gap-3 cursor-pointer group">
-           <div className="text-right hidden sm:block">
-              <p className="text-sm font-bold text-slate-700 leading-none group-hover:text-blue-600 transition-colors">Arsène P.</p>
-              <p className="text-xs text-slate-400 mt-1">Admin</p>
-           </div>
-           <div className="w-9 h-9 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-md shadow-blue-500/20 ring-2 ring-transparent group-hover:ring-blue-100 transition-all">
-             AP
-           </div>
-        </div>
+        <div className="header-user">AP</div>
       </div>
     </header>
   );

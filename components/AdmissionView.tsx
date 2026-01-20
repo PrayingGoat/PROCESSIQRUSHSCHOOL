@@ -96,53 +96,51 @@ const DEFAULT_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLScs38d38d38d3
 // --- COMPONENTS ---
 
 const StepItem = ({ step, label, isActive, isCompleted }: { step: number, label: string, isActive: boolean, isCompleted: boolean }) => (
-  <div className="flex flex-col items-center gap-3 relative z-10 group cursor-default">
-    <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center font-bold text-sm transition-all duration-300 ${
+  <div className="flex flex-col items-center gap-2 relative z-10">
+    <div className={`w-11 h-11 rounded-full border-2 flex items-center justify-center font-bold text-base transition-all duration-300 ${
       isCompleted 
-        ? 'bg-emerald-500 border-emerald-500 text-white shadow-md shadow-emerald-500/20' 
+        ? 'bg-emerald-500 border-emerald-500 text-white' 
         : isActive 
-          ? 'bg-blue-600 border-blue-600 text-white scale-110 shadow-lg shadow-blue-600/30' 
-          : 'bg-white border-slate-200 text-slate-400 group-hover:border-slate-300'
+          ? 'bg-blue-600 border-blue-600 text-white scale-110 shadow-lg shadow-blue-500/30' 
+          : 'bg-slate-50 border-slate-200 text-slate-400'
     }`}>
-      {isCompleted ? <CheckCircle2 size={18} /> : step}
+      {isCompleted ? <CheckCircle2 size={20} /> : step}
     </div>
-    <div className={`text-[10px] md:text-xs font-bold uppercase tracking-wider transition-colors duration-300 ${isActive ? 'text-blue-700' : isCompleted ? 'text-emerald-600' : 'text-slate-400'}`}>
+    <div className={`text-xs font-semibold uppercase tracking-wide transition-colors duration-300 ${isActive ? 'text-blue-600' : isCompleted ? 'text-emerald-600' : 'text-slate-400'}`}>
       {label}
     </div>
   </div>
 );
 
 const StepLine = ({ isCompleted }: { isCompleted: boolean }) => (
-  <div className={`h-[2px] flex-1 mx-2 mb-7 transition-colors duration-500 ${isCompleted ? 'bg-emerald-500' : 'bg-slate-200'}`}></div>
+  <div className={`h-[3px] w-12 md:w-20 rounded-full mx-2 mb-6 transition-colors duration-500 ${isCompleted ? 'bg-emerald-500' : 'bg-slate-200'}`}></div>
 );
 
 const FormationCard = ({ icon, title, desc, duration, color, selected, onClick }: any) => {
   const styles: any = {
-    blue: { icon: 'bg-blue-100 text-blue-600', active: 'border-blue-500 bg-blue-50/50' },
-    green: { icon: 'bg-emerald-100 text-emerald-600', active: 'border-emerald-500 bg-emerald-50/50' },
-    purple: { icon: 'bg-purple-100 text-purple-600', active: 'border-purple-500 bg-purple-50/50' },
-    orange: { icon: 'bg-orange-100 text-orange-600', active: 'border-orange-500 bg-orange-50/50' },
+    blue: { icon: 'bg-gradient-to-br from-blue-500 to-blue-600', border: 'hover:border-blue-300' },
+    green: { icon: 'bg-gradient-to-br from-emerald-500 to-emerald-600', border: 'hover:border-emerald-300' },
+    purple: { icon: 'bg-gradient-to-br from-violet-500 to-violet-600', border: 'hover:border-violet-300' },
+    orange: { icon: 'bg-gradient-to-br from-orange-500 to-orange-600', border: 'hover:border-orange-300' },
   };
   
-  const style = styles[color as string] || styles.blue;
+  const style = styles[color as string] || { icon: 'bg-slate-500', border: 'border-slate-200' };
 
   return (
     <div 
       onClick={onClick}
-      className={`relative p-6 rounded-2xl border-2 cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1 ${
-        selected ? style.active + ' shadow-md' : 'border-slate-100 bg-white hover:border-slate-200'
+      className={`bg-white border-2 rounded-2xl p-6 text-center cursor-pointer transition-all duration-300 hover:-translate-y-2 hover:shadow-xl ${
+        selected ? 'border-blue-500 bg-blue-50 shadow-blue-500/10' : `border-slate-100 ${style.border}`
       }`}
     >
-       {selected && <div className="absolute top-4 right-4 text-blue-500"><CheckCircle2 size={20} fill="currentColor" className="text-white"/></div>}
-      <div className={`w-14 h-14 rounded-xl flex items-center justify-center mb-4 transition-colors ${style.icon}`}>
+      <div className={`w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center text-white ${style.icon} shadow-lg shadow-black/5`}>
         {icon}
       </div>
-      <h4 className="font-bold text-slate-800 text-lg mb-2">{title}</h4>
-      <p className="text-xs text-slate-500 leading-relaxed mb-4 min-h-[40px]">{desc}</p>
-      <div className="flex items-center gap-2 text-xs font-semibold text-slate-400">
-         <PenTool size={12} />
-         <span>{duration}</span>
-      </div>
+      <h4 className="font-bold text-slate-800 text-lg mb-1">{title}</h4>
+      <p className="text-xs text-slate-500 leading-relaxed mb-4 h-9">{desc}</p>
+      <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${selected ? 'bg-blue-200 text-blue-800' : 'bg-slate-100 text-slate-500'}`}>
+        {duration}
+      </span>
     </div>
   );
 };
@@ -173,10 +171,10 @@ const FileUploadCard: React.FC<FileUploadCardProps> = ({ id, title, desc, fileNa
   return (
     <div 
       onClick={handleClick}
-      className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center text-center transition-all cursor-pointer group relative overflow-hidden bg-white ${
+      className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center text-center transition-all cursor-pointer group relative overflow-hidden ${
         uploaded 
-          ? 'border-emerald-400 bg-emerald-50/30' 
-          : 'border-slate-200 hover:border-blue-400 hover:bg-slate-50'
+          ? 'border-emerald-300 bg-emerald-50/50' 
+          : 'border-slate-200 bg-white hover:border-blue-400 hover:bg-blue-50'
       }`}
     >
       <input 
@@ -193,18 +191,18 @@ const FileUploadCard: React.FC<FileUploadCardProps> = ({ id, title, desc, fileNa
           : 'bg-slate-100 text-slate-400 group-hover:bg-blue-100 group-hover:text-blue-500'
       }`}>
         {uploading ? (
-          <Loader2 size={20} className="animate-spin" />
+          <Loader2 size={24} className="animate-spin text-blue-500" />
         ) : uploaded ? (
-          <CheckCircle2 size={20} />
+          <CheckCircle2 size={24} />
         ) : (
-          <Upload size={20} />
+          <Upload size={24} />
         )}
       </div>
       
       <h4 className={`font-bold mb-1 ${uploaded ? 'text-emerald-800' : 'text-slate-700'}`}>{title}</h4>
       
       {uploaded ? (
-        <p className="text-xs text-emerald-600 font-medium mb-4 flex items-center justify-center gap-1 max-w-full truncate px-2">
+        <p className="text-xs text-emerald-600 font-medium mb-4 flex items-center gap-1 max-w-full truncate px-2">
           <FileCheck size={12} />
           {fileName}
         </p>
@@ -212,13 +210,13 @@ const FileUploadCard: React.FC<FileUploadCardProps> = ({ id, title, desc, fileNa
         <p className="text-xs text-slate-400 mb-4">{desc}</p>
       )}
 
-      <span className={`px-3 py-1.5 rounded-md text-xs font-bold transition-colors inline-block ${
+      <button className={`px-4 py-2 rounded-lg text-xs font-bold transition-colors ${
         uploaded 
-          ? 'bg-white text-emerald-600 border border-emerald-200' 
-          : 'bg-slate-100 text-slate-600 group-hover:bg-blue-600 group-hover:text-white'
+          ? 'bg-white text-emerald-600 border border-emerald-200 hover:bg-emerald-50' 
+          : 'bg-slate-900 text-white hover:bg-slate-800'
       }`}>
-        {uploading ? 'Envoi...' : uploaded ? 'Modifier' : 'Choisir un fichier'}
-      </span>
+        {uploading ? 'Envoi...' : uploaded ? 'Remplacer' : 'Téléverser'}
+      </button>
     </div>
   );
 };
@@ -227,12 +225,12 @@ const FileUploadCard: React.FC<FileUploadCardProps> = ({ id, title, desc, fileNa
 
 const EvalCriteriaRowHTML = ({ title, desc, name, value, onChange }: { title: string, desc: string, name: string, value: number, onChange: (val: number) => void }) => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] border-b border-slate-200 last:border-0 hover:bg-slate-50/50 transition-colors">
+    <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] border-b border-slate-200 last:border-0 last:rounded-b-xl group hover:bg-slate-50/50 transition-colors">
       <div className="p-6 md:border-r border-slate-200">
         <h4 className="font-bold text-slate-800 text-base mb-2">{title}</h4>
-        <p className="text-sm text-slate-500 leading-relaxed max-w-3xl">{desc}</p>
+        <p className="text-sm text-slate-500 leading-relaxed">{desc}</p>
       </div>
-      <div className="flex items-center justify-center p-4 bg-slate-50/30 min-w-[300px]">
+      <div className="flex items-center justify-center p-4 bg-slate-50/30">
         <div className="flex border border-slate-200 rounded-lg overflow-hidden bg-white shadow-sm">
           {[1, 2, 3, 4, 5].map((val) => (
             <label key={val} className="cursor-pointer relative border-r border-slate-100 last:border-0">
@@ -244,7 +242,7 @@ const EvalCriteriaRowHTML = ({ title, desc, name, value, onChange }: { title: st
                 onChange={() => onChange(val)}
                 className="peer sr-only" 
               />
-              <div className="w-12 h-12 flex items-center justify-center font-bold text-slate-400 transition-all hover:bg-slate-50 peer-checked:bg-indigo-600 peer-checked:text-white">
+              <div className="w-12 h-full min-h-[48px] flex items-center justify-center font-bold text-slate-400 transition-all hover:bg-blue-50 peer-checked:bg-indigo-600 peer-checked:text-white">
                 {val}
               </div>
             </label>
@@ -286,7 +284,7 @@ const FormInput = ({ label, name, value, type="text", placeholder, required = fa
             name={name}
             value={value}
             onChange={onChange}
-            className={`w-full px-4 py-3 bg-white border rounded-xl transition-all text-sm focus:ring-4 focus:outline-none ${
+            className={`w-full px-4 py-3 bg-white border rounded-xl transition-all focus:ring-4 focus:outline-none ${
                 error 
                 ? 'border-red-300 focus:border-red-500 focus:ring-red-500/10' 
                 : 'border-slate-200 focus:border-emerald-500 focus:ring-emerald-500/10'
@@ -451,7 +449,7 @@ const EntrepriseForm = ({ onNext }: { onNext: () => void }) => {
   };
 
   return (
-    <div className="bg-gradient-to-br from-emerald-50/50 to-white rounded-3xl p-6 md:p-10 shadow-xl border border-emerald-100 relative overflow-hidden animate-slide-in">
+    <div className="bg-gradient-to-br from-emerald-50 to-white rounded-3xl p-6 md:p-10 shadow-xl border border-emerald-100 relative overflow-hidden animate-slide-in">
       <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500"></div>
       
       <div className="flex items-center gap-6 mb-10 pb-8 border-b border-emerald-100">
@@ -467,7 +465,7 @@ const EntrepriseForm = ({ onNext }: { onNext: () => void }) => {
       <div className="space-y-8">
         
         {/* 1. Identification */}
-        <div className="bg-white/80 p-6 rounded-2xl border border-emerald-100 shadow-sm hover:shadow-md transition-shadow">
+        <div className="bg-white/80 p-6 rounded-2xl border border-emerald-100 shadow-sm">
             <div className="flex items-center gap-3 mb-5 border-b border-slate-100 pb-3">
                 <span className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm">1</span>
                 <h3 className="font-bold text-slate-800">Identification de l'entreprise</h3>
@@ -484,7 +482,7 @@ const EntrepriseForm = ({ onNext }: { onNext: () => void }) => {
         </div>
 
         {/* 2. Adresse */}
-        <div className="bg-white/80 p-6 rounded-2xl border border-emerald-100 shadow-sm hover:shadow-md transition-shadow">
+        <div className="bg-white/80 p-6 rounded-2xl border border-emerald-100 shadow-sm">
             <div className="flex items-center gap-3 mb-5 border-b border-slate-100 pb-3">
                 <span className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm">2</span>
                 <h3 className="font-bold text-slate-800">Adresse de l'établissement</h3>
@@ -502,7 +500,7 @@ const EntrepriseForm = ({ onNext }: { onNext: () => void }) => {
         </div>
 
         {/* 3. Représentant Légal */}
-        <div className="bg-white/80 p-6 rounded-2xl border border-emerald-100 shadow-sm hover:shadow-md transition-shadow">
+        <div className="bg-white/80 p-6 rounded-2xl border border-emerald-100 shadow-sm">
             <div className="flex items-center gap-3 mb-5 border-b border-slate-100 pb-3">
                 <span className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm">3</span>
                 <h3 className="font-bold text-slate-800">Représentant Légal (Signataire)</h3>
@@ -526,7 +524,7 @@ const EntrepriseForm = ({ onNext }: { onNext: () => void }) => {
         </div>
 
         {/* 4. Maître d'apprentissage */}
-        <div className="bg-white/80 p-6 rounded-2xl border border-emerald-100 shadow-sm hover:shadow-md transition-shadow">
+        <div className="bg-white/80 p-6 rounded-2xl border border-emerald-100 shadow-sm">
             <div className="flex items-center gap-3 mb-5 border-b border-slate-100 pb-3">
                 <span className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm">4</span>
                 <h3 className="font-bold text-slate-800">Maître d'apprentissage</h3>
@@ -545,7 +543,7 @@ const EntrepriseForm = ({ onNext }: { onNext: () => void }) => {
         </div>
 
         {/* 5. Contrat */}
-        <div className="bg-white/80 p-6 rounded-2xl border border-emerald-100 shadow-sm hover:shadow-md transition-shadow">
+        <div className="bg-white/80 p-6 rounded-2xl border border-emerald-100 shadow-sm">
             <div className="flex items-center gap-3 mb-5 border-b border-slate-100 pb-3">
                 <span className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm">5</span>
                 <h3 className="font-bold text-slate-800">Le Contrat</h3>
@@ -561,7 +559,7 @@ const EntrepriseForm = ({ onNext }: { onNext: () => void }) => {
         </div>
 
         {/* 6. OPCO */}
-        <div className="bg-white/80 p-6 rounded-2xl border border-emerald-100 shadow-sm hover:shadow-md transition-shadow">
+        <div className="bg-white/80 p-6 rounded-2xl border border-emerald-100 shadow-sm">
              <div className="flex items-center gap-3 mb-5 border-b border-slate-100 pb-3">
                 <span className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm">6</span>
                 <h3 className="font-bold text-slate-800">OPCO (Opérateur de Compétences)</h3>
@@ -801,22 +799,22 @@ const AdmissionView = () => {
       </div>
 
       {/* Sub-tabs */}
-      <div className="flex overflow-x-auto gap-2 mb-8 bg-slate-50 p-1.5 rounded-2xl border border-slate-200 no-scrollbar shadow-inner">
+      <div className="flex overflow-x-auto gap-2 mb-8 bg-white p-2 rounded-2xl border border-slate-200 no-scrollbar shadow-sm">
         {[
-          { id: AdmissionTab.TESTS, label: 'Tests', icon: <PenTool size={16}/> },
-          { id: AdmissionTab.QUESTIONNAIRE, label: 'Fiche Étudiant', icon: <Info size={16}/> },
-          { id: AdmissionTab.DOCUMENTS, label: 'Documents', icon: <Upload size={16}/> },
-          { id: AdmissionTab.ENTREPRISE, label: 'Fiche Entreprise', icon: <Building size={16}/> },
-          { id: AdmissionTab.ADMINISTRATIF, label: 'Administratif', icon: <Briefcase size={16}/> },
-          { id: AdmissionTab.ENTRETIEN, label: 'Entretien', icon: <UserCheck size={16}/> },
+          { id: AdmissionTab.TESTS, label: 'Tests', icon: <PenTool size={18}/> },
+          { id: AdmissionTab.QUESTIONNAIRE, label: 'Fiche Étudiant', icon: <Info size={18}/> },
+          { id: AdmissionTab.DOCUMENTS, label: 'Documents', icon: <Upload size={18}/> },
+          { id: AdmissionTab.ENTREPRISE, label: 'Fiche Entreprise', icon: <Building size={18}/> },
+          { id: AdmissionTab.ADMINISTRATIF, label: 'Administratif', icon: <Briefcase size={18}/> },
+          { id: AdmissionTab.ENTRETIEN, label: 'Entretien', icon: <UserCheck size={18}/> },
         ].map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap ${
+            className={`flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold transition-all whitespace-nowrap ${
               activeTab === tab.id 
-                ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-slate-200' 
-                : 'text-slate-500 hover:text-slate-700 hover:bg-white/50'
+                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/25' 
+                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
             }`}
           >
             {tab.icon}
