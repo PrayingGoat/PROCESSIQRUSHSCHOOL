@@ -6,7 +6,8 @@ import {
   Settings, 
   LogOut,
   ChevronDown,
-  BookOpen
+  BookOpen,
+  PieChart
 } from 'lucide-react';
 import { ViewId } from '../types';
 
@@ -26,96 +27,98 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeView, setActiveView }) 
   const isModuleActive = (modulePrefix: string) => activeView.startsWith(modulePrefix);
 
   return (
-    <aside className={`fixed top-0 left-0 h-full w-[260px] bg-[#0f172a] text-[#e2e8f0] flex flex-col z-50 transition-transform duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
+    <aside className={`fixed top-0 left-0 h-full w-[260px] bg-[#0f172a] text-[#94a3b8] flex flex-col z-50 transition-transform duration-300 border-r border-slate-800 ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
       
       {/* Logo */}
-      <div className="p-6 flex items-center gap-3">
-        <div className="logo-dots">
-          <span></span>
-          <span></span>
-          <span></span>
-          <span></span>
-          <span></span>
+      <div className="h-[70px] flex items-center px-6 border-b border-slate-800/50">
+        <div className="flex items-center gap-3">
+            <div className="logo-dots scale-75 origin-left">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            </div>
+            <span className="text-xl font-bold text-white tracking-tight">Process<span className="text-blue-500">IQ</span></span>
         </div>
-        <span className="text-[1.35rem] font-bold text-white">Process<span className="text-[#3B82F6]">IQ</span></span>
       </div>
 
-      <nav className="flex-1 overflow-y-auto px-4 py-2 space-y-1">
+      <nav className="flex-1 overflow-y-auto px-4 py-6 space-y-2 no-scrollbar">
         
         {/* Admissions Group */}
-        <div className="mb-1">
+        <div className="mb-2">
             <div
                 onClick={() => setAdmissionOpen(!admissionOpen)}
-                className={`flex items-center gap-[14px] px-[18px] py-[14px] rounded-xl cursor-pointer transition-all duration-200 font-medium text-[0.95rem] relative ${
-                    isModuleActive('admission') ? 'bg-[#6366F1] text-white' : 'text-[#94a3b8] hover:bg-white/10 hover:text-white'
+                className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200 font-medium text-sm select-none ${
+                    isModuleActive('admission') ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/20' : 'hover:bg-slate-800/50 hover:text-slate-200'
                 }`}
             >
-                <Briefcase size={22} className={isModuleActive('admission') ? 'text-white' : 'text-[#94a3b8]'} />
+                <Briefcase size={20} className={isModuleActive('admission') ? 'text-white' : 'text-slate-500 group-hover:text-slate-300'} />
                 <span>Admissions</span>
-                <ChevronDown size={18} className={`ml-auto transition-transform duration-300 ${admissionOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown size={16} className={`ml-auto transition-transform duration-300 ${admissionOpen ? 'rotate-180' : ''} ${isModuleActive('admission') ? 'text-indigo-200' : 'text-slate-600'}`} />
             </div>
             
-            <div className={`overflow-hidden transition-all duration-300 bg-black/15 rounded-b-xl mt-[-4px] ${admissionOpen ? 'max-h-[400px]' : 'max-h-0'}`}>
-                <div onClick={() => setActiveView('admission-main')} className={`flex items-center gap-3 pl-[52px] pr-[18px] py-3 cursor-pointer text-[0.9rem] hover:bg-white/5 hover:text-white transition-colors ${activeView === 'admission-main' ? 'text-[#3B82F6] bg-blue-500/10' : 'text-[#94a3b8]'}`}>
-                    <span>Vue d'ensemble</span>
+            <div className={`overflow-hidden transition-all duration-300 ease-in-out ${admissionOpen ? 'max-h-[200px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                <div className="mt-1 ml-4 pl-4 border-l-2 border-slate-700/50 space-y-1">
+                    <div onClick={() => setActiveView('admission-main')} className={`flex items-center gap-2 px-3 py-2 rounded-md cursor-pointer text-sm transition-colors ${activeView === 'admission-main' ? 'text-blue-400 bg-blue-500/10' : 'hover:text-slate-200'}`}>
+                        <span>Vue d'ensemble</span>
+                    </div>
                 </div>
             </div>
         </div>
 
         {/* Commercial Group */}
-        <div className="mb-1">
+        <div className="mb-2">
             <div
                 onClick={() => setCommercialOpen(!commercialOpen)}
-                className={`flex items-center gap-[14px] px-[18px] py-[14px] rounded-xl cursor-pointer transition-all duration-200 font-medium text-[0.95rem] relative ${
-                    isModuleActive('commercial') ? 'bg-[#6366F1] text-white' : 'text-[#94a3b8] hover:bg-white/10 hover:text-white'
+                className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200 font-medium text-sm select-none ${
+                    isModuleActive('commercial') ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/20' : 'hover:bg-slate-800/50 hover:text-slate-200'
                 }`}
             >
-                <LayoutDashboard size={22} className={isModuleActive('commercial') ? 'text-white' : 'text-[#94a3b8]'} />
+                <LayoutDashboard size={20} className={isModuleActive('commercial') ? 'text-white' : 'text-slate-500 group-hover:text-slate-300'} />
                 <span>Commercial</span>
-                <ChevronDown size={18} className={`ml-auto transition-transform duration-300 ${commercialOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown size={16} className={`ml-auto transition-transform duration-300 ${commercialOpen ? 'rotate-180' : ''} ${isModuleActive('commercial') ? 'text-indigo-200' : 'text-slate-600'}`} />
             </div>
             
-            <div className={`overflow-hidden transition-all duration-300 bg-black/15 rounded-b-xl mt-[-4px] ${commercialOpen ? 'max-h-[300px]' : 'max-h-0'}`}>
-                <div onClick={() => setActiveView('commercial-dashboard')} className={`flex items-center gap-3 pl-[52px] pr-[18px] py-3 cursor-pointer text-[0.9rem] hover:bg-white/5 hover:text-white transition-colors ${isActive('commercial-dashboard') ? 'text-[#3B82F6] bg-blue-500/10' : 'text-[#94a3b8]'}`}>
-                    <span>Tableau de bord</span>
-                </div>
-                <div onClick={() => setActiveView('commercial-placer')} className={`flex items-center gap-3 pl-[52px] pr-[18px] py-3 cursor-pointer text-[0.9rem] hover:bg-white/5 hover:text-white transition-colors ${isActive('commercial-placer') ? 'text-[#3B82F6] bg-blue-500/10' : 'text-[#94a3b8]'}`}>
-                    <span>Élèves à placer</span>
-                </div>
-                <div onClick={() => setActiveView('commercial-alternance')} className={`flex items-center gap-3 pl-[52px] pr-[18px] py-3 cursor-pointer text-[0.9rem] hover:bg-white/5 hover:text-white transition-colors ${isActive('commercial-alternance') ? 'text-[#3B82F6] bg-blue-500/10' : 'text-[#94a3b8]'}`}>
-                    <span>Élèves en alternance</span>
+            <div className={`overflow-hidden transition-all duration-300 ease-in-out ${commercialOpen ? 'max-h-[300px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                <div className="mt-1 ml-4 pl-4 border-l-2 border-slate-700/50 space-y-1">
+                    <div onClick={() => setActiveView('commercial-dashboard')} className={`flex items-center gap-2 px-3 py-2 rounded-md cursor-pointer text-sm transition-colors ${isActive('commercial-dashboard') ? 'text-blue-400 bg-blue-500/10' : 'hover:text-slate-200'}`}>
+                        <span>Tableau de bord</span>
+                    </div>
+                    <div onClick={() => setActiveView('commercial-placer')} className={`flex items-center gap-2 px-3 py-2 rounded-md cursor-pointer text-sm transition-colors ${isActive('commercial-placer') ? 'text-blue-400 bg-blue-500/10' : 'hover:text-slate-200'}`}>
+                        <span>Élèves à placer</span>
+                    </div>
+                    <div onClick={() => setActiveView('commercial-alternance')} className={`flex items-center gap-2 px-3 py-2 rounded-md cursor-pointer text-sm transition-colors ${isActive('commercial-alternance') ? 'text-blue-400 bg-blue-500/10' : 'hover:text-slate-200'}`}>
+                        <span>Alternance</span>
+                    </div>
                 </div>
             </div>
         </div>
 
         {/* RH Group */}
-        <div className="mb-1">
+        <div className="mb-2">
             <div
                 onClick={() => setRhOpen(!rhOpen)}
-                className={`flex items-center gap-[14px] px-[18px] py-[14px] rounded-xl cursor-pointer transition-all duration-200 font-medium text-[0.95rem] relative ${
-                    isModuleActive('rh') ? 'bg-[#6366F1] text-white' : 'text-[#94a3b8] hover:bg-white/10 hover:text-white'
+                className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200 font-medium text-sm select-none ${
+                    isModuleActive('rh') ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/20' : 'hover:bg-slate-800/50 hover:text-slate-200'
                 }`}
             >
-                <Users size={22} className={isModuleActive('rh') ? 'text-white' : 'text-[#94a3b8]'} />
-                <span>RH</span>
-                <ChevronDown size={18} className={`ml-auto transition-transform duration-300 ${rhOpen ? 'rotate-180' : ''}`} />
+                <Users size={20} className={isModuleActive('rh') ? 'text-white' : 'text-slate-500 group-hover:text-slate-300'} />
+                <span>Ressources Humaines</span>
+                <ChevronDown size={16} className={`ml-auto transition-transform duration-300 ${rhOpen ? 'rotate-180' : ''} ${isModuleActive('rh') ? 'text-indigo-200' : 'text-slate-600'}`} />
             </div>
             
-            <div className={`overflow-hidden transition-all duration-300 bg-black/15 rounded-b-xl mt-[-4px] ${rhOpen ? 'max-h-[300px]' : 'max-h-0'}`}>
-                <div onClick={() => setActiveView('rh-dashboard')} className={`flex items-center gap-3 pl-[52px] pr-[18px] py-3 cursor-pointer text-[0.9rem] hover:bg-white/5 hover:text-white transition-colors ${isActive('rh-dashboard') ? 'text-[#3B82F6] bg-blue-500/10' : 'text-[#94a3b8]'}`}>
-                    <span>Vue d'ensemble</span>
-                </div>
-                <div onClick={() => setActiveView('rh-fiche')} className={`flex items-center gap-3 pl-[52px] pr-[18px] py-3 cursor-pointer text-[0.9rem] hover:bg-white/5 hover:text-white transition-colors ${isActive('rh-fiche') ? 'text-[#3B82F6] bg-blue-500/10' : 'text-[#94a3b8]'}`}>
-                    <span>Fiche Entreprise</span>
-                </div>
-                <div onClick={() => setActiveView('rh-cerfa')} className={`flex items-center gap-3 pl-[52px] pr-[18px] py-3 cursor-pointer text-[0.9rem] hover:bg-white/5 hover:text-white transition-colors ${isActive('rh-cerfa') ? 'text-[#3B82F6] bg-blue-500/10' : 'text-[#94a3b8]'}`}>
-                    <span>CERFA</span>
-                </div>
-                <div onClick={() => setActiveView('rh-pec')} className={`flex items-center gap-3 pl-[52px] pr-[18px] py-3 cursor-pointer text-[0.9rem] hover:bg-white/5 hover:text-white transition-colors ${isActive('rh-pec') ? 'text-[#3B82F6] bg-blue-500/10' : 'text-[#94a3b8]'}`}>
-                    <span>Prises en charge</span>
-                </div>
-                <div onClick={() => setActiveView('rh-ruptures')} className={`flex items-center gap-3 pl-[52px] pr-[18px] py-3 cursor-pointer text-[0.9rem] hover:bg-white/5 hover:text-white transition-colors ${isActive('rh-ruptures') ? 'text-[#3B82F6] bg-blue-500/10' : 'text-[#94a3b8]'}`}>
-                    <span>Ruptures</span>
+            <div className={`overflow-hidden transition-all duration-300 ease-in-out ${rhOpen ? 'max-h-[300px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                <div className="mt-1 ml-4 pl-4 border-l-2 border-slate-700/50 space-y-1">
+                    <div onClick={() => setActiveView('rh-dashboard')} className={`flex items-center gap-2 px-3 py-2 rounded-md cursor-pointer text-sm transition-colors ${isActive('rh-dashboard') ? 'text-blue-400 bg-blue-500/10' : 'hover:text-slate-200'}`}>
+                        <span>Vue d'ensemble</span>
+                    </div>
+                    <div onClick={() => setActiveView('rh-fiche')} className={`flex items-center gap-2 px-3 py-2 rounded-md cursor-pointer text-sm transition-colors ${isActive('rh-fiche') ? 'text-blue-400 bg-blue-500/10' : 'hover:text-slate-200'}`}>
+                        <span>Fiche Entreprise</span>
+                    </div>
+                    <div onClick={() => setActiveView('rh-cerfa')} className={`flex items-center gap-2 px-3 py-2 rounded-md cursor-pointer text-sm transition-colors ${isActive('rh-cerfa') ? 'text-blue-400 bg-blue-500/10' : 'hover:text-slate-200'}`}>
+                        <span>CERFA</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -123,34 +126,34 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeView, setActiveView }) 
         {/* Étudiant */}
         <div
           onClick={() => setActiveView('etudiant')}
-          className={`flex items-center gap-[14px] px-[18px] py-[14px] rounded-xl cursor-pointer transition-all duration-200 font-medium text-[0.95rem] mb-1 ${
+          className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200 font-medium text-sm select-none mt-4 ${
             isActive('etudiant') 
-              ? 'bg-[#6366F1] text-white' 
-              : 'text-[#94a3b8] hover:bg-white/10 hover:text-white'
+              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/20' 
+              : 'hover:bg-slate-800/50 hover:text-slate-200'
           }`}
         >
-          <BookOpen size={22} className={isActive('etudiant') ? 'text-white' : 'text-[#94a3b8]'} />
-          <span>Étudiant</span>
+          <BookOpen size={20} className={isActive('etudiant') ? 'text-white' : 'text-slate-500 group-hover:text-slate-300'} />
+          <span>Espace Étudiant</span>
         </div>
 
         {/* Paramètres */}
         <div
           onClick={() => setActiveView('parametres')}
-          className={`flex items-center gap-[14px] px-[18px] py-[14px] rounded-xl cursor-pointer transition-all duration-200 font-medium text-[0.95rem] mb-1 ${
+          className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200 font-medium text-sm select-none ${
             isActive('parametres') 
-              ? 'bg-[#6366F1] text-white' 
-              : 'text-[#94a3b8] hover:bg-white/10 hover:text-white'
+              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/20' 
+              : 'hover:bg-slate-800/50 hover:text-slate-200'
           }`}
         >
-          <Settings size={22} className={isActive('parametres') ? 'text-white' : 'text-[#94a3b8]'} />
+          <Settings size={20} className={isActive('parametres') ? 'text-white' : 'text-slate-500 group-hover:text-slate-300'} />
           <span>Paramètres</span>
         </div>
       </nav>
 
       {/* Footer */}
-      <div className="sidebar-footer">
-        <button className="logout-btn">
-          <LogOut size={22} className="nav-icon" />
+      <div className="p-4 border-t border-slate-800/50">
+        <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-colors">
+          <LogOut size={20} />
           <span>Déconnexion</span>
         </button>
       </div>
