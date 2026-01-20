@@ -117,21 +117,23 @@ const StepLine = ({ isCompleted }: { isCompleted: boolean }) => (
 );
 
 const FormationCard = ({ icon, title, desc, duration, color, selected, onClick }: any) => {
-  const styles = {
+  const styles: any = {
     blue: { icon: 'bg-gradient-to-br from-blue-500 to-blue-600', border: 'hover:border-blue-300' },
     green: { icon: 'bg-gradient-to-br from-emerald-500 to-emerald-600', border: 'hover:border-emerald-300' },
     purple: { icon: 'bg-gradient-to-br from-violet-500 to-violet-600', border: 'hover:border-violet-300' },
     orange: { icon: 'bg-gradient-to-br from-orange-500 to-orange-600', border: 'hover:border-orange-300' },
-  }[color as string] || { icon: 'bg-slate-500', border: 'border-slate-200' };
+  };
+  
+  const style = styles[color as string] || { icon: 'bg-slate-500', border: 'border-slate-200' };
 
   return (
     <div 
       onClick={onClick}
       className={`bg-white border-2 rounded-2xl p-6 text-center cursor-pointer transition-all duration-300 hover:-translate-y-2 hover:shadow-xl ${
-        selected ? 'border-blue-500 bg-blue-50 shadow-blue-500/10' : `border-slate-100 ${styles.border}`
+        selected ? 'border-blue-500 bg-blue-50 shadow-blue-500/10' : `border-slate-100 ${style.border}`
       }`}
     >
-      <div className={`w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center text-white ${styles.icon} shadow-lg shadow-black/5`}>
+      <div className={`w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center text-white ${style.icon} shadow-lg shadow-black/5`}>
         {icon}
       </div>
       <h4 className="font-bold text-slate-800 text-lg mb-1">{title}</h4>
@@ -379,18 +381,24 @@ const EntrepriseForm = ({ onNext }: { onNext: () => void }) => {
 
   // Helper pour mettre à jour les objets imbriqués
   const updateField = (section: keyof typeof formData, field: string, value: any) => {
-    setFormData(prev => ({
-        ...prev,
-        [section]: {
-            ...prev[section],
-            [field]: value
-        }
-    }));
+    setFormData(prev => {
+        // Safe access to nested object with type assertion to avoid indexing error
+        const sectionData = prev[section] as any;
+        return {
+            ...prev,
+            [section]: {
+                ...sectionData,
+                [field]: value
+            }
+        };
+    });
+    
     // Clear error
-    if (errors[`${section}.${field}`]) {
+    const errKey = `${String(section)}.${String(field)}`;
+    if (errors[errKey]) {
         setErrors(prev => {
             const newErr = { ...prev };
-            delete newErr[`${section}.${field}`];
+            delete newErr[errKey];
             return newErr;
         });
     }
@@ -717,10 +725,10 @@ const AdmissionView = () => {
         // 2. Process Name
         let formattedName = "";
         if (rawNom || rawPrenom) {
-            const n = rawNom.trim().toUpperCase();
-            const p = rawPrenom.trim();
+            const n = String(rawNom).trim().toUpperCase();
+            const p = String(rawPrenom).trim();
             const pFormatted = p ? p.charAt(0).toUpperCase() + p.slice(1) : "";
-            formattedName = `${n} ${pFormatted}`.trim();
+            formattedName = `${String(n)} ${String(pFormatted)}`.trim();
         } else {
              // Fallback for older localStorage data
              formattedName = localStorage.getItem('candidateName') || "";
@@ -734,7 +742,7 @@ const AdmissionView = () => {
             'bachelor_rdc': 'BACHELOR RDC',
             'tp_ntc': 'TP NTC'
         };
-        const mappedFormation = formationMapping[rawFormation.toLowerCase()] || rawFormation;
+        const mappedFormation = formationMapping[String(rawFormation).toLowerCase()] || String(rawFormation);
 
         // 4. Update State
         setInterviewInfo(prev => ({
@@ -1079,7 +1087,7 @@ const AdmissionView = () => {
                    green: 'from-emerald-500 to-emerald-700 shadow-emerald-500/20 border-emerald-200',
                    purple: 'from-purple-500 to-purple-700 shadow-purple-500/20 border-purple-200',
                    cyan: 'from-cyan-500 to-cyan-700 shadow-cyan-500/20 border-cyan-200',
-                 }[doc.color];
+                 }[doc.color as 'orange'|'blue'|'green'|'purple'|'cyan'];
 
                  return (
                    <div key={doc.id} className={`bg-white border border-slate-200 rounded-2xl p-6 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group ${isCompleted ? 'ring-2 ring-emerald-500 border-emerald-500' : ''}`}>

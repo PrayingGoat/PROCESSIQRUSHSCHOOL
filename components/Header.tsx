@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bell, Search, Menu } from 'lucide-react';
+import { Menu, Search, Bell } from 'lucide-react';
 import { AppModule } from '../types';
 
 interface HeaderProps {
@@ -9,61 +9,63 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ toggleSidebar, activeModule }) => {
   return (
-    <header className="h-16 bg-white border-b border-slate-200 sticky top-0 z-40 px-6 flex items-center justify-between shadow-sm">
-      <div className="flex items-center gap-4">
-        <button 
-          onClick={toggleSidebar}
-          className="p-2 -ml-2 text-slate-500 hover:bg-slate-100 rounded-lg md:hidden transition-colors"
-        >
+    <header className="header">
+      <div className="flex items-center gap-4 md:hidden mr-4">
+        <button onClick={toggleSidebar} className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg">
           <Menu size={20} />
         </button>
-        
-        {/* Breadcrumb / Title */}
-        <div className="flex flex-col">
-            <h2 className="text-lg font-bold text-slate-800">
-            {activeModule}
-            </h2>
-            <span className="text-xs text-slate-500 font-medium hidden sm:block">
-            Tableau de bord de gestion
-            </span>
-        </div>
       </div>
 
-      <div className="flex items-center gap-3 sm:gap-4">
-        {/* Search */}
-        <div className="hidden md:flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl w-64 focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all">
-          <Search size={18} className="text-slate-400" />
-          <input 
-            type="text" 
-            placeholder="Rechercher..." 
-            className="bg-transparent border-none outline-none text-sm w-full placeholder:text-slate-400"
-          />
-          <kbd className="hidden lg:inline-flex h-5 items-center gap-1 rounded border border-slate-200 bg-white px-1.5 font-mono text-[10px] font-medium text-slate-500">
-            <span className="text-xs">⌘</span>K
-          </kbd>
-        </div>
+      <div className="header-tabs hidden md:flex">
+        <button className={`header-tab ${activeModule === AppModule.ADMISSION ? 'active' : ''}`}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+            <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+          </svg>
+          Admissions
+        </button>
+        <button className={`header-tab ${activeModule === AppModule.COMMERCIAL ? 'active' : ''}`}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+            <line x1="8" y1="21" x2="16" y2="21"/>
+            <line x1="12" y1="17" x2="12" y2="21"/>
+          </svg>
+          Commercial
+        </button>
+        <button className={`header-tab ${activeModule === AppModule.RH ? 'active' : ''}`}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+          RH
+        </button>
+        <button className={`header-tab ${activeModule === AppModule.STUDENT ? 'active' : ''}`}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+          Étudiant
+        </button>
+      </div>
 
-        {/* Mobile Search Icon */}
-        <button className="md:hidden p-2 text-slate-500 hover:bg-slate-100 rounded-lg">
+      <div className="header-actions">
+        <button className="header-icon-btn">
           <Search size={20} />
         </button>
-
-        {/* Notifications */}
-        <button className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg relative transition-colors">
+        <button className="header-icon-btn">
           <Bell size={20} />
-          <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
         </button>
-
-        {/* User Profile */}
-        <div className="flex items-center gap-3 pl-3 sm:pl-4 border-l border-slate-200">
-          <div className="text-right hidden md:block">
-            <div className="text-sm font-bold text-slate-800">Arsène P.</div>
-            <div className="text-xs text-slate-500 font-medium">Administrateur</div>
-          </div>
-          <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-md ring-2 ring-white cursor-pointer hover:shadow-lg transition-shadow">
-            AP
-          </div>
+        <div className="header-lang">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="2" y1="12" x2="22" y2="12"/>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+          </svg>
+          FR
         </div>
+        <div className="header-user">AP</div>
       </div>
     </header>
   );

@@ -8,7 +8,7 @@ import {
   ChevronDown,
   BookOpen
 } from 'lucide-react';
-import { ViewId, AppModule } from '../types';
+import { ViewId } from '../types';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -17,6 +17,7 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeView, setActiveView }) => {
+  const [admissionOpen, setAdmissionOpen] = useState(true);
   const [commercialOpen, setCommercialOpen] = useState(true);
   const [rhOpen, setRhOpen] = useState(true);
 
@@ -29,29 +30,36 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeView, setActiveView }) 
       
       {/* Logo */}
       <div className="p-6 flex items-center gap-3">
-        <div className="relative w-10 h-10">
-          <span className="absolute w-3 h-3 rounded-full bg-[#EC4899] top-0 left-2"></span>
-          <span className="absolute w-3 h-3 rounded-full bg-[#F97316] top-2 left-5"></span>
-          <span className="absolute w-3 h-3 rounded-full bg-[#06B6D4] top-5 left-6"></span>
-          <span className="absolute w-3 h-3 rounded-full bg-[#86EFAC] top-7 left-3"></span>
-          <span className="absolute w-3 h-3 rounded-full bg-[#A78BFA] top-4 left-1"></span>
+        <div className="logo-dots">
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
         </div>
         <span className="text-[1.35rem] font-bold text-white">Process<span className="text-[#3B82F6]">IQ</span></span>
       </div>
 
       <nav className="flex-1 overflow-y-auto px-4 py-2 space-y-1">
         
-        {/* Admissions */}
-        <div
-          onClick={() => setActiveView('admission-main')}
-          className={`flex items-center gap-[14px] px-[18px] py-[14px] rounded-xl cursor-pointer transition-all duration-200 font-medium text-[0.95rem] mb-1 ${
-            isActive('admission-main')
-              ? 'bg-[#6366F1] text-white' 
-              : 'text-[#94a3b8] hover:bg-white/10 hover:text-white'
-          }`}
-        >
-          <Briefcase size={22} className={isActive('admission-main') ? 'text-white' : 'text-[#94a3b8]'} />
-          <span>Admissions</span>
+        {/* Admissions Group */}
+        <div className="mb-1">
+            <div
+                onClick={() => setAdmissionOpen(!admissionOpen)}
+                className={`flex items-center gap-[14px] px-[18px] py-[14px] rounded-xl cursor-pointer transition-all duration-200 font-medium text-[0.95rem] relative ${
+                    isModuleActive('admission') ? 'bg-[#6366F1] text-white' : 'text-[#94a3b8] hover:bg-white/10 hover:text-white'
+                }`}
+            >
+                <Briefcase size={22} className={isModuleActive('admission') ? 'text-white' : 'text-[#94a3b8]'} />
+                <span>Admissions</span>
+                <ChevronDown size={18} className={`ml-auto transition-transform duration-300 ${admissionOpen ? 'rotate-180' : ''}`} />
+            </div>
+            
+            <div className={`overflow-hidden transition-all duration-300 bg-black/15 rounded-b-xl mt-[-4px] ${admissionOpen ? 'max-h-[400px]' : 'max-h-0'}`}>
+                <div onClick={() => setActiveView('admission-main')} className={`flex items-center gap-3 pl-[52px] pr-[18px] py-3 cursor-pointer text-[0.9rem] hover:bg-white/5 hover:text-white transition-colors ${activeView === 'admission-main' ? 'text-[#3B82F6] bg-blue-500/10' : 'text-[#94a3b8]'}`}>
+                    <span>Vue d'ensemble</span>
+                </div>
+            </div>
         </div>
 
         {/* Commercial Group */}
@@ -67,7 +75,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeView, setActiveView }) 
                 <ChevronDown size={18} className={`ml-auto transition-transform duration-300 ${commercialOpen ? 'rotate-180' : ''}`} />
             </div>
             
-            {/* Submenu */}
             <div className={`overflow-hidden transition-all duration-300 bg-black/15 rounded-b-xl mt-[-4px] ${commercialOpen ? 'max-h-[300px]' : 'max-h-0'}`}>
                 <div onClick={() => setActiveView('commercial-dashboard')} className={`flex items-center gap-3 pl-[52px] pr-[18px] py-3 cursor-pointer text-[0.9rem] hover:bg-white/5 hover:text-white transition-colors ${isActive('commercial-dashboard') ? 'text-[#3B82F6] bg-blue-500/10' : 'text-[#94a3b8]'}`}>
                     <span>Tableau de bord</span>
@@ -94,8 +101,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeView, setActiveView }) 
                 <ChevronDown size={18} className={`ml-auto transition-transform duration-300 ${rhOpen ? 'rotate-180' : ''}`} />
             </div>
             
-            {/* Submenu */}
             <div className={`overflow-hidden transition-all duration-300 bg-black/15 rounded-b-xl mt-[-4px] ${rhOpen ? 'max-h-[300px]' : 'max-h-0'}`}>
+                <div onClick={() => setActiveView('rh-dashboard')} className={`flex items-center gap-3 pl-[52px] pr-[18px] py-3 cursor-pointer text-[0.9rem] hover:bg-white/5 hover:text-white transition-colors ${isActive('rh-dashboard') ? 'text-[#3B82F6] bg-blue-500/10' : 'text-[#94a3b8]'}`}>
+                    <span>Vue d'ensemble</span>
+                </div>
                 <div onClick={() => setActiveView('rh-fiche')} className={`flex items-center gap-3 pl-[52px] pr-[18px] py-3 cursor-pointer text-[0.9rem] hover:bg-white/5 hover:text-white transition-colors ${isActive('rh-fiche') ? 'text-[#3B82F6] bg-blue-500/10' : 'text-[#94a3b8]'}`}>
                     <span>Fiche Entreprise</span>
                 </div>
@@ -139,10 +148,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeView, setActiveView }) 
       </nav>
 
       {/* Footer */}
-      <div className="p-4 border-t border-white/10">
-        <button className="flex items-center gap-[14px] px-[18px] py-[14px] w-full rounded-xl text-[#e2e8f0] hover:bg-red-500/15 hover:text-[#FCA5A5] transition-colors">
-          <LogOut size={22} className="text-[#94a3b8]" />
-          <span className="font-medium text-[0.95rem]">Déconnexion</span>
+      <div className="sidebar-footer">
+        <button className="logout-btn">
+          <LogOut size={22} className="nav-icon" />
+          <span>Déconnexion</span>
         </button>
       </div>
     </aside>
