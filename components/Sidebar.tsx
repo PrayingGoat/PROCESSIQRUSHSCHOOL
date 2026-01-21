@@ -31,11 +31,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeView, setActiveView }) 
       {/* Logo */}
       <div className="p-6 flex items-center gap-3">
         <div className="logo-dots">
-          <span></span>
-          <span></span>
-          <span></span>
-          <span></span>
-          <span></span>
+          <span></span><span></span><span></span><span></span><span></span>
         </div>
         <span className="text-[1.35rem] font-bold text-white">Process<span className="text-[#3B82F6]">IQ</span></span>
       </div>
@@ -56,8 +52,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeView, setActiveView }) 
             </div>
             
             <div className={`overflow-hidden transition-all duration-300 bg-black/15 rounded-b-xl mt-[-4px] ${admissionOpen ? 'max-h-[400px]' : 'max-h-0'}`}>
-                <div onClick={() => setActiveView('admission-main')} className={`flex items-center gap-3 pl-[52px] pr-[18px] py-3 cursor-pointer text-[0.9rem] hover:bg-white/5 hover:text-white transition-colors ${activeView === 'admission-main' ? 'text-[#3B82F6] bg-blue-500/10' : 'text-[#94a3b8]'}`}>
-                    <span>Vue d'ensemble</span>
+                <div onClick={() => setActiveView('admission-main')} className={`nav-subitem ${activeView === 'admission-main' || !activeView.startsWith('admission-') ? 'active' : ''}`}>
+                    <div className="w-[18px] h-[18px] flex items-center justify-center">
+                        <div className="w-1.5 h-1.5 rounded-full bg-current opacity-70"></div>
+                    </div>
+                    <span>Tableau de bord</span>
                 </div>
             </div>
         </div>
@@ -76,13 +75,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeView, setActiveView }) 
             </div>
             
             <div className={`overflow-hidden transition-all duration-300 bg-black/15 rounded-b-xl mt-[-4px] ${commercialOpen ? 'max-h-[300px]' : 'max-h-0'}`}>
-                <div onClick={() => setActiveView('commercial-dashboard')} className={`flex items-center gap-3 pl-[52px] pr-[18px] py-3 cursor-pointer text-[0.9rem] hover:bg-white/5 hover:text-white transition-colors ${isActive('commercial-dashboard') ? 'text-[#3B82F6] bg-blue-500/10' : 'text-[#94a3b8]'}`}>
+                <div onClick={() => setActiveView('commercial-dashboard')} className={`nav-subitem ${isActive('commercial-dashboard') ? 'active' : ''}`}>
+                    <div className="w-[18px] h-[18px] flex items-center justify-center"><div className="w-1.5 h-1.5 rounded-full bg-current opacity-70"></div></div>
                     <span>Tableau de bord</span>
                 </div>
-                <div onClick={() => setActiveView('commercial-placer')} className={`flex items-center gap-3 pl-[52px] pr-[18px] py-3 cursor-pointer text-[0.9rem] hover:bg-white/5 hover:text-white transition-colors ${isActive('commercial-placer') ? 'text-[#3B82F6] bg-blue-500/10' : 'text-[#94a3b8]'}`}>
+                <div onClick={() => setActiveView('commercial-placer')} className={`nav-subitem ${isActive('commercial-placer') ? 'active' : ''}`}>
+                    <div className="w-[18px] h-[18px] flex items-center justify-center"><div className="w-1.5 h-1.5 rounded-full bg-current opacity-70"></div></div>
                     <span>Élèves à placer</span>
                 </div>
-                <div onClick={() => setActiveView('commercial-alternance')} className={`flex items-center gap-3 pl-[52px] pr-[18px] py-3 cursor-pointer text-[0.9rem] hover:bg-white/5 hover:text-white transition-colors ${isActive('commercial-alternance') ? 'text-[#3B82F6] bg-blue-500/10' : 'text-[#94a3b8]'}`}>
+                <div onClick={() => setActiveView('commercial-alternance')} className={`nav-subitem ${isActive('commercial-alternance') ? 'active' : ''}`}>
+                    <div className="w-[18px] h-[18px] flex items-center justify-center"><div className="w-1.5 h-1.5 rounded-full bg-current opacity-70"></div></div>
                     <span>Élèves en alternance</span>
                 </div>
             </div>
@@ -102,19 +104,24 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeView, setActiveView }) 
             </div>
             
             <div className={`overflow-hidden transition-all duration-300 bg-black/15 rounded-b-xl mt-[-4px] ${rhOpen ? 'max-h-[300px]' : 'max-h-0'}`}>
-                <div onClick={() => setActiveView('rh-dashboard')} className={`flex items-center gap-3 pl-[52px] pr-[18px] py-3 cursor-pointer text-[0.9rem] hover:bg-white/5 hover:text-white transition-colors ${isActive('rh-dashboard') ? 'text-[#3B82F6] bg-blue-500/10' : 'text-[#94a3b8]'}`}>
+                <div onClick={() => setActiveView('rh-dashboard')} className={`nav-subitem ${isActive('rh-dashboard') ? 'active' : ''}`}>
+                    <div className="w-[18px] h-[18px] flex items-center justify-center"><div className="w-1.5 h-1.5 rounded-full bg-current opacity-70"></div></div>
                     <span>Vue d'ensemble</span>
                 </div>
-                <div onClick={() => setActiveView('rh-fiche')} className={`flex items-center gap-3 pl-[52px] pr-[18px] py-3 cursor-pointer text-[0.9rem] hover:bg-white/5 hover:text-white transition-colors ${isActive('rh-fiche') ? 'text-[#3B82F6] bg-blue-500/10' : 'text-[#94a3b8]'}`}>
+                <div onClick={() => setActiveView('rh-fiche')} className={`nav-subitem ${isActive('rh-fiche') ? 'active' : ''}`}>
+                    <div className="w-[18px] h-[18px] flex items-center justify-center"><div className="w-1.5 h-1.5 rounded-full bg-current opacity-70"></div></div>
                     <span>Fiche Entreprise</span>
                 </div>
-                <div onClick={() => setActiveView('rh-cerfa')} className={`flex items-center gap-3 pl-[52px] pr-[18px] py-3 cursor-pointer text-[0.9rem] hover:bg-white/5 hover:text-white transition-colors ${isActive('rh-cerfa') ? 'text-[#3B82F6] bg-blue-500/10' : 'text-[#94a3b8]'}`}>
+                <div onClick={() => setActiveView('rh-cerfa')} className={`nav-subitem ${isActive('rh-cerfa') ? 'active' : ''}`}>
+                    <div className="w-[18px] h-[18px] flex items-center justify-center"><div className="w-1.5 h-1.5 rounded-full bg-current opacity-70"></div></div>
                     <span>CERFA</span>
                 </div>
-                <div onClick={() => setActiveView('rh-pec')} className={`flex items-center gap-3 pl-[52px] pr-[18px] py-3 cursor-pointer text-[0.9rem] hover:bg-white/5 hover:text-white transition-colors ${isActive('rh-pec') ? 'text-[#3B82F6] bg-blue-500/10' : 'text-[#94a3b8]'}`}>
+                <div onClick={() => setActiveView('rh-pec')} className={`nav-subitem ${isActive('rh-pec') ? 'active' : ''}`}>
+                    <div className="w-[18px] h-[18px] flex items-center justify-center"><div className="w-1.5 h-1.5 rounded-full bg-current opacity-70"></div></div>
                     <span>Prises en charge</span>
                 </div>
-                <div onClick={() => setActiveView('rh-ruptures')} className={`flex items-center gap-3 pl-[52px] pr-[18px] py-3 cursor-pointer text-[0.9rem] hover:bg-white/5 hover:text-white transition-colors ${isActive('rh-ruptures') ? 'text-[#3B82F6] bg-blue-500/10' : 'text-[#94a3b8]'}`}>
+                <div onClick={() => setActiveView('rh-ruptures')} className={`nav-subitem ${isActive('rh-ruptures') ? 'active' : ''}`}>
+                    <div className="w-[18px] h-[18px] flex items-center justify-center"><div className="w-1.5 h-1.5 rounded-full bg-current opacity-70"></div></div>
                     <span>Ruptures</span>
                 </div>
             </div>
@@ -148,8 +155,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeView, setActiveView }) 
       </nav>
 
       {/* Footer */}
-      <div className="sidebar-footer">
-        <button className="logout-btn">
+      <div className="p-4 border-t border-slate-700/50">
+        <button className="flex items-center gap-[14px] px-[18px] py-[14px] rounded-xl cursor-pointer transition-all duration-200 font-medium text-[0.95rem] w-full hover:bg-red-500/10 hover:text-red-400 text-[#94a3b8]">
           <LogOut size={22} className="nav-icon" />
           <span>Déconnexion</span>
         </button>

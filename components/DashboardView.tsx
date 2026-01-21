@@ -2,14 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { 
   Users, 
   Search, 
-  Filter,
-  Eye,
-  Edit,
-  Loader2,
-  FileText,
   Calendar,
   CheckCircle2,
-  Briefcase
+  FileText,
+  Loader2,
+  Eye,
+  Edit
 } from 'lucide-react';
 import { ViewId } from '../types';
 import { api } from '../services/api';
@@ -36,7 +34,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ activeSubView }) => {
     fetchData();
   }, []);
 
-  // Normalizer to handle different field names
+  // Helper to extract clean candidate data
   const getC = (c: any) => {
     const d = c.fields || c.data || c || {};
     return {
@@ -44,26 +42,20 @@ const DashboardView: React.FC<DashboardViewProps> = ({ activeSubView }) => {
         prenom: d['Prénom'] || d.prenom || d.firstname || "",
         nom: d['NOM de naissance'] || d.nom_naissance || d.nom || d.lastname || "",
         email: d['E-mail'] || d.email || "",
-        formation: d['Formation'] || d.formation_souhaitee || d.formation || "",
-        situation: d['Situation avant le contrat'] || d.situation || d.situation_actuelle || "En recherche",
-        ville: d['Commune de naissance'] || d.ville || d.commune_naissance || "",
-        departement: d['Département'] || d.departement || "",
+        formation: d['Formation'] || d.formation_souhaitee || d.formation || "Non renseigné",
+        ville: d['Commune de naissance'] || d.ville || d.commune_naissance || "Non renseigné",
         entreprise: d['Entreprise daccueil'] || d.entreprise_d_accueil || d.entreprise || "En recherche",
         telephone: d['Téléphone'] || d.telephone || "",
-        age: d['Age'] || "20" // Default for display if missing
     };
   };
 
-  // Filter helpers
-  const isPlaced = (rawCandidate: any) => {
-      const c = getC(rawCandidate);
-      const ent = c.entreprise;
+  const isPlaced = (c: any) => {
+      const ent = getC(c).entreprise;
       return ent && ent !== 'Non' && ent !== 'En recherche' && ent !== 'En cours' && ent !== 'null';
   };
 
   const studentsToPlace = candidates.filter(c => !isPlaced(c));
   const studentsPlaced = candidates.filter(c => isPlaced(c));
-  const uniqueCompanies = new Set(studentsPlaced.map(raw => getC(raw).entreprise)).size;
 
   if (loading) {
       return (
@@ -76,248 +68,116 @@ const DashboardView: React.FC<DashboardViewProps> = ({ activeSubView }) => {
   // --- SUB-VIEW: PLACER ---
   if (activeSubView === 'commercial-placer') {
       return (
-          <div className="eleves-section-wrapper">
-              <div className="eleves-hero danger">
-                  <div className="eleves-hero-content">
-                      <div className="eleves-hero-left">
-                          <div className="eleves-hero-icon">
+          <div className="animate-slide-in">
+              <div className="bg-[#A78BFA] rounded-3xl p-8 mb-7 relative overflow-hidden border border-white/10 text-white">
+                  <div className="relative z-10 flex justify-between items-center">
+                      <div className="flex items-center gap-5">
+                          <div className="w-[72px] h-[72px] rounded-[20px] bg-white/15 backdrop-blur-md border border-white/20 flex items-center justify-center">
                               <Users size={36} />
                           </div>
-                          <div className="eleves-hero-text">
-                              <h1>Élèves à placer</h1>
-                              <p>Étudiants en recherche d'alternance ou suite à une rupture de contrat</p>
+                          <div>
+                              <h1 className="text-[1.75rem] font-extrabold mb-1.5 tracking-tight">Élèves à placer</h1>
+                              <p className="text-white/70 text-[0.95rem]">Étudiants en recherche d'alternance ou suite à une rupture de contrat</p>
                           </div>
                       </div>
-                      <div className="eleves-hero-actions">
-                          <button className="btn-hero primary">
-                              Ajouter un élève
-                          </button>
-                          <button className="btn-hero secondary">
-                              Exporter
-                          </button>
+                      <div className="flex gap-3">
+                          <button className="inline-flex items-center gap-2.5 px-6 py-3.5 bg-white text-[#1e1e2e] rounded-2xl font-semibold text-[0.95rem] hover:-translate-y-0.5 hover:shadow-xl transition-all">Ajouter un élève</button>
+                          <button className="inline-flex items-center gap-2.5 px-6 py-3.5 bg-white/15 text-white border border-white/30 rounded-2xl font-semibold text-[0.95rem] backdrop-blur-md hover:bg-white/25 transition-all">Exporter</button>
                       </div>
                   </div>
               </div>
 
-              <div className="eleves-stats-grid">
-                  <div className="eleves-stat-card danger">
-                      <div className="eleves-stat-header">
-                          <div className="eleves-stat-icon danger">
-                              <Users size={24} />
-                          </div>
-                          <span className="eleves-stat-trend down">Urgent</span>
+              <div className="grid grid-cols-4 gap-5 mb-7">
+                  <div className="bg-white rounded-[20px] p-6 border border-slate-200 relative overflow-hidden hover:-translate-y-1 transition-all shadow-sm">
+                      <div className="absolute top-0 left-0 w-1 h-full bg-[#A78BFA]"></div>
+                      <div className="flex justify-between items-center mb-4">
+                          <div className="w-12 h-12 rounded-xl bg-[#EDE9FE] text-[#A78BFA] flex items-center justify-center"><Users size={24}/></div>
+                          <span className="bg-[#EDE9FE] text-[#8B5CF6] px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1">Urgent</span>
                       </div>
-                      <div className="eleves-stat-value">{studentsToPlace.length}</div>
-                      <div className="eleves-stat-label">Élèves à placer</div>
+                      <div className="text-[2.5rem] font-extrabold text-slate-800 leading-none mb-1">{studentsToPlace.length}</div>
+                      <div className="text-sm font-medium text-slate-500">Élèves à placer</div>
                   </div>
-                  <div className="eleves-stat-card warning">
-                      <div className="eleves-stat-header">
-                          <div className="eleves-stat-icon warning">
-                              <Calendar size={24} />
-                          </div>
-                          <span className="eleves-stat-trend neutral">En cours</span>
+                  {/* Additional dummy stats */}
+                  <div className="bg-white rounded-[20px] p-6 border border-slate-200 relative overflow-hidden hover:-translate-y-1 transition-all shadow-sm">
+                      <div className="absolute top-0 left-0 w-1 h-full bg-orange-400"></div>
+                      <div className="flex justify-between items-center mb-4">
+                          <div className="w-12 h-12 rounded-xl bg-orange-50 text-orange-500 flex items-center justify-center"><Calendar size={24}/></div>
+                          <span className="bg-slate-100 text-slate-500 px-2.5 py-1 rounded-full text-xs font-bold">En cours</span>
                       </div>
-                      <div className="eleves-stat-value">0</div>
-                      <div className="eleves-stat-label">En cours de placement</div>
-                  </div>
-                  <div className="eleves-stat-card info">
-                      <div className="eleves-stat-header">
-                          <div className="eleves-stat-icon info">
-                              <FileText size={24} />
-                          </div>
-                          <span className="eleves-stat-trend down">À mettre à jour</span>
-                      </div>
-                      <div className="eleves-stat-value">0</div>
-                      <div className="eleves-stat-label">CV à actualiser</div>
-                  </div>
-                  <div className="eleves-stat-card success">
-                      <div className="eleves-stat-header">
-                          <div className="eleves-stat-icon success">
-                              <CheckCircle2 size={24} />
-                          </div>
-                          <span className="eleves-stat-trend up">+2 ce mois</span>
-                      </div>
-                      <div className="eleves-stat-value">0</div>
-                      <div className="eleves-stat-label">Entretiens programmés</div>
+                      <div className="text-[2.5rem] font-extrabold text-slate-800 leading-none mb-1">0</div>
+                      <div className="text-sm font-medium text-slate-500">Entretiens prévus</div>
                   </div>
               </div>
 
-              <div className="eleves-toolbar">
-                  <div className="eleves-toolbar-left">
-                      <div className="eleves-search">
-                          <Search size={20} />
-                          <input type="text" placeholder="Rechercher un élève..." />
-                      </div>
-                  </div>
-              </div>
-
-              <div className="eleves-table-container">
-                  <div style={{overflowX: 'auto'}}>
-                    <table className="eleves-table">
-                        <thead className="danger">
-                            <tr>
-                                <th className="danger">Formation</th>
-                                <th className="danger">Nom</th>
-                                <th className="danger">Prénom</th>
-                                <th className="danger">Ville</th>
-                                <th className="danger">N° Téléphone</th>
-                                <th className="danger">Adresse mail</th>
-                                <th className="danger">Statut</th>
-                                <th className="danger" style={{textAlign: 'center'}}>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {studentsToPlace.map((raw: any) => {
-                                const c = getC(raw);
-                                return (
-                                <tr key={c.id}>
-                                    <td><span className="tag formation">{c.formation || 'Non renseigné'}</span></td>
-                                    <td style={{fontWeight: 600}}>{c.nom}</td>
-                                    <td>{c.prenom}</td>
-                                    <td>{c.ville}</td>
-                                    <td>{c.telephone}</td>
-                                    <td><a href={`mailto:${c.email}`} style={{color: '#3B82F6'}}>{c.email}</a></td>
-                                    <td><span className="tag status non">{c.situation}</span></td>
-                                    <td>
-                                        <div className="eleves-actions" style={{justifyContent: 'center'}}>
-                                            <button className="action-btn-new" title="Voir"><Eye size={16}/></button>
-                                            <button className="action-btn-new" title="Modifier"><Edit size={16}/></button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            )})}
-                        </tbody>
-                    </table>
-                  </div>
+              <div className="bg-white rounded-[20px] border border-slate-200 overflow-hidden shadow-sm">
+                  <table className="w-full">
+                      <thead className="bg-[#EDE9FE]">
+                          <tr>
+                              <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider text-[#7C3AED]">Formation</th>
+                              <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider text-[#7C3AED]">Nom</th>
+                              <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider text-[#7C3AED]">Prénom</th>
+                              <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider text-[#7C3AED]">Ville</th>
+                              <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider text-[#7C3AED]">Téléphone</th>
+                              <th className="px-4 py-4 text-center text-xs font-bold uppercase tracking-wider text-[#7C3AED]">Actions</th>
+                          </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                          {studentsToPlace.map((raw) => {
+                              const c = getC(raw);
+                              return (
+                                  <tr key={c.id} className="hover:bg-[#f8fafc]">
+                                      <td className="px-4 py-4"><span className="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-blue-50 text-blue-600 text-xs font-bold">{c.formation}</span></td>
+                                      <td className="px-4 py-4 font-bold text-slate-800">{c.nom}</td>
+                                      <td className="px-4 py-4 text-slate-600">{c.prenom}</td>
+                                      <td className="px-4 py-4 text-slate-600">{c.ville}</td>
+                                      <td className="px-4 py-4 text-slate-600">{c.telephone}</td>
+                                      <td className="px-4 py-4 text-center">
+                                          <div className="flex justify-center gap-2">
+                                              <button className="p-2 rounded-lg bg-slate-100 text-slate-500 hover:bg-blue-500 hover:text-white transition-colors"><Eye size={16}/></button>
+                                              <button className="p-2 rounded-lg bg-slate-100 text-slate-500 hover:bg-blue-500 hover:text-white transition-colors"><Edit size={16}/></button>
+                                          </div>
+                                      </td>
+                                  </tr>
+                              );
+                          })}
+                      </tbody>
+                  </table>
               </div>
           </div>
-      )
+      );
   }
 
-  // --- SUB-VIEW: ALTERNANCE ---
-  if (activeSubView === 'commercial-alternance') {
-    return (
-        <div className="eleves-section-wrapper">
-             <div className="eleves-hero success">
-                  <div className="eleves-hero-content">
-                      <div className="eleves-hero-left">
-                          <div className="eleves-hero-icon">
-                              <CheckCircle2 size={36} />
-                          </div>
-                          <div className="eleves-hero-text">
-                              <h1>Élèves en alternance</h1>
-                              <p>Étudiants ayant trouvé une entreprise d'accueil</p>
-                          </div>
-                      </div>
-                      <div className="eleves-hero-actions">
-                          <button className="btn-hero primary">
-                              Ajouter un élève
-                          </button>
-                          <button className="btn-hero secondary">
-                              Exporter
-                          </button>
-                      </div>
-                  </div>
-              </div>
-
-              <div className="eleves-stats-grid">
-                  <div className="eleves-stat-card success">
-                      <div className="eleves-stat-header">
-                          <div className="eleves-stat-icon success">
-                              <Users size={24} />
-                          </div>
-                          <span className="eleves-stat-trend up">+2 ce mois</span>
-                      </div>
-                      <div className="eleves-stat-value">{studentsPlaced.length}</div>
-                      <div className="eleves-stat-label">Élèves en alternance</div>
-                  </div>
-                  {/* ... other stats ... */}
-              </div>
-
-              <div className="eleves-table-container">
-                  <div style={{overflowX: 'auto'}}>
-                    <table className="eleves-table">
-                        <thead className="success">
-                            <tr>
-                                <th className="success">Formation</th>
-                                <th className="success">Nom</th>
-                                <th className="success">Prénom</th>
-                                <th className="success">Entreprise</th>
-                                <th className="success">Ville</th>
-                                <th className="success">N° Téléphone</th>
-                                <th className="success">Statut</th>
-                                <th className="success" style={{textAlign: 'center'}}>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {studentsPlaced.map((raw: any) => {
-                                const c = getC(raw);
-                                return (
-                                <tr key={c.id}>
-                                    <td><span className="tag formation">{c.formation}</span></td>
-                                    <td style={{fontWeight: 600}}>{c.nom}</td>
-                                    <td>{c.prenom}</td>
-                                    <td style={{fontWeight: 600}}>{c.entreprise}</td>
-                                    <td>{c.ville}</td>
-                                    <td>{c.telephone}</td>
-                                    <td><span className="tag status cerfa-valide">✓ Validé</span></td>
-                                    <td>
-                                        <div className="eleves-actions" style={{justifyContent: 'center'}}>
-                                            <button className="action-btn-new" title="Voir"><Eye size={16}/></button>
-                                            <button className="action-btn-new" title="Modifier"><Edit size={16}/></button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            )})}
-                        </tbody>
-                    </table>
-                  </div>
-              </div>
-        </div>
-    )
-  }
-
-  // Default: Dashboard
+  // Default: Dashboard / Alternance
   return (
-    <div className="commercial-section active">
-      <div className="bg-indigo-500 rounded-3xl p-8 mb-6 text-white">
-        <div className="flex justify-between items-center">
-            <div>
-                <h2 className="text-2xl font-bold mb-2">Vue d'ensemble</h2>
-                <p className="opacity-90">Suivi du placement en alternance</p>
+    <div className="animate-slide-in">
+        <div className="bg-[#818CF8] rounded-3xl p-8 mb-6 text-white shadow-lg shadow-indigo-200">
+            <div className="flex justify-between items-center">
+                <div>
+                    <h2 className="text-2xl font-bold mb-2">Vue d'ensemble Commercial</h2>
+                    <p className="opacity-90">Suivi du placement en alternance</p>
+                </div>
             </div>
         </div>
-      </div>
 
-      <div className="stats-grid mb-8">
-          <div className="stat-card" style={{background: 'linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 100%)', borderColor: '#DDD6FE'}}>
-              <div className="stat-header">
-                  <div className="stat-icon purple">
-                      <Users size={24} color="white" />
-                  </div>
-                  <div className="stat-label" style={{color: '#A78BFA'}}>À placer</div>
-              </div>
-              <div className="stat-value" style={{color: '#8B5CF6'}}>{studentsToPlace.length}</div>
-          </div>
-          <div className="stat-card" style={{background: 'linear-gradient(135deg, #F0FFF4 0%, #E6FFFA 100%)', borderColor: '#C6F6D5'}}>
-              <div className="stat-header">
-                  <div className="stat-icon green">
-                      <CheckCircle2 size={24} color="white" />
-                  </div>
-                  <div className="stat-label" style={{color: '#86EFAC'}}>En alternance</div>
-              </div>
-              <div className="stat-value" style={{color: '#6EE7B7'}}>{studentsPlaced.length}</div>
-          </div>
-          <div className="stat-card" style={{background: 'linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%)', borderColor: '#C7D2FE'}}>
-              <div className="stat-header">
-                  <div className="stat-icon blue">
-                      <Briefcase size={24} color="white" />
-                  </div>
-                  <div className="stat-label" style={{color: '#6366F1'}}>Total Entreprises</div>
-              </div>
-              <div className="stat-value" style={{color: '#4F46E5'}}>{uniqueCompanies}</div>
-          </div>
-      </div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-5 mb-8">
+            <div className="bg-[#F5F3FF] rounded-2xl p-6 border-2 border-[#DDD6FE]">
+                <div className="flex justify-between items-start mb-4">
+                    <div className="w-12 h-12 rounded-xl bg-[#A78BFA] flex items-center justify-center text-white"><Users size={24}/></div>
+                    <span className="text-[#A78BFA] font-bold text-sm">À placer</span>
+                </div>
+                <div className="text-4xl font-bold text-[#8B5CF6] mb-1">{studentsToPlace.length}</div>
+                <div className="text-[#A78BFA] text-sm flex items-center gap-1"><Users size={12}/> Étudiants</div>
+            </div>
+            
+            <div className="bg-[#F0FFF4] rounded-2xl p-6 border-2 border-[#C6F6D5]">
+                <div className="flex justify-between items-start mb-4">
+                    <div className="w-12 h-12 rounded-xl bg-[#86EFAC] flex items-center justify-center text-white"><CheckCircle2 size={24}/></div>
+                    <span className="text-[#86EFAC] font-bold text-sm">En alternance</span>
+                </div>
+                <div className="text-4xl font-bold text-[#6EE7B7] mb-1">{studentsPlaced.length}</div>
+                <div className="text-[#86EFAC] text-sm flex items-center gap-1"><CheckCircle2 size={12}/> Placés</div>
+            </div>
+        </div>
     </div>
   );
 };

@@ -117,7 +117,6 @@ export const api = {
       };
 
       // Construction du payload STRICTEMENT selon la spec backend
-      // Note: The input `data` comes from QuestionnaireForm.tsx and uses snake_case keys (mostly).
       const payload = {
         // Identité
         prenom: data.prenom,
@@ -138,11 +137,12 @@ export const api = {
         nir: data.nir ? data.nir.replace(/\s/g, '') : "",
         
         // Situation & Déclarations
-        situation: mapSituation(data.situation), // apiData already has 'situation' mapped from 'situation_avant'
+        // Map 'situation_avant' from new form or 'situation' from old form
+        situation: mapSituation(data.situation || data.situation_avant), 
         regime_social: (data.regime_social === 'urssaf' || data.regimeSocial === 'urssaf') ? "Sécurité Sociale" : (data.regime_social === 'msa' || data.regimeSocial === 'msa' ? "MSA" : "Sécurité Sociale"), 
         
-        declare_inscription_sportif_haut_niveau: typeof data.declare_inscription_sportif_haut_niveau === 'boolean' ? data.declare_inscription_sportif_haut_niveau : (data.sportifHautNiveau === 'oui'),
-        declare_avoir_projet_creation_reprise_entreprise: typeof data.declare_avoir_projet_creation_reprise_entreprise === 'boolean' ? data.declare_avoir_projet_creation_reprise_entreprise : (data.projetEntreprise === 'oui'),
+        declare_inscription_sportif_haut_niveau: typeof data.declare_inscription_sportif_haut_niveau === 'boolean' ? data.declare_inscription_sportif_haut_niveau : (data.sportif_haut_niveau === 'oui' || data.sportifHautNiveau === 'oui'),
+        declare_avoir_projet_creation_reprise_entreprise: typeof data.declare_avoir_projet_creation_reprise_entreprise === 'boolean' ? data.declare_avoir_projet_creation_reprise_entreprise : (data.projet_entreprise === 'oui' || data.projetEntreprise === 'oui'),
         declare_travailleur_handicape: typeof data.declare_travailleur_handicape === 'boolean' ? data.declare_travailleur_handicape : (data.rqth === 'oui'),
         
         // Scolarité
@@ -153,10 +153,12 @@ export const api = {
         
         // Projet
         formation_souhaitee: mapFormation(data.formation_souhaitee || data.formation),
-        date_de_visite: data.date_de_visite || data.dateVisite || new Date().toISOString().split('T')[0],
-        date_de_reglement: data.date_de_reglement || data.dateReglement || new Date().toISOString().split('T')[0],
+        // Handle snake_case dates from new form
+        date_de_visite: data.date_de_visite || data.date_visite || data.dateVisite || new Date().toISOString().split('T')[0],
+        date_de_reglement: data.date_de_reglement || data.date_reglement || data.dateReglement || new Date().toISOString().split('T')[0],
         
-        entreprise_d_accueil: data.entreprise_d_accueil || (data.entrepriseAccueil === 'oui' ? (data.nomEntreprise || "Oui") : (data.entrepriseAccueil === 'en_cours' ? "En recherche" : "Non")),
+        // Handle entreprise_accueil from new form which maps to entreprise_d_accueil
+        entreprise_d_accueil: data.entreprise_d_accueil || data.entreprise_accueil || (data.entrepriseAccueil === 'oui' ? (data.nomEntreprise || "Oui") : (data.entrepriseAccueil === 'en_cours' ? "En recherche" : "Non")),
         
         connaissance_rush_how: formatString(data.connaissance_rush_how || data.source) || "Autre", 
         motivation_projet_professionnel: data.motivation_projet_professionnel || data.motivations || "Non renseigné" 

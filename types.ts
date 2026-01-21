@@ -27,18 +27,11 @@ export type ViewId =
 
 export enum AdmissionTab {
   TESTS = 'tests',
-  ENTRETIEN = 'entretien',
-  DOCUMENTS = 'documents-etudiant',
   QUESTIONNAIRE = 'questionnaire', // Fiche Étudiant
+  DOCUMENTS = 'documents-etudiant',
   ENTREPRISE = 'questionnaire-entreprise', // Fiche Entreprise
-  ADMINISTRATIF = 'documents-generes' // Documents générés
-}
-
-export enum RHTab {
-  FICHE_ENTREPRISE = 'fiche-entreprise',
-  CERFA = 'cerfas',
-  PEC = 'prises-en-charge',
-  RUPTURES = 'ruptures'
+  ADMINISTRATIF = 'documents-generes', // Documents générés
+  ENTRETIEN = 'entretien'
 }
 
 export interface StatCardProps {
