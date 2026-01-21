@@ -738,15 +738,13 @@ const AdmissionView = () => {
   const [entrepriseCompleted, setEntrepriseCompleted] = useState(false);
   const [adminCompleted, setAdminCompleted] = useState(false);
 
-  // Initial check for student record
-  useEffect(() => {
-    const savedRecordId = localStorage.getItem('candidateRecordId');
-    if (savedRecordId && !studentData) {
-        // Optimistic: we assume if ID is there, user exists. 
-        // In a real app we might fetch the student data here.
-        setStudentData({ record_id: savedRecordId });
-    }
-  }, []);
+  // Initial check for student record - REMOVED to ensure fresh start
+  // useEffect(() => {
+  //   const savedRecordId = localStorage.getItem('candidateRecordId');
+  //   if (savedRecordId && !studentData) {
+  //       setStudentData({ record_id: savedRecordId });
+  //   }
+  // }, []);
 
   const handleFinishTest = () => {
       setTestCompleted(true);
