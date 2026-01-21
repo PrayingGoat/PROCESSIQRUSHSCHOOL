@@ -34,7 +34,7 @@ const FORMATION_FORMS: Record<string, string> = {
   mco: "https://docs.google.com/forms/d/e/1FAIpQLSdoGS2NZKs3sGRZ-dZ-3a8x9JZ32FQcpBQupMmD4CUQpEhnuw/viewform?embedded=true", 
   ndrc: "https://docs.google.com/forms/d/e/1FAIpQLSeDDzl2VDR__aY776N_7auk4uAZc04uC6mQNUsRNOr9D3eCmw/viewform?embedded=true",
   bachelor: "https://docs.google.com/forms/d/e/1FAIpQLSdzOg66p81XV9Ghb4dS6xP2r-BCw4qiGECU4F01Vs7VlrJNCQ/viewform?embedded=true",
-  ntc: "https://docs.google.com/forms/d/e/1FAIpQLSfW-Gi40ZBpU9zymrYBZ05P8s2TSSL88OYwkp5lzPSNDXTnhA/viewform?embedded=true",
+  tpntc: "https://docs.google.com/forms/d/e/1FAIpQLSfW-Gi40ZBpU9zymrYBZ05P8s2TSSL88OYwkp5lzPSNDXTnhA/viewform?embedded=true",
 };
 
 const REQUIRED_DOCUMENTS = [
@@ -288,7 +288,7 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
                         </div>
                          <div>
                             <label className="block text-sm font-semibold text-slate-700 mb-2">Type Employeur</label>
-                            <select className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:border-emerald-500 outline-none"
+                            <select className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:border-emerald-500 outline-none cursor-pointer"
                                 value={formData.identification.type_employeur}
                                 onChange={(e) => handleNestedChange('identification', 'type_employeur', e.target.value)}
                             >
@@ -325,7 +325,7 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
                         <div className="col-span-9">
                              <label className="block text-sm font-semibold text-slate-700 mb-2">Voie & Nom de rue</label>
                              <div className="flex gap-2">
-                                <select className="w-1/3 px-4 py-3 bg-white border border-slate-200 rounded-xl focus:border-emerald-500 outline-none"
+                                <select className="w-1/3 px-4 py-3 bg-white border border-slate-200 rounded-xl focus:border-emerald-500 outline-none cursor-pointer"
                                     value={formData.adresse.voie}
                                     onChange={(e) => handleNestedChange('adresse', 'voie', e.target.value)}
                                 >
@@ -467,7 +467,7 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
                         </div>
                         <div>
                             <label className="block text-sm font-semibold text-slate-700 mb-2">Niveau de diplôme</label>
-                            <select className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:border-emerald-500 outline-none"
+                            <select className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:border-emerald-500 outline-none cursor-pointer"
                                 value={formData.maitre_apprentissage.niveau_diplome}
                                 onChange={(e) => handleNestedChange('maitre_apprentissage', 'niveau_diplome', e.target.value)}
                             >
@@ -514,12 +514,12 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
                         </div>
                          <div>
                             <label className="block text-sm font-semibold text-slate-700 mb-2">Déjà maître d'apprentissage ?</label>
-                            <select className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:border-emerald-500 outline-none"
+                            <select className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:border-emerald-500 outline-none cursor-pointer"
                                 value={formData.maitre_apprentissage.deja_maitre_apprentissage}
                                 onChange={(e) => handleNestedChange('maitre_apprentissage', 'deja_maitre_apprentissage', e.target.value)}
                             >
-                                <option value="Oui">Oui</option>
                                 <option value="Non">Non</option>
+                                <option value="Oui">Oui</option>
                             </select>
                         </div>
                     </div>
@@ -573,7 +573,7 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                          <div>
                             <label className="block text-sm font-semibold text-slate-700 mb-2">Nature du contrat</label>
-                             <select className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:border-emerald-500 outline-none"
+                             <select className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:border-emerald-500 outline-none cursor-pointer"
                                 value={formData.contrat.nature_contrat}
                                 onChange={(e) => handleNestedChange('contrat', 'nature_contrat', e.target.value)}
                              >
@@ -583,7 +583,7 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
                         </div>
                         <div>
                             <label className="block text-sm font-semibold text-slate-700 mb-2">Type de dérogation</label>
-                             <select className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:border-emerald-500 outline-none"
+                             <select className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:border-emerald-500 outline-none cursor-pointer"
                                 value={formData.contrat.type_derogation}
                                 onChange={(e) => handleNestedChange('contrat', 'type_derogation', e.target.value)}
                              >
@@ -616,7 +616,7 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
                         </div>
                         <div>
                             <label className="block text-sm font-semibold text-slate-700 mb-2">Durée Hebdomadaire</label>
-                             <select className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:border-emerald-500 outline-none"
+                             <select className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:border-emerald-500 outline-none cursor-pointer"
                                 value={formData.contrat.duree_hebdomadaire}
                                 onChange={(e) => handleNestedChange('contrat', 'duree_hebdomadaire', e.target.value)}
                              >
@@ -649,7 +649,7 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
                         </div>
                          <div>
                             <label className="block text-sm font-semibold text-slate-700 mb-2">Base calcul salaire</label>
-                            <select className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:border-emerald-500 outline-none"
+                            <select className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:border-emerald-500 outline-none cursor-pointer"
                                 value={formData.contrat.base_calcul_salaire}
                                 onChange={(e) => handleNestedChange('contrat', 'base_calcul_salaire', e.target.value)}
                             >
