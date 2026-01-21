@@ -60,6 +60,31 @@ const FORMATION_CARDS = [
     { id: 'tpntc', title: 'TP NTC', subtitle: 'Titre Pro Négociateur Technico-Commercial', color: 'orange' }
 ];
 
+// --- COMPONENTS ---
+
+const SuccessModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
+    if (!isOpen) return null;
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+            <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl transform transition-all scale-100 animate-slide-up text-center border border-white/20">
+                <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-emerald-500/20">
+                    <CheckCircle2 size={40} strokeWidth={2.5} />
+                </div>
+                <h3 className="text-2xl font-bold text-slate-800 mb-2">Félicitations !</h3>
+                <p className="text-slate-500 mb-8 leading-relaxed">
+                    La fiche de renseignements a été générée et envoyée avec succès.
+                </p>
+                <button 
+                    onClick={onClose}
+                    className="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl font-bold text-lg hover:shadow-lg hover:shadow-emerald-500/25 hover:-translate-y-0.5 transition-all"
+                >
+                    Continuer
+                </button>
+            </div>
+        </div>
+    );
+};
+
 const StepItem = ({ step, label, isActive, isCompleted }: { step: number, label: string, isActive: boolean, isCompleted: boolean }) => (
   <div className="flex flex-col items-center gap-2 relative z-10 group">
     <div className={`w-11 h-11 rounded-full border-2 flex items-center justify-center font-bold text-base transition-all duration-300 ${
@@ -149,6 +174,12 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
             fonction_contact: "",
             telephone_contact: "",
             email_contact: ""
+        },
+        contact_rh: {
+            nom_contact_rh: "",
+            fonction_contact_rh: "",
+            telephone_contact_rh: "",
+            email_contact_rh: ""
         },
         formation_missions: {
             formation_alternant: ""
@@ -660,7 +691,7 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
                     </div>
                 </div>
 
-                {/* 7. Contact Taxe & Formation */}
+                {/* 7. Contact Taxe & Formation & RH */}
                 <div className="bg-white/80 p-6 md:p-8 rounded-2xl border border-emerald-100 shadow-sm mb-6 transition-all hover:shadow-md">
                     <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
                         <div className="w-8 h-8 bg-emerald-100 text-emerald-700 rounded-lg flex items-center justify-center font-bold text-sm shadow-sm">7</div>
@@ -668,6 +699,40 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                          <div className="md:col-span-2">
+                             <h4 className="font-bold text-slate-600 mb-3 text-sm uppercase">Contact Ressources Humaines (Optionnel)</h4>
+                         </div>
+                         <div className="md:col-span-2">
+                            <label className="block text-sm font-semibold text-slate-700 mb-2">Nom & Prénom</label>
+                            <input type="text" className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:border-emerald-500 outline-none" 
+                                value={formData.contact_rh.nom_contact_rh}
+                                onChange={(e) => handleNestedChange('contact_rh', 'nom_contact_rh', e.target.value)}
+                                placeholder="Nom du contact RH"
+                            />
+                        </div>
+                         <div>
+                            <label className="block text-sm font-semibold text-slate-700 mb-2">Fonction</label>
+                            <input type="text" className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:border-emerald-500 outline-none" 
+                                value={formData.contact_rh.fonction_contact_rh}
+                                onChange={(e) => handleNestedChange('contact_rh', 'fonction_contact_rh', e.target.value)}
+                                placeholder="Ex: DRH, Chargé RH..."
+                            />
+                        </div>
+                         <div>
+                            <label className="block text-sm font-semibold text-slate-700 mb-2">Téléphone</label>
+                            <input type="tel" className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:border-emerald-500 outline-none" 
+                                value={formData.contact_rh.telephone_contact_rh}
+                                onChange={(e) => handleNestedChange('contact_rh', 'telephone_contact_rh', e.target.value)}
+                            />
+                        </div>
+                         <div className="md:col-span-2">
+                            <label className="block text-sm font-semibold text-slate-700 mb-2">Email</label>
+                            <input type="email" className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:border-emerald-500 outline-none" 
+                                value={formData.contact_rh.email_contact_rh}
+                                onChange={(e) => handleNestedChange('contact_rh', 'email_contact_rh', e.target.value)}
+                            />
+                        </div>
+
+                         <div className="md:col-span-2 mt-4">
                              <h4 className="font-bold text-slate-600 mb-3 text-sm uppercase">Contact Taxe d'Apprentissage / Admin</h4>
                          </div>
                          <div>
@@ -737,14 +802,9 @@ const AdmissionView = () => {
   
   const [entrepriseCompleted, setEntrepriseCompleted] = useState(false);
   const [adminCompleted, setAdminCompleted] = useState(false);
-
-  // Initial check for student record - REMOVED to ensure fresh start
-  // useEffect(() => {
-  //   const savedRecordId = localStorage.getItem('candidateRecordId');
-  //   if (savedRecordId && !studentData) {
-  //       setStudentData({ record_id: savedRecordId });
-  //   }
-  // }, []);
+  
+  // Modal state
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const handleFinishTest = () => {
       setTestCompleted(true);
@@ -775,6 +835,54 @@ const AdmissionView = () => {
         setUploadingFiles(prev => ({ ...prev, [docId]: false }));
     }
   };
+  
+  // Handle Document Action (e.g. Generate Fiche Renseignement)
+  const handleDocAction = async (doc: any) => {
+    // Cas spécifique pour la Fiche de renseignements
+    if (doc.id === 'renseignements') {
+        // Vérifier que le dossier étudiant et entreprise est rempli
+        // (Pour la démo, on vérifie surtout qu'on a l'ID étudiant, 
+        // l'entreprise est techniquement requise par la logique métier backend)
+        
+        if (!studentData && !localStorage.getItem('candidateRecordId')) {
+            alert("Veuillez d'abord compléter la Fiche Étudiant.");
+            return;
+        }
+
+        const recordId = studentData?.record_id || studentData?.id || localStorage.getItem('candidateRecordId');
+        if (!recordId) {
+            alert("Identifiant étudiant introuvable. Veuillez recharger ou compléter le dossier.");
+            return;
+        }
+        
+        // Optionnel : Vérifier si l'entreprise est complétée
+        // if (!entrepriseCompleted) { ... }
+
+        try {
+            // Feedback visuel temporaire
+            const btn = document.getElementById(`btn-${doc.id}`);
+            const originalText = btn ? btn.innerText : "";
+            if(btn) btn.innerText = "Génération...";
+
+            await api.generateFicheRenseignement(recordId);
+            
+            // Succès - Show Modal instead of alert
+            setShowSuccessModal(true);
+            
+            if(btn) btn.innerText = originalText;
+        } catch (e) {
+            console.error(e);
+            alert("Erreur lors de la génération de la fiche.");
+             const btn = document.getElementById(`btn-${doc.id}`);
+             // Remettre le texte original si possible, sinon "Compléter"
+             if(btn) btn.innerText = "Compléter"; 
+        }
+    } else {
+        // Placeholder pour les autres documents
+        console.log("Action pour le document:", doc.title);
+        // Si d'autres logiques existent (modales etc.), elles iraient ici
+    }
+  };
 
   const uploadedCount = Object.keys(uploadedFiles).length;
   const progressPercent = (uploadedCount / REQUIRED_DOCUMENTS.length) * 100;
@@ -784,6 +892,7 @@ const AdmissionView = () => {
   if (mainTab === 'ntc') {
       return (
           <div className="animate-fade-in">
+              {/* NTC View Content (Same as before) */}
               <div className="flex gap-2 mb-6 bg-slate-50 p-2 rounded-2xl border border-slate-200 w-fit">
                   <button onClick={() => setMainTab('dashboard')} className="flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold text-slate-500 hover:bg-white hover:text-slate-700">
                       Tableau de bord
@@ -875,7 +984,8 @@ const AdmissionView = () => {
 
   // --- DASHBOARD VIEW (DEFAULT) ---
   return (
-    <div className="animate-fade-in max-w-6xl mx-auto pb-20">
+    <div className="animate-fade-in max-w-6xl mx-auto pb-20 relative">
+      <SuccessModal isOpen={showSuccessModal} onClose={() => setShowSuccessModal(false)} />
       
       {/* Hero Section */}
       <div className="admission-hero">
@@ -1134,7 +1244,11 @@ const AdmissionView = () => {
                           <h4 className="font-bold text-slate-800 text-lg mb-1">{doc.title}</h4>
                           <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">{doc.subtitle}</p>
                           <p className="text-sm text-slate-400 mb-6">{doc.desc}</p>
-                          <button className="w-full py-2.5 rounded-lg border-2 border-slate-100 font-bold text-slate-600 hover:border-slate-300 hover:text-slate-800 transition-all flex items-center justify-center gap-2">
+                          <button 
+                            id={`btn-${doc.id}`}
+                            onClick={() => handleDocAction(doc)}
+                            className="w-full py-2.5 rounded-lg border-2 border-slate-100 font-bold text-slate-600 hover:border-slate-300 hover:text-slate-800 transition-all flex items-center justify-center gap-2"
+                          >
                               {doc.btnText} <ArrowRight size={14} />
                           </button>
                       </div>

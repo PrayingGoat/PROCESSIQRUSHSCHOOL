@@ -308,6 +308,27 @@ export const api = {
       throw error;
     }
   },
+  
+  // --- GENERATE FICHE (NEW) ---
+  async generateFicheRenseignement(etudiantId: string) {
+    try {
+      console.log(`🚀 Génération fiche pour étudiant: ${etudiantId}`);
+      const response = await fetch(`${BASE_URL}/generate-fiche/${etudiantId}`, {
+        method: 'POST',
+        headers: { 'Accept': 'application/json' }
+      });
+      
+      if (!response.ok) {
+         const txt = await response.text();
+         throw new Error(txt || response.statusText);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('❌ API Error (Generate Fiche):', error);
+      throw error;
+    }
+  },
 
   // --- ENTREPRISE (CRUD) ---
   
