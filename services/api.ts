@@ -1,5 +1,6 @@
 
-const BASE_URL = 'https://liantsoaxx08-apirushscholl.hf.space/api/v1/admission';
+const BASE_API_URL = 'https://liantsoaxx08-apirushscholl.hf.space/api/v1';
+const BASE_URL = `${BASE_API_URL}/admission`;
 
 // Helper to format string (remove underscores, capitalize)
 const formatString = (str: string) => {
@@ -31,7 +32,7 @@ export const api = {
   },
 
   // --- CANDIDATES (CRUD) ---
-  
+
   // CREATE (POST)
   async submitStudent(data: any) {
     try {
@@ -41,127 +42,125 @@ export const api = {
         let phone = p.toString().replace(/\D/g, '');
         // Gestion du format international +33
         if (phone.length === 11 && phone.startsWith('33')) {
-           return '0' + phone.substring(2);
+          return '0' + phone.substring(2);
         }
         // Gestion du format sans 0
         if (phone.length === 9) {
-           return '0' + phone;
+          return '0' + phone;
         }
         return phone;
       };
 
       // --- MAPPINGS ---
       const mapSexe = (v: string) => {
-          // Normalisation pour envoyer strictement Féminin ou Masculin
-          if (v === 'feminin' || v === 'Féminin' || v === 'Femme') return 'Féminin';
-          if (v === 'masculin' || v === 'Masculin' || v === 'Homme') return 'Masculin';
-          return v; 
+        // Normalisation pour envoyer strictement Féminin ou Masculin
+        if (v === 'feminin' || v === 'Féminin' || v === 'Femme') return 'Féminin';
+        if (v === 'masculin' || v === 'Masculin' || v === 'Homme') return 'Masculin';
+        return v;
       };
 
       const mapNationalite = (v: string) => {
-          if (v === 'francaise') return 'Française';
-          if (v === 'ue') return 'Union Européenne';
-          if (v === 'hors_ue') return 'Hors Union Européenne';
-          return formatString(v);
+        if (v === 'francaise') return 'Française';
+        if (v === 'ue') return 'Union Européenne';
+        if (v === 'hors_ue') return 'Hors Union Européenne';
+        return formatString(v);
       };
 
       const mapSituation = (v: string) => {
-          const map: Record<string, string> = {
-              'scolaire': 'Scolaire : (Bac / brevet...)',
-              'etudiant': 'Etudiant : (Etude supérieur)',
-              'contrat_pro': 'Contrat pro',
-              'salarie': 'Salarié : (CDD/CDI)',
-              'apprentissage': "Contrat d'apprentissage"
-          };
-          // Try exact match first, then formatted, then pass through
-          return map[v] || v || formatString(v);
+        const map: Record<string, string> = {
+          'scolaire': 'Scolaire : (Bac / brevet...)',
+          'etudiant': 'Etudiant : (Etude supérieur)',
+          'contrat_pro': 'Contrat pro',
+          'salarie': 'Salarié : (CDD/CDI)',
+          'apprentissage': "Contrat d'apprentissage"
+        };
+        // Try exact match first, then formatted, then pass through
+        return map[v] || v || formatString(v);
       };
 
       const mapDiplome = (v: string) => {
-          const map: Record<string, string> = {
-              'bac_techno': 'Baccalauréat Technologique',
-              'bac_general': 'Baccalauréat général',
-              'bac_pro': 'Baccalauréat pro',
-              'brevet': 'Brevet',
-              'cap': 'CAP',
-              'bts': 'BTS',
-              'aucun': 'Aucun diplôme'
-          };
-          return map[v] || v || formatString(v);
+        const map: Record<string, string> = {
+          'bac_techno': 'Baccalauréat Technologique',
+          'bac_general': 'Baccalauréat général',
+          'bac_pro': 'Baccalauréat pro',
+          'brevet': 'Brevet',
+          'cap': 'CAP',
+          'bts': 'BTS',
+          'aucun': 'Aucun diplôme'
+        };
+        return map[v] || v || formatString(v);
       };
-      
+
       const mapNiveau = (v: string) => {
-           // The new form sends "BAC", "BAC +2" strings directly.
-           // Only map if it's a code
-           const map: Record<string, string> = {
-              'aucun': 'Aucun',
-              'cap_bep': 'CAP / BEP',
-              'bac': 'BAC',
-              'bac2': 'BAC +2',
-              'bac3_4': 'BAC +3/4',
-              'bac5': 'BAC +5',
-              'bac5+': 'BAC +5+'
-           };
-           return map[v] || v;
+        // The new form sends "BAC", "BAC +2" strings directly.
+        // Only map if it's a code
+        const map: Record<string, string> = {
+          'aucun': 'Aucun',
+          'cap_bep': 'CAP / BEP',
+          'bac': 'BAC',
+          'bac2': 'BAC +2',
+          'bac3_4': 'BAC +3/4',
+          'bac5': 'BAC +5',
+          'bac5+': 'BAC +5+'
+        };
+        return map[v] || v;
       };
 
       const mapFormation = (v: string) => {
-          const map: Record<string, string> = {
-              'bts_mco': 'BTS MCO',
-              'bts_ndrc': 'BTS NDRC',
-              'bachelor': 'BACHELOR RDC',
-              'bachelor_rdc': 'BACHELOR RDC',
-              'tp_ntc': 'TP NTC'
-          };
-          return map[v] || formatString(v);
+        const map: Record<string, string> = {
+          'bts_mco': 'BTS MCO',
+          'bts_ndrc': 'BTS NDRC',
+          'bachelor': 'BACHELOR RDC',
+          'bachelor_rdc': 'BACHELOR RDC',
+          'tp_ntc': 'TP NTC'
+        };
+        return map[v] || formatString(v);
       };
 
       // Construction du payload STRICTEMENT selon la spec backend
       const payload = {
         // Identité
         prenom: data.prenom,
-        nom_naissance: data.nom_naissance || data.nom,
-        nom_usage: data.nom_usage || data.nomUsage || "",
+        nom_naissance: data.nom_naissance,
+        nom_usage: data.nom_usage || "",
         sexe: mapSexe(data.sexe),
-        date_naissance: data.date_naissance || data.dateNaissance,
+        date_naissance: data.date_naissance,
         nationalite: mapNationalite(data.nationalite),
-        commune_naissance: data.commune_naissance || data.villeNaissance,
-        departement: data.departement || data.deptNaissance,
-        
+        commune_naissance: data.commune_naissance,
+        departement: data.departement,
+
         // Coordonnées
-        adresse_residence: data.adresse_residence || data.adresse,
-        code_postal: data.code_postal || data.codePostal,
+        adresse_residence: data.adresse_residence,
+        code_postal: data.code_postal,
         ville: data.ville,
         email: data.email,
         telephone: cleanPhone(data.telephone),
         nir: data.nir ? data.nir.replace(/\s/g, '') : "",
-        
+
         // Situation & Déclarations
-        // Map 'situation_avant' from new form or 'situation' from old form
-        situation: mapSituation(data.situation || data.situation_avant), 
-        regime_social: (data.regime_social === 'urssaf' || data.regimeSocial === 'urssaf') ? "Sécurité Sociale" : (data.regime_social === 'msa' || data.regimeSocial === 'msa' ? "MSA" : "Sécurité Sociale"), 
-        
-        declare_inscription_sportif_haut_niveau: typeof data.declare_inscription_sportif_haut_niveau === 'boolean' ? data.declare_inscription_sportif_haut_niveau : (data.sportif_haut_niveau === 'oui' || data.sportifHautNiveau === 'oui'),
-        declare_avoir_projet_creation_reprise_entreprise: typeof data.declare_avoir_projet_creation_reprise_entreprise === 'boolean' ? data.declare_avoir_projet_creation_reprise_entreprise : (data.projet_entreprise === 'oui' || data.projetEntreprise === 'oui'),
-        declare_travailleur_handicape: typeof data.declare_travailleur_handicape === 'boolean' ? data.declare_travailleur_handicape : (data.rqth === 'oui'),
-        
+        situation: mapSituation(data.situation),
+        regime_social: (data.regime_social === 'urssaf') ? "Sécurité Sociale" : (data.regime_social === 'msa' ? "MSA" : "Sécurité Sociale"),
+
+        declare_inscription_sportif_haut_niveau: data.declare_inscription_sportif_haut_niveau || false,
+        declare_avoir_projet_creation_reprise_entreprise: data.declare_avoir_projet_creation_reprise_entreprise || false,
+        declare_travailleur_handicape: data.declare_travailleur_handicape || false,
+        alternance: data.alternance || false,
+
         // Scolarité
-        dernier_diplome_prepare: mapDiplome(data.dernier_diplome_prepare || data.diplome),
-        intitule_diplome: data.intitule_diplome || "",
-        derniere_classe: data.derniere_classe || data.classe || "",
-        bac: mapNiveau(data.bac || data.niveau) || "", 
-        
+        dernier_diplome_prepare: mapDiplome(data.dernier_diplome_prepare),
+        intitulePrecisDernierDiplome: data.intitulePrecisDernierDiplome || "",
+        derniere_classe: data.derniere_classe || "",
+        bac: mapNiveau(data.bac) || "",
+
         // Projet
-        formation_souhaitee: mapFormation(data.formation_souhaitee || data.formation),
-        // Handle snake_case dates from new form
-        date_de_visite: data.date_de_visite || data.date_visite || data.dateVisite || new Date().toISOString().split('T')[0],
-        date_de_reglement: data.date_de_reglement || data.date_reglement || data.dateReglement || new Date().toISOString().split('T')[0],
-        
-        // Handle entreprise_accueil from new form which maps to entreprise_d_accueil
-        entreprise_d_accueil: data.entreprise_d_accueil || data.entreprise_accueil || (data.entrepriseAccueil === 'oui' ? (data.nomEntreprise || "Oui") : (data.entrepriseAccueil === 'en_cours' ? "En recherche" : "Non")),
-        
-        connaissance_rush_how: formatString(data.connaissance_rush_how || data.source) || "Autre", 
-        motivation_projet_professionnel: data.motivation_projet_professionnel || data.motivations || "Non renseigné" 
+        formation_souhaitee: mapFormation(data.formation_souhaitee),
+        date_de_visite: data.date_de_visite || new Date().toISOString().split('T')[0],
+        date_de_reglement: data.date_de_reglement || new Date().toISOString().split('T')[0],
+
+        entreprise_d_accueil: data.entreprise_d_accueil || "Non",
+
+        connaissance_rush_how: formatString(data.connaissance_rush_how) || "Autre",
+        motivation_projet_professionnel: data.motivation_projet_professionnel || "Non renseigné"
       };
 
       console.log("📤 Submitting payload:", payload);
@@ -180,8 +179,8 @@ export const api = {
           if (Array.isArray(errorData.detail)) {
             const details = errorData.detail
               .map((err: any) => {
-                 const field = Array.isArray(err.loc) ? err.loc[err.loc.length - 1] : 'champ inconnu';
-                 return `${field}: ${err.msg}`;
+                const field = Array.isArray(err.loc) ? err.loc[err.loc.length - 1] : 'champ inconnu';
+                return `${field}: ${err.msg}`;
               })
               .join(', ');
             if (details) errorMessage = details;
@@ -189,27 +188,27 @@ export const api = {
             errorMessage = errorData.detail;
           }
         } catch (e) {
-           const text = await response.text();
-           if (text) errorMessage = `Erreur ${response.status}: ${text}`;
+          const text = await response.text();
+          if (text) errorMessage = `Erreur ${response.status}: ${text}`;
         }
         throw new Error(errorMessage);
       }
-      
+
       const json = await response.json();
-      
+
       // Ensure we return the expected structure for the form (success, record_id)
       if (json && (json.id || json.record_id)) {
-          return {
-              success: true,
-              record_id: json.record_id || json.id,
-              data: json
-          };
+        return {
+          success: true,
+          record_id: json.record_id || json.id,
+          data: json
+        };
       }
-      
+
       return json;
     } catch (error) {
       console.error('❌ API Error (Submit Student):', error);
-      throw error; 
+      throw error;
     }
   },
 
@@ -225,6 +224,40 @@ export const api = {
     } catch (error) {
       console.error('❌ API Error (Get All Candidates):', error);
       return [];
+    }
+  },
+
+  // GET ETUDIANTS FICHES (Document tracking)
+  async getEtudiantsFiches(avecFicheUniquement: boolean = false) {
+    try {
+      const url = `${BASE_API_URL}/rh/etudiants-fiches?avec_fiche_uniquement=${avecFicheUniquement}`;
+      console.log(`🔍 Fetching étudiants fiches from: ${url}`);
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch étudiants fiches');
+      return await response.json();
+    } catch (error) {
+      console.error('❌ API Error (Get Étudiants Fiches):', error);
+      throw error;
+    }
+  },
+
+  // GET RH STATS
+  async getRHStats() {
+    try {
+      const response = await fetch(`${BASE_API_URL}/rh/statistiques`, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      });
+      if (!response.ok) throw new Error('Failed to fetch RH stats');
+      return await response.json();
+    } catch (error) {
+      console.error('❌ API Error (Get RH Stats):', error);
+      throw error;
     }
   },
 
@@ -308,21 +341,21 @@ export const api = {
       throw error;
     }
   },
-  
+
   // --- GENERATE FICHE (NEW) ---
   async generateFicheRenseignement(etudiantId: string) {
     try {
       console.log(`🚀 Génération fiche pour étudiant: ${etudiantId}`);
-      const response = await fetch(`${BASE_URL}/generate-fiche/${etudiantId}`, {
+      const response = await fetch(`${BASE_API_URL}/generate-fiche/${etudiantId}`, {
         method: 'POST',
         headers: { 'Accept': 'application/json' }
       });
-      
+
       if (!response.ok) {
-         const txt = await response.text();
-         throw new Error(txt || response.statusText);
+        const txt = await response.text();
+        throw new Error(txt || response.statusText);
       }
-      
+
       return await response.json();
     } catch (error) {
       console.error('❌ API Error (Generate Fiche):', error);
@@ -331,14 +364,31 @@ export const api = {
   },
 
   // --- ENTREPRISE (CRUD) ---
-  
+
   // CREATE (POST)
   async submitCompany(data: any) {
     try {
-      // Direct pass-through since the frontend is now sending the exact nested structure required by the backend.
-      // We do NOT use mapToBackendFormat here because the structure is already complex and nested correctly.
-      const payload = data;
-      
+      // Clean up empty fields - convert empty strings to null
+      const cleanDates = (obj: any): any => {
+        if (typeof obj !== 'object' || obj === null) return obj;
+
+        const cleaned: any = Array.isArray(obj) ? [] : {};
+        for (const key in obj) {
+          const value = obj[key];
+          // Convert all empty strings to null
+          if (value === '') {
+            cleaned[key] = null;
+          } else if (typeof value === 'object' && value !== null) {
+            cleaned[key] = cleanDates(value);
+          } else {
+            cleaned[key] = value;
+          }
+        }
+        return cleaned;
+      };
+
+      const payload = cleanDates(data);
+
       console.log("📤 Submitting Company payload:", payload);
 
       const response = await fetch(`${BASE_URL}/entreprise`, {

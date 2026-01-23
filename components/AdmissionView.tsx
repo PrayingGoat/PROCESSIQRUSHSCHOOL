@@ -206,6 +206,11 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
             code_postal: "",
             ville: ""
         },
+        facturation: {
+            code_postal_facturation: "",
+            ville_facturation: "",
+            numero_bon_commande: ""
+        },
         contrat: {
             nature_contrat: "Contrat",
             type_contrat: "Contrat d'apprentissage",
@@ -218,7 +223,11 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
             lieu_execution: "",
             base_calcul_salaire: "SMIC",
             montant_salaire_brut: 0,
-            numero_bon_commande: ""
+            date_conclusion: "",
+            date_debut_execution: "",
+            numero_deca_ancien_contrat: "",
+            travail_machine_dangereuse: "",
+            caisse_retraite: ""
         },
         contact_taxe: {
             fonction_contact: "",
@@ -226,14 +235,21 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
             email_contact: ""
         },
         contact_rh: {
-            nom_contact_rh: "",
-            fonction_contact_rh: "",
-            telephone_contact_rh: "",
-            email_contact_rh: ""
+            nom_prenom_rh: "",
+            fonction_rh: "",
+            telephone_rh: "",
+            email_rh: ""
         },
         formation_missions: {
             formation_alternant: "",
-            missions: [] as string[]
+            mission_suggere: "",
+            formation_choisie: "",
+            date_debut_formation: "",
+            date_fin_formation: "",
+            code_rncp: "",
+            code_diplome: "",
+            nombre_heures_formation: 0,
+            jours_de_cours: 0
         }
     });
 
@@ -248,31 +264,10 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
         }));
     };
 
-    const toggleMission = (mission: string) => {
-        setFormData(prev => {
-            const currentMissions = prev.formation_missions.missions;
-            const newMissions = currentMissions.includes(mission)
-                ? currentMissions.filter(m => m !== mission)
-                : currentMissions.length < 10 ? [...currentMissions, mission] : currentMissions;
-
-            return {
-                ...prev,
-                formation_missions: {
-                    ...prev.formation_missions,
-                    missions: newMissions
-                }
-            };
-        });
-    };
 
     const handleSubmit = async () => {
         if (!formData.identification.raison_sociale || !formData.identification.siret) {
             alert("Veuillez remplir au moins la raison sociale et le SIRET.");
-            return;
-        }
-
-        if (formData.formation_missions.formation_alternant && formData.formation_missions.missions.length < 5) {
-            alert("Veuillez sélectionner au moins 5 missions.");
             return;
         }
 
@@ -299,6 +294,11 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
                 ...formData.contrat,
                 nombre_mois: Number(formData.contrat.nombre_mois),
                 montant_salaire_brut: Number(formData.contrat.montant_salaire_brut)
+            },
+            formation_missions: {
+                ...formData.formation_missions,
+                nombre_heures_formation: Number(formData.formation_missions.nombre_heures_formation),
+                jours_de_cours: Number(formData.formation_missions.jours_de_cours)
             }
         };
 
@@ -835,42 +835,91 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
                             </div>
                         </div>
 
-                        {/* Missions List */}
+
+                        {/* Formation Details */}
                         {formData.formation_missions.formation_alternant && (
-                            <div className="animate-in fade-in slide-in-from-top-4 duration-500">
-                                <div className="flex items-center justify-between mb-6">
-                                    <h4 className="font-bold text-slate-900 flex items-center gap-2">
-                                        Missions suggérées
-                                        <span className="text-xs font-medium text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">Sélectionnez-en 5 minimum</span>
-                                    </h4>
-                                    <div className={`text-sm font-bold px-3 py-1 rounded-full ${formData.formation_missions.missions.length >= 5 ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
-                                        {formData.formation_missions.missions.length} / 10 missions
+                            <div className="animate-in fade-in slide-in-from-top-4 duration-500 space-y-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label className="block text-sm font-bold text-slate-700 mb-2">Formation choisie</label>
+                                        <input
+                                            type="text"
+                                            className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none font-medium text-sm"
+                                            value={formData.formation_missions.formation_choisie}
+                                            onChange={(e) => handleNestedChange('formation_missions', 'formation_choisie', e.target.value)}
+                                            placeholder="Ex: BTS NDRC"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-bold text-slate-700 mb-2">Code RNCP</label>
+                                        <input
+                                            type="text"
+                                            className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none font-medium text-sm"
+                                            value={formData.formation_missions.code_rncp}
+                                            onChange={(e) => handleNestedChange('formation_missions', 'code_rncp', e.target.value)}
+                                            placeholder="Ex: RNCP38368"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-bold text-slate-700 mb-2">Code diplôme</label>
+                                        <input
+                                            type="text"
+                                            className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none font-medium text-sm"
+                                            value={formData.formation_missions.code_diplome}
+                                            onChange={(e) => handleNestedChange('formation_missions', 'code_diplome', e.target.value)}
+                                            placeholder="Ex: 32031310"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-bold text-slate-700 mb-2">Nombre d'heures de formation</label>
+                                        <input
+                                            type="number"
+                                            className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none font-medium text-sm"
+                                            value={formData.formation_missions.nombre_heures_formation}
+                                            onChange={(e) => handleNestedChange('formation_missions', 'nombre_heures_formation', e.target.value)}
+                                            placeholder="Ex: 1350"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-bold text-slate-700 mb-2">Date début formation</label>
+                                        <input
+                                            type="date"
+                                            className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none font-medium text-sm"
+                                            value={formData.formation_missions.date_debut_formation}
+                                            onChange={(e) => handleNestedChange('formation_missions', 'date_debut_formation', e.target.value)}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-bold text-slate-700 mb-2">Date fin formation</label>
+                                        <input
+                                            type="date"
+                                            className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none font-medium text-sm"
+                                            value={formData.formation_missions.date_fin_formation}
+                                            onChange={(e) => handleNestedChange('formation_missions', 'date_fin_formation', e.target.value)}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-bold text-slate-700 mb-2">Jours de cours</label>
+                                        <input
+                                            type="number"
+                                            className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none font-medium text-sm"
+                                            value={formData.formation_missions.jours_de_cours}
+                                            onChange={(e) => handleNestedChange('formation_missions', 'jours_de_cours', e.target.value)}
+                                            placeholder="Ex: 2"
+                                        />
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    {MISSIONS_BY_FORMATION[formData.formation_missions.formation_alternant]?.map((mission, index) => (
-                                        <div
-                                            key={index}
-                                            onClick={() => toggleMission(mission)}
-                                            className={`group flex items-start gap-3 p-4 rounded-2xl border-2 transition-all duration-300 cursor-pointer ${formData.formation_missions.missions.includes(mission) ? 'bg-emerald-50 border-emerald-500 shadow-sm' : 'bg-white border-slate-100 hover:border-emerald-200'}`}
-                                        >
-                                            <div className={`mt-0.5 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${formData.formation_missions.missions.includes(mission) ? 'bg-emerald-500 border-emerald-500' : 'border-slate-200 group-hover:border-emerald-300'}`}>
-                                                {formData.formation_missions.missions.includes(mission) && <CheckCircle2 size={14} className="text-white" />}
-                                            </div>
-                                            <span className={`text-sm font-medium leading-tight ${formData.formation_missions.missions.includes(mission) ? 'text-emerald-900' : 'text-slate-600'}`}>
-                                                {mission}
-                                            </span>
-                                        </div>
-                                    ))}
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-700 mb-2">Missions suggérées</label>
+                                    <textarea
+                                        className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none font-medium text-sm resize-none"
+                                        rows={6}
+                                        value={formData.formation_missions.mission_suggere}
+                                        onChange={(e) => handleNestedChange('formation_missions', 'mission_suggere', e.target.value)}
+                                        placeholder="Décrivez les missions principales de l'alternant..."
+                                    />
                                 </div>
-
-                                {formData.formation_missions.missions.length < 5 && (
-                                    <div className="mt-6 flex items-center gap-3 p-4 bg-amber-50 border border-amber-100 rounded-2xl text-amber-800 text-sm font-medium">
-                                        <Info size={18} className="text-amber-500" />
-                                        Veuillez sélectionner encore {5 - formData.formation_missions.missions.length} mission(s) pour valider le formulaire.
-                                    </div>
-                                )}
                             </div>
                         )}
 
@@ -883,13 +932,13 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
                                 </h4>
                                 <div className="space-y-4">
                                     <input type="text" className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none font-medium text-sm"
-                                        value={formData.contact_rh.nom_contact_rh}
-                                        onChange={(e) => handleNestedChange('contact_rh', 'nom_contact_rh', e.target.value)}
+                                        value={formData.contact_rh.nom_prenom_rh}
+                                        onChange={(e) => handleNestedChange('contact_rh', 'nom_prenom_rh', e.target.value)}
                                         placeholder="Nom & Prénom RH"
                                     />
                                     <input type="email" className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none font-medium text-sm"
-                                        value={formData.contact_rh.email_contact_rh}
-                                        onChange={(e) => handleNestedChange('contact_rh', 'email_contact_rh', e.target.value)}
+                                        value={formData.contact_rh.email_rh}
+                                        onChange={(e) => handleNestedChange('contact_rh', 'email_rh', e.target.value)}
                                         placeholder="Email RH"
                                     />
                                 </div>
@@ -932,7 +981,7 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
                 <div className="flex items-center gap-4 w-full md:w-auto">
                     <button
                         onClick={handleSubmit}
-                        disabled={isSubmitting || (formData.formation_missions.formation_alternant && formData.formation_missions.missions.length < 5)}
+                        disabled={isSubmitting}
                         className="flex-1 md:flex-none px-10 py-4 bg-emerald-500 text-white font-black rounded-2xl hover:bg-emerald-600 hover:shadow-2xl hover:shadow-emerald-500/40 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
                     >
                         {isSubmitting ? (
