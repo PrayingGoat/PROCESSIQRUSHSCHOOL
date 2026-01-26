@@ -1033,8 +1033,7 @@ const EvaluationGrid = () => {
                     <p className="text-slate-400 text-sm">Évaluation des compétences et du savoir-être</p>
                 </div>
                 <div className="flex flex-col items-end">
-                    <span className="text-2xl font-black tracking-tighter text-emerald-400">RUSH</span>
-                    <span className="text-[10px] font-bold tracking-[0.2em] -mt-1">SCHOOL</span>
+                    <img src="/images/logo-process-iq.png" alt="Process IQ" className="h-8 brightness-0 invert" />
                 </div>
             </div>
 
@@ -1408,9 +1407,13 @@ const AdmissionView = () => {
             {/* Hero Section */}
             <div className="admission-hero">
                 <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 w-full max-w-[60%]">
-                    <div>
-                        <div className="inline-flex items-center gap-2 bg-white/20 px-4 py-1.5 rounded-full text-sm font-medium mb-4 backdrop-blur-sm border border-white/10">
-                            <Briefcase size={14} /> Processus d'admission
+                    <div className="flex-1">
+                        <div className="flex flex-col md:flex-row md:items-center gap-4 mb-4">
+                            <img src="/images/logo-process-iq.png" alt="Process IQ" className="h-10 w-fit brightness-0 invert" />
+                            <div className="hidden md:block w-px h-8 bg-white/20"></div>
+                            <div className="inline-flex items-center gap-2 bg-white/20 px-4 py-1.5 rounded-full text-sm font-medium backdrop-blur-sm border border-white/10">
+                                <Briefcase size={14} /> Processus d'admission
+                            </div>
                         </div>
                         <h1 className="text-3xl md:text-4xl font-extrabold mb-3 tracking-tight">Admission Rush School</h1>
                         <p className="text-indigo-100 text-lg leading-relaxed opacity-90">Complétez votre dossier d'admission : tests, documents et formalités administratives.</p>

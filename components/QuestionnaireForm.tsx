@@ -82,9 +82,13 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
         <form onSubmit={handleSubmit} className="bg-gradient-to-br from-blue-50 to-white rounded-3xl p-6 md:p-10 shadow-xl border border-blue-100 relative overflow-hidden animate-slide-in">
             <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-500 via-indigo-500 to-violet-500"></div>
 
-            <div className="flex items-center gap-6 mb-10 pb-8 border-b border-blue-100">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-blue-500/20">
-                    <User size={32} />
+            <div className="flex flex-col md:flex-row md:items-center gap-6 mb-10 pb-8 border-b border-blue-100">
+                <div className="flex items-center gap-4">
+                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-blue-500/20 shrink-0">
+                        <User size={32} />
+                    </div>
+                    <div className="w-px h-12 bg-slate-200 hidden md:block"></div>
+                    <img src="/images/logo-process-iq.png" alt="Process IQ" className="h-10 w-auto" />
                 </div>
                 <div>
                     <h2 className="text-2xl font-bold text-slate-900 mb-1">Fiche d'inscription étudiant</h2>
