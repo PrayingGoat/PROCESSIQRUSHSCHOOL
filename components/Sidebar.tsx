@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
 import {
   Users,
   Briefcase,
@@ -8,22 +9,34 @@ import {
   ChevronDown,
   BookOpen
 } from 'lucide-react';
-import { ViewId } from '../types';
 
 interface SidebarProps {
   isOpen: boolean;
-  activeView: ViewId;
-  setActiveView: (view: ViewId) => void;
+  onClose?: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeView, setActiveView }) => {
-  const [admissionOpen, setAdmissionOpen] = useState(true);
-  const [commercialOpen, setCommercialOpen] = useState(true);
-  const [rhOpen, setRhOpen] = useState(true);
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
+  const location = useLocation();
+  
+  const [admissionOpen, setAdmissionOpen] = useState(false);
+  const [commercialOpen, setCommercialOpen] = useState(false);
+  const [rhOpen, setRhOpen] = useState(false);
 
-  // Helper to check active state
-  const isActive = (view: ViewId) => activeView === view;
-  const isModuleActive = (modulePrefix: string) => activeView.startsWith(modulePrefix);
+  // Auto-expand groups based on current path
+  useEffect(() => {
+    const path = location.pathname;
+    if (path.startsWith('/admission')) setAdmissionOpen(true);
+    if (path.startsWith('/commercial')) setCommercialOpen(true);
+    if (path.startsWith('/rh')) setRhOpen(true);
+  }, [location.pathname]);
+
+  const isModuleActive = (modulePrefix: string) => location.pathname.startsWith(modulePrefix);
+
+  const handleLinkClick = () => {
+    if (window.innerWidth < 768 && onClose) {
+      onClose();
+    }
+  };
 
   return (
     <aside className={`fixed top-0 left-0 h-full w-[260px] bg-[#0f172a] text-[#e2e8f0] flex flex-col z-50 transition-transform duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
@@ -39,21 +52,25 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeView, setActiveView }) 
         <div className="mb-1">
           <div
             onClick={() => setAdmissionOpen(!admissionOpen)}
-            className={`flex items-center gap-[14px] px-[18px] py-[14px] rounded-xl cursor-pointer transition-all duration-200 font-medium text-[0.95rem] relative ${isModuleActive('admission') ? 'bg-[#6366F1] text-white' : 'text-[#94a3b8] hover:bg-white/10 hover:text-white'
+            className={`flex items-center gap-[14px] px-[18px] py-[14px] rounded-xl cursor-pointer transition-all duration-200 font-medium text-[0.95rem] relative ${isModuleActive('/admission') ? 'bg-[#6366F1] text-white' : 'text-[#94a3b8] hover:bg-white/10 hover:text-white'
               }`}
           >
-            <Briefcase size={22} className={isModuleActive('admission') ? 'text-white' : 'text-[#94a3b8]'} />
+            <Briefcase size={22} className={isModuleActive('/admission') ? 'text-white' : 'text-[#94a3b8]'} />
             <span>Admissions</span>
             <ChevronDown size={18} className={`ml-auto transition-transform duration-300 ${admissionOpen ? 'rotate-180' : ''}`} />
           </div>
 
           <div className={`overflow-hidden transition-all duration-300 bg-black/15 rounded-b-xl mt-[-4px] ${admissionOpen ? 'max-h-[400px]' : 'max-h-0'}`}>
-            <div onClick={() => setActiveView('admission-main')} className={`nav-subitem ${activeView === 'admission-main' || !activeView.startsWith('admission-') ? 'active' : ''}`}>
+            <NavLink 
+              to="/admission" 
+              onClick={handleLinkClick}
+              className={({ isActive }) => `nav-subitem ${isActive ? 'active' : ''}`}
+            >
               <div className="w-[18px] h-[18px] flex items-center justify-center">
                 <div className="w-1.5 h-1.5 rounded-full bg-current opacity-70"></div>
               </div>
               <span>Tableau de bord</span>
-            </div>
+            </NavLink>
           </div>
         </div>
 
@@ -61,27 +78,39 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeView, setActiveView }) 
         <div className="mb-1">
           <div
             onClick={() => setCommercialOpen(!commercialOpen)}
-            className={`flex items-center gap-[14px] px-[18px] py-[14px] rounded-xl cursor-pointer transition-all duration-200 font-medium text-[0.95rem] relative ${isModuleActive('commercial') ? 'bg-[#6366F1] text-white' : 'text-[#94a3b8] hover:bg-white/10 hover:text-white'
+            className={`flex items-center gap-[14px] px-[18px] py-[14px] rounded-xl cursor-pointer transition-all duration-200 font-medium text-[0.95rem] relative ${isModuleActive('/commercial') ? 'bg-[#6366F1] text-white' : 'text-[#94a3b8] hover:bg-white/10 hover:text-white'
               }`}
           >
-            <LayoutDashboard size={22} className={isModuleActive('commercial') ? 'text-white' : 'text-[#94a3b8]'} />
+            <LayoutDashboard size={22} className={isModuleActive('/commercial') ? 'text-white' : 'text-[#94a3b8]'} />
             <span>Commercial</span>
             <ChevronDown size={18} className={`ml-auto transition-transform duration-300 ${commercialOpen ? 'rotate-180' : ''}`} />
           </div>
 
           <div className={`overflow-hidden transition-all duration-300 bg-black/15 rounded-b-xl mt-[-4px] ${commercialOpen ? 'max-h-[300px]' : 'max-h-0'}`}>
-            <div onClick={() => setActiveView('commercial-dashboard')} className={`nav-subitem ${isActive('commercial-dashboard') ? 'active' : ''}`}>
+            <NavLink 
+              to="/commercial/dashboard" 
+              onClick={handleLinkClick}
+              className={({ isActive }) => `nav-subitem ${isActive ? 'active' : ''}`}
+            >
               <div className="w-[18px] h-[18px] flex items-center justify-center"><div className="w-1.5 h-1.5 rounded-full bg-current opacity-70"></div></div>
               <span>Tableau de bord</span>
-            </div>
-            <div onClick={() => setActiveView('commercial-placer')} className={`nav-subitem ${isActive('commercial-placer') ? 'active' : ''}`}>
+            </NavLink>
+            <NavLink 
+              to="/commercial/placer" 
+              onClick={handleLinkClick}
+              className={({ isActive }) => `nav-subitem ${isActive ? 'active' : ''}`}
+            >
               <div className="w-[18px] h-[18px] flex items-center justify-center"><div className="w-1.5 h-1.5 rounded-full bg-current opacity-70"></div></div>
               <span>Élèves à placer</span>
-            </div>
-            <div onClick={() => setActiveView('commercial-alternance')} className={`nav-subitem ${isActive('commercial-alternance') ? 'active' : ''}`}>
+            </NavLink>
+            <NavLink 
+              to="/commercial/alternance" 
+              onClick={handleLinkClick}
+              className={({ isActive }) => `nav-subitem ${isActive ? 'active' : ''}`}
+            >
               <div className="w-[18px] h-[18px] flex items-center justify-center"><div className="w-1.5 h-1.5 rounded-full bg-current opacity-70"></div></div>
               <span>Élèves en alternance</span>
-            </div>
+            </NavLink>
           </div>
         </div>
 
@@ -89,61 +118,91 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeView, setActiveView }) 
         <div className="mb-1">
           <div
             onClick={() => setRhOpen(!rhOpen)}
-            className={`flex items-center gap-[14px] px-[18px] py-[14px] rounded-xl cursor-pointer transition-all duration-200 font-medium text-[0.95rem] relative ${isModuleActive('rh') ? 'bg-[#6366F1] text-white' : 'text-[#94a3b8] hover:bg-white/10 hover:text-white'
+            className={`flex items-center gap-[14px] px-[18px] py-[14px] rounded-xl cursor-pointer transition-all duration-200 font-medium text-[0.95rem] relative ${isModuleActive('/rh') ? 'bg-[#6366F1] text-white' : 'text-[#94a3b8] hover:bg-white/10 hover:text-white'
               }`}
           >
-            <Users size={22} className={isModuleActive('rh') ? 'text-white' : 'text-[#94a3b8]'} />
+            <Users size={22} className={isModuleActive('/rh') ? 'text-white' : 'text-[#94a3b8]'} />
             <span>RH</span>
             <ChevronDown size={18} className={`ml-auto transition-transform duration-300 ${rhOpen ? 'rotate-180' : ''}`} />
           </div>
 
           <div className={`overflow-hidden transition-all duration-300 bg-black/15 rounded-b-xl mt-[-4px] ${rhOpen ? 'max-h-[300px]' : 'max-h-0'}`}>
-            <div onClick={() => setActiveView('rh-dashboard')} className={`nav-subitem ${isActive('rh-dashboard') ? 'active' : ''}`}>
+            <NavLink 
+              to="/rh/dashboard" 
+              onClick={handleLinkClick}
+              className={({ isActive }) => `nav-subitem ${isActive ? 'active' : ''}`}
+            >
               <div className="w-[18px] h-[18px] flex items-center justify-center"><div className="w-1.5 h-1.5 rounded-full bg-current opacity-70"></div></div>
               <span>Vue d'ensemble</span>
-            </div>
-            <div onClick={() => setActiveView('rh-fiche')} className={`nav-subitem ${isActive('rh-fiche') ? 'active' : ''}`}>
+            </NavLink>
+            <NavLink 
+              to="/rh/fiche" 
+              onClick={handleLinkClick}
+              className={({ isActive }) => `nav-subitem ${isActive ? 'active' : ''}`}
+            >
               <div className="w-[18px] h-[18px] flex items-center justify-center"><div className="w-1.5 h-1.5 rounded-full bg-current opacity-70"></div></div>
               <span>Fiche Entreprise</span>
-            </div>
-            <div onClick={() => setActiveView('rh-cerfa')} className={`nav-subitem ${isActive('rh-cerfa') ? 'active' : ''}`}>
+            </NavLink>
+            <NavLink 
+              to="/rh/cerfa" 
+              onClick={handleLinkClick}
+              className={({ isActive }) => `nav-subitem ${isActive ? 'active' : ''}`}
+            >
               <div className="w-[18px] h-[18px] flex items-center justify-center"><div className="w-1.5 h-1.5 rounded-full bg-current opacity-70"></div></div>
               <span>CERFA</span>
-            </div>
-            <div onClick={() => setActiveView('rh-pec')} className={`nav-subitem ${isActive('rh-pec') ? 'active' : ''}`}>
+            </NavLink>
+            <NavLink 
+              to="/rh/pec" 
+              onClick={handleLinkClick}
+              className={({ isActive }) => `nav-subitem ${isActive ? 'active' : ''}`}
+            >
               <div className="w-[18px] h-[18px] flex items-center justify-center"><div className="w-1.5 h-1.5 rounded-full bg-current opacity-70"></div></div>
               <span>Prises en charge</span>
-            </div>
-            <div onClick={() => setActiveView('rh-ruptures')} className={`nav-subitem ${isActive('rh-ruptures') ? 'active' : ''}`}>
+            </NavLink>
+            <NavLink 
+              to="/rh/ruptures" 
+              onClick={handleLinkClick}
+              className={({ isActive }) => `nav-subitem ${isActive ? 'active' : ''}`}
+            >
               <div className="w-[18px] h-[18px] flex items-center justify-center"><div className="w-1.5 h-1.5 rounded-full bg-current opacity-70"></div></div>
               <span>Ruptures</span>
-            </div>
+            </NavLink>
           </div>
         </div>
 
         {/* Étudiant */}
-        <div
-          onClick={() => setActiveView('etudiant')}
-          className={`flex items-center gap-[14px] px-[18px] py-[14px] rounded-xl cursor-pointer transition-all duration-200 font-medium text-[0.95rem] mb-1 ${isActive('etudiant')
+        <NavLink
+          to="/etudiant"
+          onClick={handleLinkClick}
+          className={({ isActive }) => `flex items-center gap-[14px] px-[18px] py-[14px] rounded-xl cursor-pointer transition-all duration-200 font-medium text-[0.95rem] mb-1 ${isActive
               ? 'bg-[#6366F1] text-white'
               : 'text-[#94a3b8] hover:bg-white/10 hover:text-white'
             }`}
         >
-          <BookOpen size={22} className={isActive('etudiant') ? 'text-white' : 'text-[#94a3b8]'} />
-          <span>Étudiant</span>
-        </div>
+          {({ isActive }) => (
+            <>
+              <BookOpen size={22} className={isActive ? 'text-white' : 'text-[#94a3b8]'} />
+              <span>Étudiant</span>
+            </>
+          )}
+        </NavLink>
 
         {/* Paramètres */}
-        <div
-          onClick={() => setActiveView('parametres')}
-          className={`flex items-center gap-[14px] px-[18px] py-[14px] rounded-xl cursor-pointer transition-all duration-200 font-medium text-[0.95rem] mb-1 ${isActive('parametres')
+        <NavLink
+          to="/parametres"
+          onClick={handleLinkClick}
+          className={({ isActive }) => `flex items-center gap-[14px] px-[18px] py-[14px] rounded-xl cursor-pointer transition-all duration-200 font-medium text-[0.95rem] mb-1 ${isActive
               ? 'bg-[#6366F1] text-white'
               : 'text-[#94a3b8] hover:bg-white/10 hover:text-white'
             }`}
         >
-          <Settings size={22} className={isActive('parametres') ? 'text-white' : 'text-[#94a3b8]'} />
-          <span>Paramètres</span>
-        </div>
+          {({ isActive }) => (
+            <>
+              <Settings size={22} className={isActive ? 'text-white' : 'text-[#94a3b8]'} />
+              <span>Paramètres</span>
+            </>
+          )}
+        </NavLink>
       </nav>
 
       {/* Footer */}
