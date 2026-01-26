@@ -28,7 +28,14 @@ import {
     X,
     FileCheck,
     FileX,
-    UserCircle
+    UserCircle,
+    Save,
+    Building,
+    RefreshCw,
+    AlertCircle,
+    CheckCircle,
+    Trash2,
+    ArrowLeft
 } from 'lucide-react';
 import { ViewId } from '../types';
 import { api } from '../services/api';
@@ -48,10 +55,14 @@ const DashboardView: React.FC<DashboardViewProps> = ({ activeSubView }) => {
     const [selectedCandidate, setSelectedCandidate] = useState<any>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [detailsLoading, setDetailsLoading] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editForm, setEditForm] = useState<any>(null);
+    const [isSaving, setIsSaving] = useState(false);
 
     const handleViewDetails = async (id: string) => {
         setDetailsLoading(true);
         setIsModalOpen(true);
+        setIsEditing(false);
         try {
             const data = await api.getCandidateById(id);
             setSelectedCandidate(data);
@@ -62,11 +73,108 @@ const DashboardView: React.FC<DashboardViewProps> = ({ activeSubView }) => {
         }
     };
 
+    const handleEdit = async (id: string) => {
+        // Find candidate in local state first for instant pre-fill
+        const localRaw = candidates.find(cand => {
+            const c = getC(cand);
+            return c.id === id;
+        });
+
+        if (localRaw) {
+            const c = getC(localRaw);
+            setSelectedCandidate(localRaw);
+            setEditForm({
+                prenom: c.prenom || "",
+                nom_naissance: c.nom || "",
+                email: c.email || "",
+                telephone: c.telephone || "",
+                formation_souhaitee: c.formation || "",
+                ville: c.ville || "",
+                entreprise_d_accueil: c.entreprise || "Non",
+            });
+        }
+
+        setDetailsLoading(true);
+        setIsModalOpen(true);
+        setIsEditing(true);
+
+        try {
+            const data = await api.getCandidateById(id);
+            setSelectedCandidate(data);
+            const c = getC(data);
+            setEditForm({
+                prenom: c.prenom || "",
+                nom_naissance: c.nom || "",
+                email: c.email || "",
+                telephone: c.telephone || "",
+                formation_souhaitee: c.formation || "",
+                ville: c.ville || "",
+                entreprise_d_accueil: c.entreprise || "Non",
+            });
+        } catch (error) {
+            console.error("Failed to fetch candidate for edit", error);
+        } finally {
+            setDetailsLoading(false);
+        }
+    };
+
+    const handleSaveEdit = async () => {
+        if (!selectedCandidate || !editForm) return;
+        setIsSaving(true);
+        try {
+            // Clean the form: convert empty strings to null
+            const cleanedForm = Object.keys(editForm).reduce((acc: any, key) => {
+                acc[key] = editForm[key] === "" ? null : editForm[key];
+                return acc;
+            }, {});
+
+            // Merge the changes into the candidate object
+            // We update both the root and the nested informations_personnelles to be safe
+            // as the API might return/expect either structure.
+            const updatedCandidate = {
+                ...selectedCandidate,
+                ...cleanedForm,
+                informations_personnelles: {
+                    ...(selectedCandidate.informations_personnelles || {}),
+                    ...cleanedForm
+                }
+            };
+
+            await api.updateCandidate(selectedCandidate.id, updatedCandidate);
+
+            // Refresh list
+            const data = await api.getAllCandidates();
+            setCandidates(data);
+            setIsModalOpen(false);
+        } catch (error) {
+            console.error("Failed to save candidate", error);
+            alert("Erreur lors de la sauvegarde");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const data = await api.getAllCandidates();
-                setCandidates(data);
+                const [candidatesData, fichesData] = await Promise.all([
+                    api.getAllCandidates(),
+                    api.getEtudiantsFiches(false)
+                ]);
+
+                // Merge data based on record_id/id
+                const mergedData = candidatesData.map((c: any) => {
+                    const candidateId = c.id || (c.fields && (c.fields.id || c.fields.record_id)) || c.record_id;
+                    const fiche = fichesData.etudiants?.find((f: any) => f.record_id === candidateId);
+                    return {
+                        ...c,
+                        has_cerfa: fiche?.has_cerfa || false,
+                        has_fiche_renseignement: fiche?.has_fiche_renseignement || false,
+                        has_cv: fiche?.has_cv || false
+                    };
+                });
+
+                setCandidates(mergedData);
             } catch (e) {
                 console.error(e);
             } finally {
@@ -81,6 +189,12 @@ const DashboardView: React.FC<DashboardViewProps> = ({ activeSubView }) => {
         const d = c.fields || c.data || c || {};
         const info = c.informations_personnelles || {};
 
+        // Handle alternance as boolean or string
+        let alt = d.alternance || info.alternance;
+        if (alt === true) alt = "Oui";
+        else if (alt === false) alt = "Non";
+        else alt = alt || "Non";
+
         return {
             id: c.id || d.id || d.record_id,
             prenom: info.prenom || d['Prénom'] || d.prenom || d.firstname || "",
@@ -90,16 +204,41 @@ const DashboardView: React.FC<DashboardViewProps> = ({ activeSubView }) => {
             ville: info.ville || d['Commune de naissance'] || d.ville || d.commune_naissance || "Non renseigné",
             entreprise: info.entreprise_d_accueil || d['Entreprise daccueil'] || d.entreprise_d_accueil || d.entreprise || "En recherche",
             telephone: info.telephone || d['Téléphone'] || d.telephone || "",
+            alternance: alt,
+            has_cerfa: c.has_cerfa,
+            has_fiche_renseignement: c.has_fiche_renseignement,
+            has_cv: c.has_cv
         };
     };
 
     const isPlaced = (c: any) => {
-        const ent = getC(c).entreprise;
+        const data = getC(c);
+        // Use the explicit alternance field if it's "Oui"
+        if (data.alternance === 'Oui') return true;
+
+        // Fallback to entreprise check
+        const ent = data.entreprise;
         return ent && ent !== 'Non' && ent !== 'En recherche' && ent !== 'En cours' && ent !== 'null';
     };
 
     const studentsToPlace = candidates.filter(c => !isPlaced(c));
     const studentsPlaced = candidates.filter(c => isPlaced(c));
+
+    // Real stats for "À placer"
+    const statsToPlace = {
+        total: studentsToPlace.length,
+        enCours: studentsToPlace.filter(s => getC(s).entreprise === 'En recherche').length,
+        cvAjour: studentsToPlace.filter(s => getC(s).has_cv).length,
+        cvAActualiser: studentsToPlace.filter(s => !getC(s).has_cv).length
+    };
+
+    // Real stats for "En alternance"
+    const statsPlaced = {
+        total: studentsPlaced.length,
+        contratsSignes: studentsPlaced.filter(s => getC(s).has_cerfa).length,
+        missionsValidees: studentsPlaced.filter(s => getC(s).has_fiche_renseignement).length,
+        entreprisesPartenaires: new Set(studentsPlaced.map(s => getC(s).entreprise)).size
+    };
 
     const renderMainContent = () => {
         if (loading) {
@@ -125,25 +264,29 @@ const DashboardView: React.FC<DashboardViewProps> = ({ activeSubView }) => {
             return (
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
                     {/* Hero Section */}
-                    <div className="bg-gradient-to-br from-rose-500 to-rose-600 rounded-[2rem] p-8 mb-8 text-white shadow-xl shadow-rose-500/20 relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32 blur-3xl group-hover:bg-white/20 transition-all duration-700"></div>
-                        <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-6">
-                            <div className="flex items-center gap-6">
-                                <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center shadow-inner">
-                                    <Users size={32} className="text-white" />
+                    <div className="bg-gradient-to-br from-rose-500 via-rose-600 to-orange-600 rounded-[2.5rem] p-10 mb-10 text-white shadow-2xl shadow-rose-500/30 relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full -mr-48 -mt-48 blur-3xl group-hover:bg-white/20 transition-all duration-1000"></div>
+                        <div className="absolute bottom-0 left-0 w-64 h-64 bg-rose-400/20 rounded-full -ml-32 -mb-32 blur-3xl"></div>
+
+                        <div className="relative z-10 flex flex-col lg:flex-row justify-between items-center gap-8">
+                            <div className="flex items-center gap-8">
+                                <div className="w-20 h-20 rounded-3xl bg-white/20 backdrop-blur-xl border border-white/40 flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform duration-500">
+                                    <Users size={40} className="text-white drop-shadow-md" />
                                 </div>
                                 <div>
-                                    <h1 className="text-3xl font-black tracking-tight mb-1">Élèves à placer</h1>
-                                    <p className="text-rose-100 font-medium">Étudiants en recherche d'alternance ou suite à une rupture de contrat</p>
+                                    <h1 className="text-4xl font-black tracking-tighter mb-2 drop-shadow-sm">Élèves à placer</h1>
+                                    <p className="text-rose-50 font-semibold text-lg opacity-90 max-w-xl leading-relaxed">
+                                        Accélérez le placement de nos talents. Suivez et accompagnez les étudiants en recherche active.
+                                    </p>
                                 </div>
                             </div>
-                            <div className="flex gap-3 w-full md:w-auto">
-                                <button className="flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-white text-rose-600 rounded-2xl font-bold hover:shadow-lg hover:-translate-y-0.5 transition-all">
-                                    <Plus size={20} />
+                            <div className="flex gap-4 w-full lg:w-auto">
+                                <button className="flex-1 lg:flex-none inline-flex items-center justify-center gap-3 px-8 py-4 bg-white text-rose-600 rounded-2xl font-black hover:shadow-2xl hover:-translate-y-1 active:scale-95 transition-all duration-300">
+                                    <Plus size={24} strokeWidth={3} />
                                     Ajouter un élève
                                 </button>
-                                <button className="flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-rose-400/30 text-white border border-rose-400/50 rounded-2xl font-bold backdrop-blur-md hover:bg-rose-400/40 transition-all">
-                                    <Download size={20} />
+                                <button className="flex-1 lg:flex-none inline-flex items-center justify-center gap-3 px-8 py-4 bg-rose-400/20 text-white border-2 border-rose-300/30 rounded-2xl font-black backdrop-blur-md hover:bg-rose-400/40 hover:border-rose-300/50 transition-all duration-300">
+                                    <Download size={24} />
                                     Exporter
                                 </button>
                             </div>
@@ -151,48 +294,49 @@ const DashboardView: React.FC<DashboardViewProps> = ({ activeSubView }) => {
                     </div>
 
                     {/* Stats Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
                         {[
-                            { label: 'Élèves à placer', value: studentsToPlace.length, icon: Users, color: 'rose', trend: 'Urgent', trendIcon: ArrowDownRight },
-                            { label: 'En cours de placement', value: 1, icon: Clock, color: 'amber', trend: 'En cours', trendIcon: Clock },
-                            { label: 'CV à actualiser', value: 2, icon: FileText, color: 'blue', trend: 'À mettre à jour', trendIcon: ArrowDownRight },
-                            { label: 'Entretiens programmés', value: 5, icon: CheckCircle2, color: 'emerald', trend: '+2 ce mois', trendIcon: ArrowUpRight },
+                            { label: 'Élèves à placer', value: statsToPlace.total, icon: Users, color: 'rose', trend: 'Urgent', trendIcon: ArrowDownRight },
+                            { label: 'En cours de placement', value: statsToPlace.enCours, icon: Clock, color: 'amber', trend: 'En cours', trendIcon: Clock },
+                            { label: 'CV à actualiser', value: statsToPlace.cvAActualiser, icon: FileText, color: 'blue', trend: 'À mettre à jour', trendIcon: ArrowDownRight },
+                            { label: 'Entretiens programmés', value: 0, icon: CheckCircle2, color: 'emerald', trend: 'À suivre', trendIcon: ArrowUpRight },
                         ].map((stat, i) => (
-                            <div key={i} className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition-all group">
-                                <div className="flex justify-between items-start mb-4">
-                                    <div className={`w-12 h-12 rounded-2xl bg-${stat.color}-50 text-${stat.color}-500 flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                                        <stat.icon size={24} />
+                            <div key={i} className="bg-white rounded-[2rem] p-8 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-500 group relative overflow-hidden">
+                                <div className={`absolute -right-4 -top-4 w-24 h-24 bg-${stat.color}-500/5 rounded-full blur-2xl group-hover:bg-${stat.color}-500/10 transition-colors duration-500`}></div>
+                                <div className="flex justify-between items-start mb-6 relative z-10">
+                                    <div className={`w-14 h-14 rounded-2xl bg-${stat.color}-50 text-${stat.color}-500 flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shadow-inner`}>
+                                        <stat.icon size={28} />
                                     </div>
-                                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 ${stat.color === 'rose' ? 'bg-rose-50 text-rose-600' :
+                                    <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-sm ${stat.color === 'rose' ? 'bg-rose-50 text-rose-600' :
                                         stat.color === 'amber' ? 'bg-amber-50 text-amber-600' :
                                             stat.color === 'blue' ? 'bg-blue-50 text-blue-600' : 'bg-emerald-50 text-emerald-600'
                                         }`}>
-                                        {stat.trendIcon && <stat.trendIcon size={12} />}
+                                        {stat.trendIcon && <stat.trendIcon size={14} strokeWidth={3} />}
                                         {stat.trend}
                                     </span>
                                 </div>
-                                <div className="text-4xl font-black text-slate-800 mb-1">{stat.value}</div>
-                                <div className="text-sm font-bold text-slate-400 uppercase tracking-wide">{stat.label}</div>
+                                <div className="text-5xl font-black text-slate-800 mb-2 tracking-tighter relative z-10">{stat.value}</div>
+                                <div className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] relative z-10">{stat.label}</div>
                             </div>
                         ))}
                     </div>
 
                     {/* Toolbar */}
-                    <div className="bg-white rounded-[2rem] p-4 mb-8 border border-slate-100 shadow-sm flex flex-col lg:flex-row justify-between items-center gap-4">
-                        <div className="flex flex-col md:flex-row items-center gap-4 w-full lg:w-auto">
+                    <div className="bg-white/80 backdrop-blur-xl rounded-[2.5rem] p-6 mb-10 border border-white/20 shadow-xl flex flex-col lg:flex-row justify-between items-center gap-6">
+                        <div className="flex flex-col md:flex-row items-center gap-6 w-full lg:w-auto">
                             <div className="relative w-full md:w-80 group">
-                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-rose-500 transition-colors" size={20} />
+                                <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-rose-500 transition-colors duration-300" size={22} />
                                 <input
                                     type="text"
                                     placeholder="Rechercher un élève..."
-                                    className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-rose-500 outline-none transition-all font-medium"
+                                    className="w-full pl-14 pr-6 py-4 bg-slate-50/50 border-2 border-transparent rounded-[1.5rem] focus:bg-white focus:border-rose-500 focus:shadow-lg focus:shadow-rose-500/10 outline-none transition-all duration-300 font-bold text-slate-700 placeholder:text-slate-400"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                 />
                             </div>
-                            <div className="flex items-center gap-3 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
+                            <div className="flex items-center gap-4 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
                                 <select
-                                    className="px-4 py-3.5 bg-slate-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-rose-500 outline-none transition-all font-bold text-sm text-slate-600 cursor-pointer"
+                                    className="px-6 py-4 bg-slate-50/50 border-2 border-transparent rounded-[1.5rem] focus:bg-white focus:border-rose-500 outline-none transition-all duration-300 font-black text-sm text-slate-600 cursor-pointer hover:bg-slate-100"
                                     value={filterFormation}
                                     onChange={(e) => setFilterFormation(e.target.value)}
                                 >
@@ -202,32 +346,32 @@ const DashboardView: React.FC<DashboardViewProps> = ({ activeSubView }) => {
                                     <option value="bachelor">Bachelor RDC</option>
                                     <option value="ntc">TP NTC</option>
                                 </select>
-                                <select className="px-4 py-3.5 bg-slate-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-rose-500 outline-none transition-all font-bold text-sm text-slate-600 cursor-pointer">
+                                <select className="px-6 py-4 bg-slate-50/50 border-2 border-transparent rounded-[1.5rem] focus:bg-white focus:border-rose-500 outline-none transition-all duration-300 font-black text-sm text-slate-600 cursor-pointer hover:bg-slate-100">
                                     <option value="">Type de rupture</option>
                                     <option value="amiable">Rupture amiable</option>
                                     <option value="demission">Démission</option>
                                     <option value="periode-essai">Fin période d'essai</option>
                                 </select>
-                                <select className="px-4 py-3.5 bg-slate-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-rose-500 outline-none transition-all font-bold text-sm text-slate-600 cursor-pointer">
+                                <select className="px-6 py-4 bg-slate-50/50 border-2 border-transparent rounded-[1.5rem] focus:bg-white focus:border-rose-500 outline-none transition-all duration-300 font-black text-sm text-slate-600 cursor-pointer hover:bg-slate-100">
                                     <option value="">CV à jour</option>
                                     <option value="oui">Oui</option>
                                     <option value="non">Non</option>
                                 </select>
                             </div>
                         </div>
-                        <div className="flex items-center gap-2 p-1.5 bg-slate-100 rounded-2xl">
+                        <div className="flex items-center gap-2 p-2 bg-slate-100/50 rounded-[1.5rem] border border-slate-200/50">
                             <button
                                 onClick={() => setViewMode('table')}
-                                className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm transition-all ${viewMode === 'table' ? 'bg-white text-rose-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                className={`flex items-center gap-3 px-6 py-3 rounded-[1.2rem] font-black text-sm transition-all duration-300 ${viewMode === 'table' ? 'bg-white text-rose-600 shadow-lg shadow-rose-500/10' : 'text-slate-500 hover:text-slate-700'}`}
                             >
-                                <List size={18} />
+                                <List size={20} strokeWidth={3} />
                                 Liste
                             </button>
                             <button
                                 onClick={() => setViewMode('cards')}
-                                className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-sm transition-all ${viewMode === 'cards' ? 'bg-white text-rose-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                className={`flex items-center gap-3 px-6 py-3 rounded-[1.2rem] font-black text-sm transition-all duration-300 ${viewMode === 'cards' ? 'bg-white text-rose-600 shadow-lg shadow-rose-500/10' : 'text-slate-500 hover:text-slate-700'}`}
                             >
-                                <LayoutGrid size={18} />
+                                <LayoutGrid size={20} strokeWidth={3} />
                                 Cartes
                             </button>
                         </div>
@@ -235,71 +379,78 @@ const DashboardView: React.FC<DashboardViewProps> = ({ activeSubView }) => {
 
                     {/* Content View */}
                     {viewMode === 'table' ? (
-                        <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
+                        <div className="bg-white/80 backdrop-blur-xl rounded-[2.5rem] border border-white/20 shadow-2xl overflow-hidden">
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left border-collapse">
                                     <thead>
                                         <tr className="bg-slate-50/50 border-b border-slate-100">
-                                            <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Formation</th>
-                                            <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Étudiant</th>
-                                            <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Ville</th>
-                                            <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Contact</th>
-                                            <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">CV</th>
-                                            <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 text-center">Actions</th>
+                                            <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Formation</th>
+                                            <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Étudiant</th>
+                                            <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Ville</th>
+                                            <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Contact</th>
+                                            <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">CV</th>
+                                            <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 text-center">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-50">
                                         {filteredStudents.map((raw) => {
                                             const c = getC(raw);
                                             return (
-                                                <tr key={c.id} className="hover:bg-slate-50/80 transition-colors group">
-                                                    <td className="px-6 py-5">
-                                                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${c.formation.includes('MCO') ? 'bg-blue-50 text-blue-600' :
-                                                            c.formation.includes('NDRC') ? 'bg-emerald-50 text-emerald-600' :
-                                                                c.formation.includes('RDC') ? 'bg-purple-50 text-purple-600' : 'bg-orange-50 text-orange-600'
+                                                <tr key={c.id} className="hover:bg-slate-50/50 transition-colors group">
+                                                    <td className="px-8 py-6">
+                                                        <span className={`inline-flex items-center px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider border ${c.formation.includes('MCO') ? 'bg-blue-50 text-blue-600 border-blue-100/50' :
+                                                            c.formation.includes('NDRC') ? 'bg-emerald-50 text-emerald-600 border-emerald-100/50' :
+                                                                c.formation.includes('RDC') ? 'bg-purple-50 text-purple-600 border-purple-100/50' : 'bg-orange-50 text-orange-600 border-orange-100/50'
                                                             }`}>
                                                             {c.formation}
                                                         </span>
                                                     </td>
-                                                    <td className="px-6 py-5">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 font-bold text-sm">
+                                                    <td className="px-8 py-6">
+                                                        <div className="flex items-center gap-4">
+                                                            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center text-slate-500 font-black text-lg shadow-inner group-hover:scale-110 transition-transform duration-300">
                                                                 {c.nom[0]}{c.prenom[0]}
                                                             </div>
                                                             <div>
-                                                                <div className="font-bold text-slate-800">{c.nom} {c.prenom}</div>
-                                                                <div className="text-xs text-slate-400 font-medium">{c.email}</div>
+                                                                <div className="font-black text-slate-800 text-base">{c.nom} {c.prenom}</div>
+                                                                <div className="text-xs font-bold text-slate-400">{c.email}</div>
                                                             </div>
                                                         </div>
                                                     </td>
-                                                    <td className="px-6 py-5">
-                                                        <div className="flex items-center gap-2 text-slate-600 font-medium text-sm">
-                                                            <MapPin size={14} className="text-slate-300" />
+                                                    <td className="px-8 py-6">
+                                                        <div className="flex items-center gap-2 text-slate-600 font-bold">
+                                                            <MapPin size={16} className="text-slate-300" />
                                                             {c.ville}
                                                         </div>
                                                     </td>
-                                                    <td className="px-6 py-5">
-                                                        <div className="flex items-center gap-2 text-slate-600 font-medium text-sm">
-                                                            <Phone size={14} className="text-slate-300" />
+                                                    <td className="px-8 py-6">
+                                                        <div className="flex items-center gap-2 text-slate-600 font-bold">
+                                                            <Phone size={16} className="text-slate-300" />
                                                             {c.telephone}
                                                         </div>
                                                     </td>
-                                                    <td className="px-6 py-5">
-                                                        <a href="#" className="inline-flex items-center gap-2 text-rose-500 hover:text-rose-600 font-bold text-xs transition-colors">
-                                                            <FileText size={14} />
+                                                    <td className="px-8 py-6">
+                                                        <a href="#" className="inline-flex items-center gap-2 text-rose-500 hover:text-rose-600 font-black text-[10px] uppercase tracking-wider transition-colors">
+                                                            <FileText size={16} />
                                                             Voir CV
                                                         </a>
                                                     </td>
-                                                    <td className="px-6 py-5">
-                                                        <div className="flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <td className="px-8 py-6">
+                                                        <div className="flex justify-center gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-4 group-hover:translate-x-0">
                                                             <button
                                                                 onClick={() => handleViewDetails(c.id)}
-                                                                className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-rose-500 hover:border-rose-200 hover:shadow-sm transition-all"
+                                                                className="p-3 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-rose-500 hover:border-rose-200 hover:shadow-lg hover:shadow-rose-500/10 transition-all duration-300"
                                                             >
-                                                                <Eye size={18} />
+                                                                <Eye size={20} />
                                                             </button>
-                                                            <button className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-rose-500 hover:border-rose-200 hover:shadow-sm transition-all"><Edit size={18} /></button>
-                                                            <button className="p-2.5 rounded-xl bg-rose-500 text-white shadow-lg shadow-rose-500/20 hover:bg-rose-600 transition-all"><CheckCircle2 size={18} /></button>
+                                                            <button
+                                                                onClick={() => handleEdit(c.id)}
+                                                                className="p-3 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-rose-500 hover:border-rose-200 hover:shadow-lg hover:shadow-rose-500/10 transition-all duration-300"
+                                                            >
+                                                                <Edit size={20} />
+                                                            </button>
+                                                            <button className="p-3 rounded-xl bg-rose-500 text-white shadow-lg shadow-rose-500/20 hover:bg-rose-600 hover:-translate-y-0.5 active:scale-95 transition-all duration-300">
+                                                                <CheckCircle2 size={20} strokeWidth={3} />
+                                                            </button>
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -376,40 +527,436 @@ const DashboardView: React.FC<DashboardViewProps> = ({ activeSubView }) => {
                                 );
                             })}
                         </div>
-                    )}
+                    )
+                    }
+                </div >
+            );
+        }
+
+        // --- SUB-VIEW: ALTERNANCE ---
+        if (activeSubView === 'commercial-alternance') {
+            const filteredStudents = studentsPlaced.filter(raw => {
+                const c = getC(raw);
+                const matchesSearch = (c.nom + ' ' + c.prenom).toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    c.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    c.telephone.includes(searchQuery);
+                const matchesFormation = !filterFormation || c.formation.toLowerCase().includes(filterFormation.toLowerCase());
+                return matchesSearch && matchesFormation;
+            });
+
+            return (
+                <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+                    {/* Hero Section */}
+                    <div className="bg-gradient-to-br from-indigo-500 via-indigo-600 to-purple-600 rounded-[2.5rem] p-10 mb-10 text-white shadow-2xl shadow-indigo-500/30 relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full -mr-48 -mt-48 blur-3xl group-hover:bg-white/20 transition-all duration-1000"></div>
+                        <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-400/20 rounded-full -ml-32 -mb-32 blur-3xl"></div>
+
+                        <div className="relative z-10 flex flex-col lg:flex-row justify-between items-center gap-8">
+                            <div className="flex items-center gap-8">
+                                <div className="w-20 h-20 rounded-3xl bg-white/20 backdrop-blur-xl border border-white/40 flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform duration-500">
+                                    <CheckCircle2 size={40} className="text-white drop-shadow-md" />
+                                </div>
+                                <div>
+                                    <h1 className="text-4xl font-black tracking-tighter mb-2 drop-shadow-sm">Élèves en alternance</h1>
+                                    <p className="text-indigo-50 font-semibold text-lg opacity-90 max-w-xl leading-relaxed">
+                                        Félicitations à nos alternants. Suivez leur progression et gérez les documents de placement.
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex gap-4 w-full lg:w-auto">
+                                <button className="flex-1 lg:flex-none inline-flex items-center justify-center gap-3 px-8 py-4 bg-white text-indigo-600 rounded-2xl font-black hover:shadow-2xl hover:-translate-y-1 active:scale-95 transition-all duration-300">
+                                    <Download size={24} />
+                                    Exporter la liste
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Stats Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+                        {[
+                            { label: 'Total Alternants', value: statsPlaced.total, icon: Users, color: 'indigo', trend: 'Actif', trendIcon: CheckCircle2 },
+                            { label: 'Contrats signés', value: statsPlaced.contratsSignes, icon: FileCheck, color: 'emerald', trend: `${statsPlaced.total > 0 ? Math.round((statsPlaced.contratsSignes / statsPlaced.total) * 100) : 0}%`, trendIcon: ArrowUpRight },
+                            { label: 'Entreprises partenaires', value: statsPlaced.entreprisesPartenaires, icon: Building, color: 'blue', trend: 'Diversifié', trendIcon: MapPin },
+                            { label: 'Missions validées', value: statsPlaced.missionsValidees, icon: GraduationCap, color: 'purple', trend: `${statsPlaced.total > 0 ? Math.round((statsPlaced.missionsValidees / statsPlaced.total) * 100) : 0}%`, trendIcon: CheckCircle2 },
+                        ].map((stat, i) => (
+                            <div key={i} className="bg-white rounded-[2rem] p-8 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-500 group relative overflow-hidden">
+                                <div className={`absolute -right-4 -top-4 w-24 h-24 bg-${stat.color}-500/5 rounded-full blur-2xl group-hover:bg-${stat.color}-500/10 transition-colors duration-500`}></div>
+                                <div className="flex justify-between items-start mb-6 relative z-10">
+                                    <div className={`w-14 h-14 rounded-2xl bg-${stat.color}-50 text-${stat.color}-500 flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shadow-inner`}>
+                                        <stat.icon size={28} />
+                                    </div>
+                                    <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-sm ${stat.color === 'indigo' ? 'bg-indigo-50 text-indigo-600' :
+                                        stat.color === 'emerald' ? 'bg-emerald-50 text-emerald-600' :
+                                            stat.color === 'blue' ? 'bg-blue-50 text-blue-600' : 'bg-purple-50 text-purple-600'
+                                        }`}>
+                                        {stat.trendIcon && <stat.trendIcon size={14} strokeWidth={3} />}
+                                        {stat.trend}
+                                    </span>
+                                </div>
+                                <div className="text-5xl font-black text-slate-800 mb-2 tracking-tighter relative z-10">{stat.value}</div>
+                                <div className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] relative z-10">{stat.label}</div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Toolbar */}
+                    <div className="bg-white/80 backdrop-blur-xl rounded-[2.5rem] p-6 mb-10 border border-white/20 shadow-xl flex flex-col lg:flex-row justify-between items-center gap-6">
+                        <div className="flex flex-col md:flex-row items-center gap-6 w-full lg:w-auto">
+                            <div className="relative w-full md:w-96 group">
+                                <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors duration-300" size={22} />
+                                <input
+                                    type="text"
+                                    placeholder="Rechercher un alternant..."
+                                    className="w-full pl-14 pr-6 py-4 bg-slate-50/50 border-2 border-transparent rounded-[1.5rem] focus:bg-white focus:border-indigo-500 focus:shadow-lg focus:shadow-indigo-500/10 outline-none transition-all duration-300 font-bold text-slate-700 placeholder:text-slate-400"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                />
+                            </div>
+                            <div className="flex items-center gap-4 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
+                                <select
+                                    className="px-6 py-4 bg-slate-50/50 border-2 border-transparent rounded-[1.5rem] focus:bg-white focus:border-indigo-500 outline-none transition-all duration-300 font-black text-sm text-slate-600 cursor-pointer hover:bg-slate-100"
+                                    value={filterFormation}
+                                    onChange={(e) => setFilterFormation(e.target.value)}
+                                >
+                                    <option value="">Toutes formations</option>
+                                    <option value="mco">BTS MCO</option>
+                                    <option value="ndrc">BTS NDRC</option>
+                                    <option value="bachelor">Bachelor RDC</option>
+                                    <option value="ntc">TP NTC</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2 p-2 bg-slate-100/50 rounded-[1.5rem] border border-slate-200/50">
+                            <button
+                                onClick={() => setViewMode('table')}
+                                className={`flex items-center gap-3 px-6 py-3 rounded-[1.2rem] font-black text-sm transition-all duration-300 ${viewMode === 'table' ? 'bg-white text-indigo-600 shadow-lg shadow-indigo-500/10' : 'text-slate-500 hover:text-slate-700'}`}
+                            >
+                                <List size={20} strokeWidth={3} />
+                                Liste
+                            </button>
+                            <button
+                                onClick={() => setViewMode('cards')}
+                                className={`flex items-center gap-3 px-6 py-3 rounded-[1.2rem] font-black text-sm transition-all duration-300 ${viewMode === 'cards' ? 'bg-white text-indigo-600 shadow-lg shadow-indigo-500/10' : 'text-slate-500 hover:text-slate-700'}`}
+                            >
+                                <LayoutGrid size={20} strokeWidth={3} />
+                                Cartes
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Content View */}
+                    {viewMode === 'table' ? (
+                        <div className="bg-white/80 backdrop-blur-xl rounded-[2.5rem] border border-white/20 shadow-2xl overflow-hidden">
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr className="bg-slate-50/50 border-b border-slate-100">
+                                            <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Formation</th>
+                                            <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Étudiant</th>
+                                            <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Entreprise</th>
+                                            <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Ville</th>
+                                            <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Contact</th>
+                                            <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 text-center">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-50">
+                                        {filteredStudents.map((raw) => {
+                                            const c = getC(raw);
+                                            return (
+                                                <tr key={c.id} className="hover:bg-slate-50/50 transition-colors group">
+                                                    <td className="px-8 py-6">
+                                                        <span className={`inline-flex items-center px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider border ${c.formation.includes('MCO') ? 'bg-blue-50 text-blue-600 border-blue-100/50' :
+                                                            c.formation.includes('NDRC') ? 'bg-emerald-50 text-emerald-600 border-emerald-100/50' :
+                                                                c.formation.includes('RDC') ? 'bg-purple-50 text-purple-600 border-purple-100/50' : 'bg-orange-50 text-orange-600 border-orange-100/50'
+                                                            }`}>
+                                                            {c.formation}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-8 py-6">
+                                                        <div className="flex items-center gap-4">
+                                                            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center text-slate-500 font-black text-lg shadow-inner group-hover:scale-110 transition-transform duration-300">
+                                                                {c.nom[0]}{c.prenom[0]}
+                                                            </div>
+                                                            <div>
+                                                                <div className="font-black text-slate-800 text-base">{c.nom} {c.prenom}</div>
+                                                                <div className="text-xs font-bold text-slate-400">{c.email}</div>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-8 py-6">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-500 flex items-center justify-center shadow-inner">
+                                                                <Building size={18} />
+                                                            </div>
+                                                            <div className="font-black text-slate-700 text-sm">{c.entreprise}</div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-8 py-6">
+                                                        <div className="flex items-center gap-2 text-slate-600 font-bold">
+                                                            <MapPin size={16} className="text-slate-300" />
+                                                            {c.ville}
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-8 py-6">
+                                                        <div className="flex items-center gap-2 text-slate-600 font-bold">
+                                                            <Phone size={16} className="text-slate-300" />
+                                                            {c.telephone}
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-8 py-6">
+                                                        <div className="flex justify-center gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-4 group-hover:translate-x-0">
+                                                            <button
+                                                                onClick={() => handleViewDetails(c.id)}
+                                                                className="p-3 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-200 hover:shadow-lg hover:shadow-indigo-500/10 transition-all duration-300"
+                                                            >
+                                                                <Eye size={20} />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleEdit(c.id)}
+                                                                className="p-3 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-200 hover:shadow-lg hover:shadow-indigo-500/10 transition-all duration-300"
+                                                            >
+                                                                <Edit size={20} />
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div className="px-8 py-5 bg-slate-50/50 border-t border-slate-100 flex justify-between items-center">
+                                <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                                    Affichage de <span className="text-slate-800">{filteredStudents.length}</span> alternants
+                                </div>
+                                <div className="flex gap-2">
+                                    <button className="p-2 rounded-xl bg-white border border-slate-200 text-slate-400 disabled:opacity-50" disabled><ChevronLeft size={20} /></button>
+                                    <button className="px-4 py-2 rounded-xl bg-indigo-500 text-white font-bold text-sm">1</button>
+                                    <button className="p-2 rounded-xl bg-white border border-slate-200 text-slate-400 disabled:opacity-50" disabled><ArrowRight size={20} /></button>
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {filteredStudents.map((raw) => {
+                                const c = getC(raw);
+                                return (
+                                    <div key={c.id} className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group relative overflow-hidden">
+                                        <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-indigo-500/10 transition-colors"></div>
+
+                                        <div className="flex justify-between items-start mb-6 relative z-10">
+                                            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center text-white text-xl font-black shadow-lg shadow-indigo-500/20">
+                                                {c.nom[0]}{c.prenom[0]}
+                                            </div>
+                                            <span className="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-black uppercase tracking-wider">Contrat Actif</span>
+                                        </div>
+
+                                        <div className="mb-6 relative z-10">
+                                            <h3 className="text-xl font-black text-slate-800 mb-1">{c.nom} {c.prenom}</h3>
+                                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${c.formation.includes('MCO') ? 'bg-blue-50 text-blue-600' :
+                                                c.formation.includes('NDRC') ? 'bg-emerald-50 text-emerald-600' :
+                                                    c.formation.includes('RDC') ? 'bg-purple-50 text-purple-600' : 'bg-orange-50 text-orange-600'
+                                                }`}>
+                                                {c.formation}
+                                            </span>
+                                        </div>
+
+                                        <div className="space-y-4 mb-8 relative z-10">
+                                            <div className="flex items-center justify-between text-sm">
+                                                <span className="text-slate-400 font-bold uppercase text-[10px] tracking-wider">Entreprise</span>
+                                                <span className="text-slate-700 font-bold">{c.entreprise}</span>
+                                            </div>
+                                            <div className="flex items-center justify-between text-sm">
+                                                <span className="text-slate-400 font-bold uppercase text-[10px] tracking-wider">Localisation</span>
+                                                <span className="text-slate-700 font-bold">{c.ville}</span>
+                                            </div>
+                                            <div className="flex items-center justify-between text-sm">
+                                                <span className="text-slate-400 font-bold uppercase text-[10px] tracking-wider">Contact</span>
+                                                <span className="text-slate-700 font-bold">{c.telephone}</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex gap-3 relative z-10">
+                                            <button
+                                                onClick={() => handleViewDetails(c.id)}
+                                                className="flex-1 py-3.5 bg-slate-100 text-slate-600 rounded-2xl font-bold text-sm hover:bg-slate-200 transition-all flex items-center justify-center gap-2"
+                                            >
+                                                <Eye size={18} />
+                                                Détails
+                                            </button>
+                                            <button
+                                                onClick={() => handleEdit(c.id)}
+                                                className="flex-1 py-3.5 bg-indigo-500 text-white rounded-2xl font-bold text-sm hover:bg-indigo-600 shadow-lg shadow-indigo-500/20 transition-all flex items-center justify-center gap-2"
+                                            >
+                                                <Edit size={18} />
+                                                Modifier
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )
+                    }
                 </div>
             );
         }
 
         // Default: Dashboard / Alternance
         return (
-            <div className="animate-slide-in">
-                <div className="bg-[#818CF8] rounded-3xl p-8 mb-6 text-white shadow-lg shadow-indigo-200">
-                    <div className="flex justify-between items-center">
-                        <div>
-                            <h2 className="text-2xl font-bold mb-2">Vue d'ensemble Commercial</h2>
-                            <p className="opacity-90">Suivi du placement en alternance</p>
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+                {/* Hero Section */}
+                <div className="relative overflow-hidden bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-700 rounded-[2.5rem] p-10 mb-10 text-white shadow-2xl shadow-indigo-500/20 group">
+                    <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full -mr-32 -mt-32 blur-3xl group-hover:bg-white/15 transition-colors duration-700"></div>
+                    <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-400/20 rounded-full -ml-32 -mb-32 blur-3xl"></div>
+
+                    <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-8">
+                        <div className="text-center md:text-left">
+                            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-[10px] font-black uppercase tracking-widest mb-6">
+                                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                                Système Live • Commercial
+                            </div>
+                            <h2 className="text-4xl md:text-5xl font-black mb-4 tracking-tighter leading-tight">
+                                Vue d'ensemble <br />
+                                <span className="text-indigo-200">Commerciale</span>
+                            </h2>
+                            <p className="text-indigo-100 text-lg font-medium max-w-md leading-relaxed opacity-90">
+                                Suivi en temps réel de vos {candidates.length} étudiants et de l'état d'avancement des placements en alternance.
+                            </p>
+                        </div>
+
+                        <div className="flex gap-4">
+                            <div className="bg-white/10 backdrop-blur-xl border border-white/20 p-6 rounded-3xl text-center min-w-[140px] hover:bg-white/15 transition-colors">
+                                <div className="text-3xl font-black mb-1">{studentsToPlace.length}</div>
+                                <div className="text-[10px] font-black uppercase tracking-wider text-indigo-200">À Placer</div>
+                            </div>
+                            <div className="bg-white/10 backdrop-blur-xl border border-white/20 p-6 rounded-3xl text-center min-w-[140px] hover:bg-white/15 transition-colors">
+                                <div className="text-3xl font-black mb-1">{studentsPlaced.length}</div>
+                                <div className="text-[10px] font-black uppercase tracking-wider text-indigo-200">Placés</div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-5 mb-8">
-                    <div className="bg-[#F5F3FF] rounded-2xl p-6 border-2 border-[#DDD6FE]">
-                        <div className="flex justify-between items-start mb-4">
-                            <div className="w-12 h-12 rounded-xl bg-[#A78BFA] flex items-center justify-center text-white"><Users size={24} /></div>
-                            <span className="text-[#A78BFA] font-bold text-sm">À placer</span>
+                {/* Stats Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+                    <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-indigo-500/10 transition-colors"></div>
+                        <div className="flex justify-between items-start mb-6">
+                            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/20 group-hover:scale-110 transition-transform">
+                                <Users size={28} />
+                            </div>
+                            <span className="px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-[10px] font-black uppercase tracking-wider">Total Étudiants</span>
                         </div>
-                        <div className="text-4xl font-bold text-[#8B5CF6] mb-1">{studentsToPlace.length}</div>
-                        <div className="text-[#A78BFA] text-sm flex items-center gap-1"><Users size={12} /> Étudiants</div>
+                        <div className="text-5xl font-black text-slate-800 mb-2 tracking-tighter">{candidates.length}</div>
+                        <div className="text-slate-400 text-sm font-bold flex items-center gap-2">
+                            <ArrowUpRight size={16} className="text-emerald-500" />
+                            <span className="text-emerald-500">+12%</span> depuis le mois dernier
+                        </div>
                     </div>
 
-                    <div className="bg-[#F0FFF4] rounded-2xl p-6 border-2 border-[#C6F6D5]">
-                        <div className="flex justify-between items-start mb-4">
-                            <div className="w-12 h-12 rounded-xl bg-[#86EFAC] flex items-center justify-center text-white"><CheckCircle2 size={24} /></div>
-                            <span className="text-[#86EFAC] font-bold text-sm">En alternance</span>
+                    <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/5 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-rose-500/10 transition-colors"></div>
+                        <div className="flex justify-between items-start mb-6">
+                            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-rose-500 to-rose-600 flex items-center justify-center text-white shadow-lg shadow-rose-500/20 group-hover:scale-110 transition-transform">
+                                <Users size={28} />
+                            </div>
+                            <span className="px-3 py-1 bg-rose-50 text-rose-600 rounded-full text-[10px] font-black uppercase tracking-wider">En recherche</span>
                         </div>
-                        <div className="text-4xl font-bold text-[#6EE7B7] mb-1">{studentsPlaced.length}</div>
-                        <div className="text-[#86EFAC] text-sm flex items-center gap-1"><CheckCircle2 size={12} /> Placés</div>
+                        <div className="text-5xl font-black text-slate-800 mb-2 tracking-tighter">{studentsToPlace.length}</div>
+                        <div className="text-slate-400 text-sm font-bold flex items-center gap-2">
+                            <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                                <div className="bg-rose-500 h-full rounded-full" style={{ width: `${(studentsToPlace.length / candidates.length) * 100}%` }}></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-emerald-500/10 transition-colors"></div>
+                        <div className="flex justify-between items-start mb-6">
+                            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-white shadow-lg shadow-emerald-500/20 group-hover:scale-110 transition-transform">
+                                <CheckCircle2 size={28} />
+                            </div>
+                            <span className="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-black uppercase tracking-wider">Placés</span>
+                        </div>
+                        <div className="text-5xl font-black text-slate-800 mb-2 tracking-tighter">{studentsPlaced.length}</div>
+                        <div className="text-slate-400 text-sm font-bold flex items-center gap-2">
+                            <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                                <div className="bg-emerald-500 h-full rounded-full" style={{ width: `${(studentsPlaced.length / candidates.length) * 100}%` }}></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Quick Actions & Recent Activity */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div className="bg-slate-50/50 rounded-[2.5rem] p-10 border border-slate-100">
+                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-8 flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-500 flex items-center justify-center shadow-sm">
+                                <Plus size={16} strokeWidth={3} />
+                            </div>
+                            Actions Rapides
+                        </h3>
+                        <div className="grid grid-cols-2 gap-4">
+                            <button className="flex flex-col items-center justify-center p-6 bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all group">
+                                <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-500 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                                    <Users size={24} />
+                                </div>
+                                <span className="text-sm font-black text-slate-700">Nouvel Étudiant</span>
+                            </button>
+                            <button className="flex flex-col items-center justify-center p-6 bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-md hover:border-emerald-200 transition-all group">
+                                <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-500 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                                    <Download size={24} />
+                                </div>
+                                <span className="text-sm font-black text-slate-700">Exporter Data</span>
+                            </button>
+                            <button className="flex flex-col items-center justify-center p-6 bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-md hover:border-rose-200 transition-all group">
+                                <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-500 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                                    <FileText size={24} />
+                                </div>
+                                <span className="text-sm font-black text-slate-700">Rapport Hebdo</span>
+                            </button>
+                            <button className="flex flex-col items-center justify-center p-6 bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-md hover:border-violet-200 transition-all group">
+                                <div className="w-12 h-12 rounded-2xl bg-violet-50 text-violet-500 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                                    <Calendar size={24} />
+                                </div>
+                                <span className="text-sm font-black text-slate-700">Planning</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-sm">
+                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-8 flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center shadow-sm">
+                                <Clock size={16} strokeWidth={3} />
+                            </div>
+                            Activité Récente
+                        </h3>
+                        <div className="space-y-6">
+                            {candidates.slice(0, 4).map((raw, i) => {
+                                const c = getC(raw);
+                                return (
+                                    <div key={i} className="flex items-center justify-between group">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 font-black text-sm group-hover:bg-indigo-50 group-hover:text-indigo-500 transition-colors">
+                                                {c.nom[0]}{c.prenom[0]}
+                                            </div>
+                                            <div>
+                                                <div className="text-sm font-black text-slate-800">{c.nom} {c.prenom}</div>
+                                                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{c.formation}</div>
+                                            </div>
+                                        </div>
+                                        <div className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                                            {i === 0 ? "À l'instant" : i === 1 ? "Il y a 2h" : "Hier"}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        <button className="w-full mt-10 py-4 bg-slate-50 text-slate-400 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-100 hover:text-slate-600 transition-all">
+                            Voir tout l'historique
+                        </button>
                     </div>
                 </div>
             </div>
@@ -426,21 +973,31 @@ const DashboardView: React.FC<DashboardViewProps> = ({ activeSubView }) => {
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
                     <div className="bg-white rounded-[2.5rem] w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl border border-white/20 flex flex-col animate-in zoom-in-95 duration-300">
                         {/* Modal Header */}
-                        <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-gradient-to-r from-slate-50 to-white">
-                            <div className="flex items-center gap-5">
-                                <div className="w-16 h-16 rounded-2xl bg-rose-500 text-white flex items-center justify-center shadow-lg shadow-rose-500/20">
-                                    <UserCircle size={32} />
+                        <div className="p-10 border-b border-slate-100 flex justify-between items-center bg-gradient-to-r from-slate-50 via-white to-slate-50 relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-rose-500/5 rounded-full -mr-32 -mt-32 blur-3xl"></div>
+                            <div className="relative z-10 flex items-center gap-6">
+                                <div className="w-20 h-20 rounded-[2rem] bg-gradient-to-br from-rose-500 to-rose-600 text-white flex items-center justify-center shadow-2xl shadow-rose-500/30 group-hover:scale-110 transition-transform duration-500">
+                                    <UserCircle size={40} />
                                 </div>
                                 <div>
-                                    <h2 className="text-2xl font-black text-slate-800 tracking-tight">Détails de l'étudiant</h2>
-                                    <p className="text-slate-400 font-medium text-sm">Informations complètes et suivi des documents</p>
+                                    <h2 className="text-3xl font-black text-slate-800 tracking-tighter mb-1">
+                                        {isEditing ? "Modifier le profil" : "Détails de l'étudiant"}
+                                    </h2>
+                                    <div className="flex items-center gap-3">
+                                        <span className="px-3 py-1 bg-rose-50 text-rose-600 rounded-full text-[10px] font-black uppercase tracking-wider border border-rose-100/50">
+                                            {isEditing ? "Édition en cours" : "Consultation"}
+                                        </span>
+                                        <p className="text-slate-400 font-bold text-sm">
+                                            {isEditing ? "Mise à jour des informations de profil" : "Informations complètes et suivi des documents"}
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                             <button
                                 onClick={() => setIsModalOpen(false)}
-                                className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 hover:bg-rose-50 hover:text-rose-500 transition-all flex items-center justify-center"
+                                className="relative z-10 w-14 h-14 rounded-2xl bg-slate-100 text-slate-400 hover:bg-rose-50 hover:text-rose-500 hover:rotate-90 transition-all duration-300 flex items-center justify-center group"
                             >
-                                <X size={24} />
+                                <X size={28} strokeWidth={3} />
                             </button>
                         </div>
 
@@ -451,27 +1008,105 @@ const DashboardView: React.FC<DashboardViewProps> = ({ activeSubView }) => {
                                     <Loader2 className="animate-spin text-rose-500" size={48} />
                                     <p className="text-slate-400 font-bold animate-pulse">Chargement des données...</p>
                                 </div>
+                            ) : isEditing && editForm ? (
+                                <div className="space-y-8">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50/50 p-8 rounded-[2rem] border border-slate-100">
+                                        <div className="flex flex-col gap-2">
+                                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Prénom</label>
+                                            <input
+                                                type="text"
+                                                value={editForm.prenom}
+                                                onChange={(e) => setEditForm({ ...editForm, prenom: e.target.value })}
+                                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:border-rose-500 outline-none transition-all font-bold text-slate-700"
+                                            />
+                                        </div>
+                                        <div className="flex flex-col gap-2">
+                                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Nom</label>
+                                            <input
+                                                type="text"
+                                                value={editForm.nom_naissance}
+                                                onChange={(e) => setEditForm({ ...editForm, nom_naissance: e.target.value })}
+                                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:border-rose-500 outline-none transition-all font-bold text-slate-700"
+                                            />
+                                        </div>
+                                        <div className="flex flex-col gap-2">
+                                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Email</label>
+                                            <input
+                                                type="email"
+                                                value={editForm.email}
+                                                onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:border-rose-500 outline-none transition-all font-bold text-slate-700"
+                                            />
+                                        </div>
+                                        <div className="flex flex-col gap-2">
+                                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Téléphone</label>
+                                            <input
+                                                type="text"
+                                                value={editForm.telephone}
+                                                onChange={(e) => setEditForm({ ...editForm, telephone: e.target.value })}
+                                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:border-rose-500 outline-none transition-all font-bold text-slate-700"
+                                            />
+                                        </div>
+                                        <div className="flex flex-col gap-2">
+                                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Ville</label>
+                                            <input
+                                                type="text"
+                                                value={editForm.ville}
+                                                onChange={(e) => setEditForm({ ...editForm, ville: e.target.value })}
+                                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:border-rose-500 outline-none transition-all font-bold text-slate-700"
+                                            />
+                                        </div>
+                                        <div className="flex flex-col gap-2">
+                                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Formation</label>
+                                            <select
+                                                value={editForm.formation_souhaitee}
+                                                onChange={(e) => setEditForm({ ...editForm, formation_souhaitee: e.target.value })}
+                                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:border-rose-500 outline-none transition-all font-bold text-slate-700"
+                                            >
+                                                <option value="BTS MCO">BTS MCO</option>
+                                                <option value="BTS NDRC">BTS NDRC</option>
+                                                <option value="BACHELOR RDC">BACHELOR RDC</option>
+                                                <option value="TP NTC">TP NTC</option>
+                                            </select>
+                                        </div>
+                                        <div className="flex flex-col gap-2 md:col-span-2">
+                                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Entreprise d'accueil</label>
+                                            <input
+                                                type="text"
+                                                value={editForm.entreprise_d_accueil}
+                                                onChange={(e) => setEditForm({ ...editForm, entreprise_d_accueil: e.target.value })}
+                                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:border-rose-500 outline-none transition-all font-bold text-slate-700"
+                                                placeholder="Non ou Nom de l'entreprise"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
                             ) : selectedCandidate ? (
                                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                                     {/* Left Column: Personal Info */}
-                                    <div className="lg:col-span-2 space-y-8">
-                                        <section>
-                                            <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
-                                                <User size={14} className="text-rose-500" /> Informations Personnelles
+                                    <div className="lg:col-span-2 space-y-10">
+                                        <section className="animate-in fade-in slide-in-from-left-4 duration-500">
+                                            <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-8 flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center shadow-sm">
+                                                    <User size={16} strokeWidth={3} />
+                                                </div>
+                                                Informations Personnelles
                                             </h3>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50/50 p-6 rounded-3xl border border-slate-100">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 bg-slate-50/50 p-10 rounded-[2.5rem] border border-slate-100 shadow-inner">
                                                 {[
-                                                    { label: 'Prénom', value: selectedCandidate.informations_personnelles?.prenom || 'N/A' },
-                                                    { label: 'Nom', value: selectedCandidate.informations_personnelles?.nom_naissance || 'N/A' },
+                                                    { label: 'Prénom', value: selectedCandidate.informations_personnelles?.prenom || 'N/A', icon: User },
+                                                    { label: 'Nom', value: selectedCandidate.informations_personnelles?.nom_naissance || 'N/A', icon: User },
                                                     { label: 'Email', value: selectedCandidate.informations_personnelles?.email || 'N/A', icon: Mail },
                                                     { label: 'Téléphone', value: selectedCandidate.informations_personnelles?.telephone || 'N/A', icon: Phone },
                                                     { label: 'Ville', value: selectedCandidate.informations_personnelles?.ville || 'N/A', icon: MapPin },
                                                     { label: 'Formation', value: selectedCandidate.informations_personnelles?.formation_souhaitee || 'N/A', icon: GraduationCap },
                                                 ].map((item, i) => (
-                                                    <div key={i} className="flex flex-col gap-1">
-                                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{item.label}</span>
-                                                        <div className="flex items-center gap-2 text-slate-700 font-bold">
-                                                            {item.icon && <item.icon size={14} className="text-slate-300" />}
+                                                    <div key={i} className="flex flex-col gap-2 group/item">
+                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{item.label}</span>
+                                                        <div className="flex items-center gap-3 text-slate-700 font-black text-base group-hover/item:translate-x-1 transition-transform duration-300">
+                                                            <div className="w-8 h-8 rounded-lg bg-white shadow-sm flex items-center justify-center text-slate-300 group-hover/item:text-rose-500 transition-colors">
+                                                                {item.icon && <item.icon size={16} />}
+                                                            </div>
                                                             {item.value}
                                                         </div>
                                                     </div>
@@ -479,60 +1114,83 @@ const DashboardView: React.FC<DashboardViewProps> = ({ activeSubView }) => {
                                             </div>
                                         </section>
 
-                                        <section>
-                                            <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
-                                                <Clock size={14} className="text-rose-500" /> Historique
-                                            </h3>
-                                            <div className="flex gap-4">
-                                                <div className="flex-1 bg-slate-50/50 p-4 rounded-2xl border border-slate-100">
-                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Créé le</span>
-                                                    <span className="text-sm font-bold text-slate-700">{new Date(selectedCandidate.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                                        <section className="animate-in fade-in slide-in-from-left-4 duration-500 delay-100">
+                                            <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-8 flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center shadow-sm">
+                                                    <Clock size={16} strokeWidth={3} />
                                                 </div>
-                                                <div className="flex-1 bg-slate-50/50 p-4 rounded-2xl border border-slate-100">
-                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Dernière mise à jour</span>
-                                                    <span className="text-sm font-bold text-slate-700">{selectedCandidate.updated_at ? new Date(selectedCandidate.updated_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Jamais'}</span>
+                                                Historique du dossier
+                                            </h3>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 flex items-center gap-5">
+                                                    <div className="w-12 h-12 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center">
+                                                        <Calendar size={24} />
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Créé le</span>
+                                                        <span className="text-base font-black text-slate-800">{new Date(selectedCandidate.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                                                    </div>
+                                                </div>
+                                                <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 flex items-center gap-5">
+                                                    <div className="w-12 h-12 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center">
+                                                        <RefreshCw size={24} />
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Dernière mise à jour</span>
+                                                        <span className="text-base font-black text-slate-800">{selectedCandidate.updated_at ? new Date(selectedCandidate.updated_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Jamais'}</span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </section>
                                     </div>
 
                                     {/* Right Column: Documents */}
-                                    <div className="space-y-6">
-                                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
-                                            <FileText size={14} className="text-rose-500" /> Documents
-                                        </h3>
-                                        <div className="space-y-3">
-                                            {selectedCandidate.documents && Object.entries(selectedCandidate.documents).filter(([key]) => key !== 'record_id').map(([key, doc]: [string, any]) => (
-                                                <div key={key} className="flex items-center justify-between p-4 bg-white border border-slate-100 rounded-2xl hover:border-rose-200 transition-all group">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${doc.uploaded ? 'bg-emerald-50 text-emerald-500' : 'bg-rose-50 text-rose-500'}`}>
-                                                            {doc.uploaded ? <FileCheck size={20} /> : <FileX size={20} />}
+                                    <div className="space-y-10">
+                                        <section className="animate-in fade-in slide-in-from-right-4 duration-500 delay-200">
+                                            <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-8 flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center shadow-sm">
+                                                    <FileText size={16} strokeWidth={3} />
+                                                </div>
+                                                Documents du dossier
+                                            </h3>
+                                            <div className="space-y-4">
+                                                {selectedCandidate.documents && Object.entries(selectedCandidate.documents).filter(([key]) => key !== 'record_id').map(([key, doc]: [string, any]) => (
+                                                    <div key={key} className="flex items-center justify-between p-5 bg-white border border-slate-100 rounded-[1.5rem] hover:border-rose-200 hover:shadow-lg hover:shadow-rose-500/5 transition-all duration-300 group">
+                                                        <div className="flex items-center gap-4">
+                                                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-inner ${doc.uploaded ? 'bg-emerald-50 text-emerald-500' : 'bg-slate-50 text-slate-300'}`}>
+                                                                {doc.uploaded ? <CheckCircle size={24} strokeWidth={3} /> : <AlertCircle size={24} strokeWidth={3} />}
+                                                            </div>
+                                                            <div>
+                                                                <div className="text-sm font-black text-slate-700 uppercase tracking-tight">
+                                                                    {doc.document_type || key.replace(/_/g, ' ')}
+                                                                </div>
+                                                                <div className={`text-[10px] font-bold uppercase tracking-widest ${doc.uploaded ? 'text-emerald-500' : 'text-slate-400'}`}>
+                                                                    {doc.uploaded ? 'Document validé' : 'Document manquant'}
+                                                                </div>
+                                                            </div>
                                                         </div>
-                                                        <div>
-                                                            <div className="text-xs font-bold text-slate-700 capitalize">{doc.document_type || key.replace(/_/g, ' ')}</div>
-                                                            <div className="text-[10px] font-medium text-slate-400">{doc.uploaded ? 'Téléchargé' : 'Manquant'}</div>
-                                                        </div>
+                                                        {doc.uploaded && (
+                                                            <button className="p-3 rounded-xl bg-slate-50 text-slate-400 hover:bg-rose-500 hover:text-white hover:shadow-lg hover:shadow-rose-500/20 transition-all duration-300 opacity-0 group-hover:opacity-100">
+                                                                <Download size={18} strokeWidth={3} />
+                                                            </button>
+                                                        )}
                                                     </div>
-                                                    {doc.uploaded && (
-                                                        <button className="w-8 h-8 rounded-lg bg-slate-50 text-slate-400 hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center">
-                                                            <Download size={14} />
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            ))}
-                                        </div>
-
-                                        <div className="p-6 bg-rose-50 rounded-[2rem] border border-rose-100 mt-8">
-                                            <div className="flex items-center gap-3 mb-3">
-                                                <div className="w-8 h-8 rounded-full bg-rose-500 text-white flex items-center justify-center shadow-lg shadow-rose-500/20">
-                                                    <Plus size={16} />
-                                                </div>
-                                                <span className="text-sm font-black text-rose-600">Action requise</span>
+                                                ))}
                                             </div>
-                                            <p className="text-xs text-rose-500 font-medium leading-relaxed">
-                                                Relancez l'étudiant pour les documents manquants afin de finaliser son dossier de placement.
-                                            </p>
-                                        </div>
+
+                                            <div className="p-8 bg-rose-50/50 rounded-[2.5rem] border border-rose-100/50 mt-10 relative overflow-hidden group/alert">
+                                                <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/5 rounded-full -mr-16 -mt-16 blur-2xl group-hover/alert:bg-rose-500/10 transition-colors"></div>
+                                                <div className="flex items-center gap-4 mb-4 relative z-10">
+                                                    <div className="w-10 h-10 rounded-xl bg-rose-500 text-white flex items-center justify-center shadow-lg shadow-rose-500/20">
+                                                        <Plus size={20} strokeWidth={3} />
+                                                    </div>
+                                                    <span className="text-sm font-black text-rose-600 uppercase tracking-wider">Action requise</span>
+                                                </div>
+                                                <p className="text-sm text-rose-500/80 font-bold leading-relaxed relative z-10">
+                                                    Relancez l'étudiant pour les documents manquants afin de finaliser son dossier de placement.
+                                                </p>
+                                            </div>
+                                        </section>
                                     </div>
                                 </div>
                             ) : (
@@ -548,17 +1206,29 @@ const DashboardView: React.FC<DashboardViewProps> = ({ activeSubView }) => {
                                 onClick={() => setIsModalOpen(false)}
                                 className="px-8 py-4 bg-white border border-slate-200 text-slate-600 rounded-2xl font-bold text-sm hover:bg-slate-50 transition-all"
                             >
-                                Fermer
+                                Annuler
                             </button>
-                            <button className="px-8 py-4 bg-rose-500 text-white rounded-2xl font-bold text-sm hover:bg-rose-600 shadow-lg shadow-rose-500/20 transition-all flex items-center gap-2">
-                                <Mail size={18} />
-                                Relancer l'étudiant
-                            </button>
+                            {isEditing ? (
+                                <button
+                                    onClick={handleSaveEdit}
+                                    disabled={isSaving}
+                                    className="px-8 py-4 bg-rose-500 text-white rounded-2xl font-bold text-sm hover:bg-rose-600 shadow-lg shadow-rose-500/20 transition-all flex items-center gap-2 disabled:opacity-50"
+                                >
+                                    {isSaving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
+                                    Enregistrer
+                                </button>
+                            ) : (
+                                <button className="px-8 py-4 bg-rose-500 text-white rounded-2xl font-bold text-sm hover:bg-rose-600 shadow-lg shadow-rose-500/20 transition-all flex items-center gap-2">
+                                    <Mail size={18} />
+                                    Relancer l'étudiant
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>
-            )}
-        </div>
+            )
+            }
+        </div >
     );
 };
 

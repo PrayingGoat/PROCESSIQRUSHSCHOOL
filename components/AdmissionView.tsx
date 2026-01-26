@@ -22,7 +22,8 @@ import {
     MapPin,
     Calendar,
     Euro,
-    Phone
+    Phone,
+    Calculator
 } from 'lucide-react';
 import { AdmissionTab } from '../types';
 import QuestionnaireForm from './QuestionnaireForm';
@@ -162,19 +163,15 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
     const [formData, setFormData] = useState({
         identification: {
             raison_sociale: "",
-            nom_entreprise: "",
             siret: "",
-            code_ape_naf: "",
-            type_employeur: "SARL",
-            employeur_specifique: "Aucun",
-            nombre_salaries: 0,
-            code_idcc: "",
-            convention_collective: ""
+            code_ape: "",
+            type_employeur: "",
+            effectif: "",
+            convention: ""
         },
         adresse: {
-            numero: "",
-            voie: "Rue",
-            nom_rue: "",
+            num: "",
+            voie: "",
             complement: "",
             code_postal: "",
             ville: "",
@@ -182,76 +179,147 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
             email: ""
         },
         representant_legal: {
-            nom: "", // Nom complet
-            titre: "",
-            telephone_direct: "",
+            nom_prenom: "",
+            fonction: "",
+            telephone: "",
             email: ""
         },
         maitre_apprentissage: {
             nom: "",
             prenom: "",
             date_naissance: "",
-            numero_securite_sociale: "",
             fonction: "",
-            diplome_plus_eleve: "",
-            niveau_diplome: "Aucun diplôme",
-            annees_experience: 0,
+            diplome: "",
+            experience: "",
             telephone: "",
-            email: "",
-            deja_maitre_apprentissage: "Non"
+            email: ""
         },
         opco: {
-            nom_opco: "",
-            adresse: "",
-            code_postal: "",
-            ville: ""
+            nom: ""
         },
-        facturation: {
-            code_postal_facturation: "",
-            ville_facturation: "",
-            numero_bon_commande: ""
-        },
-        contrat: {
-            nature_contrat: "Contrat",
-            type_contrat: "Contrat d'apprentissage",
-            type_derogation: "Aucune dérogation",
+        formation: {
+            choisie: "",
             date_debut: "",
             date_fin: "",
-            nombre_mois: 12,
-            duree_hebdomadaire: "35h",
-            poste_occupe: "",
-            lieu_execution: "",
-            base_calcul_salaire: "SMIC",
-            montant_salaire_brut: 0,
+            code_rncp: "",
+            code_diplome: "",
+            nb_heures: "",
+            jours_cours: ""
+        },
+        cfa: {
+            rush_school: "oui",
+            entreprise: "non",
+            denomination: "RUSH SCHOOL",
+            diplome_vise: "",
+            intitule_formation: "",
+            uai: "0932731W",
+            siret: "91901416300018",
+            adresse: "11-13 AVENUE DE LA DIVISION LECLERC",
+            complement: "",
+            code_postal: "93000",
+            commune: "BOBIGNY"
+        },
+        contrat: {
+            type: "",
+            derogation: "",
+            numero_deca_ancien: "",
             date_conclusion: "",
             date_debut_execution: "",
-            numero_deca_ancien_contrat: "",
-            travail_machine_dangereuse: "",
-            caisse_retraite: ""
+            date_formation_employeur: "",
+            date_fin_apprentissage: "",
+            date_avenant: "",
+            machines_dangereuses: "non",
+            duree_hebdo: "35h",
+            poste: "",
+            lieu: ""
         },
-        contact_taxe: {
-            fonction_contact: "",
-            telephone_contact: "",
-            email_contact: ""
+        salaire: {
+            age: "",
+            annee: "",
+            pourcentage: 0,
+            montant: 0
+        },
+        missions: {
+            formation_alternant: "",
+            selectionnees: [] as string[]
         },
         contact_rh: {
             nom_prenom_rh: "",
-            fonction_rh: "",
-            telephone_rh: "",
             email_rh: ""
         },
-        formation_missions: {
-            formation_alternant: "",
-            mission_suggere: "",
-            formation_choisie: "",
-            date_debut_formation: "",
-            date_fin_formation: "",
-            code_rncp: "",
-            code_diplome: "",
-            nombre_heures_formation: 0,
-            jours_de_cours: 0
+        contact_taxe: {
+            fonction_contact: "",
+            email_contact: ""
         }
     });
+
+    const FORMATION_DETAILS: Record<string, any> = {
+        "BTS MCO": { debut: "2024-09-02", fin: "2026-08-31", rncp: "RNCP38368", diplome: "32031310", heures: "1350", jours: "Lundi/Mardi" },
+        "BTS NDRC": { debut: "2024-09-02", fin: "2026-08-31", rncp: "RNCP38368", diplome: "32031310", heures: "1350", jours: "Mercredi/Jeudi" },
+        "Titre Pro NTC": { debut: "2024-09-02", fin: "2025-08-31", rncp: "RNCP34059", diplome: "46T31201", heures: "600", jours: "Lundi/Mardi" },
+        "Bachelor RDC": { debut: "2024-09-16", fin: "2025-09-12", rncp: "RNCP36504", diplome: "26X31204", heures: "525", jours: "Vendredi" }
+    };
+
+    const handleFormationChange = (val: string) => {
+        const details = FORMATION_DETAILS[val] || { debut: "", fin: "", rncp: "", diplome: "", heures: "", jours: "" };
+        setFormData(prev => ({
+            ...prev,
+            formation: {
+                ...prev.formation,
+                choisie: val,
+                date_debut: details.debut,
+                date_fin: details.fin,
+                code_rncp: details.rncp,
+                code_diplome: details.diplome,
+                nb_heures: details.heures,
+                jours_cours: details.jours
+            }
+        }));
+    };
+
+    const handleSalaryCalc = (age: string, annee: string) => {
+        if (!age || !annee) return;
+        const smic = 1823.03;
+        let pct = 0;
+
+        if (age === "16-17") {
+            pct = annee === "1" ? 27 : annee === "2" ? 39 : 55;
+        } else if (age === "18-20") {
+            pct = annee === "1" ? 43 : annee === "2" ? 51 : 67;
+        } else if (age === "21-25") {
+            pct = annee === "1" ? 53 : annee === "2" ? 61 : 78;
+        } else if (age === "26+") {
+            pct = 100;
+        }
+
+        const montant = (smic * pct) / 100;
+        setFormData(prev => ({
+            ...prev,
+            salaire: {
+                ...prev.salaire,
+                age,
+                annee,
+                pourcentage: pct,
+                montant: montant
+            }
+        }));
+    };
+
+    const toggleMission = (mission: string) => {
+        setFormData(prev => {
+            const current = prev.missions.selectionnees;
+            const next = current.includes(mission)
+                ? current.filter(m => m !== mission)
+                : [...current, mission];
+            return {
+                ...prev,
+                missions: {
+                    ...prev.missions,
+                    selectionnees: next
+                }
+            };
+        });
+    };
 
     const handleNestedChange = (section: string, field: string, value: any) => {
         setFormData(prev => ({
@@ -278,32 +346,11 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
 
         setIsSubmitting(true);
 
-        const payload = {
-            ...formData,
-            record_id_etudiant: studentRecordId,
-            identification: {
-                ...formData.identification,
-                nom_entreprise: formData.identification.nom_entreprise || formData.identification.raison_sociale, // Fallback
-                nombre_salaries: Number(formData.identification.nombre_salaries)
-            },
-            maitre_apprentissage: {
-                ...formData.maitre_apprentissage,
-                annees_experience: Number(formData.maitre_apprentissage.annees_experience)
-            },
-            contrat: {
-                ...formData.contrat,
-                nombre_mois: Number(formData.contrat.nombre_mois),
-                montant_salaire_brut: Number(formData.contrat.montant_salaire_brut)
-            },
-            formation_missions: {
-                ...formData.formation_missions,
-                nombre_heures_formation: Number(formData.formation_missions.nombre_heures_formation),
-                jours_de_cours: Number(formData.formation_missions.jours_de_cours)
-            }
-        };
-
         try {
-            await api.submitCompany(payload);
+            await api.submitCompany({
+                ...formData,
+                record_id_etudiant: studentRecordId
+            });
             onNext();
         } catch (error) {
             console.error("Erreur soumission entreprise:", error);
@@ -314,65 +361,56 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
     };
 
     return (
-        <div className="max-w-5xl mx-auto bg-gradient-to-br from-emerald-50 to-white rounded-3xl shadow-2xl border border-emerald-100 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700 relative">
-            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500"></div>
-
+        <div className="bg-gradient-to-br from-blue-50 to-white rounded-3xl p-6 md:p-10 shadow-xl border border-blue-100 relative overflow-hidden animate-slide-in">
+            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-500 via-indigo-500 to-violet-500"></div>
 
             {/* Header */}
-            <div className="px-8 md:px-12 py-10 flex items-center gap-6 border-b border-emerald-100">
-                <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-emerald-500/20">
+            <div className="flex items-center gap-6 mb-10 pb-8 border-b border-blue-100">
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-blue-500/20">
                     <Building size={32} />
                 </div>
                 <div>
-                    <h2 className="text-2xl font-bold text-slate-900 mb-1">Fiche de Renseignement Entreprise</h2>
-                    <p className="text-slate-500">Complétez les informations de votre entreprise d'accueil pour générer votre contrat d'alternance.</p>
+                    <h2 className="text-2xl font-bold text-slate-900 mb-1">Fiche de renseignement Entreprise</h2>
+                    <p className="text-slate-500">Informations sur l'entreprise d'accueil pour le contrat d'apprentissage</p>
                 </div>
             </div>
 
-            <div className="p-8 md:p-12 space-y-12">
-
-                {/* 1. Identification */}
-                <section className="relative">
-                    <div className="flex items-center gap-4 mb-8">
-                        <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center font-black text-xl shadow-sm border border-emerald-100">1</div>
-                        <div>
-                            <h3 className="text-xl font-bold text-slate-900">Identification de l'entreprise</h3>
-                            <p className="text-slate-500 text-sm">Informations juridiques et administratives</p>
-                        </div>
+            <div className="space-y-6">
+                {/* Section 1: Identification */}
+                <div className="bg-white/80 p-6 md:p-8 rounded-2xl border border-blue-100 shadow-sm mb-6 transition-all hover:shadow-md">
+                    <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
+                        <div className="w-8 h-8 bg-blue-100 text-blue-700 rounded-lg flex items-center justify-center font-bold text-sm shadow-sm ring-1 ring-blue-500/10">1</div>
+                        <h3 className="text-lg font-bold text-slate-800">Identification de l'entreprise</h3>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 bg-slate-50/50 p-8 rounded-3xl border border-slate-100">
-                        <div className="md:col-span-2">
-                            <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">Raison sociale <span className="text-emerald-500">*</span></label>
-                            <input type="text" className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/5 outline-none transition-all duration-300 placeholder:text-slate-300 font-medium"
+                    <div className="grid grid-cols-12 gap-5">
+                        <div className="col-span-12">
+                            <label className="block text-sm font-semibold text-slate-700 mb-2">Raison sociale <span className="text-red-500">*</span></label>
+                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="text"
                                 value={formData.identification.raison_sociale}
                                 onChange={(e) => handleNestedChange('identification', 'raison_sociale', e.target.value)}
                                 placeholder="Nom de l'entreprise"
                             />
                         </div>
-
-                        <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">Numéro SIRET <span className="text-emerald-500">*</span></label>
-                            <input type="text" className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/5 outline-none transition-all duration-300 placeholder:text-slate-300 font-medium"
+                        <div className="col-span-12 md:col-span-6">
+                            <label className="block text-sm font-semibold text-slate-700 mb-2">Numéro SIRET <span className="text-red-500">*</span></label>
+                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="text"
                                 value={formData.identification.siret}
                                 onChange={(e) => handleNestedChange('identification', 'siret', e.target.value)}
                                 placeholder="14 chiffres"
                             />
-                            <span className="text-[10px] text-slate-400 mt-1 ml-1">Numéro SIRET à 14 chiffres</span>
                         </div>
-
-                        <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">Code APE/NAF <span className="text-emerald-500">*</span></label>
-                            <input type="text" className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/5 outline-none transition-all duration-300 placeholder:text-slate-300 font-medium"
-                                value={formData.identification.code_ape_naf}
-                                onChange={(e) => handleNestedChange('identification', 'code_ape_naf', e.target.value)}
+                        <div className="col-span-12 md:col-span-6">
+                            <label className="block text-sm font-semibold text-slate-700 mb-2">Code APE/NAF <span className="text-red-500">*</span></label>
+                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="text"
+                                value={formData.identification.code_ape}
+                                onChange={(e) => handleNestedChange('identification', 'code_ape', e.target.value)}
                                 placeholder="Ex: 4711D"
                             />
                         </div>
-
-                        <div className="md:col-span-2">
-                            <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">Type d'employeur <span className="text-emerald-500">*</span></label>
-                            <select className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none cursor-pointer font-medium appearance-none"
+                        <div className="col-span-12">
+                            <label className="block text-sm font-semibold text-slate-700 mb-2">Type d'employeur <span className="text-red-500">*</span></label>
+                            <select className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 transition-all focus:ring-4 focus:outline-none cursor-pointer border-slate-200 focus:border-blue-500 focus:ring-blue-500/10"
                                 value={formData.identification.type_employeur}
                                 onChange={(e) => handleNestedChange('identification', 'type_employeur', e.target.value)}
                             >
@@ -399,596 +437,527 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
                                 </optgroup>
                             </select>
                         </div>
-
-                        <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">Effectif salarié de l'entreprise <span className="text-emerald-500">*</span></label>
-                            <input type="number" className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/5 outline-none transition-all duration-300 font-medium"
-                                value={formData.identification.nombre_salaries}
-                                onChange={(e) => handleNestedChange('identification', 'nombre_salaries', e.target.value)}
+                        <div className="col-span-12 md:col-span-6">
+                            <label className="block text-sm font-semibold text-slate-700 mb-2">Effectif salarié <span className="text-red-500">*</span></label>
+                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="number"
+                                value={formData.identification.effectif}
+                                onChange={(e) => handleNestedChange('identification', 'effectif', e.target.value)}
                                 placeholder="Nombre de salariés"
                             />
                         </div>
-
-                        <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">Convention collective</label>
-                            <input type="text" className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/5 outline-none transition-all duration-300 font-medium"
-                                value={formData.identification.convention_collective}
-                                onChange={(e) => handleNestedChange('identification', 'convention_collective', e.target.value)}
+                        <div className="col-span-12 md:col-span-6">
+                            <label className="block text-sm font-semibold text-slate-700 mb-2">Convention collective</label>
+                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="text"
+                                value={formData.identification.convention}
+                                onChange={(e) => handleNestedChange('identification', 'convention', e.target.value)}
                                 placeholder="Intitulé ou code IDCC"
                             />
                         </div>
                     </div>
-                </section>
+                </div>
 
-                {/* 2. Adresse */}
-                <section className="relative">
-                    <div className="flex items-center gap-4 mb-8">
-                        <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center font-black text-xl shadow-sm border border-emerald-100">2</div>
-                        <div>
-                            <h3 className="text-xl font-bold text-slate-900">Adresse de l'entreprise</h3>
-                            <p className="text-slate-500 text-sm">Localisation du siège ou de l'établissement</p>
-                        </div>
+                {/* Section 2: Adresse */}
+                <div className="bg-white/80 p-6 md:p-8 rounded-2xl border border-blue-100 shadow-sm mb-6 transition-all hover:shadow-md">
+                    <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
+                        <div className="w-8 h-8 bg-blue-100 text-blue-700 rounded-lg flex items-center justify-center font-bold text-sm shadow-sm ring-1 ring-blue-500/10">2</div>
+                        <h3 className="text-lg font-bold text-slate-800">Adresse de l'entreprise</h3>
                     </div>
 
-                    <div className="grid grid-cols-12 gap-6 bg-slate-50/50 p-8 rounded-3xl border border-slate-100">
+                    <div className="grid grid-cols-12 gap-5">
                         <div className="col-span-12 md:col-span-3">
-                            <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">N°</label>
-                            <input type="text" className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none font-medium"
-                                value={formData.adresse.numero}
-                                onChange={(e) => handleNestedChange('adresse', 'numero', e.target.value)}
+                            <label className="block text-sm font-semibold text-slate-700 mb-2">Numéro</label>
+                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="text"
+                                value={formData.adresse.num}
+                                onChange={(e) => handleNestedChange('adresse', 'num', e.target.value)}
+                                placeholder="N°"
                             />
                         </div>
                         <div className="col-span-12 md:col-span-9">
-                            <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">Voie & Nom de rue</label>
-                            <div className="flex gap-3">
-                                <select className="w-1/3 px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none cursor-pointer font-medium appearance-none"
-                                    value={formData.adresse.voie}
-                                    onChange={(e) => handleNestedChange('adresse', 'voie', e.target.value)}
-                                >
-                                    <option value="Rue">Rue</option>
-                                    <option value="Avenue">Avenue</option>
-                                    <option value="Boulevard">Boulevard</option>
-                                    <option value="Impasse">Impasse</option>
-                                    <option value="Chemin">Chemin</option>
-                                    <option value="Place">Place</option>
-                                    <option value="ZI">ZI</option>
-                                </select>
-                                <input type="text" className="w-2/3 px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none placeholder:text-slate-300 font-medium"
-                                    value={formData.adresse.nom_rue}
-                                    onChange={(e) => handleNestedChange('adresse', 'nom_rue', e.target.value)}
-                                    placeholder="Nom de la voie"
-                                />
-                            </div>
+                            <label className="block text-sm font-semibold text-slate-700 mb-2">Voie <span className="text-red-500">*</span></label>
+                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="text"
+                                value={formData.adresse.voie}
+                                onChange={(e) => handleNestedChange('adresse', 'voie', e.target.value)}
+                                placeholder="Rue, avenue, boulevard..."
+                            />
                         </div>
                         <div className="col-span-12">
-                            <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">Complément d'adresse</label>
-                            <input type="text" className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none placeholder:text-slate-300 font-medium"
+                            <label className="block text-sm font-semibold text-slate-700 mb-2">Complément d'adresse</label>
+                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="text"
                                 value={formData.adresse.complement}
                                 onChange={(e) => handleNestedChange('adresse', 'complement', e.target.value)}
-                                placeholder="Étage, Bâtiment, Bureau..."
+                                placeholder="Bâtiment, étage, etc."
                             />
                         </div>
                         <div className="col-span-12 md:col-span-4">
-                            <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">Code Postal</label>
-                            <input type="text" className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none font-medium"
+                            <label className="block text-sm font-semibold text-slate-700 mb-2">Code postal <span className="text-red-500">*</span></label>
+                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="text"
                                 value={formData.adresse.code_postal}
                                 onChange={(e) => handleNestedChange('adresse', 'code_postal', e.target.value)}
+                                placeholder="Ex: 75001"
                             />
                         </div>
                         <div className="col-span-12 md:col-span-8">
-                            <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">Ville</label>
-                            <input type="text" className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none font-medium"
+                            <label className="block text-sm font-semibold text-slate-700 mb-2">Ville <span className="text-red-500">*</span></label>
+                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="text"
                                 value={formData.adresse.ville}
                                 onChange={(e) => handleNestedChange('adresse', 'ville', e.target.value)}
+                                placeholder="Ville"
                             />
                         </div>
                         <div className="col-span-12 md:col-span-6">
-                            <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">Email Entreprise</label>
-                            <input type="email" className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none font-medium"
-                                value={formData.adresse.email}
-                                onChange={(e) => handleNestedChange('adresse', 'email', e.target.value)}
-                            />
-                        </div>
-                        <div className="col-span-12 md:col-span-6">
-                            <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">Téléphone Standard</label>
-                            <input type="tel" className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none font-medium"
+                            <label className="block text-sm font-semibold text-slate-700 mb-2">Téléphone <span className="text-red-500">*</span></label>
+                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="tel"
                                 value={formData.adresse.telephone}
                                 onChange={(e) => handleNestedChange('adresse', 'telephone', e.target.value)}
+                                placeholder="Téléphone de l'entreprise"
+                            />
+                        </div>
+                        <div className="col-span-12 md:col-span-6">
+                            <label className="block text-sm font-semibold text-slate-700 mb-2">Email <span className="text-red-500">*</span></label>
+                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="email"
+                                value={formData.adresse.email}
+                                onChange={(e) => handleNestedChange('adresse', 'email', e.target.value)}
+                                placeholder="Email de contact"
                             />
                         </div>
                     </div>
-                </section>
+                </div>
 
-                {/* 3. Représentant Légal */}
-                <section className="relative">
-                    <div className="flex items-center gap-4 mb-8">
-                        <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center font-black text-xl shadow-sm border border-emerald-100">3</div>
-                        <div>
-                            <h3 className="text-xl font-bold text-slate-900">Représentant Légal</h3>
-                            <p className="text-slate-500 text-sm">La personne habilitée à signer le contrat</p>
-                        </div>
+                {/* Section 3: Représentant légal */}
+                <div className="bg-white/80 p-6 md:p-8 rounded-2xl border border-blue-100 shadow-sm mb-6 transition-all hover:shadow-md">
+                    <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
+                        <div className="w-8 h-8 bg-blue-100 text-blue-700 rounded-lg flex items-center justify-center font-bold text-sm shadow-sm ring-1 ring-blue-500/10">3</div>
+                        <h3 className="text-lg font-bold text-slate-800">Représentant légal de l'entreprise</h3>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 bg-slate-50/50 p-8 rounded-3xl border border-slate-100">
-                        <div className="md:col-span-2">
-                            <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">Nom & Prénom <span className="text-emerald-500">*</span></label>
-                            <input type="text" className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none font-medium"
-                                value={formData.representant_legal.nom}
-                                onChange={(e) => handleNestedChange('representant_legal', 'nom', e.target.value)}
-                                placeholder="Nom complet du signataire"
+                    <div className="grid grid-cols-12 gap-5">
+                        <div className="col-span-12 md:col-span-6">
+                            <label className="block text-sm font-semibold text-slate-700 mb-2">Nom et prénom <span className="text-red-500">*</span></label>
+                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="text"
+                                value={formData.representant_legal.nom_prenom}
+                                onChange={(e) => handleNestedChange('representant_legal', 'nom_prenom', e.target.value)}
+                                placeholder="Nom et prénom du représentant"
                             />
                         </div>
-                        <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">Fonction / Titre</label>
-                            <input type="text" className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none font-medium"
-                                value={formData.representant_legal.titre}
-                                onChange={(e) => handleNestedChange('representant_legal', 'titre', e.target.value)}
-                                placeholder="Ex: Gérant, DRH..."
+                        <div className="col-span-12 md:col-span-6">
+                            <label className="block text-sm font-semibold text-slate-700 mb-2">Fonction / Titre <span className="text-red-500">*</span></label>
+                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="text"
+                                value={formData.representant_legal.fonction}
+                                onChange={(e) => handleNestedChange('representant_legal', 'fonction', e.target.value)}
+                                placeholder="Ex: Gérant, Directeur..."
                             />
                         </div>
-                        <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">Email direct</label>
-                            <input type="email" className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none font-medium"
+                        <div className="col-span-12 md:col-span-6">
+                            <label className="block text-sm font-semibold text-slate-700 mb-2">Téléphone direct</label>
+                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="tel"
+                                value={formData.representant_legal.telephone}
+                                onChange={(e) => handleNestedChange('representant_legal', 'telephone', e.target.value)}
+                                placeholder="Téléphone"
+                            />
+                        </div>
+                        <div className="col-span-12 md:col-span-6">
+                            <label className="block text-sm font-semibold text-slate-700 mb-2">Email</label>
+                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="email"
                                 value={formData.representant_legal.email}
                                 onChange={(e) => handleNestedChange('representant_legal', 'email', e.target.value)}
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">Téléphone direct</label>
-                            <input type="tel" className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none font-medium"
-                                value={formData.representant_legal.telephone_direct}
-                                onChange={(e) => handleNestedChange('representant_legal', 'telephone_direct', e.target.value)}
+                                placeholder="Email"
                             />
                         </div>
                     </div>
-                </section>
+                </div>
 
-                {/* 4. Maître d'apprentissage */}
-                <section className="relative">
-                    <div className="flex items-center gap-4 mb-8">
-                        <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center font-black text-xl shadow-sm border border-emerald-100">4</div>
-                        <div>
-                            <h3 className="text-xl font-bold text-slate-900">Maître d'apprentissage</h3>
-                            <p className="text-slate-500 text-sm">Le tuteur qui accompagnera l'alternant</p>
-                        </div>
+                {/* Section 4: Maître d'apprentissage */}
+                <div className="bg-white/80 p-6 md:p-8 rounded-2xl border border-blue-100 shadow-sm mb-6 transition-all hover:shadow-md">
+                    <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
+                        <div className="w-8 h-8 bg-blue-100 text-blue-700 rounded-lg flex items-center justify-center font-bold text-sm shadow-sm ring-1 ring-blue-500/10">4</div>
+                        <h3 className="text-lg font-bold text-slate-800">Maître d'apprentissage</h3>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 bg-slate-50/50 p-8 rounded-3xl border border-slate-100">
-                        <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">Nom <span className="text-emerald-500">*</span></label>
-                            <input type="text" className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none font-medium"
+                    <div className="grid grid-cols-12 gap-5">
+                        <div className="col-span-12 md:col-span-6">
+                            <label className="block text-sm font-semibold text-slate-700 mb-2">Nom <span className="text-red-500">*</span></label>
+                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="text"
                                 value={formData.maitre_apprentissage.nom}
                                 onChange={(e) => handleNestedChange('maitre_apprentissage', 'nom', e.target.value)}
+                                placeholder="Nom"
                             />
                         </div>
-                        <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">Prénom <span className="text-emerald-500">*</span></label>
-                            <input type="text" className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none font-medium"
+                        <div className="col-span-12 md:col-span-6">
+                            <label className="block text-sm font-semibold text-slate-700 mb-2">Prénom <span className="text-red-500">*</span></label>
+                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="text"
                                 value={formData.maitre_apprentissage.prenom}
                                 onChange={(e) => handleNestedChange('maitre_apprentissage', 'prenom', e.target.value)}
+                                placeholder="Prénom"
                             />
                         </div>
-                        <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">Date de naissance</label>
-                            <input type="date" className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none font-medium"
+                        <div className="col-span-12 md:col-span-6">
+                            <label className="block text-sm font-semibold text-slate-700 mb-2">Date de naissance <span className="text-red-500">*</span></label>
+                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="date"
                                 value={formData.maitre_apprentissage.date_naissance}
                                 onChange={(e) => handleNestedChange('maitre_apprentissage', 'date_naissance', e.target.value)}
                             />
                         </div>
-                        <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">NIR (Sécu) <span className="text-emerald-500">*</span></label>
-                            <input type="text" className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none font-medium"
-                                value={formData.maitre_apprentissage.numero_securite_sociale}
-                                onChange={(e) => handleNestedChange('maitre_apprentissage', 'numero_securite_sociale', e.target.value)}
-                                placeholder="15 chiffres"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">Fonction</label>
-                            <input type="text" className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none font-medium"
+                        <div className="col-span-12 md:col-span-6">
+                            <label className="block text-sm font-semibold text-slate-700 mb-2">Fonction <span className="text-red-500">*</span></label>
+                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="text"
                                 value={formData.maitre_apprentissage.fonction}
                                 onChange={(e) => handleNestedChange('maitre_apprentissage', 'fonction', e.target.value)}
+                                placeholder="Poste occupé"
                             />
                         </div>
-                        <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">Niveau de diplôme</label>
-                            <select className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none cursor-pointer font-medium appearance-none"
-                                value={formData.maitre_apprentissage.niveau_diplome}
-                                onChange={(e) => handleNestedChange('maitre_apprentissage', 'niveau_diplome', e.target.value)}
-                            >
-                                <option value="Aucun diplôme">Aucun diplôme</option>
-                                <option value="CAP">CAP</option>
-                                <option value="BEP">BEP</option>
-                                <option value="BAC">BAC</option>
-                                <option value="BAC+2">BAC+2</option>
-                                <option value="BAC+3">BAC+3</option>
-                                <option value="BAC+5">BAC+5</option>
-                                <option value="Master">Master</option>
-                                <option value="Doctorat">Doctorat</option>
-                                <option value="Autre">Autre</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">Intitulé du diplôme</label>
-                            <input type="text" className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none font-medium"
-                                value={formData.maitre_apprentissage.diplome_plus_eleve}
-                                onChange={(e) => handleNestedChange('maitre_apprentissage', 'diplome_plus_eleve', e.target.value)}
-                                placeholder="Ex: Master Droit Social"
+                        <div className="col-span-12 md:col-span-6">
+                            <label className="block text-sm font-semibold text-slate-700 mb-2">Diplôme le plus élevé</label>
+                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="text"
+                                value={formData.maitre_apprentissage.diplome}
+                                onChange={(e) => handleNestedChange('maitre_apprentissage', 'diplome', e.target.value)}
+                                placeholder="Ex: Master 2"
                             />
                         </div>
-                        <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">Années d'expérience</label>
-                            <input type="number" className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none font-medium"
-                                value={formData.maitre_apprentissage.annees_experience}
-                                onChange={(e) => handleNestedChange('maitre_apprentissage', 'annees_experience', e.target.value)}
+                        <div className="col-span-12 md:col-span-6">
+                            <label className="block text-sm font-semibold text-slate-700 mb-2">Années d'expérience</label>
+                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="number"
+                                value={formData.maitre_apprentissage.experience}
+                                onChange={(e) => handleNestedChange('maitre_apprentissage', 'experience', e.target.value)}
+                                placeholder="Nombre d'années"
                             />
                         </div>
-                        <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">Email</label>
-                            <input type="email" className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none font-medium"
-                                value={formData.maitre_apprentissage.email}
-                                onChange={(e) => handleNestedChange('maitre_apprentissage', 'email', e.target.value)}
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">Téléphone</label>
-                            <input type="tel" className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none font-medium"
+                        <div className="col-span-12 md:col-span-6">
+                            <label className="block text-sm font-semibold text-slate-700 mb-2">Téléphone <span className="text-red-500">*</span></label>
+                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="tel"
                                 value={formData.maitre_apprentissage.telephone}
                                 onChange={(e) => handleNestedChange('maitre_apprentissage', 'telephone', e.target.value)}
+                                placeholder="Téléphone direct"
                             />
                         </div>
-                        <div className="md:col-span-2">
-                            <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">Le maître d'apprentissage a-t-il déjà formé un apprenti ?</label>
-                            <div className="flex gap-4">
-                                <button
-                                    type="button"
-                                    onClick={() => handleNestedChange('maitre_apprentissage', 'deja_maitre_apprentissage', 'Oui')}
-                                    className={`flex-1 py-4 rounded-2xl font-bold transition-all duration-300 border-2 ${formData.maitre_apprentissage.deja_maitre_apprentissage === 'Oui' ? 'bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'bg-white border-slate-100 text-slate-600 hover:border-emerald-200'}`}
-                                >
-                                    Oui
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => handleNestedChange('maitre_apprentissage', 'deja_maitre_apprentissage', 'Non')}
-                                    className={`flex-1 py-4 rounded-2xl font-bold transition-all duration-300 border-2 ${formData.maitre_apprentissage.deja_maitre_apprentissage === 'Non' ? 'bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'bg-white border-slate-100 text-slate-600 hover:border-emerald-200'}`}
-                                >
-                                    Non
-                                </button>
+                        <div className="col-span-12 md:col-span-6">
+                            <label className="block text-sm font-semibold text-slate-700 mb-2">Email <span className="text-red-500">*</span></label>
+                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="email"
+                                value={formData.maitre_apprentissage.email}
+                                onChange={(e) => handleNestedChange('maitre_apprentissage', 'email', e.target.value)}
+                                placeholder="Email"
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                {/* Section 5: OPCO */}
+                <div className="bg-white/80 p-6 md:p-8 rounded-2xl border border-blue-100 shadow-sm mb-6 transition-all hover:shadow-md">
+                    <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
+                        <div className="w-8 h-8 bg-blue-100 text-blue-700 rounded-lg flex items-center justify-center font-bold text-sm shadow-sm ring-1 ring-blue-500/10">5</div>
+                        <h3 className="text-lg font-bold text-slate-800">OPCO (Opérateur de Compétences)</h3>
+                    </div>
+
+                    <div className="grid grid-cols-12 gap-5">
+                        <div className="col-span-12">
+                            <label className="block text-sm font-semibold text-slate-700 mb-2">Sélectionnez votre OPCO <span className="text-red-500">*</span></label>
+                            <select className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 transition-all focus:ring-4 focus:outline-none cursor-pointer border-slate-200 focus:border-blue-500 focus:ring-blue-500/10"
+                                value={formData.opco.nom}
+                                onChange={(e) => handleNestedChange('opco', 'nom', e.target.value)}
+                            >
+                                <option value="">Choisir un OPCO</option>
+                                <option value="AFDAS">AFDAS (Culture, médias, loisirs, sport)</option>
+                                <option value="AKTO">AKTO (Services à forte intensité de main-d'œuvre)</option>
+                                <option value="ATLAS">ATLAS (Services financiers et conseil)</option>
+                                <option value="CONSTRUCTYS">CONSTRUCTYS (Bâtiment, travaux publics)</option>
+                                <option value="OPCO 2I">OPCO 2I (Interindustriel)</option>
+                                <option value="OPCO EP">OPCO EP (Entreprises de proximité)</option>
+                                <option value="OPCO MOBILITES">OPCO MOBILITES (Transports, services de l'automobile)</option>
+                                <option value="OPCO SANTE">OPCO SANTE (Santé, médico-social)</option>
+                                <option value="OPCOMMERCE">OPCOMMERCE (Commerce)</option>
+                                <option value="UNIFORMATION">UNIFORMATION (Cohésion sociale)</option>
+                                <option value="OCAPIAT">OCAPIAT (Agriculture, pêche, agroalimentaire)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Section 6: Formation & CFA */}
+                <div className="bg-white/80 p-6 md:p-8 rounded-2xl border border-blue-100 shadow-sm mb-6 transition-all hover:shadow-md">
+                    <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
+                        <div className="w-8 h-8 bg-blue-100 text-blue-700 rounded-lg flex items-center justify-center font-bold text-sm shadow-sm ring-1 ring-blue-500/10">6</div>
+                        <h3 className="text-lg font-bold text-slate-800">Formation & CFA</h3>
+                    </div>
+
+                    <div className="grid grid-cols-12 gap-5">
+                        <div className="col-span-12">
+                            <label className="block text-sm font-semibold text-slate-700 mb-3">Formation suivie *</label>
+                            <div className="flex gap-3 flex-wrap">
+                                {['BTS MCO', 'BTS NDRC', 'Titre Pro NTC', 'Bachelor RDC'].map((f, idx) => (
+                                    <label key={f} className="relative cursor-pointer group flex-1 min-w-[120px]">
+                                        <input className="peer sr-only" type="radio" name="formation_choisie" value={f} checked={formData.formation.choisie === f} onChange={() => handleFormationChange(f)} />
+                                        <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all ${formData.formation.choisie === f ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500' : 'bg-white border-slate-200 hover:border-blue-300 hover:bg-slate-50'}`}>
+                                            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${formData.formation.choisie === f ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-400'}`}>{String.fromCharCode(65 + idx)}</span>
+                                            <span className="font-medium text-slate-600">{f}</span>
+                                        </div>
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="col-span-12 md:col-span-6">
+                            <label className="block text-sm font-semibold text-slate-700 mb-2">Date de début <span className="text-red-500">*</span></label>
+                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="date"
+                                value={formData.formation.date_debut}
+                                onChange={(e) => handleNestedChange('formation', 'date_debut', e.target.value)}
+                            />
+                        </div>
+                        <div className="col-span-12 md:col-span-6">
+                            <label className="block text-sm font-semibold text-slate-700 mb-2">Date de fin <span className="text-red-500">*</span></label>
+                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="date"
+                                value={formData.formation.date_fin}
+                                onChange={(e) => handleNestedChange('formation', 'date_fin', e.target.value)}
+                            />
+                        </div>
+
+                        <div className="col-span-12 mt-4">
+                            <div className="bg-blue-50/50 p-6 rounded-2xl border border-blue-100">
+                                <div className="flex items-center gap-4 mb-4">
+                                    <div className="w-10 h-10 bg-blue-500 text-white rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
+                                        <Building size={20} />
+                                    </div>
+                                    <div>
+                                        <h4 className="font-bold text-slate-900">CFA d'accueil : Rush School</h4>
+                                        <p className="text-xs text-slate-500 font-medium">Informations pré-remplies</p>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                    <div className="bg-white p-3 rounded-xl border border-blue-50">
+                                        <span className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Dénomination</span>
+                                        <span className="font-semibold text-slate-700">RUSH SCHOOL</span>
+                                    </div>
+                                    <div className="bg-white p-3 rounded-xl border border-blue-50">
+                                        <span className="block text-[10px] font-bold text-slate-400 uppercase mb-1">N° SIRET</span>
+                                        <span className="font-semibold text-slate-700">919 233 135 00014</span>
+                                    </div>
+                                    <div className="bg-white p-3 rounded-xl border border-blue-50">
+                                        <span className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Code UAI</span>
+                                        <span className="font-semibold text-slate-700">0756342X</span>
+                                    </div>
+                                    <div className="bg-white p-3 rounded-xl border border-blue-50">
+                                        <span className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Adresse</span>
+                                        <span className="font-semibold text-slate-700">15 passage de la Main d'Or, 75011 Paris</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </section>
+                </div>
 
-                {/* 5. OPCO */}
-                <section className="relative">
-                    <div className="flex items-center gap-4 mb-8">
-                        <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center font-black text-xl shadow-sm border border-emerald-100">5</div>
-                        <div>
-                            <h3 className="text-xl font-bold text-slate-900">OPCO</h3>
-                            <p className="text-slate-500 text-sm">Organisme de financement de la formation</p>
-                        </div>
+                {/* Section 7: Contrat & Salaire */}
+                <div className="bg-white/80 p-6 md:p-8 rounded-2xl border border-blue-100 shadow-sm mb-6 transition-all hover:shadow-md">
+                    <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
+                        <div className="w-8 h-8 bg-blue-100 text-blue-700 rounded-lg flex items-center justify-center font-bold text-sm shadow-sm ring-1 ring-blue-500/10">7</div>
+                        <h3 className="text-lg font-bold text-slate-800">Contrat & Salaire</h3>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 bg-slate-50/50 p-8 rounded-3xl border border-slate-100">
-                        <div className="md:col-span-2">
-                            <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">Nom de l'OPCO</label>
-                            <input type="text" className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none font-medium"
-                                value={formData.opco.nom_opco}
-                                onChange={(e) => handleNestedChange('opco', 'nom_opco', e.target.value)}
-                                placeholder="Si connu (ex: ATLAS, AKTO, AFDAS...)"
-                            />
-                        </div>
-                        <div className="md:col-span-2">
-                            <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">Adresse OPCO</label>
-                            <input type="text" className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none font-medium"
-                                value={formData.opco.adresse}
-                                onChange={(e) => handleNestedChange('opco', 'adresse', e.target.value)}
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">Code Postal</label>
-                            <input type="text" className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none font-medium"
-                                value={formData.opco.code_postal}
-                                onChange={(e) => handleNestedChange('opco', 'code_postal', e.target.value)}
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">Ville</label>
-                            <input type="text" className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none font-medium"
-                                value={formData.opco.ville}
-                                onChange={(e) => handleNestedChange('opco', 'ville', e.target.value)}
-                            />
-                        </div>
-                    </div>
-                </section>
-
-                {/* 6. Contrat */}
-                <section className="relative">
-                    <div className="flex items-center gap-4 mb-8">
-                        <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center font-black text-xl shadow-sm border border-emerald-100">6</div>
-                        <div>
-                            <h3 className="text-xl font-bold text-slate-900">Informations sur le contrat</h3>
-                            <p className="text-slate-500 text-sm">Détails de la mission et conditions de travail</p>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 bg-slate-50/50 p-8 rounded-3xl border border-slate-100">
-                        <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">Nature du contrat</label>
-                            <select className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none cursor-pointer font-medium appearance-none"
-                                value={formData.contrat.nature_contrat}
-                                onChange={(e) => handleNestedChange('contrat', 'nature_contrat', e.target.value)}
+                    <div className="grid grid-cols-12 gap-5">
+                        <div className="col-span-12 md:col-span-6">
+                            <label className="block text-sm font-semibold text-slate-700 mb-2">Type de contrat <span className="text-red-500">*</span></label>
+                            <select className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 transition-all focus:ring-4 focus:outline-none cursor-pointer border-slate-200 focus:border-blue-500 focus:ring-blue-500/10"
+                                value={formData.contrat.type}
+                                onChange={(e) => handleNestedChange('contrat', 'type', e.target.value)}
                             >
-                                <option value="Contrat">Contrat initial</option>
-                                <option value="Avenant">Avenant</option>
+                                <option value="11">11 - Contrat initial</option>
+                                <option value="21">21 - Avenant : modification de situation</option>
+                                <option value="22">22 - Avenant : changement de maître d'apprentissage</option>
+                                <option value="23">23 - Avenant : prolongation</option>
                             </select>
                         </div>
-                        <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">Type de dérogation</label>
-                            <select className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none cursor-pointer font-medium appearance-none"
-                                value={formData.contrat.type_derogation}
-                                onChange={(e) => handleNestedChange('contrat', 'type_derogation', e.target.value)}
-                            >
-                                <option value="Aucune dérogation">Aucune dérogation</option>
-                                <option value="Dérogation d'âge">Dérogation d'âge</option>
-                                <option value="Dérogation handicap">Dérogation handicap</option>
-                                <option value="Autre">Autre</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">Date de début <span className="text-emerald-500">*</span></label>
-                            <input type="date" className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none font-medium"
-                                value={formData.contrat.date_debut}
-                                onChange={(e) => handleNestedChange('contrat', 'date_debut', e.target.value)}
+                        <div className="col-span-12 md:col-span-6">
+                            <label className="block text-sm font-semibold text-slate-700 mb-2">Durée hebdomadaire <span className="text-red-500">*</span></label>
+                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="text"
+                                value={formData.contrat.duree_hebdo}
+                                onChange={(e) => handleNestedChange('contrat', 'duree_hebdo', e.target.value)}
+                                placeholder="Ex: 35h"
                             />
                         </div>
-                        <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">Date de fin <span className="text-emerald-500">*</span></label>
-                            <input type="date" className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none font-medium"
-                                value={formData.contrat.date_fin}
-                                onChange={(e) => handleNestedChange('contrat', 'date_fin', e.target.value)}
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">Durée (mois)</label>
-                            <input type="number" className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none font-medium"
-                                value={formData.contrat.nombre_mois}
-                                onChange={(e) => handleNestedChange('contrat', 'nombre_mois', e.target.value)}
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">Durée Hebdomadaire</label>
-                            <select className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none cursor-pointer font-medium appearance-none"
-                                value={formData.contrat.duree_hebdomadaire}
-                                onChange={(e) => handleNestedChange('contrat', 'duree_hebdomadaire', e.target.value)}
-                            >
-                                <option value="35h">35 heures</option>
-                                <option value="39h">39 heures</option>
-                            </select>
-                        </div>
-                        <div className="md:col-span-2">
-                            <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">Poste occupé <span className="text-emerald-500">*</span></label>
-                            <input type="text" className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none font-medium"
-                                value={formData.contrat.poste_occupe}
-                                onChange={(e) => handleNestedChange('contrat', 'poste_occupe', e.target.value)}
+                        <div className="col-span-12">
+                            <label className="block text-sm font-semibold text-slate-700 mb-2">Poste occupé <span className="text-red-500">*</span></label>
+                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="text"
+                                value={formData.contrat.poste}
+                                onChange={(e) => handleNestedChange('contrat', 'poste', e.target.value)}
                                 placeholder="Intitulé exact du poste"
                             />
                         </div>
-                        <div className="md:col-span-2">
-                            <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">Lieu d'exécution (si différent du siège)</label>
-                            <input type="text" className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none font-medium"
-                                value={formData.contrat.lieu_execution}
-                                onChange={(e) => handleNestedChange('contrat', 'lieu_execution', e.target.value)}
-                                placeholder="Adresse complète du lieu de travail"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">Rémunération Brute Mensuelle (€) <span className="text-emerald-500">*</span></label>
-                            <input type="number" className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none font-medium"
-                                value={formData.contrat.montant_salaire_brut}
-                                onChange={(e) => handleNestedChange('contrat', 'montant_salaire_brut', e.target.value)}
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-bold text-slate-700 mb-2 ml-1">Base de calcul</label>
-                            <select className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none cursor-pointer font-medium appearance-none"
-                                value={formData.contrat.base_calcul_salaire}
-                                onChange={(e) => handleNestedChange('contrat', 'base_calcul_salaire', e.target.value)}
-                            >
-                                <option value="SMIC">SMIC</option>
-                                <option value="SMC">SMC (Conventionnel)</option>
-                            </select>
+
+                        {/* Simulateur de salaire */}
+                        <div className="col-span-12 mt-4 bg-blue-50/50 p-6 md:p-8 rounded-2xl border border-blue-100">
+                            <div className="flex items-center gap-4 mb-8">
+                                <div className="w-12 h-12 bg-blue-500 text-white rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
+                                    <Calculator size={24} />
+                                </div>
+                                <div>
+                                    <h4 className="text-lg font-bold text-slate-900">Simulateur de rémunération brute</h4>
+                                    <p className="text-slate-500 text-xs font-medium">Calcul basé sur le SMIC 2024</p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div className="space-y-6">
+                                    <div>
+                                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 ml-1">Âge de l'apprenti</label>
+                                        <div className="flex flex-wrap gap-2">
+                                            {['15-17', '18-20', '21-25', '26+'].map((age) => (
+                                                <button key={age} type="button" onClick={() => handleSalaryCalc(age, formData.salaire.annee)}
+                                                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${formData.salaire.age === age ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-slate-600 border border-slate-200 hover:bg-blue-50 hover:border-blue-200'}`}>
+                                                    {age} ans
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 ml-1">Année d'exécution</label>
+                                        <div className="flex gap-2">
+                                            {['1', '2', '3'].map((year) => (
+                                                <button key={year} type="button" onClick={() => handleSalaryCalc(formData.salaire.age, year)}
+                                                    className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${formData.salaire.annee === year ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-slate-600 border border-slate-200 hover:bg-blue-50 hover:border-blue-200'}`}>
+                                                    Année {year}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="bg-white p-6 rounded-2xl shadow-sm border border-blue-100 flex flex-col justify-center items-center text-center">
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Salaire mensuel brut estimé</span>
+                                    <div className="text-4xl font-bold text-slate-900 mb-1">
+                                        {formData.salaire.montant.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}
+                                    </div>
+                                    <div className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-[10px] font-bold uppercase tracking-tighter">
+                                        {formData.salaire.pourcentage}% du SMIC
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </section>
+                </div>
 
-                {/* 7. Divers & Missions */}
-                <section className="relative">
-                    <div className="flex items-center gap-4 mb-8">
-                        <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center font-black text-xl shadow-sm border border-emerald-100">7</div>
-                        <div>
-                            <h3 className="text-xl font-bold text-slate-900">Missions en entreprise</h3>
-                            <p className="text-slate-500 text-sm">Définissez les objectifs de votre alternance</p>
-                        </div>
+                {/* Section 8: Missions en entreprise */}
+                <div className="bg-white/80 p-6 md:p-8 rounded-2xl border border-blue-100 shadow-sm mb-6 transition-all hover:shadow-md">
+                    <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
+                        <div className="w-8 h-8 bg-blue-100 text-blue-700 rounded-lg flex items-center justify-center font-bold text-sm shadow-sm ring-1 ring-blue-500/10">8</div>
+                        <h3 className="text-lg font-bold text-slate-800">Missions en entreprise</h3>
                     </div>
 
-                    <div className="space-y-8 bg-slate-50/50 p-8 rounded-3xl border border-slate-100">
-                        {/* Formation Selection */}
-                        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-                            <label className="block text-sm font-bold text-slate-700 mb-4 ml-1">Sélectionnez votre formation pour voir les missions types</label>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="space-y-8">
+                        <div className="bg-slate-50/50 p-6 md:p-8 rounded-2xl border border-slate-100">
+                            <div className="flex items-center justify-between mb-8">
+                                <div>
+                                    <h4 className="text-sm font-bold text-slate-900 uppercase tracking-widest">Sélection des missions</h4>
+                                    <p className="text-slate-500 text-xs font-medium mt-1">Choisissez au moins 3 missions principales</p>
+                                </div>
+                                <div className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${formData.missions.selectionnees.length >= 3 ? 'bg-blue-500 text-white' : 'bg-rose-100 text-rose-600'}`}>
+                                    {formData.missions.selectionnees.length} / 3 missions
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {[
-                                    { id: 'ndrc', label: 'BTS NDRC' },
-                                    { id: 'mco', label: 'BTS MCO' },
-                                    { id: 'ntc', label: 'BTS NTC' },
-                                    { id: 'rdc', label: 'RDC' }
-                                ].map((f) => (
-                                    <button
-                                        key={f.id}
-                                        type="button"
-                                        onClick={() => handleNestedChange('formation_missions', 'formation_alternant', f.id)}
-                                        className={`py-3 px-4 rounded-xl text-sm font-bold transition-all duration-300 border-2 ${formData.formation_missions.formation_alternant === f.id ? 'bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'bg-slate-50 border-transparent text-slate-600 hover:bg-slate-100'}`}
-                                    >
-                                        {f.label}
-                                    </button>
+                                    "Prospection et développement commercial",
+                                    "Gestion et suivi de la relation client",
+                                    "Vente en face à face ou à distance",
+                                    "Animation et gestion d'un espace de vente",
+                                    "Mise en place d'opérations promotionnelles",
+                                    "Analyse des performances commerciales",
+                                    "Veille concurrentielle et étude de marché",
+                                    "Gestion des stocks et approvisionnements",
+                                    "Management d'une petite équipe",
+                                    "Reporting et tableaux de bord"
+                                ].map((mission) => (
+                                    <label key={mission} className={`flex items-center gap-4 p-4 rounded-xl border transition-all cursor-pointer group ${formData.missions.selectionnees.includes(mission) ? 'bg-white border-blue-500 shadow-md ring-1 ring-blue-500/10' : 'bg-white/50 border-slate-200 hover:border-blue-300'}`}>
+                                        <div className="relative flex items-center justify-center">
+                                            <input type="checkbox" className="peer hidden" checked={formData.missions.selectionnees.includes(mission)} onChange={() => toggleMission(mission)} />
+                                            <div className="w-6 h-6 rounded-lg border-2 border-slate-200 peer-checked:border-blue-500 peer-checked:bg-blue-500 transition-all flex items-center justify-center">
+                                                <CheckCircle2 size={14} className="text-white scale-0 peer-checked:scale-100 transition-transform" />
+                                            </div>
+                                        </div>
+                                        <span className={`text-sm font-medium transition-colors ${formData.missions.selectionnees.includes(mission) ? 'text-slate-900' : 'text-slate-500'}`}>{mission}</span>
+                                    </label>
                                 ))}
                             </div>
                         </div>
 
-
-                        {/* Formation Details */}
-                        {formData.formation_missions.formation_alternant && (
-                            <div className="animate-in fade-in slide-in-from-top-4 duration-500 space-y-6">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
-                                        <label className="block text-sm font-bold text-slate-700 mb-2">Formation choisie</label>
-                                        <input
-                                            type="text"
-                                            className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none font-medium text-sm"
-                                            value={formData.formation_missions.formation_choisie}
-                                            onChange={(e) => handleNestedChange('formation_missions', 'formation_choisie', e.target.value)}
-                                            placeholder="Ex: BTS NDRC"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-bold text-slate-700 mb-2">Code RNCP</label>
-                                        <input
-                                            type="text"
-                                            className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none font-medium text-sm"
-                                            value={formData.formation_missions.code_rncp}
-                                            onChange={(e) => handleNestedChange('formation_missions', 'code_rncp', e.target.value)}
-                                            placeholder="Ex: RNCP38368"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-bold text-slate-700 mb-2">Code diplôme</label>
-                                        <input
-                                            type="text"
-                                            className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none font-medium text-sm"
-                                            value={formData.formation_missions.code_diplome}
-                                            onChange={(e) => handleNestedChange('formation_missions', 'code_diplome', e.target.value)}
-                                            placeholder="Ex: 32031310"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-bold text-slate-700 mb-2">Nombre d'heures de formation</label>
-                                        <input
-                                            type="number"
-                                            className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none font-medium text-sm"
-                                            value={formData.formation_missions.nombre_heures_formation}
-                                            onChange={(e) => handleNestedChange('formation_missions', 'nombre_heures_formation', e.target.value)}
-                                            placeholder="Ex: 1350"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-bold text-slate-700 mb-2">Date début formation</label>
-                                        <input
-                                            type="date"
-                                            className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none font-medium text-sm"
-                                            value={formData.formation_missions.date_debut_formation}
-                                            onChange={(e) => handleNestedChange('formation_missions', 'date_debut_formation', e.target.value)}
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-bold text-slate-700 mb-2">Date fin formation</label>
-                                        <input
-                                            type="date"
-                                            className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none font-medium text-sm"
-                                            value={formData.formation_missions.date_fin_formation}
-                                            onChange={(e) => handleNestedChange('formation_missions', 'date_fin_formation', e.target.value)}
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-bold text-slate-700 mb-2">Jours de cours</label>
-                                        <input
-                                            type="number"
-                                            className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none font-medium text-sm"
-                                            value={formData.formation_missions.jours_de_cours}
-                                            onChange={(e) => handleNestedChange('formation_missions', 'jours_de_cours', e.target.value)}
-                                            placeholder="Ex: 2"
-                                        />
-                                    </div>
+                        <div className="bg-slate-900 text-white p-6 md:p-8 rounded-2xl shadow-xl">
+                            <div className="flex items-center gap-4 mb-6">
+                                <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center">
+                                    <PenTool size={24} className="text-blue-400" />
                                 </div>
-
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-2">Missions suggérées</label>
-                                    <textarea
-                                        className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none font-medium text-sm resize-none"
-                                        rows={6}
-                                        value={formData.formation_missions.mission_suggere}
-                                        onChange={(e) => handleNestedChange('formation_missions', 'mission_suggere', e.target.value)}
-                                        placeholder="Décrivez les missions principales de l'alternant..."
-                                    />
+                                    <h4 className="text-lg font-bold tracking-tight">Détails complémentaires</h4>
+                                    <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">Précisez vos missions spécifiques</p>
                                 </div>
                             </div>
-                        )}
+                            <textarea
+                                className="w-full px-6 py-4 bg-white/5 border-2 border-white/10 rounded-2xl focus:border-blue-400 outline-none transition-all font-medium text-white placeholder:text-slate-600 resize-none h-32"
+                                placeholder="Décrivez ici les spécificités de votre poste..."
+                            />
+                        </div>
+                    </div>
+                </div>
 
-                        {/* Contacts Section */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-slate-200">
-                            <div className="space-y-6">
-                                <h4 className="font-bold text-slate-900 uppercase tracking-wider text-xs flex items-center gap-2">
-                                    <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
-                                    Contact RH (Optionnel)
-                                </h4>
-                                <div className="space-y-4">
-                                    <input type="text" className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none font-medium text-sm"
-                                        value={formData.contact_rh.nom_prenom_rh}
-                                        onChange={(e) => handleNestedChange('contact_rh', 'nom_prenom_rh', e.target.value)}
-                                        placeholder="Nom & Prénom RH"
-                                    />
-                                    <input type="email" className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none font-medium text-sm"
-                                        value={formData.contact_rh.email_rh}
-                                        onChange={(e) => handleNestedChange('contact_rh', 'email_rh', e.target.value)}
-                                        placeholder="Email RH"
-                                    />
-                                </div>
+                {/* Section 9: Contacts RH & Administratif */}
+                <div className="bg-white/80 p-6 md:p-8 rounded-2xl border border-blue-100 shadow-sm mb-6 transition-all hover:shadow-md">
+                    <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
+                        <div className="w-8 h-8 bg-blue-100 text-blue-700 rounded-lg flex items-center justify-center font-bold text-sm shadow-sm ring-1 ring-blue-500/10">9</div>
+                        <h3 className="text-lg font-bold text-slate-800">Contacts RH & Administratif</h3>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="bg-slate-50/50 p-6 md:p-8 rounded-2xl border border-slate-100">
+                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6 ml-1">Contact RH (Optionnel)</h4>
+                            <div className="space-y-4">
+                                <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="text"
+                                    value={formData.contact_rh.nom_prenom_rh}
+                                    onChange={(e) => handleNestedChange('contact_rh', 'nom_prenom_rh', e.target.value)}
+                                    placeholder="Nom & Prénom RH"
+                                />
+                                <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="email"
+                                    value={formData.contact_rh.email_rh}
+                                    onChange={(e) => handleNestedChange('contact_rh', 'email_rh', e.target.value)}
+                                    placeholder="Email RH"
+                                />
                             </div>
-                            <div className="space-y-6">
-                                <h4 className="font-bold text-slate-900 uppercase tracking-wider text-xs flex items-center gap-2">
-                                    <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
-                                    Contact Administratif
-                                </h4>
-                                <div className="space-y-4">
-                                    <input type="text" className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none font-medium text-sm"
-                                        value={formData.contact_taxe.fonction_contact}
-                                        onChange={(e) => handleNestedChange('contact_taxe', 'fonction_contact', e.target.value)}
-                                        placeholder="Fonction (ex: Comptable)"
-                                    />
-                                    <input type="email" className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-emerald-500 outline-none font-medium text-sm"
-                                        value={formData.contact_taxe.email_contact}
-                                        onChange={(e) => handleNestedChange('contact_taxe', 'email_contact', e.target.value)}
-                                        placeholder="Email administratif"
-                                    />
-                                </div>
+                        </div>
+
+                        <div className="bg-slate-50/50 p-6 md:p-8 rounded-2xl border border-slate-100">
+                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6 ml-1">Contact Taxe / Administratif</h4>
+                            <div className="space-y-4">
+                                <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="text"
+                                    value={formData.contact_taxe.fonction_contact}
+                                    onChange={(e) => handleNestedChange('contact_taxe', 'fonction_contact', e.target.value)}
+                                    placeholder="Fonction (ex: Comptable)"
+                                />
+                                <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="email"
+                                    value={formData.contact_taxe.email_contact}
+                                    onChange={(e) => handleNestedChange('contact_taxe', 'email_contact', e.target.value)}
+                                    placeholder="Email administratif"
+                                />
                             </div>
                         </div>
                     </div>
-                </section>
+                </div>
             </div>
 
             {/* Footer Actions */}
-            <div className="px-8 md:px-12 py-10 bg-slate-50 border-t border-slate-100 flex flex-col md:flex-row items-center justify-between gap-6">
-                <button
-                    onClick={() => alert("Brouillon enregistré (simulation)")}
-                    className="flex items-center gap-2 text-slate-500 font-bold hover:text-slate-800 transition-colors group"
-                >
-                    <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center group-hover:border-slate-300 shadow-sm transition-all">
-                        <Save size={18} />
+            <div className="mt-10 p-8 bg-white/50 border-t border-blue-100 flex flex-col md:flex-row items-center justify-between gap-8 rounded-b-3xl">
+                <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-500">
+                        <Info size={24} />
                     </div>
-                    Enregistrer le brouillon
-                </button>
+                    <p className="text-xs font-medium text-slate-500 max-w-xs">
+                        En validant ce formulaire, vous certifiez l'exactitude des informations transmises.
+                    </p>
+                </div>
 
                 <div className="flex items-center gap-4 w-full md:w-auto">
-                    <button
-                        onClick={handleSubmit}
-                        disabled={isSubmitting}
-                        className="flex-1 md:flex-none px-10 py-4 bg-emerald-500 text-white font-black rounded-2xl hover:bg-emerald-600 hover:shadow-2xl hover:shadow-emerald-500/40 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
-                    >
-                        {isSubmitting ? (
-                            <Loader2 className="animate-spin" />
-                        ) : (
+                    <button onClick={() => alert("Brouillon enregistré")}
+                        className="flex-1 md:flex-none px-8 py-4 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl hover:border-blue-500 hover:text-blue-600 transition-all">
+                        Brouillon
+                    </button>
+                    <button onClick={handleSubmit} disabled={isSubmitting || formData.missions.selectionnees.length < 3}
+                        className="flex-[2] md:flex-none flex items-center gap-2.5 px-10 py-4 rounded-xl font-bold text-lg transition-all shadow-lg hover:shadow-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:-translate-y-1 shadow-blue-500/25 disabled:opacity-70 disabled:cursor-not-allowed">
+                        {isSubmitting ? <Loader2 className="animate-spin" /> : (
                             <>
-                                Valider ma fiche entreprise
+                                Valider la fiche
                                 <ArrowRight size={20} />
                             </>
                         )}
