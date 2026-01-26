@@ -1,3 +1,4 @@
+import { StudentFormData, CompanyFormData, ApiResponse } from '../types';
 
 const BASE_API_URL = 'https://liantsoaxx08-apirushscholl.hf.space/api/v1';
 const BASE_URL = `${BASE_API_URL}/admission`;
@@ -22,7 +23,7 @@ const mapToBackendFormat = (data: any): any => {
 
 export const api = {
   // --- HEALTH ---
-  async checkHealth() {
+  async checkHealth(): Promise<boolean> {
     try {
       const response = await fetch(`${BASE_URL}/health`, { method: 'GET' });
       return response.ok;
@@ -34,7 +35,7 @@ export const api = {
   // --- CANDIDATES (CRUD) ---
 
   // CREATE (POST)
-  async submitStudent(data: any) {
+  async submitStudent(data: StudentFormData): Promise<ApiResponse> {
     try {
       // Helper pour nettoyer les téléphones
       const cleanPhone = (p: any) => {
@@ -159,7 +160,7 @@ export const api = {
 
         entreprise_d_accueil: data.entreprise_d_accueil || "Non",
 
-        connaissance_rush_how: formatString(data.connaissance_rush_how) || "Autre",
+        connaissance_rush_how: formatString(data.connaissance_rush_how || "") || "Autre",
         motivation_projet_professionnel: data.motivation_projet_professionnel || "Non renseigné"
       };
 
@@ -205,15 +206,18 @@ export const api = {
         };
       }
 
-      return json;
-    } catch (error) {
+      return {
+        success: true,
+        ...json
+      };
+    } catch (error: any) {
       console.error('❌ API Error (Submit Student):', error);
       throw error;
     }
   },
 
   // READ ALL (GET)
-  async getAllCandidates() {
+  async getAllCandidates(): Promise<any[]> {
     try {
       const response = await fetch(`${BASE_URL}/candidates`, {
         method: 'GET',
@@ -228,7 +232,7 @@ export const api = {
   },
 
   // GET ETUDIANTS FICHES (Document tracking)
-  async getEtudiantsFiches(avecFicheUniquement: boolean = false) {
+  async getEtudiantsFiches(avecFicheUniquement: boolean = false): Promise<any> {
     try {
       const url = `${BASE_API_URL}/rh/etudiants-fiches?avec_fiche_uniquement=${avecFicheUniquement}`;
       console.log(`🔍 Fetching étudiants fiches from: ${url}`);
@@ -247,7 +251,7 @@ export const api = {
   },
 
   // GET RH STATS
-  async getRHStats() {
+  async getRHStats(): Promise<any> {
     try {
       const response = await fetch(`${BASE_API_URL}/rh/statistiques`, {
         method: 'GET',
@@ -262,7 +266,7 @@ export const api = {
   },
 
   // READ ONE (GET)
-  async getCandidateById(id: string) {
+  async getCandidateById(id: string): Promise<any> {
     try {
       const response = await fetch(`${BASE_URL}/candidates/${id}`, {
         method: 'GET',
@@ -277,7 +281,7 @@ export const api = {
   },
 
   // UPDATE (PUT)
-  async updateCandidate(id: string, data: any) {
+  async updateCandidate(id: string, data: Partial<StudentFormData>): Promise<any> {
     try {
       const payload = mapToBackendFormat(data);
       const response = await fetch(`${BASE_URL}/candidates/${id}`, {
@@ -294,7 +298,7 @@ export const api = {
   },
 
   // DELETE (DELETE)
-  async deleteCandidate(id: string) {
+  async deleteCandidate(id: string): Promise<boolean> {
     try {
       const response = await fetch(`${BASE_URL}/candidates/${id}`, {
         method: 'DELETE',
@@ -308,7 +312,7 @@ export const api = {
   },
 
   // --- DOCUMENTS ---
-  async uploadDocument(recordId: string, docType: string, file: File) {
+  async uploadDocument(recordId: string, docType: string, file: File): Promise<any> {
     try {
       const formData = new FormData();
       formData.append('file', file);
@@ -343,7 +347,7 @@ export const api = {
   },
 
   // --- GENERATE FICHE (NEW) ---
-  async generateFicheRenseignement(etudiantId: string) {
+  async generateFicheRenseignement(etudiantId: string): Promise<ApiResponse> {
     try {
       console.log(`🚀 Génération fiche pour étudiant: ${etudiantId}`);
       const response = await fetch(`${BASE_API_URL}/generate-fiche/${etudiantId}`, {
@@ -356,8 +360,12 @@ export const api = {
         throw new Error(txt || response.statusText);
       }
 
-      return await response.json();
-    } catch (error) {
+      const json = await response.json();
+      return {
+        success: true,
+        data: json
+      };
+    } catch (error: any) {
       console.error('❌ API Error (Generate Fiche):', error);
       throw error;
     }
@@ -366,7 +374,7 @@ export const api = {
   // --- ENTREPRISE (CRUD) ---
 
   // CREATE (POST)
-  async submitCompany(data: any) {
+  async submitCompany(data: CompanyFormData): Promise<ApiResponse> {
     try {
       // Clean up empty fields - convert empty strings to null
       const cleanDates = (obj: any): any => {
@@ -400,15 +408,19 @@ export const api = {
         const txt = await response.text();
         throw new Error(txt || response.statusText);
       }
-      return await response.json();
-    } catch (error) {
+      const json = await response.json();
+      return {
+        success: true,
+        data: json
+      };
+    } catch (error: any) {
       console.error('❌ API Error (Submit Company):', error);
       throw error;
     }
   },
 
   // READ ALL (GET)
-  async getAllCompanies() {
+  async getAllCompanies(): Promise<any[]> {
     try {
       const response = await fetch(`${BASE_URL}/entreprise`, {
         method: 'GET',
@@ -422,7 +434,7 @@ export const api = {
   },
 
   // READ ONE (GET)
-  async getCompanyById(id: string) {
+  async getCompanyById(id: string): Promise<any> {
     try {
       const response = await fetch(`${BASE_URL}/entreprise/${id}`, {
         method: 'GET',
@@ -437,7 +449,7 @@ export const api = {
   },
 
   // UPDATE (PUT)
-  async updateCompany(id: string, data: any) {
+  async updateCompany(id: string, data: Partial<CompanyFormData>): Promise<any> {
     try {
       const payload = mapToBackendFormat(data);
       const response = await fetch(`${BASE_URL}/entreprise/${id}`, {
