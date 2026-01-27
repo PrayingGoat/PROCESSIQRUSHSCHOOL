@@ -1,6 +1,76 @@
 import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { User, Save, Loader2, ArrowRight } from 'lucide-react';
 import { api } from '../services/api';
+import { StudentFormData } from '../types';
+import Button from './ui/Button';
+import Input from './ui/Input';
+import Select from './ui/Select';
+import Card from './ui/Card';
+
+// Validation Schema with Zod
+const studentSchema = z.object({
+    prenom: z.string().min(2, "Le prénom est requis"),
+    nom_naissance: z.string().min(2, "Le nom de naissance est requis"),
+    nom_usage: z.string().optional().or(z.literal("")),
+    sexe: z.string().min(1, "Veuillez sélectionner votre sexe"),
+    date_naissance: z.string().min(1, "La date de naissance est requise"),
+    nationalite: z.string().min(1, "Veuillez sélectionner votre nationalité"),
+    commune_naissance: z.string().min(1, "La commune de naissance est requise"),
+    departement: z.string().min(1, "Le département est requis"),
+    adresse_residence: z.string().min(5, "L'adresse est requise"),
+    code_postal: z.string().min(5, "Code postal invalide"),
+    ville: z.string().min(1, "La ville est requise"),
+    email: z.string().email("Email invalide"),
+    telephone: z.string().min(10, "Téléphone invalide"),
+    nir: z.string().optional().or(z.literal("")),
+    situation: z.string().min(1, "Veuillez sélectionner votre situation"),
+    regime_social: z.string().optional().or(z.literal("")),
+    declare_inscription_sportif_haut_niveau: z.boolean(),
+    declare_avoir_projet_creation_reprise_entreprise: z.boolean(),
+    declare_travailleur_handicape: z.boolean(),
+    alternance: z.boolean(),
+    dernier_diplome_prepare: z.string().min(1, "Veuillez sélectionner votre dernier diplôme"),
+    derniere_classe: z.string().min(1, "Veuillez sélectionner votre dernière classe"),
+    intitulePrecisDernierDiplome: z.string().optional().or(z.literal("")),
+    bac: z.string().min(1, "Veuillez sélectionner votre niveau d'études"),
+    formation_souhaitee: z.string().min(1, "Veuillez sélectionner une formation"),
+    date_de_visite: z.string().optional().or(z.literal("")),
+    date_de_reglement: z.string().optional().or(z.literal("")),
+    entreprise_d_accueil: z.string().optional().or(z.literal("")),
+    connaissance_rush_how: z.string().optional().or(z.literal("")),
+    motivation_projet_professionnel: z.string().optional().or(z.literal("")),
+    agreement: z.boolean().refine(val => val === true, {
+        message: "Vous devez attester sur l'honneur l'exactitude des informations"
+    }),
+    add_second_representative: z.boolean().optional(),
+    representant_legal_1: z.object({
+        nom: z.string().optional(),
+        prenom: z.string().optional(),
+        numero: z.string().optional(),
+        voie: z.string().optional(),
+        complement: z.string().optional(),
+        code_postal: z.string().optional(),
+        ville: z.string().optional(),
+        email: z.string().optional(),
+        telephone: z.string().optional(),
+    }).optional(),
+    representant_legal_2: z.object({
+        nom: z.string().optional(),
+        prenom: z.string().optional(),
+        numero: z.string().optional(),
+        voie: z.string().optional(),
+        complement: z.string().optional(),
+        code_postal: z.string().optional(),
+        ville: z.string().optional(),
+        email: z.string().optional(),
+        telephone: z.string().optional(),
+    }).optional()
+});
+
+type StudentFormValues = z.infer<typeof studentSchema>;
 
 interface QuestionnaireFormProps {
     onNext: (data: any) => void;
@@ -8,67 +78,65 @@ interface QuestionnaireFormProps {
 }
 
 const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
-    const [formData, setFormData] = useState({
-        prenom: '',
-        nom_naissance: '',
-        nom_usage: '',
-        sexe: '',
-        date_naissance: '',
-        nationalite: '',
-        commune_naissance: '',
-        departement: '',
-        adresse_residence: '',
-        code_postal: '',
-        ville: '',
-        email: '',
-        telephone: '',
-        nir: '',
-        situation: '',
-        regime_social: '',
-        declare_inscription_sportif_haut_niveau: false,
-        declare_avoir_projet_creation_reprise_entreprise: false,
-        declare_travailleur_handicape: false,
-        alternance: false,
-        dernier_diplome_prepare: '',
-        derniere_classe: '',
-        intitulePrecisDernierDiplome: '',
-        bac: '',
-        formation_souhaitee: '',
-        date_de_visite: '',
-        date_de_reglement: '',
-        entreprise_d_accueil: '',
-        connaissance_rush_how: '',
-        motivation_projet_professionnel: '',
-        agreement: false
-    });
-
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleChange = (e: any) => {
-        const { name, value, type, checked } = e.target;
-        let finalValue = type === 'checkbox' ? checked : value;
-
-        // Convert 'oui'/'non' to boolean for declaration fields
-        if (['declare_inscription_sportif_haut_niveau', 'declare_avoir_projet_creation_reprise_entreprise', 'declare_travailleur_handicape', 'alternance'].includes(name)) {
-            finalValue = value === 'oui';
+    const {
+        register,
+        handleSubmit,
+        watch,
+        setValue,
+        formState: { errors }
+    } = useForm<StudentFormValues>({
+        resolver: zodResolver(studentSchema),
+        defaultValues: {
+            prenom: '',
+            nom_naissance: '',
+            nom_usage: '',
+            sexe: '',
+            date_naissance: '',
+            nationalite: '',
+            commune_naissance: '',
+            departement: '',
+            adresse_residence: '',
+            code_postal: '',
+            ville: '',
+            email: '',
+            telephone: '',
+            nir: '',
+            situation: '',
+            regime_social: '',
+            declare_inscription_sportif_haut_niveau: false,
+            declare_avoir_projet_creation_reprise_entreprise: false,
+            declare_travailleur_handicape: false,
+            alternance: false,
+            dernier_diplome_prepare: '',
+            derniere_classe: '',
+            intitulePrecisDernierDiplome: '',
+            bac: '',
+            formation_souhaitee: '',
+            date_de_visite: '',
+            date_de_reglement: '',
+            entreprise_d_accueil: '',
+            connaissance_rush_how: '',
+            motivation_projet_professionnel: '',
+            agreement: false as any,
+            add_second_representative: false,
+            representant_legal_1: {
+                nom: '', prenom: '', numero: '', voie: '', complement: '', code_postal: '', ville: '', email: '', telephone: ''
+            },
+            representant_legal_2: {
+                nom: '', prenom: '', numero: '', voie: '', complement: '', code_postal: '', ville: '', email: '', telephone: ''
+            }
         }
+    });
 
-        setFormData(prev => ({ ...prev, [name]: finalValue }));
-    };
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-
-        // Basic validation
-        if (!formData.prenom || !formData.nom_naissance || !formData.email || !formData.agreement) {
-            alert("Veuillez remplir les champs obligatoires (*) et accepter l'attestation sur l'honneur.");
-            return;
-        }
-
+    const onSubmit = async (data: StudentFormValues) => {
         setIsSubmitting(true);
         try {
-            const response = await api.submitStudent(formData);
-            if (response && response.record_id) localStorage.setItem('candidateRecordId', response.record_id);
+            const response = await api.submitStudent(data as StudentFormData);
+            if (response && response.record_id) {
+                localStorage.setItem('candidateRecordId', response.record_id);
+            }
             onNext(response);
         } catch (err) {
             console.error(err);
@@ -78,8 +146,27 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
         }
     };
 
+    const selectedSexe = watch('sexe');
+    const selectedBac = watch('bac');
+    const selectedEntreprise = watch('entreprise_d_accueil');
+    const declarations = watch();
+    const dateNaissance = watch('date_naissance');
+    const addSecondRep = watch('add_second_representative');
+
+    const isMinor = React.useMemo(() => {
+        if (!dateNaissance) return false;
+        const birth = new Date(dateNaissance);
+        const today = new Date();
+        let age = today.getFullYear() - birth.getFullYear();
+        const m = today.getMonth() - birth.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+            age--;
+        }
+        return age < 18;
+    }, [dateNaissance]);
+
     return (
-        <form onSubmit={handleSubmit} className="bg-gradient-to-br from-blue-50 to-white rounded-3xl p-6 md:p-10 shadow-xl border border-blue-100 relative overflow-hidden animate-slide-in">
+        <form onSubmit={handleSubmit(onSubmit)} className="bg-gradient-to-br from-blue-50 to-white rounded-3xl p-6 md:p-10 shadow-xl border border-blue-100 relative overflow-hidden animate-slide-in">
             <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-500 via-indigo-500 to-violet-500"></div>
 
             <div className="flex flex-col md:flex-row md:items-center gap-6 mb-10 pb-8 border-b border-blue-100">
@@ -97,129 +184,196 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
             </div>
 
             <div className="space-y-6">
-                {/* Section 1 */}
-                <div className="bg-white/80 p-6 md:p-8 rounded-2xl border border-blue-100 shadow-sm mb-6 transition-all hover:shadow-md">
-                    <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
-                        <div className="w-8 h-8 bg-blue-100 text-blue-700 rounded-lg flex items-center justify-center font-bold text-sm shadow-sm ring-1 ring-blue-500/10">1</div>
-                        <h3 className="text-lg font-bold text-slate-800">Informations personnelles</h3>
-                    </div>
+                <Card step={1} title="Informations personnelles">
                     <div className="grid grid-cols-12 gap-5">
                         <div className="col-span-12 md:col-span-6">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Prénom <span className="text-red-500">*</span></label>
-                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="text" name="prenom" placeholder="Votre prénom" value={formData.prenom} onChange={handleChange} />
+                            <Input label="Prénom" required placeholder="Votre prénom" error={errors.prenom?.message} {...register('prenom')} />
                         </div>
                         <div className="col-span-12 md:col-span-6">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Nom de naissance <span className="text-red-500">*</span></label>
-                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="text" name="nom_naissance" placeholder="Votre nom de naissance" value={formData.nom_naissance} onChange={handleChange} />
+                            <Input label="Nom de naissance" required placeholder="Votre nom de naissance" error={errors.nom_naissance?.message} {...register('nom_naissance')} />
                         </div>
                         <div className="col-span-12">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Nom d'usage </label>
-                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="text" name="nom_usage" placeholder="Si différent du nom de naissance" value={formData.nom_usage} onChange={handleChange} />
+                            <Input label="Nom d'usage" placeholder="Si différent du nom de naissance" {...register('nom_usage')} />
                         </div>
                         <div className="col-span-12">
                             <label className="block text-sm font-semibold text-slate-700 mb-3">Sexe *</label>
                             <div className="flex gap-3 flex-wrap">
-                                <label className="relative cursor-pointer group flex-1 min-w-[120px]">
-                                    <input className="peer sr-only" type="radio" name="sexe" value="Féminin" checked={formData.sexe === 'Féminin'} onChange={handleChange} />
-                                    <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all ${formData.sexe === 'Féminin' ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500' : 'bg-white border-slate-200 hover:border-blue-300 hover:bg-slate-50'}`}>
-                                        <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${formData.sexe === 'Féminin' ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-400'}`}>A</span>
-                                        <span className="font-medium text-slate-600">Féminin</span>
-                                    </div>
-                                </label>
-                                <label className="relative cursor-pointer group flex-1 min-w-[120px]">
-                                    <input className="peer sr-only" type="radio" name="sexe" value="Masculin" checked={formData.sexe === 'Masculin'} onChange={handleChange} />
-                                    <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all ${formData.sexe === 'Masculin' ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500' : 'bg-white border-slate-200 hover:border-blue-300 hover:bg-slate-50'}`}>
-                                        <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${formData.sexe === 'Masculin' ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-400'}`}>B</span>
-                                        <span className="font-medium text-slate-600">Masculin</span>
-                                    </div>
-                                </label>
+                                {['Féminin', 'Masculin'].map((val, idx) => (
+                                    <label key={val} className="relative cursor-pointer group flex-1 min-w-[120px]">
+                                        <input className="peer sr-only" type="radio" value={val} {...register('sexe')} />
+                                        <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all ${selectedSexe === val ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500' : 'bg-white border-slate-200 hover:border-blue-300 hover:bg-slate-50'}`}>
+                                            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${selectedSexe === val ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-400'}`}>{String.fromCharCode(65 + idx)}</span>
+                                            <span className="font-medium text-slate-600">{val}</span>
+                                        </div>
+                                    </label>
+                                ))}
                             </div>
+                            {errors.sexe && <p className="mt-1.5 text-rose-500 text-xs font-bold">{errors.sexe.message}</p>}
                         </div>
                         <div className="col-span-12 md:col-span-6">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Date de naissance <span className="text-red-500">*</span></label>
-                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="date" name="date_naissance" value={formData.date_naissance} onChange={handleChange} />
+                            <Input label="Date de naissance" required type="date" error={errors.date_naissance?.message} {...register('date_naissance')} />
                         </div>
                         <div className="col-span-12 md:col-span-6">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Nationalité <span className="text-red-500">*</span></label>
-                            <select name="nationalite" value={formData.nationalite} onChange={handleChange} className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 transition-all focus:ring-4 focus:outline-none cursor-pointer border-slate-200 focus:border-blue-500 focus:ring-blue-500/10">
-                                <option value="">Sélectionnez</option>
-                                <option value="francaise">Française</option>
-                                <option value="ue">Union Européenne</option>
-                                <option value="hors_ue">Etranger hors Union Européenne</option>
-                            </select>
+                            <Select
+                                label="Nationalité"
+                                required
+                                error={errors.nationalite?.message}
+                                {...register('nationalite')}
+                                options={[
+                                    { value: 'francaise', label: 'Française' },
+                                    { value: 'ue', label: 'Union Européenne' },
+                                    { value: 'hors_ue', label: 'Etranger hors Union Européenne' }
+                                ]}
+                                placeholder="Sélectionnez"
+                            />
                         </div>
                         <div className="col-span-12 md:col-span-6">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Commune de naissance <span className="text-red-500">*</span></label>
-                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="text" name="commune_naissance" placeholder="Ville de naissance" value={formData.commune_naissance} onChange={handleChange} />
+                            <Input label="Commune de naissance" required placeholder="Ville de naissance" error={errors.commune_naissance?.message} {...register('commune_naissance')} />
                         </div>
                         <div className="col-span-12 md:col-span-6">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Département de naissance <span className="text-red-500">*</span></label>
-                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="text" name="departement" placeholder="Ex: 75 - Paris" value={formData.departement} onChange={handleChange} />
+                            <Input label="Département de naissance" required placeholder="Ex: 75 - Paris" error={errors.departement?.message} {...register('departement')} />
                         </div>
                     </div>
-                </div>
+                </Card>
 
-                {/* Section 2 */}
-                <div className="bg-white/80 p-6 md:p-8 rounded-2xl border border-blue-100 shadow-sm mb-6 transition-all hover:shadow-md">
-                    <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
-                        <div className="w-8 h-8 bg-blue-100 text-blue-700 rounded-lg flex items-center justify-center font-bold text-sm shadow-sm ring-1 ring-blue-500/10">2</div>
-                        <h3 className="text-lg font-bold text-slate-800">Coordonnées</h3>
-                    </div>
+                <Card step={2} title="Coordonnées">
                     <div className="grid grid-cols-12 gap-5">
                         <div className="col-span-12">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Adresse de résidence <span className="text-red-500">*</span></label>
-                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="text" name="adresse_residence" placeholder="Numéro et nom de rue" value={formData.adresse_residence} onChange={handleChange} />
+                            <Input label="Adresse de résidence" required placeholder="Numéro et nom de rue" error={errors.adresse_residence?.message} {...register('adresse_residence')} />
                         </div>
                         <div className="col-span-12 md:col-span-4">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Code postal <span className="text-red-500">*</span></label>
-                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="text" name="code_postal" placeholder="Ex: 75001" value={formData.code_postal} onChange={handleChange} />
+                            <Input label="Code postal" required placeholder="Ex: 75001" error={errors.code_postal?.message} {...register('code_postal')} />
                         </div>
                         <div className="col-span-12 md:col-span-8">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Ville <span className="text-red-500">*</span></label>
-                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="text" name="ville" placeholder="Ville de résidence" value={formData.ville} onChange={handleChange} />
+                            <Input label="Ville" required placeholder="Ville de résidence" error={errors.ville?.message} {...register('ville')} />
                         </div>
                         <div className="col-span-12 md:col-span-6">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">E-mail <span className="text-red-500">*</span></label>
-                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="email" name="email" placeholder="votre@email.com" value={formData.email} onChange={handleChange} />
+                            <Input label="E-mail" required type="email" placeholder="votre@email.com" error={errors.email?.message} {...register('email')} />
                         </div>
                         <div className="col-span-12 md:col-span-6">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Téléphone <span className="text-red-500">*</span></label>
-                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="tel" name="telephone" placeholder="06 12 34 56 78" value={formData.telephone} onChange={handleChange} />
+                            <Input label="Téléphone" required type="tel" placeholder="06 12 34 56 78" error={errors.telephone?.message} {...register('telephone')} />
                         </div>
                         <div className="col-span-12">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">NIR (Numéro de Sécurité Sociale) </label>
-                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="text" name="nir" placeholder="1 85 12 75 108 123 45" value={formData.nir} onChange={handleChange} />
+                            <Input label="NIR (Numéro de Sécurité Sociale)" placeholder="1 85 12 75 108 123 45" {...register('nir')} />
                         </div>
                     </div>
-                </div>
+                </Card>
 
-                {/* Section 3 */}
-                <div className="bg-white/80 p-6 md:p-8 rounded-2xl border border-blue-100 shadow-sm mb-6 transition-all hover:shadow-md">
-                    <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
-                        <div className="w-8 h-8 bg-blue-100 text-blue-700 rounded-lg flex items-center justify-center font-bold text-sm shadow-sm ring-1 ring-blue-500/10">3</div>
-                        <h3 className="text-lg font-bold text-slate-800">Situation & Déclarations</h3>
-                    </div>
+                {isMinor && (
+                    <Card step={3} title="Représentants Légaux">
+                        <div className="space-y-8">
+                            <div>
+                                <h3 className="text-lg font-semibold text-slate-800 mb-4">Représentant légal 1</h3>
+                                <div className="grid grid-cols-12 gap-5">
+                                    <div className="col-span-12 md:col-span-6">
+                                        <Input label="Nom" required={isMinor} {...register('representant_legal_1.nom')} />
+                                    </div>
+                                    <div className="col-span-12 md:col-span-6">
+                                        <Input label="Prénom" required={isMinor} {...register('representant_legal_1.prenom')} />
+                                    </div>
+                                    <div className="col-span-12 md:col-span-4">
+                                        <Input label="Numéro" required={isMinor} {...register('representant_legal_1.numero')} />
+                                    </div>
+                                    <div className="col-span-12 md:col-span-8">
+                                        <Input label="Voie" required={isMinor} {...register('representant_legal_1.voie')} />
+                                    </div>
+                                    <div className="col-span-12">
+                                        <Input label="Complément d'adresse" {...register('representant_legal_1.complement')} />
+                                    </div>
+                                    <div className="col-span-12 md:col-span-4">
+                                        <Input label="Code postal" required={isMinor} {...register('representant_legal_1.code_postal')} />
+                                    </div>
+                                    <div className="col-span-12 md:col-span-8">
+                                        <Input label="Ville" required={isMinor} {...register('representant_legal_1.ville')} />
+                                    </div>
+                                    <div className="col-span-12 md:col-span-6">
+                                        <Input label="Email" required={isMinor} type="email" {...register('representant_legal_1.email')} />
+                                    </div>
+                                    <div className="col-span-12 md:col-span-6">
+                                        <Input label="Téléphone" required={isMinor} type="tel" {...register('representant_legal_1.telephone')} />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-3">
+                                <input
+                                    type="checkbox"
+                                    id="add_second_rep"
+                                    className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                                    {...register('add_second_representative')}
+                                />
+                                <label htmlFor="add_second_rep" className="text-slate-700 font-medium cursor-pointer">
+                                    Ajouter un second représentant légal
+                                </label>
+                            </div>
+
+                            {addSecondRep && (
+                                <div className="animate-fade-in">
+                                    <h3 className="text-lg font-semibold text-slate-800 mb-4">Représentant légal 2</h3>
+                                    <div className="grid grid-cols-12 gap-5">
+                                        <div className="col-span-12 md:col-span-6">
+                                            <Input label="Nom" {...register('representant_legal_2.nom')} />
+                                        </div>
+                                        <div className="col-span-12 md:col-span-6">
+                                            <Input label="Prénom" {...register('representant_legal_2.prenom')} />
+                                        </div>
+                                        <div className="col-span-12 md:col-span-4">
+                                            <Input label="Numéro" {...register('representant_legal_2.numero')} />
+                                        </div>
+                                        <div className="col-span-12 md:col-span-8">
+                                            <Input label="Voie" {...register('representant_legal_2.voie')} />
+                                        </div>
+                                        <div className="col-span-12">
+                                            <Input label="Complément d'adresse" {...register('representant_legal_2.complement')} />
+                                        </div>
+                                        <div className="col-span-12 md:col-span-4">
+                                            <Input label="Code postal" {...register('representant_legal_2.code_postal')} />
+                                        </div>
+                                        <div className="col-span-12 md:col-span-8">
+                                            <Input label="Ville" {...register('representant_legal_2.ville')} />
+                                        </div>
+                                        <div className="col-span-12 md:col-span-6">
+                                            <Input label="Email" type="email" {...register('representant_legal_2.email')} />
+                                        </div>
+                                        <div className="col-span-12 md:col-span-6">
+                                            <Input label="Téléphone" type="tel" {...register('representant_legal_2.telephone')} />
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </Card>
+                )}
+
+                <Card step={isMinor ? 4 : 3} title="Situation & Déclarations">
                     <div className="grid grid-cols-12 gap-5">
                         <div className="col-span-12">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Situation avant le contrat <span className="text-red-500">*</span></label>
-                            <select name="situation" value={formData.situation} onChange={handleChange} className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 transition-all focus:ring-4 focus:outline-none cursor-pointer border-slate-200 focus:border-blue-500 focus:ring-blue-500/10">
-                                <option value="">Sélectionnez votre situation</option>
-                                <option value="Etudiant : (Etude supérieur)">Etudiant : (Etude supérieur)</option>
-                                <option value="Scolaire : (Bac / brevet...)">Scolaire : (Bac / brevet...)</option>
-                                <option value="contrat_pro">Contrat pro</option>
-                                <option value="Salarié : (CDD/CDI)">Salarié : (CDD/CDI)</option>
-                                <option value="Contrat d'apprentissage">Contrat apprentissage</option>
-                            </select>
+                            <Select
+                                label="Situation avant le contrat"
+                                required
+                                error={errors.situation?.message}
+                                {...register('situation')}
+                                options={[
+                                    { value: 'Etudiant', label: 'Etudiant : (Etude supérieur)' },
+                                    { value: 'Scolaire', label: 'Scolaire : (Bac / brevet...)' },
+                                    { value: 'contrat_pro', label: 'Contrat pro' },
+                                    { value: 'Salarié', label: 'Salarié : (CDD/CDI)' },
+                                    { value: 'Contrat d\'apprentissage', label: 'Contrat apprentissage' }
+                                ]}
+                                placeholder="Sélectionnez votre situation"
+                            />
                         </div>
                         <div className="col-span-12">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Régime social </label>
-                            <select name="regime_social" value={formData.regime_social} onChange={handleChange} className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 transition-all focus:ring-4 focus:outline-none cursor-pointer border-slate-200 focus:border-blue-500 focus:ring-blue-500/10">
-                                <option value="">Sélectionnez</option>
-                                <option value="urssaf">URSSAF</option>
-                                <option value="msa">MSA (Mutualité Sociale Agricole)</option>
-                            </select>
+                            <Select
+                                label="Régime social"
+                                {...register('regime_social')}
+                                options={[
+                                    { value: 'Sécurité Sociale', label: 'URSSAF / Sécurité Sociale' },
+                                    { value: 'MSA', label: 'MSA (Mutualité Sociale Agricole)' }
+                                ]}
+                                placeholder="Sélectionnez"
+                            />
                         </div>
-                        {/* Yes/No Groups */}
                         {[
                             { label: "Déclare être inscrit(e) sur la liste des sportifs de haut niveau", name: "declare_inscription_sportif_haut_niveau" },
                             { label: "Déclare avoir un projet de création ou de reprise d'entreprise", name: "declare_avoir_projet_creation_reprise_entreprise" },
@@ -230,126 +384,129 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
                                 <div className="bg-slate-50/50 p-5 rounded-xl border border-slate-100">
                                     <label className="block text-sm font-semibold text-slate-800 mb-4">{item.label}</label>
                                     <div className="flex gap-3">
-                                        <label className="relative cursor-pointer group flex-1">
-                                            <input className="peer sr-only" type="radio" name={item.name} value="oui" checked={formData[item.name as keyof typeof formData] === true} onChange={handleChange} />
-                                            <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all ${formData[item.name as keyof typeof formData] === true ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500' : 'bg-white border-slate-200 hover:border-blue-300'}`}>
-                                                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${formData[item.name as keyof typeof formData] === true ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-400'}`}>A</span>
-                                                <span className="font-medium text-slate-700">Oui</span>
-                                            </div>
-                                        </label>
-                                        <label className="relative cursor-pointer group flex-1">
-                                            <input className="peer sr-only" type="radio" name={item.name} value="non" checked={formData[item.name as keyof typeof formData] === false} onChange={handleChange} />
-                                            <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all ${formData[item.name as keyof typeof formData] === false ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500' : 'bg-white border-slate-200 hover:border-blue-300'}`}>
-                                                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${formData[item.name as keyof typeof formData] === false ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-400'}`}>B</span>
-                                                <span className="font-medium text-slate-700">Non</span>
-                                            </div>
-                                        </label>
+                                        <button
+                                            type="button"
+                                            onClick={() => setValue(item.name as any, true)}
+                                            className={`flex-1 flex items-center gap-3 px-4 py-3 rounded-xl border transition-all ${declarations[item.name as keyof StudentFormValues] === true ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500' : 'bg-white border-slate-200 hover:border-blue-300'}`}
+                                        >
+                                            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${declarations[item.name as keyof StudentFormValues] === true ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-400'}`}>A</span>
+                                            <span className="font-medium text-slate-700">Oui</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setValue(item.name as any, false)}
+                                            className={`flex-1 flex items-center gap-3 px-4 py-3 rounded-xl border transition-all ${declarations[item.name as keyof StudentFormValues] === false ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500' : 'bg-white border-slate-200 hover:border-blue-300'}`}
+                                        >
+                                            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${declarations[item.name as keyof StudentFormValues] === false ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-400'}`}>B</span>
+                                            <span className="font-medium text-slate-700">Non</span>
+                                        </button>
                                     </div>
                                 </div>
                             </div>
                         ))}
                     </div>
-                </div>
+                </Card>
 
-                {/* Section 4 */}
-                <div className="bg-white/80 p-6 md:p-8 rounded-2xl border border-blue-100 shadow-sm mb-6 transition-all hover:shadow-md">
-                    <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
-                        <div className="w-8 h-8 bg-blue-100 text-blue-700 rounded-lg flex items-center justify-center font-bold text-sm shadow-sm ring-1 ring-blue-500/10">4</div>
-                        <h3 className="text-lg font-bold text-slate-800">Parcours scolaire</h3>
-                    </div>
+                <Card step={isMinor ? 5 : 4} title="Parcours scolaire">
                     <div className="grid grid-cols-12 gap-5">
                         <div className="col-span-12">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Dernier diplôme ou titre préparé <span className="text-red-500">*</span></label>
-                            <select name="dernier_diplome_prepare" value={formData.dernier_diplome_prepare} onChange={handleChange} className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 transition-all focus:ring-4 focus:outline-none cursor-pointer border-slate-200 focus:border-blue-500 focus:ring-blue-500/10">
-                                <option value="">Sélectionnez</option>
-                                <option value="bac_techno">Baccalauréat Technologique</option>
-                                <option value="bac_general">Baccalauréat général</option>
-                                <option value="bac_pro">Baccalauréat pro</option>
-                                <option value="brevet">Brevet</option>
-                                <option value="cap">CAP</option>
-                                <option value="bts">BTS</option>
-                                <option value="aucun">Aucun diplôme</option>
-                            </select>
+                            <Select
+                                label="Dernier diplôme ou titre préparé"
+                                required
+                                error={errors.dernier_diplome_prepare?.message}
+                                {...register('dernier_diplome_prepare')}
+                                options={[
+                                    { value: 'Baccalauréat Technologique', label: 'Baccalauréat Technologique' },
+                                    { value: 'Baccalauréat général', label: 'Baccalauréat général' },
+                                    { value: 'Baccalauréat pro', label: 'Baccalauréat pro' },
+                                    { value: 'Brevet', label: 'Brevet' },
+                                    { value: 'CAP', label: 'CAP' },
+                                    { value: 'BTS', label: 'BTS' },
+                                    { value: 'Aucun diplôme', label: 'Aucun diplôme' }
+                                ]}
+                                placeholder="Sélectionnez"
+                            />
                         </div>
                         <div className="col-span-12">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Dernière année ou classe suivie <span className="text-red-500">*</span></label>
-                            <select name="derniere_classe" value={formData.derniere_classe} onChange={handleChange} className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 transition-all focus:ring-4 focus:outline-none cursor-pointer border-slate-200 focus:border-blue-500 focus:ring-blue-500/10">
-                                <option value="">Sélectionnez</option>
-                                <option value="derniere_annee_obtenu">Dernière année du cycle de formation - diplôme obtenu</option>
-                                <option value="1ere_annee_validee">1ère année du cycle validée (année non diplômante)</option>
-                                <option value="1ere_annee_non_validee">1ère année du cycle non validée (échec/interruption)</option>
-                                <option value="2e_annee_validee">2è année du cycle validée (année non diplômante)</option>
-                                <option value="2e_annee_non_validee">2è année du cycle non validée (échec/interruption)</option>
-                                <option value="3e_annee_validee">3è année du cycle validée (année non diplômante)</option>
-                                <option value="3e_annee_non_validee">3è année du cycle non validée (échec/interruption)</option>
-                                <option value="1er_cycle_secondaire">1er cycle de l'enseignement secondaire achevé (collège)</option>
-                                <option value="interrompu_3e">Études interrompues en classe de 3è</option>
-                                <option value="interrompu_4e">Études interrompues en classe de 4è</option>
-                            </select>
+                            <Select
+                                label="Dernière année ou classe suivie"
+                                required
+                                error={errors.derniere_classe?.message}
+                                {...register('derniere_classe')}
+                                options={[
+                                    { value: 'Diplôme obtenu', label: 'Dernière année du cycle de formation - diplôme obtenu' },
+                                    { value: 'Terminale', label: 'Terminale' },
+                                    { value: '1ère année validée', label: '1ère année du cycle validée' },
+                                    { value: 'Classe de 3ème', label: 'Études interrompues en classe de 3ème' }
+                                ]}
+                                placeholder="Sélectionnez"
+                            />
                         </div>
                         <div className="col-span-12">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Intitulé précis du dernier diplôme ou titre préparé </label>
-                            <select name="intitulePrecisDernierDiplome" value={formData.intitulePrecisDernierDiplome} onChange={handleChange} className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 transition-all focus:ring-4 focus:outline-none cursor-pointer border-slate-200 focus:border-blue-500 focus:ring-blue-500/10">
-                                <option value="">Sélectionnez</option>
-                                <option value="Baccalauréat Technologique">Baccalauréat Technologique</option>
-                                <option value="Baccalauréat général">Baccalauréat général</option>
-                                <option value="Baccalauréat pro">Baccalauréat pro</option>
-                                <option value="Brevet">Brevet</option>
-                                <option value="CAP">CAP</option>
-                                <option value="BTS">BTS</option>
-                                <option value="Aucun diplôme">Aucun diplôme</option>
-                            </select>
+                            <Select
+                                label="Intitulé précis du dernier diplôme ou titre préparé"
+                                {...register('intitulePrecisDernierDiplome')}
+                                options={[
+                                    { value: 'Baccalauréat Technologique', label: 'Baccalauréat Technologique' },
+                                    { value: 'Baccalauréat général', label: 'Baccalauréat général' },
+                                    { value: 'Baccalauréat pro', label: 'Baccalauréat pro' },
+                                    { value: 'Brevet', label: 'Brevet' },
+                                    { value: 'CAP', label: 'CAP' },
+                                    { value: 'BTS', label: 'BTS' },
+                                    { value: 'Aucun diplôme', label: 'Aucun diplôme' }
+                                ]}
+                                placeholder="Sélectionnez"
+                            />
                         </div>
                         <div className="col-span-12">
                             <label className="block text-sm font-semibold text-slate-700 mb-3">Diplôme ou titre le plus élevé obtenu *</label>
                             <div className="flex gap-3 grid grid-cols-2 md:grid-cols-3">
                                 {['BAC', 'BAC+1', 'BAC+2', 'BAC+3', 'BAC+4', 'BAC+5'].map((val, idx) => (
                                     <label key={val} className="relative cursor-pointer group flex-1 min-w-[120px]">
-                                        <input className="peer sr-only" type="radio" name="bac" value={val} checked={formData.bac === val} onChange={handleChange} />
-                                        <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all ${formData.bac === val ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500' : 'bg-white border-slate-200 hover:border-blue-300 hover:bg-slate-50'}`}>
-                                            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${formData.bac === val ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-400'}`}>{String.fromCharCode(65 + idx)}</span>
+                                        <input className="peer sr-only" type="radio" value={val} {...register('bac')} />
+                                        <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all ${selectedBac === val ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500' : 'bg-white border-slate-200 hover:border-blue-300 hover:bg-slate-50'}`}>
+                                            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${selectedBac === val ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-400'}`}>{String.fromCharCode(65 + idx)}</span>
                                             <span className="font-medium text-slate-600">{val}</span>
                                         </div>
                                     </label>
                                 ))}
                             </div>
+                            {errors.bac && <p className="mt-1.5 text-rose-500 text-xs font-bold">{errors.bac.message}</p>}
                         </div>
                     </div>
-                </div>
+                </Card>
 
-                {/* Section 5 */}
-                <div className="bg-white/80 p-6 md:p-8 rounded-2xl border border-blue-100 shadow-sm mb-6 transition-all hover:shadow-md">
-                    <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
-                        <div className="w-8 h-8 bg-blue-100 text-blue-700 rounded-lg flex items-center justify-center font-bold text-sm shadow-sm ring-1 ring-blue-500/10">5</div>
-                        <h3 className="text-lg font-bold text-slate-800">Formation souhaitée</h3>
-                    </div>
+                <Card step={isMinor ? 6 : 5} title="Formation souhaitée">
                     <div className="grid grid-cols-12 gap-5">
                         <div className="col-span-12">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Formation <span className="text-red-500">*</span></label>
-                            <select name="formation_souhaitee" value={formData.formation_souhaitee} onChange={handleChange} className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 transition-all focus:ring-4 focus:outline-none cursor-pointer border-slate-200 focus:border-blue-500 focus:ring-blue-500/10">
-                                <option value="">Sélectionnez une formation</option>
-                                <option value="bts_mco">BTS MCO - Management Commercial Opérationnel</option>
-                                <option value="bts_ndrc">BTS NDRC - Négociation et Digitalisation de la Relation Client</option>
-                                <option value="bachelor_rdc">BACHELOR RDC - Responsable Développement Commercial</option>
-                                <option value="tp_ntc">TP NTC - Négociateur Technico-Commercial</option>
-                            </select>
+                            <Select
+                                label="Formation"
+                                required
+                                error={errors.formation_souhaitee?.message}
+                                {...register('formation_souhaitee')}
+                                options={[
+                                    { value: 'bts_mco', label: 'BTS MCO - Management Commercial Opérationnel' },
+                                    { value: 'bts_ndrc', label: 'BTS NDRC - Négociation et Digitalisation de la Relation Client' },
+                                    { value: 'bachelor_rdc', label: 'BACHELOR RDC - Responsable Développement Commercial' },
+                                    { value: 'tp_ntc', label: 'TP NTC - Négociateur Technico-Commercial' }
+                                ]}
+                                placeholder="Sélectionnez une formation"
+                            />
                         </div>
                         <div className="col-span-12 md:col-span-6">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Date de visite / JPO </label>
-                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="date" name="date_de_visite" value={formData.date_de_visite} onChange={handleChange} />
+                            <Input label="Date de visite / JPO" type="date" {...register('date_de_visite')} />
                         </div>
                         <div className="col-span-12 md:col-span-6">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Date d'envoi du règlement </label>
-                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="date" name="date_de_reglement" value={formData.date_de_reglement} onChange={handleChange} />
+                            <Input label="Date d'envoi du règlement" type="date" {...register('date_de_reglement')} />
                         </div>
                         <div className="col-span-12">
                             <label className="block text-sm font-semibold text-slate-700 mb-3">Avez-vous déjà une entreprise d'accueil ?</label>
                             <div className="flex gap-3 flex-wrap">
                                 {['Oui', 'En recherche', 'Non'].map((val, idx) => (
                                     <label key={val} className="relative cursor-pointer group flex-1 min-w-[120px]">
-                                        <input className="peer sr-only" type="radio" name="entreprise_d_accueil" value={val} checked={formData.entreprise_d_accueil === val} onChange={handleChange} />
-                                        <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all ${formData.entreprise_d_accueil === val ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500' : 'bg-white border-slate-200 hover:border-blue-300 hover:bg-slate-50'}`}>
-                                            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${formData.entreprise_d_accueil === val ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-400'}`}>{String.fromCharCode(65 + idx)}</span>
+                                        <input className="peer sr-only" type="radio" value={val} {...register('entreprise_d_accueil')} />
+                                        <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all ${selectedEntreprise === val ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500' : 'bg-white border-slate-200 hover:border-blue-300 hover:bg-slate-50'}`}>
+                                            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${selectedEntreprise === val ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-400'}`}>{String.fromCharCode(65 + idx)}</span>
                                             <span className="font-medium text-slate-600">{val}</span>
                                         </div>
                                     </label>
@@ -357,45 +514,50 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
                             </div>
                         </div>
                     </div>
-                </div>
+                </Card>
 
-                {/* Section 6 */}
-                <div className="bg-white/80 p-6 md:p-8 rounded-2xl border border-blue-100 shadow-sm mb-6 transition-all hover:shadow-md">
-                    <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
-                        <div className="w-8 h-8 bg-blue-100 text-blue-700 rounded-lg flex items-center justify-center font-bold text-sm shadow-sm ring-1 ring-blue-500/10">6</div>
-                        <h3 className="text-lg font-bold text-slate-800">Informations complémentaires</h3>
-                    </div>
+                <Card step={isMinor ? 7 : 6} title="Informations complémentaires">
                     <div className="grid grid-cols-12 gap-5">
                         <div className="col-span-12">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Comment avez-vous connu Rush School ? </label>
-                            <select name="connaissance_rush_how" value={formData.connaissance_rush_how} onChange={handleChange} className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 transition-all focus:ring-4 focus:outline-none cursor-pointer border-slate-200 focus:border-blue-500 focus:ring-blue-500/10">
-                                <option value="">Sélectionnez</option>
-                                <option value="reseaux_sociaux">Réseaux sociaux</option>
-                                <option value="google">Recherche Google</option>
-                                <option value="parcoursup">Parcoursup</option>
-                                <option value="salon">Salon / Forum</option>
-                                <option value="bouche_oreille">Bouche à oreille</option>
-                                <option value="autre">Autre</option>
-                            </select>
+                            <Select
+                                label="Comment avez-vous connu Rush School ?"
+                                {...register('connaissance_rush_how')}
+                                options={[
+                                    { value: 'reseaux_sociaux', label: 'Réseaux sociaux' },
+                                    { value: 'google', label: 'Recherche Google' },
+                                    { value: 'parcoursup', label: 'Parcoursup' },
+                                    { value: 'salon', label: 'Salon / Forum' },
+                                    { value: 'bouche_oreille', label: 'Bouche à oreille' },
+                                    { value: 'autre', label: 'Autre' }
+                                ]}
+                                placeholder="Sélectionnez"
+                            />
                         </div>
                         <div className="col-span-12">
                             <label className="block text-sm font-semibold text-slate-700 mb-2">Motivations et projet professionnel </label>
-                            <textarea name="motivation_projet_professionnel" value={formData.motivation_projet_professionnel} onChange={handleChange} placeholder="Décrivez brièvement vos motivations et votre projet professionnel..." rows={4} className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none resize-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10"></textarea>
+                            <textarea placeholder="Décrivez brièvement vos motivations et votre projet professionnel..." rows={4} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none resize-none focus:border-blue-500 focus:ring-blue-500/10" {...register('motivation_projet_professionnel')}></textarea>
                         </div>
                     </div>
-                </div>
+                </Card>
             </div>
 
             <div className="mt-8 pt-8 border-t border-blue-100 flex flex-col items-center gap-6">
-                <label className="flex items-center gap-3 cursor-pointer select-none">
-                    <input className="w-5 h-5 accent-blue-600 rounded cursor-pointer" type="checkbox" name="agreement" checked={formData.agreement} onChange={handleChange} />
-                    <span className="font-medium text-slate-700">J'atteste sur l'honneur l'exactitude des informations fournies <span className="text-red-500">*</span></span>
-                </label>
-                <button type="submit" disabled={isSubmitting} className="flex items-center gap-2.5 px-10 py-4 rounded-xl font-bold text-lg transition-all shadow-lg hover:shadow-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:-translate-y-1 shadow-blue-500/25 disabled:opacity-70 disabled:cursor-not-allowed">
-                    {isSubmitting ? <Loader2 className="animate-spin" /> : <Save size={20} />}
+                <div className="flex flex-col items-center gap-2">
+                    <label className="flex items-center gap-3 cursor-pointer select-none">
+                        <input className="w-5 h-5 accent-blue-600 rounded cursor-pointer" type="checkbox" {...register('agreement')} />
+                        <span className="font-medium text-slate-700">J'atteste sur l'honneur l'exactitude des informations fournies <span className="text-red-500">*</span></span>
+                    </label>
+                    {errors.agreement && <p className="mt-1.5 text-rose-500 text-xs font-bold animate-slide-in">{errors.agreement.message}</p>}
+                </div>
+
+                <Button
+                    type="submit"
+                    size="lg"
+                    isLoading={isSubmitting}
+                    rightIcon={<ArrowRight size={20} />}
+                >
                     Enregistrer et continuer
-                    <ArrowRight size={20} />
-                </button>
+                </Button>
             </div>
         </form>
     );

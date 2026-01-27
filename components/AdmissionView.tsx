@@ -28,6 +28,10 @@ import {
 import { AdmissionTab } from '../types';
 import QuestionnaireForm from './QuestionnaireForm';
 import { api } from '../services/api';
+import Button from './ui/Button';
+import Input from './ui/Input';
+import Select from './ui/Select';
+import Card from './ui/Card';
 
 // --- CONFIGURATION ---
 
@@ -75,12 +79,9 @@ const SuccessModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
                 <p className="text-slate-500 mb-8 leading-relaxed">
                     La fiche de renseignements a été générée et envoyée avec succès.
                 </p>
-                <button
-                    onClick={onClose}
-                    className="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl font-bold text-lg hover:shadow-lg hover:shadow-emerald-500/25 hover:-translate-y-0.5 transition-all"
-                >
+                <Button variant="success" size="lg" className="w-full" onClick={onClose}>
                     Continuer
-                </button>
+                </Button>
             </div>
         </div>
     );
@@ -106,57 +107,6 @@ const StepLine = ({ isCompleted }: { isCompleted: boolean }) => (
     <div className={`w-12 h-0.5 mx-1 transition-colors duration-300 ${isCompleted ? 'bg-emerald-500' : 'bg-slate-200'}`}></div>
 );
 
-const MISSIONS_BY_FORMATION: Record<string, string[]> = {
-    ndrc: [
-        "Prospection et recherche de nouveaux clients (terrain, téléphone, digital)",
-        "Négociation et vente de produits/services",
-        "Gestion et suivi du portefeuille clients",
-        "Animation de la relation client à distance (téléphone, email, chat)",
-        "Utilisation des outils CRM et digitalisation de la relation client",
-        "Réalisation de devis et propositions commerciales",
-        "Suivi des commandes et gestion des réclamations",
-        "Animation des réseaux sociaux professionnels (LinkedIn, etc.)",
-        "Veille concurrentielle et analyse du marché",
-        "Reporting et analyse des performances commerciales"
-    ],
-    mco: [
-        "Gestion opérationnelle d'une unité commerciale",
-        "Management et animation d'équipe de vente",
-        "Merchandising et mise en valeur des produits",
-        "Gestion des stocks et approvisionnements",
-        "Animation commerciale et promotions",
-        "Accueil, conseil et vente aux clients",
-        "Gestion de la relation client et fidélisation",
-        "Suivi des indicateurs de performance (CA, panier moyen, etc.)",
-        "Participation à la gestion administrative et financière",
-        "Veille commerciale et analyse de la concurrence"
-    ],
-    ntc: [
-        "Prospection commerciale terrain et téléphonique",
-        "Analyse des besoins techniques des clients",
-        "Élaboration de solutions techniques adaptées",
-        "Négociation de contrats commerciaux",
-        "Présentation et démonstration de produits techniques",
-        "Rédaction de propositions commerciales et devis",
-        "Suivi technique des projets clients",
-        "Fidélisation et développement du portefeuille clients",
-        "Veille technologique et concurrentielle",
-        "Reporting d'activité commerciale"
-    ],
-    rdc: [
-        "Élaboration et mise en œuvre de la stratégie commerciale",
-        "Management d'une équipe commerciale",
-        "Développement de nouveaux marchés et partenariats",
-        "Négociation de contrats à fort enjeu",
-        "Analyse des performances et pilotage des KPIs",
-        "Gestion de projets commerciaux transverses",
-        "Animation de la relation grands comptes",
-        "Élaboration de plans d'actions commerciales",
-        "Coordination avec les services marketing et communication",
-        "Veille stratégique et intelligence économique"
-    ]
-};
-
 const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, studentRecordId: string | null }) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -178,12 +128,7 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
             telephone: "",
             email: ""
         },
-        representant_legal: {
-            nom_prenom: "",
-            fonction: "",
-            telephone: "",
-            email: ""
-        },
+
         maitre_apprentissage: {
             nom: "",
             prenom: "",
@@ -207,8 +152,7 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
             jours_cours: ""
         },
         cfa: {
-            rush_school: "oui",
-            entreprise: "non",
+            isRushSchool: true,
             denomination: "RUSH SCHOOL",
             diplome_vise: "",
             intitule_formation: "",
@@ -231,7 +175,9 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
             machines_dangereuses: "non",
             duree_hebdo: "35h",
             poste: "",
-            lieu: ""
+            lieu: "",
+            nombre_mois: 12,
+            caisse_retraite: ""
         },
         salaire: {
             age: "",
@@ -262,6 +208,16 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
 
     const handleFormationChange = (val: string) => {
         const details = FORMATION_DETAILS[val] || { debut: "", fin: "", rncp: "", diplome: "", heures: "", jours: "" };
+
+        // Calcul automatique du nombre de mois
+        let nbMois = 12;
+        if (details.debut && details.fin) {
+            const d1 = new Date(details.debut);
+            const d2 = new Date(details.fin);
+            nbMois = (d2.getFullYear() - d1.getFullYear()) * 12 + (d2.getMonth() - d1.getMonth());
+            if (nbMois < 1) nbMois = 1;
+        }
+
         setFormData(prev => ({
             ...prev,
             formation: {
@@ -273,6 +229,10 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
                 code_diplome: details.diplome,
                 nb_heures: details.heures,
                 jours_cours: details.jours
+            },
+            contrat: {
+                ...prev.contrat,
+                nombre_mois: nbMois
             }
         }));
     };
@@ -332,6 +292,30 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
         }));
     };
 
+    // Calcul automatique du nombre de mois en fonction des dates de contrat
+    useEffect(() => {
+        const { date_formation_employeur, date_fin_apprentissage } = formData.contrat;
+        if (date_formation_employeur && date_fin_apprentissage) {
+            const start = new Date(date_formation_employeur);
+            const end = new Date(date_fin_apprentissage);
+
+            if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
+                let months = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
+
+                // Si on a commencé après le jour de fin dans le mois, on compte un mois de moins, 
+                // sauf si c'est le seul mois.
+                if (end.getDate() < start.getDate()) {
+                    months--;
+                }
+
+                const finalMonths = Math.max(1, months);
+
+                if (formData.contrat.nombre_mois !== finalMonths) {
+                    handleNestedChange('contrat', 'nombre_mois', finalMonths);
+                }
+            }
+        }
+    }, [formData.contrat.date_formation_employeur, formData.contrat.date_fin_apprentissage]);
 
     const handleSubmit = async () => {
         if (!formData.identification.raison_sociale || !formData.identification.siret) {
@@ -347,10 +331,142 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
         setIsSubmitting(true);
 
         try {
-            await api.submitCompany({
-                ...formData,
+            // Helpers for mapping codes to labels as per user JSON example
+            const mapTypeEmployeur = (val: string) => {
+                const map: Record<string, string> = {
+                    "11": "Entreprise répertoire des métiers",
+                    "12": "Entreprise registre du commerce",
+                    "13": "Entreprises secteur agricole (MSA)",
+                    "14": "Profession libérale",
+                    "15": "Association",
+                    "16": "Autre employeur privé",
+                    "21": "Service de l'Etat",
+                    "22": "Commune"
+                };
+                return map[val] || val;
+            };
+
+            const mapTypeContrat = (val: string) => {
+                const map: Record<string, string> = {
+                    "11": "Premier contrat d'apprentissage",
+                    "21": "Nouveau contrat (même employeur)",
+                    "22": "Nouveau contrat (autre employeur)",
+                    "23": "Nouveau contrat (précédent rompu)",
+                    "31": "Modification situation juridique employeur",
+                    "32": "Changement employeur (contrat saisonnier)",
+                    "33": "Prolongation (échec examen)",
+                    "34": "Prolongation (travailleur handicapé)",
+                    "35": "Diplôme supplémentaire préparé",
+                    "36": "Autres changements",
+                    "37": "Modification du lieu d'exécution",
+                    "38": "Modification du lieu de formation"
+                };
+                return map[val] || "Contrat d'apprentissage";
+            };
+
+            const mapNiveauDiplome = (val: string) => {
+                if (!val) return "";
+                return val.split(',')[0].trim();
+            };
+
+            const payload = {
+                identification: {
+                    raison_sociale: formData.identification.raison_sociale || null,
+                    nom_entreprise: formData.identification.raison_sociale || null,
+                    siret: formData.identification.siret || null,
+                    code_ape_naf: formData.identification.code_ape || null,
+                    type_employeur: mapTypeEmployeur(formData.identification.type_employeur) || null,
+                    employeur_specifique: null,
+                    nombre_salaries: parseInt(formData.identification.effectif.toString()) || 0,
+                    code_idcc: null,
+                    convention_collective: formData.identification.convention || null
+                },
+                adresse: {
+                    numero: formData.adresse.num || null,
+                    voie: "Voie",
+                    nom_rue: formData.adresse.voie || null,
+                    complement: formData.adresse.complement || null,
+                    code_postal: formData.adresse.code_postal || null,
+                    ville: formData.adresse.ville || null,
+                    telephone: formData.adresse.telephone || null,
+                    email: formData.adresse.email || null
+                },
+                representant_legal: null, // Section removed from UI
+                maitre_apprentissage: {
+                    nom: formData.maitre_apprentissage.nom || null,
+                    prenom: formData.maitre_apprentissage.prenom || null,
+                    date_naissance: formData.maitre_apprentissage.date_naissance || null,
+                    numero_securite_sociale: null,
+                    fonction: formData.maitre_apprentissage.fonction || null,
+                    diplome_plus_eleve: formData.maitre_apprentissage.diplome || null,
+                    niveau_diplome: mapNiveauDiplome(formData.maitre_apprentissage.diplome) || null,
+                    annees_experience: parseInt(formData.maitre_apprentissage.experience.toString()) || 0,
+                    telephone: formData.maitre_apprentissage.telephone || null,
+                    email: formData.maitre_apprentissage.email || null,
+                    deja_maitre_apprentissage: null
+                },
+                opco: {
+                    nom_opco: formData.opco.nom || null,
+                    adresse: null,
+                    code_postal: null,
+                    ville: null
+                },
+                facturation: null, // Not in form
+                contact_rh: formData.contact_rh.nom_prenom_rh ? {
+                    nom_prenom_rh: formData.contact_rh.nom_prenom_rh,
+                    fonction_rh: null,
+                    telephone_rh: null,
+                    email_rh: formData.contact_rh.email_rh || null
+                } : null,
+                contrat: {
+                    nature_contrat: "Contrat",
+                    type_contrat: mapTypeContrat(formData.contrat.type),
+                    type_derogation: formData.contrat.derogation || "Aucune dérogation",
+                    date_debut: formData.contrat.date_formation_employeur || null,
+                    date_fin: formData.contrat.date_fin_apprentissage || null,
+                    nombre_mois: formData.contrat.nombre_mois || 0,
+                    duree_hebdomadaire: formData.contrat.duree_hebdo || null,
+                    poste_occupe: formData.contrat.poste || null,
+                    lieu_execution: formData.contrat.lieu || null,
+                    base_calcul_salaire: "SMIC",
+                    montant_salaire_brut: formData.salaire.montant || 0,
+                    date_conclusion: formData.contrat.date_conclusion || null,
+                    date_debut_execution: formData.contrat.date_debut_execution || null,
+                    numero_deca_ancien_contrat: formData.contrat.numero_deca_ancien || null,
+                    travail_machine_dangereuse: formData.contrat.machines_dangereuses === 'oui' ? "Oui" : "Non",
+                    caisse_retraite: formData.contrat.caisse_retraite || null,
+                    date_avenant: formData.contrat.date_avenant || null
+                },
+                contact_taxe: formData.contact_taxe.email_contact ? {
+                    fonction_contact: formData.contact_taxe.fonction_contact || null,
+                    telephone_contact: null,
+                    email_contact: formData.contact_taxe.email_contact
+                } : null,
+                formation_missions: {
+                    formation_alternant: formData.formation.choisie || null,
+                    mission_suggere: formData.missions.selectionnees.join(", ") || null,
+                    formation_choisie: formData.formation.choisie || null,
+                    date_debut_formation: formData.formation.date_debut || null,
+                    date_fin_formation: formData.formation.date_fin || null,
+                    code_rncp: formData.formation.code_rncp || null,
+                    code_diplome: formData.formation.code_diplome || null,
+                    nombre_heures_formation: parseFloat(formData.formation.nb_heures.toString()) || 0,
+                    jours_de_cours: parseFloat(formData.formation.jours_cours.toString()) || 0,
+                    cfaEnterprise: formData.cfa.isRushSchool,
+                    DenominationCFA: formData.cfa.denomination || null,
+                    diplomeVise: formData.cfa.diplome_vise || null,
+                    intituleDiplome: formData.cfa.intitule_formation || null,
+                    NumeroUAI: formData.cfa.uai || null,
+                    NumeroSiretCFA: formData.cfa.siret || null,
+                    AdresseCFA: formData.cfa.adresse || null,
+                    complementAdresseCFA: formData.cfa.complement || null,
+                    codePostalCFA: formData.cfa.code_postal || null,
+                    communeCFA: formData.cfa.commune || null
+                },
                 record_id_etudiant: studentRecordId
-            });
+            };
+
+            await api.submitCompany(payload as any);
             onNext();
         } catch (error) {
             console.error("Erreur soumission entreprise:", error);
@@ -376,308 +492,139 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
             </div>
 
             <div className="space-y-6">
-                {/* Section 1: Identification */}
-                <div className="bg-white/80 p-6 md:p-8 rounded-2xl border border-blue-100 shadow-sm mb-6 transition-all hover:shadow-md">
-                    <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
-                        <div className="w-8 h-8 bg-blue-100 text-blue-700 rounded-lg flex items-center justify-center font-bold text-sm shadow-sm ring-1 ring-blue-500/10">1</div>
-                        <h3 className="text-lg font-bold text-slate-800">Identification de l'entreprise</h3>
-                    </div>
-
+                <Card step={1} title="Identification de l'entreprise">
                     <div className="grid grid-cols-12 gap-5">
                         <div className="col-span-12">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Raison sociale <span className="text-red-500">*</span></label>
-                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="text"
-                                value={formData.identification.raison_sociale}
-                                onChange={(e) => handleNestedChange('identification', 'raison_sociale', e.target.value)}
-                                placeholder="Nom de l'entreprise"
-                            />
+                            <Input label="Raison sociale" required placeholder="Nom de l'entreprise" value={formData.identification.raison_sociale} onChange={(e) => handleNestedChange('identification', 'raison_sociale', e.target.value)} />
                         </div>
                         <div className="col-span-12 md:col-span-6">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Numéro SIRET <span className="text-red-500">*</span></label>
-                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="text"
-                                value={formData.identification.siret}
-                                onChange={(e) => handleNestedChange('identification', 'siret', e.target.value)}
-                                placeholder="14 chiffres"
-                            />
+                            <Input label="Numéro SIRET" required placeholder="14 chiffres" value={formData.identification.siret} onChange={(e) => handleNestedChange('identification', 'siret', e.target.value)} />
                         </div>
                         <div className="col-span-12 md:col-span-6">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Code APE/NAF <span className="text-red-500">*</span></label>
-                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="text"
-                                value={formData.identification.code_ape}
-                                onChange={(e) => handleNestedChange('identification', 'code_ape', e.target.value)}
-                                placeholder="Ex: 4711D"
-                            />
+                            <Input label="Code APE/NAF" required placeholder="Ex: 4711D" value={formData.identification.code_ape} onChange={(e) => handleNestedChange('identification', 'code_ape', e.target.value)} />
                         </div>
                         <div className="col-span-12">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Type d'employeur <span className="text-red-500">*</span></label>
-                            <select className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 transition-all focus:ring-4 focus:outline-none cursor-pointer border-slate-200 focus:border-blue-500 focus:ring-blue-500/10"
+                            <Select
+                                label="Type d'employeur"
+                                required
                                 value={formData.identification.type_employeur}
                                 onChange={(e) => handleNestedChange('identification', 'type_employeur', e.target.value)}
-                            >
-                                <option value="">Sélectionnez</option>
-                                <optgroup label="Type d'employeur Privé">
-                                    <option value="11">11 - Entreprise inscrite au répertoire des métiers ou au registre des entreprises pour l'Alsace-Moselle</option>
-                                    <option value="12">12 - Entreprise inscrite uniquement au registre du commerce et des sociétés</option>
-                                    <option value="13">13 - Entreprises dont les salariés relèvent de la mutualité sociale agricole</option>
-                                    <option value="14">14 - Profession libérale</option>
-                                    <option value="15">15 - Association</option>
-                                    <option value="16">16 - Autre employeur privé</option>
-                                </optgroup>
-                                <optgroup label="Type d'employeur Public">
-                                    <option value="21">21 - Service de l'Etat (administrations centrales et leurs services déconcentrés de la fonction publique d'Etat)</option>
-                                    <option value="22">22 - Commune</option>
-                                    <option value="23">23 - Département</option>
-                                    <option value="24">24 - Région</option>
-                                    <option value="25">25 - Etablissement public hospitalier</option>
-                                    <option value="26">26 - Etablissement public local d'enseignement</option>
-                                    <option value="27">27 - Etablissement public administratif de l'Etat</option>
-                                    <option value="28">28 - Etablissement public administratif local (y compris établissement public de coopération intercommunale EPCI)</option>
-                                    <option value="29">29 - Autre employeur public</option>
-                                    <option value="30">30 - Etablissement public industriel et commercial</option>
-                                </optgroup>
-                            </select>
-                        </div>
-                        <div className="col-span-12 md:col-span-6">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Effectif salarié <span className="text-red-500">*</span></label>
-                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="number"
-                                value={formData.identification.effectif}
-                                onChange={(e) => handleNestedChange('identification', 'effectif', e.target.value)}
-                                placeholder="Nombre de salariés"
+                                placeholder="Sélectionnez"
+                                options={[
+                                    { value: "11", label: "11 - Entreprise répertoire des métiers" },
+                                    { value: "12", label: "12 - Entreprise registre du commerce" },
+                                    { value: "13", label: "13 - Entreprises secteur agricole (MSA)" },
+                                    { value: "14", label: "14 - Profession libérale" },
+                                    { value: "15", label: "15 - Association" },
+                                    { value: "16", label: "16 - Autre employeur privé" },
+                                    { value: "21", label: "21 - Service de l'Etat" },
+                                    { value: "22", label: "22 - Commune" }
+                                ]}
                             />
                         </div>
                         <div className="col-span-12 md:col-span-6">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Convention collective</label>
-                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="text"
-                                value={formData.identification.convention}
-                                onChange={(e) => handleNestedChange('identification', 'convention', e.target.value)}
-                                placeholder="Intitulé ou code IDCC"
-                            />
+                            <Input label="Effectif salarié" required type="number" placeholder="Nombre de salariés" value={formData.identification.effectif} onChange={(e) => handleNestedChange('identification', 'effectif', e.target.value)} />
+                        </div>
+                        <div className="col-span-12 md:col-span-6">
+                            <Input label="Convention collective" placeholder="Intitulé ou code IDCC" value={formData.identification.convention} onChange={(e) => handleNestedChange('identification', 'convention', e.target.value)} />
                         </div>
                     </div>
-                </div>
+                </Card>
 
-                {/* Section 2: Adresse */}
-                <div className="bg-white/80 p-6 md:p-8 rounded-2xl border border-blue-100 shadow-sm mb-6 transition-all hover:shadow-md">
-                    <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
-                        <div className="w-8 h-8 bg-blue-100 text-blue-700 rounded-lg flex items-center justify-center font-bold text-sm shadow-sm ring-1 ring-blue-500/10">2</div>
-                        <h3 className="text-lg font-bold text-slate-800">Adresse de l'entreprise</h3>
-                    </div>
-
+                <Card step={2} title="Adresse de l'entreprise">
                     <div className="grid grid-cols-12 gap-5">
                         <div className="col-span-12 md:col-span-3">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Numéro</label>
-                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="text"
-                                value={formData.adresse.num}
-                                onChange={(e) => handleNestedChange('adresse', 'num', e.target.value)}
-                                placeholder="N°"
-                            />
+                            <Input label="Numéro" placeholder="N°" value={formData.adresse.num} onChange={(e) => handleNestedChange('adresse', 'num', e.target.value)} />
                         </div>
                         <div className="col-span-12 md:col-span-9">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Voie <span className="text-red-500">*</span></label>
-                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="text"
-                                value={formData.adresse.voie}
-                                onChange={(e) => handleNestedChange('adresse', 'voie', e.target.value)}
-                                placeholder="Rue, avenue, boulevard..."
-                            />
+                            <Input label="Voie" required placeholder="Rue, avenue, boulevard..." value={formData.adresse.voie} onChange={(e) => handleNestedChange('adresse', 'voie', e.target.value)} />
                         </div>
                         <div className="col-span-12">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Complément d'adresse</label>
-                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="text"
-                                value={formData.adresse.complement}
-                                onChange={(e) => handleNestedChange('adresse', 'complement', e.target.value)}
-                                placeholder="Bâtiment, étage, etc."
-                            />
+                            <Input label="Complément d'adresse" placeholder="Bâtiment, étage, etc." value={formData.adresse.complement} onChange={(e) => handleNestedChange('adresse', 'complement', e.target.value)} />
                         </div>
                         <div className="col-span-12 md:col-span-4">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Code postal <span className="text-red-500">*</span></label>
-                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="text"
-                                value={formData.adresse.code_postal}
-                                onChange={(e) => handleNestedChange('adresse', 'code_postal', e.target.value)}
-                                placeholder="Ex: 75001"
-                            />
+                            <Input label="Code postal" required placeholder="Ex: 75001" value={formData.adresse.code_postal} onChange={(e) => handleNestedChange('adresse', 'code_postal', e.target.value)} />
                         </div>
                         <div className="col-span-12 md:col-span-8">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Ville <span className="text-red-500">*</span></label>
-                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="text"
-                                value={formData.adresse.ville}
-                                onChange={(e) => handleNestedChange('adresse', 'ville', e.target.value)}
-                                placeholder="Ville"
-                            />
+                            <Input label="Ville" required placeholder="Ville" value={formData.adresse.ville} onChange={(e) => handleNestedChange('adresse', 'ville', e.target.value)} />
                         </div>
                         <div className="col-span-12 md:col-span-6">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Téléphone <span className="text-red-500">*</span></label>
-                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="tel"
-                                value={formData.adresse.telephone}
-                                onChange={(e) => handleNestedChange('adresse', 'telephone', e.target.value)}
-                                placeholder="Téléphone de l'entreprise"
-                            />
+                            <Input label="Téléphone" required type="tel" placeholder="Téléphone entreprise" value={formData.adresse.telephone} onChange={(e) => handleNestedChange('adresse', 'telephone', e.target.value)} />
                         </div>
                         <div className="col-span-12 md:col-span-6">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Email <span className="text-red-500">*</span></label>
-                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="email"
-                                value={formData.adresse.email}
-                                onChange={(e) => handleNestedChange('adresse', 'email', e.target.value)}
-                                placeholder="Email de contact"
-                            />
+                            <Input label="Email" required type="email" placeholder="Email de contact" value={formData.adresse.email} onChange={(e) => handleNestedChange('adresse', 'email', e.target.value)} />
                         </div>
                     </div>
-                </div>
+                </Card>
 
-                {/* Section 3: Représentant légal */}
-                <div className="bg-white/80 p-6 md:p-8 rounded-2xl border border-blue-100 shadow-sm mb-6 transition-all hover:shadow-md">
-                    <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
-                        <div className="w-8 h-8 bg-blue-100 text-blue-700 rounded-lg flex items-center justify-center font-bold text-sm shadow-sm ring-1 ring-blue-500/10">3</div>
-                        <h3 className="text-lg font-bold text-slate-800">Représentant légal de l'entreprise</h3>
-                    </div>
 
+
+                <Card step={3} title="Maître d'apprentissage">
                     <div className="grid grid-cols-12 gap-5">
                         <div className="col-span-12 md:col-span-6">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Nom et prénom <span className="text-red-500">*</span></label>
-                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="text"
-                                value={formData.representant_legal.nom_prenom}
-                                onChange={(e) => handleNestedChange('representant_legal', 'nom_prenom', e.target.value)}
-                                placeholder="Nom et prénom du représentant"
-                            />
+                            <Input label="Nom" required placeholder="Nom" value={formData.maitre_apprentissage.nom} onChange={(e) => handleNestedChange('maitre_apprentissage', 'nom', e.target.value)} />
                         </div>
                         <div className="col-span-12 md:col-span-6">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Fonction / Titre <span className="text-red-500">*</span></label>
-                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="text"
-                                value={formData.representant_legal.fonction}
-                                onChange={(e) => handleNestedChange('representant_legal', 'fonction', e.target.value)}
-                                placeholder="Ex: Gérant, Directeur..."
-                            />
+                            <Input label="Prénom" required placeholder="Prénom" value={formData.maitre_apprentissage.prenom} onChange={(e) => handleNestedChange('maitre_apprentissage', 'prenom', e.target.value)} />
                         </div>
                         <div className="col-span-12 md:col-span-6">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Téléphone direct</label>
-                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="tel"
-                                value={formData.representant_legal.telephone}
-                                onChange={(e) => handleNestedChange('representant_legal', 'telephone', e.target.value)}
-                                placeholder="Téléphone"
-                            />
+                            <Input label="Date de naissance" required type="date" value={formData.maitre_apprentissage.date_naissance} onChange={(e) => handleNestedChange('maitre_apprentissage', 'date_naissance', e.target.value)} />
                         </div>
                         <div className="col-span-12 md:col-span-6">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Email</label>
-                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="email"
-                                value={formData.representant_legal.email}
-                                onChange={(e) => handleNestedChange('representant_legal', 'email', e.target.value)}
-                                placeholder="Email"
-                            />
-                        </div>
-                    </div>
-                </div>
-
-                {/* Section 4: Maître d'apprentissage */}
-                <div className="bg-white/80 p-6 md:p-8 rounded-2xl border border-blue-100 shadow-sm mb-6 transition-all hover:shadow-md">
-                    <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
-                        <div className="w-8 h-8 bg-blue-100 text-blue-700 rounded-lg flex items-center justify-center font-bold text-sm shadow-sm ring-1 ring-blue-500/10">4</div>
-                        <h3 className="text-lg font-bold text-slate-800">Maître d'apprentissage</h3>
-                    </div>
-
-                    <div className="grid grid-cols-12 gap-5">
-                        <div className="col-span-12 md:col-span-6">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Nom <span className="text-red-500">*</span></label>
-                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="text"
-                                value={formData.maitre_apprentissage.nom}
-                                onChange={(e) => handleNestedChange('maitre_apprentissage', 'nom', e.target.value)}
-                                placeholder="Nom"
-                            />
+                            <Input label="Fonction" required placeholder="Poste occupé" value={formData.maitre_apprentissage.fonction} onChange={(e) => handleNestedChange('maitre_apprentissage', 'fonction', e.target.value)} />
                         </div>
                         <div className="col-span-12 md:col-span-6">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Prénom <span className="text-red-500">*</span></label>
-                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="text"
-                                value={formData.maitre_apprentissage.prenom}
-                                onChange={(e) => handleNestedChange('maitre_apprentissage', 'prenom', e.target.value)}
-                                placeholder="Prénom"
-                            />
-                        </div>
-                        <div className="col-span-12 md:col-span-6">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Date de naissance <span className="text-red-500">*</span></label>
-                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="date"
-                                value={formData.maitre_apprentissage.date_naissance}
-                                onChange={(e) => handleNestedChange('maitre_apprentissage', 'date_naissance', e.target.value)}
-                            />
-                        </div>
-                        <div className="col-span-12 md:col-span-6">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Fonction <span className="text-red-500">*</span></label>
-                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="text"
-                                value={formData.maitre_apprentissage.fonction}
-                                onChange={(e) => handleNestedChange('maitre_apprentissage', 'fonction', e.target.value)}
-                                placeholder="Poste occupé"
-                            />
-                        </div>
-                        <div className="col-span-12 md:col-span-6">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Diplôme le plus élevé</label>
-                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="text"
+                            <Select
+                                label="Diplôme le plus élevé"
                                 value={formData.maitre_apprentissage.diplome}
                                 onChange={(e) => handleNestedChange('maitre_apprentissage', 'diplome', e.target.value)}
-                                placeholder="Ex: Master 2"
+                                options={[
+                                    { value: "Aucun diplôme", label: "Aucun diplôme" },
+                                    { value: "CAP, BEP", label: "CAP, BEP" },
+                                    { value: "Baccalauréat", label: "Baccalauréat" },
+                                    { value: "DEUG, BTS, DUT, DEUST", label: "DEUG, BTS, DUT, DEUST" },
+                                    { value: "Licence, Licence professionnelle, BUT, Maîtrise", label: "Licence, Licence professionnelle, BUT, Maîtrise" },
+                                    { value: "Master, Diplôme d'études approfondies, Diplôme d'études spécialisées, Diplôme d'ingénieur", label: "Master, DEA, DESS, Diplôme d'ingénieur" },
+                                    { value: "Doctorat, Habilitation à diriger des recherches", label: "Doctorat, HDR" }
+                                ]}
+                                placeholder="Sélectionnez"
                             />
                         </div>
                         <div className="col-span-12 md:col-span-6">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Années d'expérience</label>
-                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="number"
-                                value={formData.maitre_apprentissage.experience}
-                                onChange={(e) => handleNestedChange('maitre_apprentissage', 'experience', e.target.value)}
-                                placeholder="Nombre d'années"
-                            />
+                            <Input label="Années d'expérience" type="number" placeholder="Nombre d'années" value={formData.maitre_apprentissage.experience} onChange={(e) => handleNestedChange('maitre_apprentissage', 'experience', e.target.value)} />
                         </div>
                         <div className="col-span-12 md:col-span-6">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Téléphone <span className="text-red-500">*</span></label>
-                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="tel"
-                                value={formData.maitre_apprentissage.telephone}
-                                onChange={(e) => handleNestedChange('maitre_apprentissage', 'telephone', e.target.value)}
-                                placeholder="Téléphone direct"
-                            />
+                            <Input label="Téléphone" required type="tel" placeholder="Téléphone direct" value={formData.maitre_apprentissage.telephone} onChange={(e) => handleNestedChange('maitre_apprentissage', 'telephone', e.target.value)} />
                         </div>
                         <div className="col-span-12 md:col-span-6">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Email <span className="text-red-500">*</span></label>
-                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="email"
-                                value={formData.maitre_apprentissage.email}
-                                onChange={(e) => handleNestedChange('maitre_apprentissage', 'email', e.target.value)}
-                                placeholder="Email"
-                            />
+                            <Input label="Email" required type="email" placeholder="Email" value={formData.maitre_apprentissage.email} onChange={(e) => handleNestedChange('maitre_apprentissage', 'email', e.target.value)} />
                         </div>
                     </div>
-                </div>
+                </Card>
 
-                {/* Section 5: OPCO */}
-                <div className="bg-white/80 p-6 md:p-8 rounded-2xl border border-blue-100 shadow-sm mb-6 transition-all hover:shadow-md">
-                    <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
-                        <div className="w-8 h-8 bg-blue-100 text-blue-700 rounded-lg flex items-center justify-center font-bold text-sm shadow-sm ring-1 ring-blue-500/10">5</div>
-                        <h3 className="text-lg font-bold text-slate-800">OPCO (Opérateur de Compétences)</h3>
-                    </div>
-
+                <Card step={4} title="OPCO (Opérateur de Compétences)">
                     <div className="grid grid-cols-12 gap-5">
                         <div className="col-span-12">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Sélectionnez votre OPCO <span className="text-red-500">*</span></label>
-                            <select className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 transition-all focus:ring-4 focus:outline-none cursor-pointer border-slate-200 focus:border-blue-500 focus:ring-blue-500/10"
+                            <Select
+                                label="Sélectionnez votre OPCO"
+                                required
                                 value={formData.opco.nom}
                                 onChange={(e) => handleNestedChange('opco', 'nom', e.target.value)}
-                            >
-                                <option value="">Choisir un OPCO</option>
-                                <option value="AFDAS">AFDAS (Culture, médias, loisirs, sport)</option>
-                                <option value="AKTO">AKTO (Services à forte intensité de main-d'œuvre)</option>
-                                <option value="ATLAS">ATLAS (Services financiers et conseil)</option>
-                                <option value="CONSTRUCTYS">CONSTRUCTYS (Bâtiment, travaux publics)</option>
-                                <option value="OPCO 2I">OPCO 2I (Interindustriel)</option>
-                                <option value="OPCO EP">OPCO EP (Entreprises de proximité)</option>
-                                <option value="OPCO MOBILITES">OPCO MOBILITES (Transports, services de l'automobile)</option>
-                                <option value="OPCO SANTE">OPCO SANTE (Santé, médico-social)</option>
-                                <option value="OPCOMMERCE">OPCOMMERCE (Commerce)</option>
-                                <option value="UNIFORMATION">UNIFORMATION (Cohésion sociale)</option>
-                                <option value="OCAPIAT">OCAPIAT (Agriculture, pêche, agroalimentaire)</option>
-                            </select>
+                                placeholder="Choisir un OPCO"
+                                options={[
+                                    { value: "AFDAS", label: "AFDAS (Culture, médias, loisirs, sport)" },
+                                    { value: "AKTO", label: "AKTO (Services à forte intensité de main-d'œuvre)" },
+                                    { value: "ATLAS", label: "ATLAS (Services financiers et conseil)" },
+                                    { value: "CONSTRUCTYS", label: "CONSTRUCTYS (Bâtiment, travaux publics)" },
+                                    { value: "OPCO EP", label: "OPCO EP (Entreprises de proximité)" },
+                                    { value: "OPCOMMERCE", label: "OPCOMMERCE (Commerce)" }
+                                ]}
+                            />
                         </div>
                     </div>
-                </div>
+                </Card>
 
-                {/* Section 6: Formation & CFA */}
-                <div className="bg-white/80 p-6 md:p-8 rounded-2xl border border-blue-100 shadow-sm mb-6 transition-all hover:shadow-md">
-                    <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
-                        <div className="w-8 h-8 bg-blue-100 text-blue-700 rounded-lg flex items-center justify-center font-bold text-sm shadow-sm ring-1 ring-blue-500/10">6</div>
-                        <h3 className="text-lg font-bold text-slate-800">Formation & CFA</h3>
-                    </div>
-
+                <Card step={5} title="Formation & CFA">
                     <div className="grid grid-cols-12 gap-5">
                         <div className="col-span-12">
                             <label className="block text-sm font-semibold text-slate-700 mb-3">Formation suivie *</label>
@@ -694,89 +641,113 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
                             </div>
                         </div>
                         <div className="col-span-12 md:col-span-6">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Date de début <span className="text-red-500">*</span></label>
-                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="date"
-                                value={formData.formation.date_debut}
-                                onChange={(e) => handleNestedChange('formation', 'date_debut', e.target.value)}
-                            />
+                            <Input label="Date de début" required type="date" value={formData.formation.date_debut} onChange={(e) => handleNestedChange('formation', 'date_debut', e.target.value)} />
                         </div>
                         <div className="col-span-12 md:col-span-6">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Date de fin <span className="text-red-500">*</span></label>
-                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="date"
-                                value={formData.formation.date_fin}
-                                onChange={(e) => handleNestedChange('formation', 'date_fin', e.target.value)}
-                            />
+                            <Input label="Date de fin" required type="date" value={formData.formation.date_fin} onChange={(e) => handleNestedChange('formation', 'date_fin', e.target.value)} />
                         </div>
 
                         <div className="col-span-12 mt-4">
-                            <div className="bg-blue-50/50 p-6 rounded-2xl border border-blue-100">
-                                <div className="flex items-center gap-4 mb-4">
-                                    <div className="w-10 h-10 bg-blue-500 text-white rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
-                                        <Building size={20} />
-                                    </div>
-                                    <div>
-                                        <h4 className="font-bold text-slate-900">CFA d'accueil : Rush School</h4>
-                                        <p className="text-xs text-slate-500 font-medium">Informations pré-remplies</p>
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                                    <div className="bg-white p-3 rounded-xl border border-blue-50">
-                                        <span className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Dénomination</span>
-                                        <span className="font-semibold text-slate-700">RUSH SCHOOL</span>
-                                    </div>
-                                    <div className="bg-white p-3 rounded-xl border border-blue-50">
-                                        <span className="block text-[10px] font-bold text-slate-400 uppercase mb-1">N° SIRET</span>
-                                        <span className="font-semibold text-slate-700">919 233 135 00014</span>
-                                    </div>
-                                    <div className="bg-white p-3 rounded-xl border border-blue-50">
-                                        <span className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Code UAI</span>
-                                        <span className="font-semibold text-slate-700">0756342X</span>
-                                    </div>
-                                    <div className="bg-white p-3 rounded-xl border border-blue-50">
-                                        <span className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Adresse</span>
-                                        <span className="font-semibold text-slate-700">15 passage de la Main d'Or, 75011 Paris</span>
-                                    </div>
-                                </div>
+                            <div className="flex items-center gap-6 mb-4">
+                                <label className="flex items-center gap-3 cursor-pointer">
+                                    <input
+                                        type="radio"
+                                        name="cfa_choice"
+                                        checked={formData.cfa.isRushSchool}
+                                        onChange={() => handleNestedChange('cfa', 'isRushSchool', true)}
+                                        className="w-5 h-5 accent-blue-600"
+                                    />
+                                    <span className="font-semibold text-slate-700">CFA Rush School</span>
+                                </label>
+                                <label className="flex items-center gap-3 cursor-pointer">
+                                    <input
+                                        type="radio"
+                                        name="cfa_choice"
+                                        checked={!formData.cfa.isRushSchool}
+                                        onChange={() => handleNestedChange('cfa', 'isRushSchool', false)}
+                                        className="w-5 h-5 accent-blue-600"
+                                    />
+                                    <span className="font-semibold text-slate-700">Autre CFA</span>
+                                </label>
                             </div>
+
+                            {formData.cfa.isRushSchool ? (
+                                <div className="bg-blue-50/50 p-6 rounded-2xl border border-blue-100 animate-fade-in">
+                                    <div className="flex items-center gap-4 mb-4">
+                                        <div className="w-10 h-10 bg-blue-500 text-white rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
+                                            <Building size={20} />
+                                        </div>
+                                        <div>
+                                            <h4 className="font-bold text-slate-900">CFA d'accueil : Rush School</h4>
+                                            <p className="text-xs text-slate-500 font-medium">Informations pré-remplies</p>
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                        <div className="bg-white p-3 rounded-xl border border-blue-50">
+                                            <span className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Dénomination</span>
+                                            <span className="font-semibold text-slate-700">RUSH SCHOOL</span>
+                                        </div>
+                                        <div className="bg-white p-3 rounded-xl border border-blue-50">
+                                            <span className="block text-[10px] font-bold text-slate-400 uppercase mb-1">N° SIRET</span>
+                                            <span className="font-semibold text-slate-700">919 233 135 00014</span>
+                                        </div>
+                                        <div className="bg-white p-3 rounded-xl border border-blue-50">
+                                            <span className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Code UAI</span>
+                                            <span className="font-semibold text-slate-700">0756342X</span>
+                                        </div>
+                                        <div className="bg-white p-3 rounded-xl border border-blue-50">
+                                            <span className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Adresse</span>
+                                            <span className="font-semibold text-slate-700">15 passage de la Main d'Or, 75011 Paris</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-12 gap-4 animate-fade-in bg-slate-50 p-6 rounded-2xl border border-slate-200">
+                                    <div className="col-span-12 md:col-span-6">
+                                        <Input label="Dénomination du CFA" required value={formData.cfa.denomination} onChange={(e) => handleNestedChange('cfa', 'denomination', e.target.value)} />
+                                    </div>
+                                    <div className="col-span-12 md:col-span-6">
+                                        <Input label="N° SIRET" required value={formData.cfa.siret} onChange={(e) => handleNestedChange('cfa', 'siret', e.target.value)} />
+                                    </div>
+                                    <div className="col-span-12 md:col-span-6">
+                                        <Input label="Code UAI" required value={formData.cfa.uai} onChange={(e) => handleNestedChange('cfa', 'uai', e.target.value)} />
+                                    </div>
+                                    <div className="col-span-12">
+                                        <Input label="Adresse complète" required value={formData.cfa.adresse} onChange={(e) => handleNestedChange('cfa', 'adresse', e.target.value)} />
+                                    </div>
+                                    <div className="col-span-12 md:col-span-4">
+                                        <Input label="Code Postal" required value={formData.cfa.code_postal} onChange={(e) => handleNestedChange('cfa', 'code_postal', e.target.value)} />
+                                    </div>
+                                    <div className="col-span-12 md:col-span-8">
+                                        <Input label="Commune" required value={formData.cfa.commune} onChange={(e) => handleNestedChange('cfa', 'commune', e.target.value)} />
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
-                </div>
+                </Card>
 
-                {/* Section 7: Contrat & Salaire */}
-                <div className="bg-white/80 p-6 md:p-8 rounded-2xl border border-blue-100 shadow-sm mb-6 transition-all hover:shadow-md">
-                    <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
-                        <div className="w-8 h-8 bg-blue-100 text-blue-700 rounded-lg flex items-center justify-center font-bold text-sm shadow-sm ring-1 ring-blue-500/10">7</div>
-                        <h3 className="text-lg font-bold text-slate-800">Contrat & Salaire</h3>
-                    </div>
-
+                <Card step={6} title="Contrat & Salaire">
                     <div className="grid grid-cols-12 gap-5">
                         <div className="col-span-12 md:col-span-6">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Type de contrat <span className="text-red-500">*</span></label>
-                            <select className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 transition-all focus:ring-4 focus:outline-none cursor-pointer border-slate-200 focus:border-blue-500 focus:ring-blue-500/10"
+                            <Select
+                                label="Type de contrat"
+                                required
                                 value={formData.contrat.type}
                                 onChange={(e) => handleNestedChange('contrat', 'type', e.target.value)}
-                            >
-                                <option value="11">11 - Contrat initial</option>
-                                <option value="21">21 - Avenant : modification de situation</option>
-                                <option value="22">22 - Avenant : changement de maître d'apprentissage</option>
-                                <option value="23">23 - Avenant : prolongation</option>
-                            </select>
+                                options={[
+                                    { value: "11", label: "11 - Contrat initial" },
+                                    { value: "21", label: "21 - Avenant : modification" },
+                                    { value: "22", label: "22 - Avenant : changement maître" },
+                                    { value: "23", label: "23 - Avenant : prolongation" }
+                                ]}
+                            />
                         </div>
                         <div className="col-span-12 md:col-span-6">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Durée hebdomadaire <span className="text-red-500">*</span></label>
-                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="text"
-                                value={formData.contrat.duree_hebdo}
-                                onChange={(e) => handleNestedChange('contrat', 'duree_hebdo', e.target.value)}
-                                placeholder="Ex: 35h"
-                            />
+                            <Input label="Durée hebdomadaire" required placeholder="Ex: 35h" value={formData.contrat.duree_hebdo} onChange={(e) => handleNestedChange('contrat', 'duree_hebdo', e.target.value)} />
                         </div>
                         <div className="col-span-12">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Poste occupé <span className="text-red-500">*</span></label>
-                            <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="text"
-                                value={formData.contrat.poste}
-                                onChange={(e) => handleNestedChange('contrat', 'poste', e.target.value)}
-                                placeholder="Intitulé exact du poste"
-                            />
+                            <Input label="Poste occupé" required placeholder="Intitulé exact du poste" value={formData.contrat.poste} onChange={(e) => handleNestedChange('contrat', 'poste', e.target.value)} />
                         </div>
 
                         {/* Simulateur de salaire */}
@@ -829,15 +800,160 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
                             </div>
                         </div>
                     </div>
-                </div>
+                </Card>
 
-                {/* Section 8: Missions en entreprise */}
-                <div className="bg-white/80 p-6 md:p-8 rounded-2xl border border-blue-100 shadow-sm mb-6 transition-all hover:shadow-md">
-                    <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
-                        <div className="w-8 h-8 bg-blue-100 text-blue-700 rounded-lg flex items-center justify-center font-bold text-sm shadow-sm ring-1 ring-blue-500/10">8</div>
-                        <h3 className="text-lg font-bold text-slate-800">Missions en entreprise</h3>
+                <Card step={7} title="Informations sur le contrat">
+                    <div className="grid grid-cols-12 gap-5">
+                        <div className="col-span-12">
+                            <Select
+                                label="Type de contrat ou d'avenant"
+                                required
+                                value={formData.contrat.type}
+                                onChange={(e) => handleNestedChange('contrat', 'type', e.target.value)}
+                                placeholder="Sélectionnez"
+                                options={[
+                                    { value: "11", label: "11 - Premier contrat d'apprentissage de l'apprenti" },
+                                    { value: "21", label: "21 - Nouveau contrat (même employeur)" },
+                                    { value: "22", label: "22 - Nouveau contrat (autre employeur)" },
+                                    { value: "23", label: "23 - Nouveau contrat (précédent rompu)" },
+                                    { value: "31", label: "31 - Modification situation juridique employeur" },
+                                    { value: "32", label: "32 - Changement employeur (contrat saisonnier)" },
+                                    { value: "33", label: "33 - Prolongation (échec examen)" },
+                                    { value: "34", label: "34 - Prolongation (travailleur handicapé)" },
+                                    { value: "35", label: "35 - Diplôme supplémentaire préparé" },
+                                    { value: "36", label: "36 - Autres changements (maître, durée, etc.)" },
+                                    { value: "37", label: "37 - Modification du lieu d'exécution" },
+                                    { value: "38", label: "38 - Modification du lieu de formation" }
+                                ]}
+                            />
+                        </div>
+                        <div className="col-span-12">
+                            <Select
+                                label="Type de dérogation"
+                                value={formData.contrat.derogation}
+                                onChange={(e) => handleNestedChange('contrat', 'derogation', e.target.value)}
+                                placeholder="Aucune dérogation"
+                                options={[
+                                    { value: "11", label: "11 - Âge de l'apprenti inférieur à 16 ans" },
+                                    { value: "12", label: "12 - Âge supérieur à 29 ans" },
+                                    { value: "21", label: "21 - Réduction de la durée" },
+                                    { value: "22", label: "22 - Allongement de la durée" },
+                                    { value: "50", label: "50 - Cumul de dérogations" },
+                                    { value: "60", label: "60 - Autre dérogation" }
+                                ]}
+                            />
+                        </div>
+                        <div className="col-span-12">
+                            <Input
+                                label="Numéro DECA de l'ancien contrat"
+                                placeholder="Ex: 01234567890123"
+                                value={formData.contrat.numero_deca_ancien}
+                                onChange={(e) => handleNestedChange('contrat', 'numero_deca_ancien', e.target.value)}
+                            />
+                            <p className="text-[10px] text-slate-400 mt-1">À renseigner en cas de succession de contrats ou d'avenant</p>
+                        </div>
+                        <div className="col-span-12 md:col-span-6">
+                            <Input label="Date de conclusion" required type="date" value={formData.contrat.date_conclusion} onChange={(e) => handleNestedChange('contrat', 'date_conclusion', e.target.value)} />
+                        </div>
+                        <div className="col-span-12 md:col-span-6">
+                            <Input label="Date de début d'exécution" required type="date" value={formData.contrat.date_debut_execution} onChange={(e) => handleNestedChange('contrat', 'date_debut_execution', e.target.value)} />
+                        </div>
+                        <div className="col-span-12 md:col-span-6">
+                            <Input label="Date début formation pratique" required type="date" value={formData.contrat.date_formation_employeur} onChange={(e) => handleNestedChange('contrat', 'date_formation_employeur', e.target.value)} />
+                        </div>
+                        <div className="col-span-12 md:col-span-6">
+                            <Input label="Fin du contrat" required type="date" value={formData.contrat.date_fin_apprentissage} onChange={(e) => handleNestedChange('contrat', 'date_fin_apprentissage', e.target.value)} />
+                        </div>
+                        <div className="col-span-12">
+                            <Input label="Si c'est un avenant : date" type="date" value={formData.contrat.date_avenant} onChange={(e) => handleNestedChange('contrat', 'date_avenant', e.target.value)} />
+                        </div>
+                        <div className="col-span-12">
+                            <label className="block text-sm font-semibold text-slate-700 mb-3">Travail sur machines dangereuses ou risques particuliers</label>
+                            <div className="flex gap-3">
+                                {['oui', 'non'].map((val) => (
+                                    <label key={val} className="relative cursor-pointer group flex-1">
+                                        <input className="peer sr-only" type="radio" name="machines_dangereuses" value={val} checked={formData.contrat.machines_dangereuses === val} onChange={(e) => handleNestedChange('contrat', 'machines_dangereuses', e.target.value)} />
+                                        <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all ${formData.contrat.machines_dangereuses === val ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500' : 'bg-white border-slate-200 hover:border-blue-300'}`}>
+                                            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${formData.contrat.machines_dangereuses === val ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-400'}`}>{val === 'oui' ? 'A' : 'B'}</span>
+                                            <span className="font-medium text-slate-700 capitalize">{val}</span>
+                                        </div>
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Simulateur de salaire */}
+                        <div className="col-span-12 mt-4 bg-emerald-50/50 p-6 md:p-8 rounded-2xl border-2 border-emerald-200">
+                            <div className="flex items-center gap-4 mb-8">
+                                <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                                    <Calculator size={24} />
+                                </div>
+                                <div>
+                                    <h4 className="text-lg font-bold text-emerald-900">Simulateur de salaire apprenti</h4>
+                                    <p className="text-emerald-700 text-xs font-medium">Calcul basé sur le SMIC 2024 : 1 823,03 €</p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div className="space-y-6">
+                                    <Select
+                                        label="Tranche d'âge"
+                                        required
+                                        value={formData.salaire.age}
+                                        onChange={(e) => handleSalaryCalc(e.target.value, formData.salaire.annee)}
+                                        options={[
+                                            { value: "16-17", label: "De 16 à 17 ans" },
+                                            { value: "18-20", label: "De 18 à 20 ans" },
+                                            { value: "21-25", label: "De 21 à 25 ans" },
+                                            { value: "26+", label: "26 ans et plus" }
+                                        ]}
+                                    />
+                                    <Select
+                                        label="Année d'apprentissage"
+                                        required
+                                        value={formData.salaire.annee}
+                                        onChange={(e) => handleSalaryCalc(formData.salaire.age, e.target.value)}
+                                        options={[
+                                            { value: "1", label: "1ère année" },
+                                            { value: "2", label: "2ème année" },
+                                            { value: "3", label: "3ème année" }
+                                        ]}
+                                    />
+                                </div>
+
+                                <div className="bg-white p-6 rounded-2xl shadow-sm border border-emerald-100 flex flex-col justify-center items-center text-center">
+                                    <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-2">Salaire mensuel brut estimé</span>
+                                    <div className="text-4xl font-bold text-emerald-900 mb-1">
+                                        {formData.salaire.montant.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}
+                                    </div>
+                                    <div className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-[10px] font-bold uppercase tracking-tighter">
+                                        {formData.salaire.pourcentage}% du SMIC
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="col-span-12 mt-4">
+                            <Input
+                                label="Caisse de retraite"
+                                placeholder="Nom de la caisse de retraite complémentaire"
+                                value={formData.contrat.caisse_retraite}
+                                onChange={(e) => handleNestedChange('contrat', 'caisse_retraite', e.target.value)}
+                            />
+                        </div>
+                        <div className="col-span-12 md:col-span-6">
+                            <Input label="Durée hebdomadaire" required placeholder="Ex: 35h" value={formData.contrat.duree_hebdo} onChange={(e) => handleNestedChange('contrat', 'duree_hebdo', e.target.value)} />
+                        </div>
+                        <div className="col-span-12 md:col-span-6">
+                            <Input label="Poste occupé" required placeholder="Intitulé du poste" value={formData.contrat.poste} onChange={(e) => handleNestedChange('contrat', 'poste', e.target.value)} />
+                        </div>
+                        <div className="col-span-12">
+                            <Input label="Lieu d'exécution du contrat" placeholder="Adresse du lieu de travail (si différent du siège)" value={formData.contrat.lieu} onChange={(e) => handleNestedChange('contrat', 'lieu', e.target.value)} />
+                        </div>
                     </div>
+                </Card>
 
+                <Card step={8} title="Missions en entreprise">
                     <div className="space-y-8">
                         <div className="bg-slate-50/50 p-6 md:p-8 rounded-2xl border border-slate-100">
                             <div className="flex items-center justify-between mb-8">
@@ -892,49 +1008,27 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
                             />
                         </div>
                     </div>
-                </div>
+                </Card>
 
-                {/* Section 9: Contacts RH & Administratif */}
-                <div className="bg-white/80 p-6 md:p-8 rounded-2xl border border-blue-100 shadow-sm mb-6 transition-all hover:shadow-md">
-                    <div className="flex items-center gap-3 mb-6 border-b border-slate-100 pb-4">
-                        <div className="w-8 h-8 bg-blue-100 text-blue-700 rounded-lg flex items-center justify-center font-bold text-sm shadow-sm ring-1 ring-blue-500/10">9</div>
-                        <h3 className="text-lg font-bold text-slate-800">Contacts RH & Administratif</h3>
-                    </div>
-
+                <Card step={9} title="Contacts RH & Administratif">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div className="bg-slate-50/50 p-6 md:p-8 rounded-2xl border border-slate-100">
                             <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6 ml-1">Contact RH (Optionnel)</h4>
                             <div className="space-y-4">
-                                <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="text"
-                                    value={formData.contact_rh.nom_prenom_rh}
-                                    onChange={(e) => handleNestedChange('contact_rh', 'nom_prenom_rh', e.target.value)}
-                                    placeholder="Nom & Prénom RH"
-                                />
-                                <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="email"
-                                    value={formData.contact_rh.email_rh}
-                                    onChange={(e) => handleNestedChange('contact_rh', 'email_rh', e.target.value)}
-                                    placeholder="Email RH"
-                                />
+                                <Input placeholder="Nom & Prénom RH" value={formData.contact_rh.nom_prenom_rh} onChange={(e) => handleNestedChange('contact_rh', 'nom_prenom_rh', e.target.value)} />
+                                <Input type="email" placeholder="Email RH" value={formData.contact_rh.email_rh} onChange={(e) => handleNestedChange('contact_rh', 'email_rh', e.target.value)} />
                             </div>
                         </div>
 
                         <div className="bg-slate-50/50 p-6 md:p-8 rounded-2xl border border-slate-100">
                             <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6 ml-1">Contact Taxe / Administratif</h4>
                             <div className="space-y-4">
-                                <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="text"
-                                    value={formData.contact_taxe.fonction_contact}
-                                    onChange={(e) => handleNestedChange('contact_taxe', 'fonction_contact', e.target.value)}
-                                    placeholder="Fonction (ex: Comptable)"
-                                />
-                                <input className="w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none border-slate-200 focus:border-blue-500 focus:ring-blue-500/10" type="email"
-                                    value={formData.contact_taxe.email_contact}
-                                    onChange={(e) => handleNestedChange('contact_taxe', 'email_contact', e.target.value)}
-                                    placeholder="Email administratif"
-                                />
+                                <Input placeholder="Fonction (ex: Comptable)" value={formData.contact_taxe.fonction_contact} onChange={(e) => handleNestedChange('contact_taxe', 'fonction_contact', e.target.value)} />
+                                <Input type="email" placeholder="Email administratif" value={formData.contact_taxe.email_contact} onChange={(e) => handleNestedChange('contact_taxe', 'email_contact', e.target.value)} />
                             </div>
                         </div>
                     </div>
-                </div>
+                </Card>
             </div>
 
             {/* Footer Actions */}
@@ -949,19 +1043,19 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
                 </div>
 
                 <div className="flex items-center gap-4 w-full md:w-auto">
-                    <button onClick={() => alert("Brouillon enregistré")}
-                        className="flex-1 md:flex-none px-8 py-4 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl hover:border-blue-500 hover:text-blue-600 transition-all">
+                    <Button variant="outline" className="flex-1 md:flex-none" onClick={() => alert("Brouillon enregistré")}>
                         Brouillon
-                    </button>
-                    <button onClick={handleSubmit} disabled={isSubmitting || formData.missions.selectionnees.length < 3}
-                        className="flex-[2] md:flex-none flex items-center gap-2.5 px-10 py-4 rounded-xl font-bold text-lg transition-all shadow-lg hover:shadow-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:-translate-y-1 shadow-blue-500/25 disabled:opacity-70 disabled:cursor-not-allowed">
-                        {isSubmitting ? <Loader2 className="animate-spin" /> : (
-                            <>
-                                Valider la fiche
-                                <ArrowRight size={20} />
-                            </>
-                        )}
-                    </button>
+                    </Button>
+                    <Button
+                        size="lg"
+                        isLoading={isSubmitting}
+                        disabled={formData.missions.selectionnees.length < 3}
+                        rightIcon={<ArrowRight size={20} />}
+                        onClick={handleSubmit}
+                        className="flex-[2] md:flex-none"
+                    >
+                        Valider la fiche
+                    </Button>
                 </div>
             </div>
         </div>
@@ -1041,46 +1135,12 @@ const EvaluationGrid = () => {
                 {/* Informations candidat */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4">
-                        <div>
-                            <label className="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1">Nom et Prénom du candidat</label>
-                            <input
-                                type="text"
-                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-emerald-500 outline-none font-medium transition-all"
-                                value={evalData.candidatNom}
-                                onChange={(e) => setEvalData({ ...evalData, candidatNom: e.target.value })}
-                                placeholder="Entrez le nom complet"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1">Heure d'entretien</label>
-                            <input
-                                type="time"
-                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-emerald-500 outline-none font-medium transition-all"
-                                value={evalData.heureEntretien}
-                                onChange={(e) => setEvalData({ ...evalData, heureEntretien: e.target.value })}
-                            />
-                        </div>
+                        <Input label="Nom et Prénom du candidat" placeholder="Entrez le nom complet" value={evalData.candidatNom} onChange={(e) => setEvalData({ ...evalData, candidatNom: e.target.value })} />
+                        <Input label="Heure d'entretien" type="time" value={evalData.heureEntretien} onChange={(e) => setEvalData({ ...evalData, heureEntretien: e.target.value })} />
                     </div>
                     <div className="space-y-4">
-                        <div>
-                            <label className="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1">Nom et Prénom chargé(e) d'admission</label>
-                            <input
-                                type="text"
-                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-emerald-500 outline-none font-medium transition-all"
-                                value={evalData.chargeAdmission}
-                                onChange={(e) => setEvalData({ ...evalData, chargeAdmission: e.target.value })}
-                                placeholder="Votre nom"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1">Date d'entretien</label>
-                            <input
-                                type="date"
-                                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-emerald-500 outline-none font-medium transition-all"
-                                value={evalData.dateEntretien}
-                                onChange={(e) => setEvalData({ ...evalData, dateEntretien: e.target.value })}
-                            />
-                        </div>
+                        <Input label="Nom et Prénom chargé(e) d'admission" placeholder="Votre nom" value={evalData.chargeAdmission} onChange={(e) => setEvalData({ ...evalData, chargeAdmission: e.target.value })} />
+                        <Input label="Date d'entretien" type="date" value={evalData.dateEntretien} onChange={(e) => setEvalData({ ...evalData, dateEntretien: e.target.value })} />
                     </div>
                 </div>
 
@@ -1177,27 +1237,15 @@ const EvaluationGrid = () => {
 
                 {/* Actions */}
                 <div className="flex flex-col md:flex-row gap-4 pt-8 border-t border-slate-100">
-                    <button
-                        onClick={resetEvaluation}
-                        className="flex-1 flex items-center justify-center gap-2 px-6 py-4 bg-slate-100 text-slate-600 font-bold rounded-2xl hover:bg-slate-200 transition-all"
-                    >
-                        <RotateCcw size={18} />
+                    <Button variant="secondary" className="flex-1" onClick={resetEvaluation} leftIcon={<RotateCcw size={18} />}>
                         Réinitialiser
-                    </button>
-                    <button
-                        onClick={saveEvaluation}
-                        className="flex-1 flex items-center justify-center gap-2 px-6 py-4 bg-emerald-500 text-white font-bold rounded-2xl hover:bg-emerald-600 shadow-lg shadow-emerald-500/20 transition-all"
-                    >
-                        <Save size={18} />
+                    </Button>
+                    <Button variant="success" className="flex-1" onClick={saveEvaluation} leftIcon={<Save size={18} />}>
                         Enregistrer
-                    </button>
-                    <button
-                        onClick={exportEvaluationPDF}
-                        className="flex-1 flex items-center justify-center gap-2 px-6 py-4 bg-slate-900 text-white font-bold rounded-2xl hover:bg-slate-800 shadow-lg shadow-slate-900/20 transition-all"
-                    >
-                        <Printer size={18} />
+                    </Button>
+                    <Button variant="primary" className="flex-1 !bg-slate-900" onClick={exportEvaluationPDF} leftIcon={<Printer size={18} />}>
                         Exporter PDF
-                    </button>
+                    </Button>
                 </div>
             </div>
         </div>
@@ -1257,10 +1305,6 @@ const AdmissionView = () => {
     const handleDocAction = async (doc: any) => {
         // Cas spécifique pour la Fiche de renseignements
         if (doc.id === 'renseignements') {
-            // Vérifier que le dossier étudiant et entreprise est rempli
-            // (Pour la démo, on vérifie surtout qu'on a l'ID étudiant, 
-            // l'entreprise est techniquement requise par la logique métier backend)
-
             if (!studentData && !localStorage.getItem('candidateRecordId')) {
                 alert("Veuillez d'abord compléter la Fiche Étudiant.");
                 return;
@@ -1272,18 +1316,12 @@ const AdmissionView = () => {
                 return;
             }
 
-            // Optionnel : Vérifier si l'entreprise est complétée
-            // if (!entrepriseCompleted) { ... }
-
             try {
-                // Feedback visuel temporaire
                 const btn = document.getElementById(`btn-${doc.id}`);
                 const originalText = btn ? btn.innerText : "";
                 if (btn) btn.innerText = "Génération...";
 
                 await api.generateFicheRenseignement(recordId);
-
-                // Succès - Show Modal instead of alert
                 setShowSuccessModal(true);
 
                 if (btn) btn.innerText = originalText;
@@ -1291,25 +1329,20 @@ const AdmissionView = () => {
                 console.error(e);
                 alert("Erreur lors de la génération de la fiche.");
                 const btn = document.getElementById(`btn-${doc.id}`);
-                // Remettre le texte original si possible, sinon "Compléter"
                 if (btn) btn.innerText = "Compléter";
             }
         } else {
-            // Placeholder pour les autres documents
             console.log("Action pour le document:", doc.title);
-            // Si d'autres logiques existent (modales etc.), elles iraient ici
         }
     };
 
     const uploadedCount = Object.keys(uploadedFiles).length;
     const progressPercent = (uploadedCount / REQUIRED_DOCUMENTS.length) * 100;
-    const allDocumentsUploaded = uploadedCount >= REQUIRED_DOCUMENTS.length;
 
     // --- NTC VIEW RENDER ---
     if (mainTab === 'ntc') {
         return (
             <div className="animate-fade-in">
-                {/* NTC View Content (Same as before) */}
                 <div className="flex gap-2 mb-6 bg-slate-50 p-2 rounded-2xl border border-slate-200 w-fit">
                     <button onClick={() => setMainTab('dashboard')} className="flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold text-slate-500 hover:bg-white hover:text-slate-700">
                         Tableau de bord
@@ -1333,10 +1366,9 @@ const AdmissionView = () => {
                             </div>
                             <p className="text-slate-500">Suivi en temps réel des dossiers d'admission et statut des alternances</p>
                         </div>
-                        <button className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 transition-all flex items-center gap-2">
-                            <Download size={18} />
+                        <Button variant="primary" leftIcon={<Download size={18} />}>
                             Exporter CSV
-                        </button>
+                        </Button>
                     </div>
                 </div>
 
@@ -1385,13 +1417,6 @@ const AdmissionView = () => {
                                 <td className="px-6 py-4"><span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold">✓ Complétée</span></td>
                                 <td className="px-6 py-4 text-center"><span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold border border-emerald-200 shadow-sm">OUI</span></td>
                             </tr>
-                            <tr className="hover:bg-slate-50 transition-colors">
-                                <td className="px-6 py-4 font-bold text-slate-800">BAMBA</td>
-                                <td className="px-6 py-4 text-slate-600">Fatim</td>
-                                <td className="px-6 py-4"><span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-bold">◐ En cours</span></td>
-                                <td className="px-6 py-4"><span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 text-slate-500 text-xs font-bold">○ Non remplie</span></td>
-                                <td className="px-6 py-4 text-center"><span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs font-bold border border-red-200 shadow-sm">NON</span></td>
-                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -1399,7 +1424,6 @@ const AdmissionView = () => {
         );
     }
 
-    // --- DASHBOARD VIEW (DEFAULT) ---
     return (
         <div className="animate-fade-in max-w-6xl mx-auto pb-20 relative">
             <SuccessModal isOpen={showSuccessModal} onClose={() => setShowSuccessModal(false)} />
@@ -1421,62 +1445,55 @@ const AdmissionView = () => {
                 </div>
             </div>
 
-            {/* Stepper - Correct Order */}
+            {/* Stepper */}
             <div className="bg-white border border-slate-200 rounded-2xl p-8 mb-8 flex items-center justify-center overflow-x-auto shadow-sm">
                 <div className="flex items-center min-w-max">
                     <StepItem step={1} label="Tests" isActive={activeTab === AdmissionTab.TESTS} isCompleted={testCompleted} />
                     <StepLine isCompleted={testCompleted} />
-
                     <StepItem step={2} label="Étudiant" isActive={activeTab === AdmissionTab.QUESTIONNAIRE} isCompleted={!!studentData} />
                     <StepLine isCompleted={!!studentData} />
-
-                    <StepItem step={3} label="Documents" isActive={activeTab === AdmissionTab.DOCUMENTS} isCompleted={allDocumentsUploaded} />
-                    <StepLine isCompleted={allDocumentsUploaded} />
-
+                    <StepItem step={3} label="Documents" isActive={activeTab === AdmissionTab.DOCUMENTS} isCompleted={uploadedCount >= REQUIRED_DOCUMENTS.length} />
+                    <StepLine isCompleted={uploadedCount >= REQUIRED_DOCUMENTS.length} />
                     <StepItem step={4} label="Entreprise" isActive={activeTab === AdmissionTab.ENTREPRISE} isCompleted={entrepriseCompleted} />
                     <StepLine isCompleted={entrepriseCompleted} />
-
                     <StepItem step={5} label="Admin" isActive={activeTab === AdmissionTab.ADMINISTRATIF} isCompleted={adminCompleted} />
                     <StepLine isCompleted={adminCompleted} />
-
                     <StepItem step={6} label="Entretien" isActive={activeTab === AdmissionTab.ENTRETIEN} isCompleted={false} />
                 </div>
             </div>
 
             {/* Main Tabs Switcher */}
             <div className="flex gap-2 mb-8 bg-slate-50 p-1.5 rounded-2xl border border-slate-200 w-fit shadow-inner">
-                <button onClick={() => setMainTab('dashboard')} className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-white text-indigo-600 shadow-sm ring-1 ring-slate-200">
+                <button onClick={() => setMainTab('dashboard')} className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${mainTab === 'dashboard' ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-slate-200' : 'text-slate-500'}`}>
                     Tableau de bord
                 </button>
-                <button onClick={() => setMainTab('ntc')} className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-500 hover:text-slate-700 hover:bg-white/50">
+                <button onClick={() => setMainTab('ntc')} className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${mainTab === 'ntc' ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-slate-200' : 'text-slate-500 hover:text-slate-700'}`}>
                     Classe NTC
                     <span className="bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded-full text-[10px]">35</span>
                 </button>
             </div>
 
-            {/* Internal Tabs for Admission Flow - Correct Order */}
+            {/* Internal Tabs for Admission Flow */}
             <div className="flex overflow-x-auto gap-2 mb-8 bg-[#F1F5F9] p-2 rounded-2xl border border-slate-200 no-scrollbar">
-                <button onClick={() => setActiveTab(AdmissionTab.TESTS)} className={`flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold transition-all whitespace-nowrap ${activeTab === AdmissionTab.TESTS ? 'bg-white text-black shadow-sm' : 'text-slate-500'}`}>
-                    <PenTool size={16} /> Tests
-                </button>
-                <button onClick={() => setActiveTab(AdmissionTab.QUESTIONNAIRE)} className={`flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold transition-all whitespace-nowrap ${activeTab === AdmissionTab.QUESTIONNAIRE ? 'bg-white text-black shadow-sm' : 'text-slate-500'}`}>
-                    <Info size={16} /> Fiche Étudiant
-                </button>
-                <button onClick={() => setActiveTab(AdmissionTab.DOCUMENTS)} className={`flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold transition-all whitespace-nowrap ${activeTab === AdmissionTab.DOCUMENTS ? 'bg-white text-black shadow-sm' : 'text-slate-500'}`}>
-                    <Upload size={16} /> Documents
-                </button>
-                <button onClick={() => setActiveTab(AdmissionTab.ENTREPRISE)} className={`flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold transition-all whitespace-nowrap ${activeTab === AdmissionTab.ENTREPRISE ? 'bg-white text-black shadow-sm' : 'text-slate-500'}`}>
-                    <Building size={16} /> Fiche Entreprise
-                </button>
-                <button onClick={() => setActiveTab(AdmissionTab.ADMINISTRATIF)} className={`flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold transition-all whitespace-nowrap ${activeTab === AdmissionTab.ADMINISTRATIF ? 'bg-white text-black shadow-sm' : 'text-slate-500'}`}>
-                    <Printer size={16} /> Administratif
-                </button>
-                <button onClick={() => setActiveTab(AdmissionTab.ENTRETIEN)} className={`flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold transition-all whitespace-nowrap ${activeTab === AdmissionTab.ENTRETIEN ? 'bg-white text-black shadow-sm' : 'text-slate-500'}`}>
-                    <UserCheck size={16} /> Entretien
-                </button>
+                {[
+                    { id: AdmissionTab.TESTS, label: 'Tests', icon: PenTool },
+                    { id: AdmissionTab.QUESTIONNAIRE, label: 'Fiche Étudiant', icon: Info },
+                    { id: AdmissionTab.DOCUMENTS, label: 'Documents', icon: Upload },
+                    { id: AdmissionTab.ENTREPRISE, label: 'Fiche Entreprise', icon: Building },
+                    { id: AdmissionTab.ADMINISTRATIF, label: 'Administratif', icon: Printer },
+                    { id: AdmissionTab.ENTRETIEN, label: 'Entretien', icon: UserCheck }
+                ].map((tab) => (
+                    <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id as AdmissionTab)}
+                        className={`flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-white text-black shadow-sm' : 'text-slate-500 hover:bg-white/50'}`}
+                    >
+                        <tab.icon size={16} /> {tab.label}
+                    </button>
+                ))}
             </div>
 
-            {/* --- TEST SECTION (IFRAME) --- */}
+            {/* Sections */}
             {activeTab === AdmissionTab.TESTS && (
                 <div className="space-y-6 animate-slide-in">
                     {!selectedFormation ? (
@@ -1509,9 +1526,9 @@ const AdmissionView = () => {
                                 </button>
                                 <div className="flex items-center gap-3">
                                     <span className="text-sm font-bold text-slate-700 hidden md:block">Test: {FORMATION_CARDS.find(f => f.id === selectedFormation)?.title}</span>
-                                    <button onClick={handleFinishTest} className="px-5 py-2 bg-emerald-500 text-white rounded-lg font-bold text-sm hover:bg-emerald-600 transition-colors flex items-center gap-2 shadow-sm">
-                                        <CheckCircle2 size={16} /> J'ai envoyé mes réponses
-                                    </button>
+                                    <Button variant="success" size="sm" onClick={handleFinishTest} leftIcon={<CheckCircle2 size={16} />}>
+                                        J'ai envoyé mes réponses
+                                    </Button>
                                 </div>
                             </div>
                             <div className="w-full h-[800px] bg-slate-100 relative">
@@ -1526,7 +1543,6 @@ const AdmissionView = () => {
                 </div>
             )}
 
-            {/* --- QUESTIONNAIRE SECTION --- */}
             {activeTab === AdmissionTab.QUESTIONNAIRE && (
                 <div className="animate-slide-in">
                     <QuestionnaireForm onNext={(data) => {
@@ -1536,7 +1552,6 @@ const AdmissionView = () => {
                 </div>
             )}
 
-            {/* --- DOCUMENTS SECTION --- */}
             {activeTab === AdmissionTab.DOCUMENTS && (
                 <div className="animate-slide-in">
                     <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-2xl p-6 mb-6 flex items-center gap-5 relative overflow-hidden">
@@ -1600,7 +1615,6 @@ const AdmissionView = () => {
                         })}
                     </div>
 
-                    {/* Progress Bar */}
                     <div className="mt-8 bg-white border border-slate-200 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
                         <div className="w-full md:w-1/2">
                             <div className="flex justify-between text-sm font-semibold mb-2">
@@ -1614,21 +1628,17 @@ const AdmissionView = () => {
                                 ></div>
                             </div>
                         </div>
-                        <button
-                            onClick={() => setActiveTab(AdmissionTab.ENTREPRISE)}
+                        <Button
                             disabled={!studentData}
-                            className={`w-full md:w-auto px-8 py-3 font-bold rounded-xl transition-all shadow-lg ${studentData
-                                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:shadow-blue-500/25 hover:-translate-y-0.5'
-                                : 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                                }`}
+                            onClick={() => setActiveTab(AdmissionTab.ENTREPRISE)}
+                            className="w-full md:w-auto"
                         >
                             Continuer vers la Fiche Entreprise
-                        </button>
+                        </Button>
                     </div>
                 </div>
             )}
 
-            {/* --- ENTREPRISE SECTION --- */}
             {activeTab === AdmissionTab.ENTREPRISE && (
                 <div className="animate-slide-in">
                     <EntrepriseForm
@@ -1641,7 +1651,6 @@ const AdmissionView = () => {
                 </div>
             )}
 
-            {/* --- ADMIN DOCS SECTION --- */}
             {activeTab === AdmissionTab.ADMINISTRATIF && (
                 <div className="animate-slide-in">
                     <div className="bg-white border border-slate-200 rounded-2xl p-6 mb-6 flex items-center gap-5">
@@ -1674,17 +1683,13 @@ const AdmissionView = () => {
                     </div>
 
                     <div className="flex justify-end mt-8">
-                        <button
-                            onClick={() => setActiveTab(AdmissionTab.ENTRETIEN)}
-                            className="px-8 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold hover:shadow-lg transition-all"
-                        >
+                        <Button onClick={() => setActiveTab(AdmissionTab.ENTRETIEN)} rightIcon={<ArrowRight size={20} />}>
                             Continuer vers Entretien
-                        </button>
+                        </Button>
                     </div>
                 </div>
             )}
 
-            {/* --- ENTRETIEN SECTION --- */}
             {activeTab === AdmissionTab.ENTRETIEN && (
                 <div className="animate-slide-in">
                     <EvaluationGrid />

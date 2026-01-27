@@ -20,6 +20,10 @@ import {
     Phone
 } from 'lucide-react';
 import { api } from '../services/api';
+import Button from './ui/Button';
+import Input from './ui/Input';
+import Select from './ui/Select';
+import Card from './ui/Card';
 
 const RHView: React.FC<{ activeSubView: ViewId }> = ({ activeSubView }) => {
     const [fichesData, setFichesData] = useState<any>(null);
@@ -76,12 +80,11 @@ const RHView: React.FC<{ activeSubView: ViewId }> = ({ activeSubView }) => {
         }
     };
 
-    // Helper to format dates
     const formatDate = (dateString: string) => {
         if (!dateString) return '';
         try {
             const date = new Date(dateString);
-            return date.toISOString().split('T')[0]; // Return YYYY-MM-DD for input[type="date"]
+            return date.toISOString().split('T')[0];
         } catch (e) {
             return '';
         }
@@ -104,24 +107,23 @@ const RHView: React.FC<{ activeSubView: ViewId }> = ({ activeSubView }) => {
                             </div>
                         </div>
                         <div className="flex gap-3">
-                            <button className="flex items-center gap-2 px-5 py-2.5 bg-white/10 border border-white/20 rounded-xl hover:bg-white/20 transition-all text-sm font-semibold backdrop-blur-sm">
-                                <Clock size={16} /> Historique
-                            </button>
-                            <button className="flex items-center gap-2 px-5 py-2.5 bg-white/10 border border-white/20 rounded-xl hover:bg-white/20 transition-all text-sm font-semibold backdrop-blur-sm">
-                                <CheckCircle2 size={16} /> Exporter
-                            </button>
-                            <button className="flex items-center gap-2 px-5 py-2.5 bg-white text-[#6B5B73] rounded-xl hover:shadow-xl hover:-translate-y-0.5 transition-all font-bold text-sm shadow-lg shadow-black/5">
-                                <Plus size={18} strokeWidth={3} /> Nouveau CERFA
-                            </button>
+                            <Button variant="ghost" className="bg-white/10 text-white hover:bg-white/20" leftIcon={<Clock size={16} />}>
+                                Historique
+                            </Button>
+                            <Button variant="ghost" className="bg-white/10 text-white hover:bg-white/20" leftIcon={<CheckCircle2 size={16} />}>
+                                Exporter
+                            </Button>
+                            <Button variant="secondary" className="bg-white text-[#6B5B73] hover:shadow-xl" leftIcon={<Plus size={18} strokeWidth={3} />}>
+                                Nouveau CERFA
+                            </Button>
                         </div>
                     </div>
                 </div>
 
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
-                    {/* Total CERFA - Purple */}
                     <div className="bg-white rounded-2xl p-5 border border-slate-200 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#6B5B73] to-[#8B7B93] flex items-center justify-center text-white shadow-md shadow-purple-900/10">
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#6B5B73] to-[#8B7B93] flex items-center justify-center text-white shadow-md">
                             <FileText size={20} />
                         </div>
                         <div>
@@ -129,10 +131,8 @@ const RHView: React.FC<{ activeSubView: ViewId }> = ({ activeSubView }) => {
                             <div className="text-xs text-slate-500 font-medium uppercase tracking-wide">Total Étudiants</div>
                         </div>
                     </div>
-
-                    {/* Avec Fiche - Green */}
                     <div className="bg-white rounded-2xl p-5 border border-slate-200 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white shadow-md shadow-emerald-500/20">
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white shadow-md">
                             <CheckCircle2 size={20} />
                         </div>
                         <div>
@@ -140,10 +140,8 @@ const RHView: React.FC<{ activeSubView: ViewId }> = ({ activeSubView }) => {
                             <div className="text-xs text-slate-500 font-medium uppercase tracking-wide">Avec Fiche</div>
                         </div>
                     </div>
-
-                    {/* Avec CERFA - Blue */}
                     <div className="bg-white rounded-2xl p-5 border border-slate-200 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white shadow-md">
                             <FileText size={20} />
                         </div>
                         <div>
@@ -151,10 +149,8 @@ const RHView: React.FC<{ activeSubView: ViewId }> = ({ activeSubView }) => {
                             <div className="text-xs text-slate-500 font-medium uppercase tracking-wide">Avec CERFA</div>
                         </div>
                     </div>
-
-                    {/* Dossier Complet - Teal */}
                     <div className="bg-white rounded-2xl p-5 border border-slate-200 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center text-white shadow-md shadow-teal-500/20">
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center text-white shadow-md">
                             <CheckCircle2 size={20} />
                         </div>
                         <div>
@@ -162,10 +158,8 @@ const RHView: React.FC<{ activeSubView: ViewId }> = ({ activeSubView }) => {
                             <div className="text-xs text-slate-500 font-medium uppercase tracking-wide">Dossier Complet</div>
                         </div>
                     </div>
-
-                    {/* Sans Documents - Red */}
                     <div className="bg-white rounded-2xl p-5 border border-slate-200 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-400 to-red-500 flex items-center justify-center text-white shadow-md shadow-red-500/20">
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-400 to-red-500 flex items-center justify-center text-white shadow-md">
                             <AlertCircle size={20} />
                         </div>
                         <div>
@@ -178,12 +172,12 @@ const RHView: React.FC<{ activeSubView: ViewId }> = ({ activeSubView }) => {
                 {/* Toolbar */}
                 <div className="bg-white rounded-2xl p-4 border border-slate-200 mb-6 flex justify-between items-center flex-wrap gap-4 shadow-sm">
                     <div className="flex items-center gap-3 flex-wrap">
-                        <div className="flex items-center gap-2 px-3 py-2.5 bg-[#F3F4F6] border border-transparent rounded-xl w-64 focus-within:bg-white focus-within:border-blue-500/50 focus-within:shadow-sm focus-within:ring-2 focus-within:ring-blue-500/10 transition-all">
+                        <div className="flex items-center gap-2 px-3 py-2.5 bg-[#F3F4F6] border border-transparent rounded-xl w-64 focus-within:bg-white focus-within:border-blue-500/50 transition-all">
                             <Search size={16} className="text-slate-400" />
-                            <input type="text" placeholder="Rechercher..." className="bg-transparent border-none outline-none text-sm w-full text-slate-700 placeholder:text-slate-400" />
+                            <input type="text" placeholder="Rechercher..." className="bg-transparent border-none outline-none text-sm w-full" />
                         </div>
 
-                        <select className="px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-600 outline-none focus:border-blue-500 cursor-pointer hover:bg-slate-50">
+                        <select className="px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-600 outline-none hover:bg-slate-50 cursor-pointer">
                             <option>Toutes formations</option>
                             <option>BTS NDRC</option>
                             <option>BTS MCO</option>
@@ -191,18 +185,12 @@ const RHView: React.FC<{ activeSubView: ViewId }> = ({ activeSubView }) => {
                             <option>TP NTC</option>
                         </select>
 
-                        <select className="px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-600 outline-none focus:border-blue-500 cursor-pointer hover:bg-slate-50">
+                        <select className="px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-600 outline-none hover:bg-slate-50 cursor-pointer">
                             <option>Tous référents</option>
                             <option>Alex</option>
                             <option>Bilal</option>
                             <option>Maxime</option>
                             <option>Arsène</option>
-                        </select>
-
-                        <select className="px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-600 outline-none focus:border-blue-500 cursor-pointer hover:bg-slate-50">
-                            <option>Tous statuts</option>
-                            <option>Signé</option>
-                            <option>En attente</option>
                         </select>
                     </div>
 
@@ -211,7 +199,7 @@ const RHView: React.FC<{ activeSubView: ViewId }> = ({ activeSubView }) => {
                     </div>
                 </div>
 
-                {/* Table Container */}
+                {/* Table */}
                 <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
                     <div className="overflow-x-auto max-h-[70vh]">
                         <table className="w-full border-collapse">
@@ -238,95 +226,80 @@ const RHView: React.FC<{ activeSubView: ViewId }> = ({ activeSubView }) => {
                                 ) : (
                                     candidates.map((c: any, idx: number) => (
                                         <tr key={c.record_id || idx} className="hover:bg-[#FAFBFC] transition-colors group">
-                                            {/* Formation */}
                                             <td className="p-2">
-                                                <select className="w-full bg-[#F9FAFB] border border-transparent group-hover:border-slate-300 rounded text-[11px] py-1 px-1 outline-none focus:bg-white focus:border-blue-500 focus:shadow-sm transition-all" defaultValue={c.formation || "NDRC"}>
+                                                <select className="w-full bg-[#F9FAFB] border border-transparent group-hover:border-slate-300 rounded text-[11px] py-1 px-1 outline-none" defaultValue={c.formation || "NDRC"}>
                                                     <option value="NDRC">BTS NDRC</option>
                                                     <option value="MCO">BTS MCO</option>
                                                     <option value="BACHELOR">BACHELOR RDC</option>
                                                     <option value="NTC">TP NTC</option>
                                                 </select>
                                             </td>
-                                            {/* Référent */}
                                             <td className="p-2">
-                                                <select className="w-full bg-[#F9FAFB] border border-transparent group-hover:border-slate-300 rounded text-[11px] py-1 px-1 outline-none focus:bg-white focus:border-blue-500 transition-all">
+                                                <select className="w-full bg-[#F9FAFB] border border-transparent group-hover:border-slate-300 rounded text-[11px] py-1 px-1 outline-none">
                                                     <option>Alex</option>
                                                     <option>Bilal</option>
                                                     <option>Maxime</option>
                                                     <option>Arsène</option>
                                                 </select>
                                             </td>
-                                            {/* Chargé */}
                                             <td className="p-2">
-                                                <select className="w-full bg-[#F9FAFB] border border-transparent group-hover:border-slate-300 rounded text-[11px] py-1 px-1 outline-none focus:bg-white focus:border-blue-500 transition-all">
+                                                <select className="w-full bg-[#F9FAFB] border border-transparent group-hover:border-slate-300 rounded text-[11px] py-1 px-1 outline-none">
                                                     <option>Chaima</option>
                                                     <option>Rania</option>
                                                 </select>
                                             </td>
-                                            {/* Nom Apprenti */}
                                             <td className="p-2">
-                                                <input type="text" defaultValue={((c.prenom || '') + ' ' + (c.nom || '')).trim().toUpperCase() || "SANS NOM"} className="w-full bg-[#F9FAFB] border border-transparent group-hover:border-slate-300 rounded text-[11px] font-semibold py-1 px-2 outline-none focus:bg-white focus:border-blue-500 transition-all min-w-[120px]" />
+                                                <input type="text" defaultValue={((c.prenom || '') + ' ' + (c.nom || '')).trim().toUpperCase() || "SANS NOM"} className="w-full bg-[#F9FAFB] border border-transparent group-hover:border-slate-300 rounded text-[11px] font-semibold py-1 px-2 outline-none min-w-[120px]" />
                                             </td>
-                                            {/* Date Naissance */}
                                             <td className="p-2">
-                                                <input type="date" defaultValue={formatDate(c.date_naissance)} className="bg-[#F9FAFB] border border-transparent group-hover:border-slate-300 rounded text-[11px] py-1 px-1 outline-none focus:bg-white focus:border-blue-500 transition-all w-[95px]" />
+                                                <input type="date" defaultValue={formatDate(c.date_naissance)} className="bg-[#F9FAFB] border border-transparent group-hover:border-slate-300 rounded text-[11px] py-1 px-1 outline-none w-[95px]" />
                                             </td>
-                                            {/* Coord Apprenti */}
                                             <td className="p-2">
                                                 <div className="flex flex-col gap-1">
-                                                    <input type="tel" defaultValue={c.telephone} placeholder="Tél" className="bg-[#F9FAFB] border border-transparent group-hover:border-slate-300 rounded text-[10px] py-0.5 px-1 outline-none focus:bg-white focus:border-blue-500 w-[90px]" />
-                                                    <input type="email" defaultValue={c.email} placeholder="Email" className="bg-[#F9FAFB] border border-transparent group-hover:border-slate-300 rounded text-[10px] py-0.5 px-1 outline-none focus:bg-white focus:border-blue-500 w-[120px]" />
+                                                    <input type="tel" defaultValue={c.telephone} placeholder="Tél" className="bg-[#F9FAFB] border border-transparent rounded text-[10px] py-0.5 px-1 outline-none w-[90px]" />
+                                                    <input type="email" defaultValue={c.email} placeholder="Email" className="bg-[#F9FAFB] border border-transparent rounded text-[10px] py-0.5 px-1 outline-none w-[120px]" />
                                                 </div>
                                             </td>
-                                            {/* Statut Contrat */}
                                             <td className="p-2 text-center">
-                                                <select className="bg-[#F9FAFB] border border-transparent group-hover:border-slate-300 rounded text-[10px] py-1 px-1 outline-none focus:bg-white focus:border-blue-500 w-full" defaultValue={c.has_cerfa ? "signe" : "attente"}>
+                                                <select className="bg-[#F9FAFB] border border-transparent rounded text-[10px] py-1 px-1 outline-none w-full" defaultValue={c.has_cerfa ? "signe" : "attente"}>
                                                     <option value="attente">Attente fiche</option>
                                                     <option value="prep">Prép. entreprise</option>
                                                     <option value="signe">Signé</option>
                                                 </select>
                                             </td>
-                                            {/* Statut Convention */}
                                             <td className="p-2 text-center">
-                                                <select className="bg-[#F9FAFB] border border-transparent group-hover:border-slate-300 rounded text-[10px] py-1 px-1 outline-none focus:bg-white focus:border-blue-500 w-full" defaultValue={c.has_fiche_renseignement ? "signe" : "attente"}>
+                                                <select className="bg-[#F9FAFB] border border-transparent rounded text-[10px] py-1 px-1 outline-none w-full" defaultValue={c.has_fiche_renseignement ? "signe" : "attente"}>
                                                     <option value="attente">Attente</option>
                                                     <option value="prep">Prép. CFA</option>
                                                     <option value="signe">Signé</option>
                                                 </select>
                                             </td>
-                                            {/* Date Signature */}
                                             <td className="p-2">
-                                                <input type="date" className="bg-[#F9FAFB] border border-transparent group-hover:border-slate-300 rounded text-[11px] py-1 px-1 outline-none focus:bg-white focus:border-blue-500 w-[95px]" />
+                                                <input type="date" className="bg-[#F9FAFB] border border-transparent rounded text-[11px] py-1 px-1 outline-none w-[95px]" />
                                             </td>
-                                            {/* Date Début */}
                                             <td className="p-2">
-                                                <input type="date" className="bg-[#F9FAFB] border border-transparent group-hover:border-slate-300 rounded text-[11px] py-1 px-1 outline-none focus:bg-white focus:border-blue-500 w-[95px]" />
+                                                <input type="date" className="bg-[#F9FAFB] border border-transparent rounded text-[11px] py-1 px-1 outline-none w-[95px]" />
                                             </td>
-                                            {/* Date Fin */}
                                             <td className="p-2">
-                                                <input type="date" className="bg-[#F9FAFB] border border-transparent group-hover:border-slate-300 rounded text-[11px] py-1 px-1 outline-none focus:bg-white focus:border-blue-500 w-[95px]" />
+                                                <input type="date" className="bg-[#F9FAFB] border border-transparent rounded text-[11px] py-1 px-1 outline-none w-[95px]" />
                                             </td>
-                                            {/* Entreprise & SIRET */}
                                             <td className="p-2">
                                                 <div className="flex flex-col gap-1">
-                                                    <input type="text" defaultValue={c.entreprise_raison_sociale || ''} placeholder="Entreprise" className="bg-[#F9FAFB] border border-transparent group-hover:border-slate-300 rounded text-[11px] font-semibold py-0.5 px-1 outline-none focus:bg-white focus:border-blue-500 w-[120px]" />
-                                                    <input type="text" placeholder="SIRET" className="bg-[#F9FAFB] border border-transparent group-hover:border-slate-300 rounded text-[10px] font-mono py-0.5 px-1 outline-none focus:bg-white focus:border-blue-500 w-[110px]" />
+                                                    <input type="text" defaultValue={c.entreprise_raison_sociale || ''} placeholder="Entreprise" className="bg-[#F9FAFB] border border-transparent rounded text-[11px] font-semibold py-0.5 px-1 outline-none w-[120px]" />
+                                                    <input type="text" placeholder="SIRET" className="bg-[#F9FAFB] border border-transparent rounded text-[10px] font-mono py-0.5 px-1 outline-none w-[110px]" />
                                                 </div>
                                             </td>
-                                            {/* Maître Apprentissage */}
                                             <td className="p-2">
-                                                <input type="text" className="bg-[#F9FAFB] border border-transparent group-hover:border-slate-300 rounded text-[11px] py-1 px-1 outline-none focus:bg-white focus:border-blue-500 w-[100px]" />
+                                                <input type="text" className="bg-[#F9FAFB] border border-transparent rounded text-[11px] py-1 px-1 outline-none w-[100px]" />
                                             </td>
-                                            {/* Coord Entreprise */}
                                             <td className="p-2">
                                                 <div className="flex flex-col gap-1">
-                                                    <input type="tel" placeholder="Tél" className="bg-[#F9FAFB] border border-transparent group-hover:border-slate-300 rounded text-[10px] py-0.5 px-1 outline-none focus:bg-white focus:border-blue-500 w-[90px]" />
-                                                    <input type="email" placeholder="Email" className="bg-[#F9FAFB] border border-transparent group-hover:border-slate-300 rounded text-[10px] py-0.5 px-1 outline-none focus:bg-white focus:border-blue-500 w-[120px]" />
+                                                    <input type="tel" placeholder="Tél" className="bg-[#F9FAFB] border border-transparent rounded text-[10px] py-0.5 px-1 outline-none w-[90px]" />
+                                                    <input type="email" placeholder="Email" className="bg-[#F9FAFB] border border-transparent rounded text-[10px] py-0.5 px-1 outline-none w-[120px]" />
                                                 </div>
                                             </td>
-                                            {/* OPCO */}
                                             <td className="p-2">
-                                                <select className="bg-[#F9FAFB] border border-transparent group-hover:border-slate-300 rounded text-[11px] py-1 px-1 outline-none focus:bg-white focus:border-blue-500 w-full">
+                                                <select className="bg-[#F9FAFB] border border-transparent rounded text-[11px] py-1 px-1 outline-none w-full">
                                                     <option>ATLAS</option>
                                                     <option>AKTO</option>
                                                     <option>OPCOMMERCE</option>
@@ -334,40 +307,33 @@ const RHView: React.FC<{ activeSubView: ViewId }> = ({ activeSubView }) => {
                                                     <option>AFDAS</option>
                                                 </select>
                                             </td>
-                                            {/* État PEC */}
                                             <td className="p-2">
-                                                <select className="bg-[#F9FAFB] border border-transparent group-hover:border-slate-300 rounded text-[10px] py-1 px-1 outline-none focus:bg-white focus:border-blue-500 w-full">
+                                                <select className="bg-[#F9FAFB] border border-transparent rounded text-[10px] py-1 px-1 outline-none w-full">
                                                     <option>En analyse</option>
                                                     <option>Accordé</option>
                                                     <option>Refusé</option>
                                                 </select>
                                             </td>
-                                            {/* Montant */}
                                             <td className="p-2">
-                                                <input type="number" placeholder="€" className="bg-[#F9FAFB] border border-transparent group-hover:border-slate-300 rounded text-[11px] text-right py-1 px-1 outline-none focus:bg-white focus:border-blue-500 w-[60px]" />
+                                                <input type="number" placeholder="€" className="bg-[#F9FAFB] border border-transparent rounded text-[11px] text-right py-1 px-1 outline-none w-[60px]" />
                                             </td>
-                                            {/* Date Transmission */}
                                             <td className="p-2">
-                                                <input type="date" className="bg-[#F9FAFB] border border-transparent group-hover:border-slate-300 rounded text-[11px] py-1 px-1 outline-none focus:bg-white focus:border-blue-500 w-[95px]" />
+                                                <input type="date" className="bg-[#F9FAFB] border border-transparent rounded text-[11px] py-1 px-1 outline-none w-[95px]" />
                                             </td>
-                                            {/* Priorité */}
                                             <td className="p-2 text-center">
-                                                <select className="bg-[#F9FAFB] border border-transparent group-hover:border-slate-300 rounded text-[10px] font-bold py-1 px-1 outline-none focus:bg-white focus:border-blue-500 w-full">
+                                                <select className="bg-[#F9FAFB] border border-transparent rounded text-[10px] font-bold py-1 px-1 outline-none w-full">
                                                     <option value="haute">🔴 Haute</option>
                                                     <option value="moyenne">🟡 Moyenne</option>
                                                     <option value="basse">🟢 Basse</option>
                                                 </select>
                                             </td>
-                                            {/* Commentaires */}
                                             <td className="p-2">
-                                                <input type="text" placeholder="Notes..." className="bg-[#F9FAFB] border border-transparent group-hover:border-slate-300 rounded text-[11px] py-1 px-1 outline-none focus:bg-white focus:border-blue-500 w-[100px]" />
+                                                <input type="text" placeholder="Notes..." className="bg-[#F9FAFB] border border-transparent rounded text-[11px] py-1 px-1 outline-none w-[100px]" />
                                             </td>
-                                            {/* Actions */}
                                             <td className="p-2 text-center">
                                                 <div className="flex justify-center gap-1">
-                                                    <button className="w-7 h-7 rounded-lg border border-slate-200 bg-white hover:border-blue-500 hover:text-blue-500 text-slate-400 flex items-center justify-center transition-all"><Eye size={14} /></button>
-                                                    <button className="w-7 h-7 rounded-lg border border-slate-200 bg-white hover:border-blue-500 hover:text-blue-500 text-slate-400 flex items-center justify-center transition-all"><Copy size={14} /></button>
-                                                    <button className="w-7 h-7 rounded-lg border border-slate-200 bg-white hover:border-red-500 hover:text-red-500 text-slate-400 flex items-center justify-center transition-all"><Trash2 size={14} /></button>
+                                                    <button className="w-7 h-7 rounded-lg border border-slate-200 bg-white hover:border-blue-500 text-slate-400 flex items-center justify-center transition-all"><Eye size={14} /></button>
+                                                    <button className="w-7 h-7 rounded-lg border border-slate-200 bg-white hover:border-red-500 text-slate-400 flex items-center justify-center transition-all"><Trash2 size={14} /></button>
                                                 </div>
                                             </td>
                                         </tr>
@@ -376,28 +342,8 @@ const RHView: React.FC<{ activeSubView: ViewId }> = ({ activeSubView }) => {
                             </tbody>
                         </table>
                     </div>
-                    {/* Pagination */}
-                    <div className="p-4 border-t border-slate-200 bg-slate-50 flex justify-between items-center rounded-b-2xl">
-                        <div className="text-xs text-slate-500 font-medium">
-                            Affichage de <strong>{candidates.length > 0 ? 1 : 0}-{candidates.length}</strong> sur <strong>{candidates.length}</strong> résultats
-                        </div>
-                        <div className="flex gap-2 items-center">
-                            <select className="px-2 py-1 border border-slate-300 rounded-lg text-xs bg-white text-slate-600 outline-none">
-                                <option>10 par page</option>
-                                <option>25 par page</option>
-                                <option>50 par page</option>
-                            </select>
-                            <div className="flex gap-1">
-                                <button className="w-8 h-8 flex items-center justify-center border border-slate-300 bg-white rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50">←</button>
-                                <button className="w-8 h-8 flex items-center justify-center border border-blue-600 bg-blue-600 rounded-lg text-xs font-bold text-white shadow-sm">1</button>
-                                <button className="w-8 h-8 flex items-center justify-center border border-slate-300 bg-white rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50">2</button>
-                                <button className="w-8 h-8 flex items-center justify-center border border-slate-300 bg-white rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-50">→</button>
-                            </div>
-                        </div>
-                    </div>
                 </div>
 
-                {/* Floating Save Indicator */}
                 <div className="fixed bottom-6 right-6 bg-white border border-emerald-100 shadow-xl rounded-xl px-4 py-3 flex items-center gap-3 animate-slide-up z-50">
                     <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600">
                         <Save size={16} />
@@ -428,56 +374,30 @@ const RHView: React.FC<{ activeSubView: ViewId }> = ({ activeSubView }) => {
                                 <p className="opacity-90 text-sm font-medium">Suivi des partenaires et des fiches de renseignement entreprise</p>
                             </div>
                         </div>
-                        <div className="flex gap-3">
-                            <button className="flex items-center gap-2 px-6 py-3 bg-white/10 border border-white/20 rounded-xl hover:bg-white/20 transition-all text-sm font-bold backdrop-blur-sm">
-                                <Plus size={18} /> Nouvelle Entreprise
-                            </button>
-                        </div>
+                        <Button variant="secondary" className="bg-white text-[#0D9488]" leftIcon={<Plus size={18} />}>
+                            Nouvelle Entreprise
+                        </Button>
                     </div>
                 </div>
 
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex items-center gap-5 hover:shadow-md transition-all">
-                        <div className="w-14 h-14 rounded-2xl bg-teal-50 text-teal-600 flex items-center justify-center shadow-inner">
-                            <Building size={28} />
-                        </div>
-                        <div>
-                            <div className="text-3xl font-black text-slate-800">{companies.length}</div>
-                            <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">Total Entreprises</div>
-                        </div>
-                    </div>
-                    <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex items-center gap-5 hover:shadow-md transition-all">
-                        <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shadow-inner">
-                            <Users size={28} />
-                        </div>
-                        <div>
-                            <div className="text-3xl font-black text-slate-800">{companies.filter(c => c.fields?.recordIdetudiant).length}</div>
-                            <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">Avec Alternants</div>
-                        </div>
-                    </div>
-                    <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex items-center gap-5 hover:shadow-md transition-all">
-                        <div className="w-14 h-14 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shadow-inner">
-                            <Clock size={28} />
-                        </div>
-                        <div>
-                            <div className="text-3xl font-black text-slate-800">{companies.filter(c => !c.fields?.['N de bon de commande']).length}</div>
-                            <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">BC en attente</div>
-                        </div>
-                    </div>
+                    <Card icon={<Building size={28} />} title={companies.length.toString()} subtitle="Total Entreprises" className="!p-6" />
+                    <Card icon={<Users size={28} />} title={companies.filter(c => c.fields?.recordIdetudiant).length.toString()} subtitle="Avec Alternants" className="!p-6" />
+                    <Card icon={<Clock size={28} />} title={companies.filter(c => !c.fields?.['N de bon de commande']).length.toString()} subtitle="BC en attente" className="!p-6" />
                 </div>
 
                 {/* Toolbar */}
                 <div className="bg-white rounded-2xl p-4 border border-slate-200 mb-6 flex justify-between items-center flex-wrap gap-4 shadow-sm">
                     <div className="flex items-center gap-3 flex-wrap">
-                        <div className="flex items-center gap-2 px-4 py-2.5 bg-[#F3F4F6] border border-transparent rounded-xl w-80 focus-within:bg-white focus-within:border-teal-500/50 focus-within:shadow-sm focus-within:ring-2 focus-within:ring-teal-500/10 transition-all">
+                        <div className="flex items-center gap-2 px-4 py-2.5 bg-[#F3F4F6] border border-transparent rounded-xl w-80 focus-within:bg-white focus-within:border-teal-500/50 transition-all">
                             <Search size={18} className="text-slate-400" />
-                            <input type="text" placeholder="Rechercher par nom ou SIRET..." className="bg-transparent border-none outline-none text-sm w-full text-slate-700 placeholder:text-slate-400 font-medium" />
+                            <input type="text" placeholder="Rechercher par nom ou SIRET..." className="bg-transparent border-none outline-none text-sm w-full font-medium" />
                         </div>
                     </div>
                 </div>
 
-                {/* Table Container */}
+                {/* Table */}
                 <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm">
                     <div className="overflow-x-auto max-h-[70vh]">
                         <table className="w-full border-collapse">
@@ -502,21 +422,18 @@ const RHView: React.FC<{ activeSubView: ViewId }> = ({ activeSubView }) => {
                                         const f = c.fields || {};
                                         return (
                                             <tr key={c.id || idx} className="hover:bg-teal-50/30 transition-colors group">
-                                                {/* Entreprise */}
                                                 <td className="px-6 py-4">
                                                     <div className="flex flex-col">
                                                         <span className="font-bold text-slate-800 text-sm">{f['Raison sociale entreprise'] || 'N/A'}</span>
                                                         <span className="text-[10px] font-mono text-slate-400 uppercase tracking-tighter">SIRET: {f['SIRET de lentreprise'] || 'N/A'}</span>
                                                     </div>
                                                 </td>
-                                                {/* Localisation */}
                                                 <td className="px-6 py-4">
                                                     <div className="flex flex-col">
                                                         <span className="text-xs font-semibold text-slate-600">{f['Ville entreprise'] || 'N/A'}</span>
                                                         <span className="text-[10px] text-slate-400">{f['Code postal entreprise'] || ''}</span>
                                                     </div>
                                                 </td>
-                                                {/* Contact */}
                                                 <td className="px-6 py-4">
                                                     <div className="flex flex-col gap-1">
                                                         <div className="flex items-center gap-1.5 text-[11px] text-slate-600 font-medium">
@@ -527,31 +444,27 @@ const RHView: React.FC<{ activeSubView: ViewId }> = ({ activeSubView }) => {
                                                         </div>
                                                     </div>
                                                 </td>
-                                                {/* Maître d'Apprentissage */}
                                                 <td className="px-6 py-4">
                                                     <div className="flex flex-col">
                                                         <span className="text-xs font-bold text-slate-700">{f['Prenom du maitre dapprentissage']} {f['Nom du maitre dapprentissage']}</span>
                                                         <span className="text-[10px] text-slate-400 italic">{f['Fonction maitre dapprentissage'] || 'Tuteur'}</span>
                                                     </div>
                                                 </td>
-                                                {/* Contrat */}
                                                 <td className="px-6 py-4">
                                                     <div className="flex flex-col">
                                                         <span className="text-xs font-bold text-teal-600">{f['Poste occupé'] || 'N/A'}</span>
                                                         <span className="text-[10px] text-slate-400">{f['Type de contrat']} • {f['Nombre de mois du contrat']} mois</span>
                                                     </div>
                                                 </td>
-                                                {/* OPCO */}
                                                 <td className="px-6 py-4">
                                                     <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded text-[10px] font-black uppercase tracking-wider border border-slate-200">
                                                         {f['Nom de lOPCO'] || 'N/A'}
                                                     </span>
                                                 </td>
-                                                {/* Actions */}
                                                 <td className="px-6 py-4">
                                                     <div className="flex gap-2">
-                                                        <button className="w-8 h-8 rounded-xl border border-slate-200 bg-white hover:border-teal-500 hover:text-teal-500 text-slate-400 flex items-center justify-center transition-all shadow-sm"><Eye size={16} /></button>
-                                                        <button className="w-8 h-8 rounded-xl border border-slate-200 bg-white hover:border-teal-500 hover:text-teal-500 text-slate-400 flex items-center justify-center transition-all shadow-sm"><FileText size={16} /></button>
+                                                        <button className="w-8 h-8 rounded-xl border border-slate-200 bg-white hover:border-teal-500 text-slate-400 flex items-center justify-center transition-all shadow-sm"><Eye size={16} /></button>
+                                                        <button className="w-8 h-8 rounded-xl border border-slate-200 bg-white hover:border-teal-500 text-slate-400 flex items-center justify-center transition-all shadow-sm"><FileText size={16} /></button>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -566,7 +479,7 @@ const RHView: React.FC<{ activeSubView: ViewId }> = ({ activeSubView }) => {
         );
     }
 
-    // Default RH View (Dashboard or Fallback)
+    // Default RH View (Dashboard)
     if (activeSubView === 'rh-dashboard') {
         return (
             <div className="animate-slide-in pb-20 font-sans">
@@ -583,11 +496,9 @@ const RHView: React.FC<{ activeSubView: ViewId }> = ({ activeSubView }) => {
                                 <p className="opacity-90 text-sm font-medium">Vue d'ensemble du recrutement et de l'alternance</p>
                             </div>
                         </div>
-                        <div className="flex gap-3">
-                            <button className="flex items-center gap-2 px-6 py-3 bg-white/10 border border-white/20 rounded-xl hover:bg-white/20 transition-all text-sm font-bold backdrop-blur-sm">
-                                <Download size={18} /> Rapport Complet
-                            </button>
-                        </div>
+                        <Button variant="secondary" className="bg-white text-[#4F46E5]" leftIcon={<Download size={18} />}>
+                            Rapport Complet
+                        </Button>
                     </div>
                 </div>
 
@@ -599,23 +510,14 @@ const RHView: React.FC<{ activeSubView: ViewId }> = ({ activeSubView }) => {
                         { label: 'CERFA Signés', value: rhStats?.etudiants_avec_cerfa || 0, icon: FileText, color: 'blue' },
                         { label: 'Sans Documents', value: rhStats?.etudiants_sans_documents || 0, icon: AlertCircle, color: 'rose' },
                     ].map((stat, i) => (
-                        <div key={i} className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition-all group">
-                            <div className={`w-12 h-12 rounded-2xl bg-${stat.color}-50 text-${stat.color}-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
-                                <stat.icon size={24} />
-                            </div>
-                            <div className="text-3xl font-black text-slate-800 mb-1">{stat.value}</div>
-                            <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">{stat.label}</div>
-                        </div>
+                        <Card key={i} icon={<stat.icon size={24} />} title={stat.value.toString()} subtitle={stat.label} className="!p-6" />
                     ))}
                 </div>
 
                 {/* Rates & Progress */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                    <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm">
-                        <h3 className="text-xl font-black text-slate-800 mb-8 flex items-center gap-3">
-                            <CheckCircle2 className="text-emerald-500" /> Taux de Complétion
-                        </h3>
-                        <div className="space-y-8">
+                    <Card title="Taux de Complétion" icon={<CheckCircle2 className="text-emerald-500" />}>
+                        <div className="space-y-8 mt-4">
                             {[
                                 { label: 'Taux CERFA', value: rhStats?.taux_cerfa || 0, color: 'blue' },
                                 { label: 'Taux Dossier Complet', value: rhStats?.taux_dossier_complet || 0, color: 'emerald' },
@@ -624,20 +526,20 @@ const RHView: React.FC<{ activeSubView: ViewId }> = ({ activeSubView }) => {
                                 <div key={i}>
                                     <div className="flex justify-between items-end mb-3">
                                         <span className="text-sm font-bold text-slate-600">{rate.label}</span>
-                                        <span className={`text-lg font-black text-${rate.color}-600`}>{rate.value}%</span>
+                                        <span className="text-lg font-black">{rate.value}%</span>
                                     </div>
                                     <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
                                         <div
-                                            className={`h-full bg-${rate.color}-500 rounded-full transition-all duration-1000`}
+                                            className="h-full bg-blue-500 rounded-full transition-all duration-1000"
                                             style={{ width: `${rate.value}%` }}
                                         ></div>
                                     </div>
                                 </div>
                             ))}
                         </div>
-                    </div>
+                    </Card>
 
-                    <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm flex flex-col justify-center items-center text-center">
+                    <Card className="flex flex-col justify-center items-center text-center">
                         <div className="w-20 h-20 bg-rose-50 text-rose-500 rounded-3xl flex items-center justify-center mb-6">
                             <AlertCircle size={40} />
                         </div>
@@ -645,26 +547,25 @@ const RHView: React.FC<{ activeSubView: ViewId }> = ({ activeSubView }) => {
                         <p className="text-slate-500 mb-6 max-w-xs">
                             <strong>{rhStats?.etudiants_sans_documents || 0} étudiants</strong> n'ont pas encore transmis leurs documents obligatoires.
                         </p>
-                        <button className="px-8 py-4 bg-rose-500 text-white rounded-2xl font-bold hover:bg-rose-600 shadow-lg shadow-rose-500/20 transition-all">
+                        <Button variant="danger" size="lg">
                             Relancer les étudiants
-                        </button>
-                    </div>
+                        </Button>
+                    </Card>
                 </div>
             </div>
         );
     }
 
-    // Fallback/Default
     return (
         <div className="animate-slide-in">
             <h1 className="text-2xl font-bold mb-4 text-slate-800">Ressources Humaines</h1>
-            <div className="p-12 text-center bg-white rounded-2xl border-2 border-dashed border-slate-200">
+            <Card className="p-12 text-center border-2 border-dashed">
                 <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-300">
                     <Users size={32} />
                 </div>
                 <h3 className="text-lg font-bold text-slate-800">Sélectionnez une section</h3>
                 <p className="text-slate-500">Utilisez le menu de gauche pour naviguer dans le module RH</p>
-            </div>
+            </Card>
         </div>
     );
 };

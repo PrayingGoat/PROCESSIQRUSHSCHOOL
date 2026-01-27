@@ -39,6 +39,10 @@ import {
 } from 'lucide-react';
 import { ViewId } from '../types';
 import { api } from '../services/api';
+import Button from './ui/Button';
+import Input from './ui/Input';
+import Select from './ui/Select';
+import Card from './ui/Card';
 
 interface DashboardViewProps {
     activeSubView: ViewId;
@@ -129,8 +133,6 @@ const DashboardView: React.FC<DashboardViewProps> = ({ activeSubView }) => {
             }, {});
 
             // Merge the changes into the candidate object
-            // We update both the root and the nested informations_personnelles to be safe
-            // as the API might return/expect either structure.
             const updatedCandidate = {
                 ...selectedCandidate,
                 ...cleanedForm,
@@ -213,10 +215,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ activeSubView }) => {
 
     const isPlaced = (c: any) => {
         const data = getC(c);
-        // Use the explicit alternance field if it's "Oui"
         if (data.alternance === 'Oui') return true;
-
-        // Fallback to entreprise check
         const ent = data.entreprise;
         return ent && ent !== 'Non' && ent !== 'En recherche' && ent !== 'En cours' && ent !== 'null';
     };
@@ -228,7 +227,6 @@ const DashboardView: React.FC<DashboardViewProps> = ({ activeSubView }) => {
     const statsToPlace = {
         total: studentsToPlace.length,
         enCours: studentsToPlace.filter(s => getC(s).entreprise === 'En recherche').length,
-        cvAjour: studentsToPlace.filter(s => getC(s).has_cv).length,
         cvAActualiser: studentsToPlace.filter(s => !getC(s).has_cv).length
     };
 
@@ -257,7 +255,6 @@ const DashboardView: React.FC<DashboardViewProps> = ({ activeSubView }) => {
                     c.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
                     c.telephone.includes(searchQuery);
                 const matchesFormation = !filterFormation || c.formation.toLowerCase().includes(filterFormation.toLowerCase());
-                // Note: Rupture and CV filters would need actual data fields which might not be in getC yet
                 return matchesSearch && matchesFormation;
             });
 
@@ -281,14 +278,12 @@ const DashboardView: React.FC<DashboardViewProps> = ({ activeSubView }) => {
                                 </div>
                             </div>
                             <div className="flex flex-wrap gap-3 w-full lg:w-auto justify-center lg:justify-end">
-                                <button className="flex-1 lg:flex-none inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-white text-rose-600 rounded-2xl font-black hover:shadow-2xl hover:-translate-y-1 active:scale-95 transition-all duration-300 text-sm md:text-base">
-                                    <Plus size={20} strokeWidth={3} />
+                                <Button variant="secondary" className="bg-white text-rose-600 hover:bg-slate-50" leftIcon={<Plus size={20} strokeWidth={3} />}>
                                     Ajouter un élève
-                                </button>
-                                <button className="flex-1 lg:flex-none inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-rose-400/20 text-white border-2 border-rose-300/30 rounded-2xl font-black backdrop-blur-md hover:bg-rose-400/40 hover:border-rose-300/50 transition-all duration-300 text-sm md:text-base">
-                                    <Download size={20} />
+                                </Button>
+                                <Button variant="outline" className="border-rose-300/30 text-white hover:bg-rose-400/20" leftIcon={<Download size={20} />}>
                                     Exporter
-                                </button>
+                                </Button>
                             </div>
                         </div>
                     </div>
@@ -345,17 +340,6 @@ const DashboardView: React.FC<DashboardViewProps> = ({ activeSubView }) => {
                                     <option value="ndrc">BTS NDRC</option>
                                     <option value="bachelor">Bachelor RDC</option>
                                     <option value="ntc">TP NTC</option>
-                                </select>
-                                <select className="px-6 py-4 bg-slate-50/50 border-2 border-transparent rounded-[1.5rem] focus:bg-white focus:border-rose-500 outline-none transition-all duration-300 font-black text-sm text-slate-600 cursor-pointer hover:bg-slate-100">
-                                    <option value="">Type de rupture</option>
-                                    <option value="amiable">Rupture amiable</option>
-                                    <option value="demission">Démission</option>
-                                    <option value="periode-essai">Fin période d'essai</option>
-                                </select>
-                                <select className="px-6 py-4 bg-slate-50/50 border-2 border-transparent rounded-[1.5rem] focus:bg-white focus:border-rose-500 outline-none transition-all duration-300 font-black text-sm text-slate-600 cursor-pointer hover:bg-slate-100">
-                                    <option value="">CV à jour</option>
-                                    <option value="oui">Oui</option>
-                                    <option value="non">Non</option>
                                 </select>
                             </div>
                         </div>
@@ -459,16 +443,6 @@ const DashboardView: React.FC<DashboardViewProps> = ({ activeSubView }) => {
                                     </tbody>
                                 </table>
                             </div>
-                            <div className="px-8 py-5 bg-slate-50/50 border-t border-slate-100 flex justify-between items-center">
-                                <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                                    Affichage de <span className="text-slate-800">{filteredStudents.length}</span> élèves
-                                </div>
-                                <div className="flex gap-2">
-                                    <button className="p-2 rounded-xl bg-white border border-slate-200 text-slate-400 disabled:opacity-50" disabled><ChevronLeft size={20} /></button>
-                                    <button className="px-4 py-2 rounded-xl bg-rose-500 text-white font-bold text-sm">1</button>
-                                    <button className="p-2 rounded-xl bg-white border border-slate-200 text-slate-400 disabled:opacity-50" disabled><ArrowRight size={20} /></button>
-                                </div>
-                            </div>
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -504,24 +478,15 @@ const DashboardView: React.FC<DashboardViewProps> = ({ activeSubView }) => {
                                                 <span className="text-slate-400 font-bold uppercase text-[10px] tracking-wider">Contact</span>
                                                 <span className="text-slate-700 font-bold">{c.telephone}</span>
                                             </div>
-                                            <div className="flex items-center justify-between text-sm">
-                                                <span className="text-slate-400 font-bold uppercase text-[10px] tracking-wider">CV à jour</span>
-                                                <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded-md text-[10px] font-black uppercase">Oui</span>
-                                            </div>
                                         </div>
 
                                         <div className="flex gap-3 relative z-10">
-                                            <button
-                                                onClick={() => handleViewDetails(c.id)}
-                                                className="flex-1 py-3.5 bg-slate-100 text-slate-600 rounded-2xl font-bold text-sm hover:bg-slate-200 transition-all flex items-center justify-center gap-2"
-                                            >
-                                                <Eye size={18} />
+                                            <Button variant="secondary" className="flex-1" onClick={() => handleViewDetails(c.id)} leftIcon={<Eye size={18} />}>
                                                 Détails
-                                            </button>
-                                            <button className="flex-1 py-3.5 bg-rose-500 text-white rounded-2xl font-bold text-sm hover:bg-rose-600 shadow-lg shadow-rose-500/20 transition-all flex items-center justify-center gap-2">
-                                                <CheckCircle2 size={18} />
+                                            </Button>
+                                            <Button variant="danger" className="flex-1" leftIcon={<CheckCircle2 size={18} />}>
                                                 Placer
-                                            </button>
+                                            </Button>
                                         </div>
                                     </div>
                                 );
@@ -563,12 +528,9 @@ const DashboardView: React.FC<DashboardViewProps> = ({ activeSubView }) => {
                                     </p>
                                 </div>
                             </div>
-                            <div className="flex gap-4 w-full lg:w-auto">
-                                <button className="flex-1 lg:flex-none inline-flex items-center justify-center gap-3 px-8 py-4 bg-white text-indigo-600 rounded-2xl font-black hover:shadow-2xl hover:-translate-y-1 active:scale-95 transition-all duration-300">
-                                    <Download size={24} />
-                                    Exporter la liste
-                                </button>
-                            </div>
+                            <Button variant="secondary" className="bg-white text-indigo-600 hover:bg-slate-50" leftIcon={<Download size={24} />}>
+                                Exporter la liste
+                            </Button>
                         </div>
                     </div>
 
@@ -726,16 +688,6 @@ const DashboardView: React.FC<DashboardViewProps> = ({ activeSubView }) => {
                                     </tbody>
                                 </table>
                             </div>
-                            <div className="px-8 py-5 bg-slate-50/50 border-t border-slate-100 flex justify-between items-center">
-                                <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                                    Affichage de <span className="text-slate-800">{filteredStudents.length}</span> alternants
-                                </div>
-                                <div className="flex gap-2">
-                                    <button className="p-2 rounded-xl bg-white border border-slate-200 text-slate-400 disabled:opacity-50" disabled><ChevronLeft size={20} /></button>
-                                    <button className="px-4 py-2 rounded-xl bg-indigo-500 text-white font-bold text-sm">1</button>
-                                    <button className="p-2 rounded-xl bg-white border border-slate-200 text-slate-400 disabled:opacity-50" disabled><ArrowRight size={20} /></button>
-                                </div>
-                            </div>
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -771,27 +723,15 @@ const DashboardView: React.FC<DashboardViewProps> = ({ activeSubView }) => {
                                                 <span className="text-slate-400 font-bold uppercase text-[10px] tracking-wider">Localisation</span>
                                                 <span className="text-slate-700 font-bold">{c.ville}</span>
                                             </div>
-                                            <div className="flex items-center justify-between text-sm">
-                                                <span className="text-slate-400 font-bold uppercase text-[10px] tracking-wider">Contact</span>
-                                                <span className="text-slate-700 font-bold">{c.telephone}</span>
-                                            </div>
                                         </div>
 
                                         <div className="flex gap-3 relative z-10">
-                                            <button
-                                                onClick={() => handleViewDetails(c.id)}
-                                                className="flex-1 py-3.5 bg-slate-100 text-slate-600 rounded-2xl font-bold text-sm hover:bg-slate-200 transition-all flex items-center justify-center gap-2"
-                                            >
-                                                <Eye size={18} />
+                                            <Button variant="secondary" className="flex-1" onClick={() => handleViewDetails(c.id)} leftIcon={<Eye size={18} />}>
                                                 Détails
-                                            </button>
-                                            <button
-                                                onClick={() => handleEdit(c.id)}
-                                                className="flex-1 py-3.5 bg-indigo-500 text-white rounded-2xl font-bold text-sm hover:bg-indigo-600 shadow-lg shadow-indigo-500/20 transition-all flex items-center justify-center gap-2"
-                                            >
-                                                <Edit size={18} />
+                                            </Button>
+                                            <Button variant="primary" className="flex-1" onClick={() => handleEdit(c.id)} leftIcon={<Edit size={18} />}>
                                                 Modifier
-                                            </button>
+                                            </Button>
                                         </div>
                                     </div>
                                 );
@@ -891,13 +831,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ activeSubView }) => {
 
                 {/* Quick Actions & Recent Activity */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <div className="bg-slate-50/50 rounded-[2.5rem] p-10 border border-slate-100">
-                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-8 flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-500 flex items-center justify-center shadow-sm">
-                                <Plus size={16} strokeWidth={3} />
-                            </div>
-                            Actions Rapides
-                        </h3>
+                    <Card title="Actions Rapides" icon={<Plus size={16} strokeWidth={3} />}>
                         <div className="grid grid-cols-2 gap-4">
                             <button className="flex flex-col items-center justify-center p-6 bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all group">
                                 <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-500 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
@@ -924,15 +858,9 @@ const DashboardView: React.FC<DashboardViewProps> = ({ activeSubView }) => {
                                 <span className="text-sm font-black text-slate-700">Planning</span>
                             </button>
                         </div>
-                    </div>
+                    </Card>
 
-                    <div className="bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-sm">
-                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-8 flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center shadow-sm">
-                                <Clock size={16} strokeWidth={3} />
-                            </div>
-                            Activité Récente
-                        </h3>
+                    <Card title="Activité Récente" icon={<Clock size={16} strokeWidth={3} />}>
                         <div className="space-y-6">
                             {candidates.slice(0, 4).map((raw, i) => {
                                 const c = getC(raw);
@@ -954,10 +882,10 @@ const DashboardView: React.FC<DashboardViewProps> = ({ activeSubView }) => {
                                 );
                             })}
                         </div>
-                        <button className="w-full mt-10 py-4 bg-slate-50 text-slate-400 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-100 hover:text-slate-600 transition-all">
+                        <Button variant="ghost" className="w-full mt-10 text-xs uppercase tracking-widest">
                             Voir tout l'historique
-                        </button>
-                    </div>
+                        </Button>
+                    </Card>
                 </div>
             </div>
         );
@@ -1011,71 +939,48 @@ const DashboardView: React.FC<DashboardViewProps> = ({ activeSubView }) => {
                             ) : isEditing && editForm ? (
                                 <div className="space-y-8">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50/50 p-8 rounded-[2rem] border border-slate-100">
-                                        <div className="flex flex-col gap-2">
-                                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Prénom</label>
-                                            <input
-                                                type="text"
-                                                value={editForm.prenom}
-                                                onChange={(e) => setEditForm({ ...editForm, prenom: e.target.value })}
-                                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:border-rose-500 outline-none transition-all font-bold text-slate-700"
-                                            />
-                                        </div>
-                                        <div className="flex flex-col gap-2">
-                                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Nom</label>
-                                            <input
-                                                type="text"
-                                                value={editForm.nom_naissance}
-                                                onChange={(e) => setEditForm({ ...editForm, nom_naissance: e.target.value })}
-                                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:border-rose-500 outline-none transition-all font-bold text-slate-700"
-                                            />
-                                        </div>
-                                        <div className="flex flex-col gap-2">
-                                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Email</label>
-                                            <input
-                                                type="email"
-                                                value={editForm.email}
-                                                onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:border-rose-500 outline-none transition-all font-bold text-slate-700"
-                                            />
-                                        </div>
-                                        <div className="flex flex-col gap-2">
-                                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Téléphone</label>
-                                            <input
-                                                type="text"
-                                                value={editForm.telephone}
-                                                onChange={(e) => setEditForm({ ...editForm, telephone: e.target.value })}
-                                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:border-rose-500 outline-none transition-all font-bold text-slate-700"
-                                            />
-                                        </div>
-                                        <div className="flex flex-col gap-2">
-                                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Ville</label>
-                                            <input
-                                                type="text"
-                                                value={editForm.ville}
-                                                onChange={(e) => setEditForm({ ...editForm, ville: e.target.value })}
-                                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:border-rose-500 outline-none transition-all font-bold text-slate-700"
-                                            />
-                                        </div>
-                                        <div className="flex flex-col gap-2">
-                                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Formation</label>
-                                            <select
-                                                value={editForm.formation_souhaitee}
-                                                onChange={(e) => setEditForm({ ...editForm, formation_souhaitee: e.target.value })}
-                                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:border-rose-500 outline-none transition-all font-bold text-slate-700"
-                                            >
-                                                <option value="BTS MCO">BTS MCO</option>
-                                                <option value="BTS NDRC">BTS NDRC</option>
-                                                <option value="BACHELOR RDC">BACHELOR RDC</option>
-                                                <option value="TP NTC">TP NTC</option>
-                                            </select>
-                                        </div>
-                                        <div className="flex flex-col gap-2 md:col-span-2">
-                                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Entreprise d'accueil</label>
-                                            <input
-                                                type="text"
-                                                value={editForm.entreprise_d_accueil}
-                                                onChange={(e) => setEditForm({ ...editForm, entreprise_d_accueil: e.target.value })}
-                                                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl focus:border-rose-500 outline-none transition-all font-bold text-slate-700"
+                                        <Input 
+                                            label="Prénom" 
+                                            value={editForm.prenom} 
+                                            onChange={(e) => setEditForm({ ...editForm, prenom: e.target.value })} 
+                                        />
+                                        <Input 
+                                            label="Nom" 
+                                            value={editForm.nom_naissance} 
+                                            onChange={(e) => setEditForm({ ...editForm, nom_naissance: e.target.value })} 
+                                        />
+                                        <Input 
+                                            label="Email" 
+                                            type="email" 
+                                            value={editForm.email} 
+                                            onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} 
+                                        />
+                                        <Input 
+                                            label="Téléphone" 
+                                            value={editForm.telephone} 
+                                            onChange={(e) => setEditForm({ ...editForm, telephone: e.target.value })} 
+                                        />
+                                        <Input 
+                                            label="Ville" 
+                                            value={editForm.ville} 
+                                            onChange={(e) => setEditForm({ ...editForm, ville: e.target.value })} 
+                                        />
+                                        <Select 
+                                            label="Formation" 
+                                            value={editForm.formation_souhaitee} 
+                                            onChange={(e) => setEditForm({ ...editForm, formation_souhaitee: e.target.value })}
+                                            options={[
+                                                { value: "BTS MCO", label: "BTS MCO" },
+                                                { value: "BTS NDRC", label: "BTS NDRC" },
+                                                { value: "BACHELOR RDC", label: "BACHELOR RDC" },
+                                                { value: "TP NTC", label: "TP NTC" }
+                                            ]}
+                                        />
+                                        <div className="md:col-span-2">
+                                            <Input 
+                                                label="Entreprise d'accueil" 
+                                                value={editForm.entreprise_d_accueil} 
+                                                onChange={(e) => setEditForm({ ...editForm, entreprise_d_accueil: e.target.value })} 
                                                 placeholder="Non ou Nom de l'entreprise"
                                             />
                                         </div>
@@ -1202,26 +1107,22 @@ const DashboardView: React.FC<DashboardViewProps> = ({ activeSubView }) => {
 
                         {/* Modal Footer */}
                         <div className="p-8 border-t border-slate-100 bg-slate-50/50 flex justify-end gap-3">
-                            <button
-                                onClick={() => setIsModalOpen(false)}
-                                className="px-8 py-4 bg-white border border-slate-200 text-slate-600 rounded-2xl font-bold text-sm hover:bg-slate-50 transition-all"
-                            >
+                            <Button variant="secondary" onClick={() => setIsModalOpen(false)}>
                                 Annuler
-                            </button>
+                            </Button>
                             {isEditing ? (
-                                <button
-                                    onClick={handleSaveEdit}
-                                    disabled={isSaving}
-                                    className="px-8 py-4 bg-rose-500 text-white rounded-2xl font-bold text-sm hover:bg-rose-600 shadow-lg shadow-rose-500/20 transition-all flex items-center gap-2 disabled:opacity-50"
+                                <Button 
+                                    variant="danger" 
+                                    onClick={handleSaveEdit} 
+                                    isLoading={isSaving} 
+                                    leftIcon={<Save size={18} />}
                                 >
-                                    {isSaving ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
                                     Enregistrer
-                                </button>
+                                </Button>
                             ) : (
-                                <button className="px-8 py-4 bg-rose-500 text-white rounded-2xl font-bold text-sm hover:bg-rose-600 shadow-lg shadow-rose-500/20 transition-all flex items-center gap-2">
-                                    <Mail size={18} />
+                                <Button variant="danger" leftIcon={<Mail size={18} />}>
                                     Relancer l'étudiant
-                                </button>
+                                </Button>
                             )}
                         </div>
                     </div>
