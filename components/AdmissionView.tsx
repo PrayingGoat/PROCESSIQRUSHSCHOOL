@@ -190,11 +190,7 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
             selectionnees: [] as string[]
         },
 
-        contact_taxe: {
-            fonction_contact: "",
-            telephone_contact: "",
-            email_contact: ""
-        },
+
         record_id_etudiant: studentRecordId || ""
     });
 
@@ -595,80 +591,7 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
                     </div>
                 </Card>
 
-                <Card step={6} title="Contrat & Salaire">
-                    <div className="grid grid-cols-12 gap-5">
-                        <div className="col-span-12 md:col-span-6">
-                            <Select
-                                label="Type de contrat"
-                                required
-                                value={formData.contrat.type}
-                                onChange={(e) => handleNestedChange('contrat', 'type', e.target.value)}
-                                options={[
-                                    { value: "11", label: "11 - Contrat initial" },
-                                    { value: "21", label: "21 - Avenant : modification" },
-                                    { value: "22", label: "22 - Avenant : changement maître" },
-                                    { value: "23", label: "23 - Avenant : prolongation" }
-                                ]}
-                            />
-                        </div>
-                        <div className="col-span-12 md:col-span-6">
-                            <Input label="Durée hebdomadaire" required placeholder="Ex: 35h" value={formData.contrat.duree_hebdo} onChange={(e) => handleNestedChange('contrat', 'duree_hebdo', e.target.value)} />
-                        </div>
-                        <div className="col-span-12">
-                            <Input label="Poste occupé" required placeholder="Intitulé exact du poste" value={formData.contrat.poste} onChange={(e) => handleNestedChange('contrat', 'poste', e.target.value)} />
-                        </div>
 
-                        {/* Simulateur de salaire */}
-                        <div className="col-span-12 mt-4 bg-blue-50/50 p-6 md:p-8 rounded-2xl border border-blue-100">
-                            <div className="flex items-center gap-4 mb-8">
-                                <div className="w-12 h-12 bg-blue-500 text-white rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
-                                    <Calculator size={24} />
-                                </div>
-                                <div>
-                                    <h4 className="text-lg font-bold text-slate-900">Simulateur de rémunération brute</h4>
-                                    <p className="text-slate-500 text-xs font-medium">Calcul basé sur le SMIC 2024</p>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <div className="space-y-6">
-                                    <div>
-                                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 ml-1">Âge de l'apprenti</label>
-                                        <div className="flex flex-wrap gap-2">
-                                            {['15-17', '18-20', '21-25', '26+'].map((age) => (
-                                                <button key={age} type="button" onClick={() => handleSalaryCalc(age, formData.salaire.annee)}
-                                                    className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${formData.salaire.age === age ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-slate-600 border border-slate-200 hover:bg-blue-50 hover:border-blue-200'}`}>
-                                                    {age} ans
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 ml-1">Année d'exécution</label>
-                                        <div className="flex gap-2">
-                                            {['1', '2', '3'].map((year) => (
-                                                <button key={year} type="button" onClick={() => handleSalaryCalc(formData.salaire.age, year)}
-                                                    className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${formData.salaire.annee === year ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-slate-600 border border-slate-200 hover:bg-blue-50 hover:border-blue-200'}`}>
-                                                    Année {year}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="bg-white p-6 rounded-2xl shadow-sm border border-blue-100 flex flex-col justify-center items-center text-center">
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Salaire mensuel brut estimé</span>
-                                    <div className="text-4xl font-bold text-slate-900 mb-1">
-                                        {formData.salaire.montant.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}
-                                    </div>
-                                    <div className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-[10px] font-bold uppercase tracking-tighter">
-                                        {formData.salaire.pourcentage}% du SMIC
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </Card>
 
                 <Card step={6} title="Contrat & Salaire">
                     <div className="grid grid-cols-12 gap-5">
