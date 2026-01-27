@@ -37,123 +37,178 @@ export const api = {
   // CREATE (POST)
   async submitStudent(data: StudentFormData): Promise<ApiResponse> {
     try {
-      // Helper pour nettoyer les téléphones (Strictement selon le validator Python)
+      // Helper pour nettoyer les téléphones
       const cleanPhone = (p: any) => {
         if (!p) return "";
-        let phone = p.toString().replace(/[^\d+]/g, '');
-        if (phone.startsWith('0') && phone.length === 10) {
-          return '0' + phone.substring(1); // Le backend s'occupe de mettre +33
+        let phone = p.toString().replace(/\D/g, '');
+        // Gestion du format international +33
+        if (phone.length === 11 && phone.startsWith('33')) {
+          return '0' + phone.substring(2);
+        }
+        // Gestion du format sans 0
+        if (phone.length === 9) {
+          return '0' + phone;
         }
         return phone;
       };
 
+      // --- MAPPINGS ---
       const mapSexe = (v: string) => {
+        // Normalisation pour envoyer strictement Féminin ou Masculin
         if (v === 'feminin' || v === 'Féminin' || v === 'Femme') return 'Féminin';
         if (v === 'masculin' || v === 'Masculin' || v === 'Homme') return 'Masculin';
-        return v || "Masculin";
+        return v;
       };
 
       const mapNationalite = (v: string) => {
         if (v === 'francaise') return 'Française';
         if (v === 'ue') return 'Union Européenne';
         if (v === 'hors_ue') return 'Hors Union Européenne';
-        return formatString(v || "");
+        return formatString(v);
       };
 
-      const mapClasse = (v: string) => {
+      const mapSituation = (v: string) => {
         const map: Record<string, string> = {
-          'derniere_annee_obtenu': 'Diplôme obtenu',
-          'terminale': 'Terminale',
-          '1ere_annee_validee': '1ère année validée',
-          '3e': 'Classe de 3ème'
+          'scolaire': 'Scolaire : (Bac / brevet...)',
+          'etudiant': 'Etudiant : (Etude supérieur)',
+          'contrat_pro': 'Contrat pro',
+          'salarie': 'Salarié : (CDD/CDI)',
+          'apprentissage': "Contrat d'apprentissage"
+        };
+        // Try exact match first, then formatted, then pass through
+        return map[v] || v || formatString(v);
+      };
+
+      const mapDiplome = (v: string) => {
+        const map: Record<string, string> = {
+          'bac_techno': 'Baccalauréat Technologique',
+          'bac_general': 'Baccalauréat général',
+          'bac_pro': 'Baccalauréat pro',
+          'brevet': 'Brevet',
+          'cap': 'CAP',
+          'bts': 'BTS',
+          'aucun': 'Aucun diplôme'
+        };
+        return map[v] || v || formatString(v);
+      };
+
+      const mapNiveau = (v: string) => {
+        // The new form sends "BAC", "BAC +2" strings directly.
+        // Only map if it's a code
+        const map: Record<string, string> = {
+          'aucun': 'Aucun',
+          'cap_bep': 'CAP / BEP',
+          'bac': 'BAC',
+          'bac2': 'BAC +2',
+          'bac3_4': 'BAC +3/4',
+          'bac5': 'BAC +5',
+          'bac5+': 'BAC +5+'
         };
         return map[v] || v;
       };
 
-      // Construction du payload selon les types du modèle Pydantic
-      const payload = {
-        prenom: data.prenom || "",
-        nom_naissance: data.nom_naissance || "",
-        nom_usage: data.nom_usage || null,
-        sexe: mapSexe(data.sexe || ""),
-        date_naissance: data.date_naissance || null,
-        nationalite: mapNationalite(data.nationalite || ""),
-        commune_naissance: data.commune_naissance || "",
-        departement: data.departement || "",
-
-        nom_representant_legal: data.nom_representant_legal || (data.representant_legal_1?.nom ? `${data.representant_legal_1.nom} ${data.representant_legal_1.prenom || ""}`.trim() : null),
-        voie_representant_legal: data.voie_representant_legal || data.representant_legal_1?.voie || null,
-        numero_legal: data.numero_legal || data.representant_legal_1?.numero || null,
-        complement_adresse_legal: data.complement_adresse_legal || data.representant_legal_1?.complement || null,
-        code_postal_legal: data.code_postal_legal || data.representant_legal_1?.code_postal || null,
-        commune_legal: data.commune_legal || data.representant_legal_1?.ville || null,
-        courriel_legal: data.courriel_legal || data.representant_legal_1?.email || null,
-
-        adresse_residence: data.adresse_residence || "",
-        code_postal: data.code_postal?.toString() || "",
-        ville: data.ville || "",
-        email: data.email || "",
-        telephone: cleanPhone(data.telephone || ""),
-        nir: data.nir ? data.nir.replace(/\s/g, '') : null,
-
-        situation: data.situation || null,
-        regime_social: data.regime_social || null,
-        declare_inscription_sportif_haut_niveau: !!data.declare_inscription_sportif_haut_niveau,
-        declare_avoir_projet_creation_reprise_entreprise: !!data.declare_avoir_projet_creation_reprise_entreprise,
-        declare_travailleur_handicape: !!data.declare_travailleur_handicape,
-        alternance: !!data.alternance,
-
-        dernier_diplome_prepare: data.dernier_diplome_prepare || null,
-        derniere_classe: mapClasse(data.derniere_classe || ""),
-        bac: data.bac || "",
-        intitulePrecisDernierDiplome: data.intitulePrecisDernierDiplome || null,
-
-        formation_souhaitee: data.formation_souhaitee || null,
-        date_de_visite: data.date_de_visite || null,
-        date_de_reglement: data.date_de_reglement || null,
-        entreprise_d_accueil: data.entreprise_d_accueil || null,
-
-        connaissance_rush_how: data.connaissance_rush_how || null,
-        motivation_projet_professionnel: data.motivation_projet_professionnel || null
+      const mapFormation = (v: string) => {
+        const map: Record<string, string> = {
+          'bts_mco': 'BTS MCO',
+          'bts_ndrc': 'BTS NDRC',
+          'bachelor': 'BACHELOR RDC',
+          'bachelor_rdc': 'BACHELOR RDC',
+          'tp_ntc': 'TP NTC'
+        };
+        return map[v] || formatString(v);
       };
 
-      const requiredFields = ['prenom', 'nom_naissance', 'sexe', 'date_naissance', 'nationalite', 'commune_naissance', 'departement', 'adresse_residence', 'code_postal', 'ville', 'email', 'telephone', 'bac'];
+      // Construction du payload STRICTEMENT selon la spec backend
+      const payload = {
+        // Identité
+        prenom: data.prenom,
+        nom_naissance: data.nom_naissance,
+        nom_usage: data.nom_usage || "",
+        sexe: mapSexe(data.sexe),
+        date_naissance: data.date_naissance,
+        nationalite: mapNationalite(data.nationalite),
+        commune_naissance: data.commune_naissance,
+        departement: data.departement,
 
-      const finalPayload = Object.keys(payload).reduce((acc: any, key) => {
-        const value = (payload as any)[key];
-        if (!requiredFields.includes(key) && (value === "" || value === undefined)) {
-          acc[key] = null;
-        } else {
-          acc[key] = value;
-        }
-        return acc;
-      }, {});
+        // Coordonnées
+        adresse_residence: data.adresse_residence,
+        code_postal: data.code_postal,
+        ville: data.ville,
+        email: data.email,
+        telephone: cleanPhone(data.telephone),
+        nir: data.nir ? data.nir.replace(/\s/g, '') : "",
 
-      console.log("🚀 Submitting payload to backend:", finalPayload);
+        // Situation & Déclarations
+        situation: mapSituation(data.situation),
+        regime_social: (data.regime_social === 'urssaf') ? "Sécurité Sociale" : (data.regime_social === 'msa' ? "MSA" : "Sécurité Sociale"),
+
+        declare_inscription_sportif_haut_niveau: data.declare_inscription_sportif_haut_niveau || false,
+        declare_avoir_projet_creation_reprise_entreprise: data.declare_avoir_projet_creation_reprise_entreprise || false,
+        declare_travailleur_handicape: data.declare_travailleur_handicape || false,
+        alternance: data.alternance || false,
+
+        // Scolarité
+        dernier_diplome_prepare: mapDiplome(data.dernier_diplome_prepare),
+        intitulePrecisDernierDiplome: data.intitulePrecisDernierDiplome || "",
+        derniere_classe: data.derniere_classe || "",
+        bac: mapNiveau(data.bac) || "",
+
+        // Projet
+        formation_souhaitee: mapFormation(data.formation_souhaitee),
+        date_de_visite: data.date_de_visite || new Date().toISOString().split('T')[0],
+        date_de_reglement: data.date_de_reglement || new Date().toISOString().split('T')[0],
+
+        entreprise_d_accueil: data.entreprise_d_accueil || "Non",
+
+        connaissance_rush_how: formatString(data.connaissance_rush_how || "") || "Autre",
+        motivation_projet_professionnel: data.motivation_projet_professionnel || "Non renseigné"
+      };
+
+      console.log("📤 Submitting payload:", payload);
 
       const response = await fetch(`${BASE_URL}/candidates`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify(finalPayload),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
-        let errorMessage = `Erreur ${response.status}`;
+        let errorMessage = `Erreur ${response.status}: ${response.statusText}`;
         try {
           const errorData = await response.json();
-          if (errorData.detail) errorMessage = typeof errorData.detail === 'string' ? errorData.detail : JSON.stringify(errorData.detail);
+          // Gestion des erreurs Pydantic détaillées
+          if (Array.isArray(errorData.detail)) {
+            const details = errorData.detail
+              .map((err: any) => {
+                const field = Array.isArray(err.loc) ? err.loc[err.loc.length - 1] : 'champ inconnu';
+                return `${field}: ${err.msg}`;
+              })
+              .join(', ');
+            if (details) errorMessage = details;
+          } else if (typeof errorData.detail === 'string' && errorData.detail) {
+            errorMessage = errorData.detail;
+          }
         } catch (e) {
           const text = await response.text();
-          if (text) errorMessage = text;
+          if (text) errorMessage = `Erreur ${response.status}: ${text}`;
         }
         throw new Error(errorMessage);
       }
 
       const json = await response.json();
+
+      // Ensure we return the expected structure for the form (success, record_id)
+      if (json && (json.id || json.record_id)) {
+        return {
+          success: true,
+          record_id: json.record_id || json.id,
+          data: json
+        };
+      }
+
       return {
         success: true,
-        record_id: json.record_id || json.id,
-        data: json
+        ...json
       };
     } catch (error: any) {
       console.error('❌ API Error (Submit Student):', error);
@@ -180,10 +235,13 @@ export const api = {
   async getEtudiantsFiches(avecFicheUniquement: boolean = false): Promise<any> {
     try {
       const url = `${BASE_API_URL}/rh/etudiants-fiches?avec_fiche_uniquement=${avecFicheUniquement}`;
+      console.log(`🔍 Fetching étudiants fiches from: ${url}`);
+
       const response = await fetch(url, {
         method: 'GET',
         headers: { 'Accept': 'application/json' }
       });
+
       if (!response.ok) throw new Error('Failed to fetch étudiants fiches');
       return await response.json();
     } catch (error) {
@@ -258,17 +316,29 @@ export const api = {
     try {
       const formData = new FormData();
       formData.append('file', file);
+
       const endpointMap: Record<string, string> = {
-        'cv': 'cv', 'cni': 'cin', 'lettre': 'lettre-motivation', 'vitale': 'carte-vitale', 'diplome': 'dernier-diplome'
+        'cv': 'cv',
+        'cni': 'cin',
+        'lettre': 'lettre-motivation',
+        'vitale': 'carte-vitale',
+        'diplome': 'dernier-diplome'
       };
+
       const endpointSuffix = endpointMap[docType] || docType;
       const url = `${BASE_URL}/candidates/${recordId}/documents/${endpointSuffix}`;
+
+      console.log(`🚀 Uploading ${docType} to ${url}`);
+
       const response = await fetch(url, {
         method: 'POST',
         headers: { 'Accept': 'application/json' },
         body: formData,
       });
-      if (!response.ok) throw new Error(`Upload failed: ${response.statusText}`);
+
+      if (!response.ok) {
+        throw new Error(`Upload failed: ${response.statusText}`);
+      }
       return await response.json();
     } catch (error) {
       console.error(`❌ API Error (Upload ${docType}):`, error);
@@ -279,16 +349,22 @@ export const api = {
   // --- GENERATE FICHE (NEW) ---
   async generateFicheRenseignement(etudiantId: string): Promise<ApiResponse> {
     try {
+      console.log(`🚀 Génération fiche pour étudiant: ${etudiantId}`);
       const response = await fetch(`${BASE_API_URL}/generate-fiche/${etudiantId}`, {
         method: 'POST',
         headers: { 'Accept': 'application/json' }
       });
+
       if (!response.ok) {
         const txt = await response.text();
         throw new Error(txt || response.statusText);
       }
+
       const json = await response.json();
-      return { success: true, data: json };
+      return {
+        success: true,
+        data: json
+      };
     } catch (error: any) {
       console.error('❌ API Error (Generate Fiche):', error);
       throw error;
@@ -300,42 +376,137 @@ export const api = {
   // CREATE (POST)
   async submitCompany(data: CompanyFormData): Promise<ApiResponse> {
     try {
-      const cleanData = (obj: any): any => {
-        if (typeof obj !== 'object' || obj === null) return obj;
-        const cleaned: any = Array.isArray(obj) ? [] : {};
-        for (const key in obj) {
-          const value = obj[key];
-          const numericFields = [
-            'nombre_salaries', 'annees_experience', 'nombre_mois', 'montant_salaire_brut',
-            'nombre_heures_formation', 'jours_de_cours', 'effectif', 'nb_heures',
-            'experience', 'pourcentage', 'montant'
-          ];
-          if (numericFields.includes(key)) {
-            cleaned[key] = (value === null || value === undefined || (typeof value === 'string' && value.trim() === ''))
-              ? null
-              : (typeof value === 'number' ? value : parseFloat(value.toString()) || null);
-          } else if (typeof value === 'object' && value !== null) {
-            cleaned[key] = cleanData(value);
-          } else if (typeof value === 'string' && value.trim() === '') {
-            cleaned[key] = null;
-          } else {
-            cleaned[key] = value;
-          }
-        }
-        return cleaned;
+      // Helper pour s'assurer qu'on envoie une chaîne vide et non null
+      const ensureString = (val: any) => {
+        if (val === undefined || val === null) return "";
+        return String(val);
       };
-      const payload = cleanData(data);
+
+      // Mapper la structure imbriquée du frontend vers la structure plate attendue par le backend
+      const payload = {
+        // SECTION 1: IDENTIFICATION ENTREPRISE
+        identification: {
+          raison_sociale: ensureString(data.identification.raison_sociale),
+          siret: ensureString(data.identification.siret),
+          code_ape_naf: ensureString(data.identification.code_ape_naf),
+          type_employeur: ensureString(data.identification.type_employeur),
+          nombre_salaries: data.identification.effectif ? parseInt(data.identification.effectif.toString()) : null,
+          convention_collective: ensureString(data.identification.convention)
+        },
+
+        // SECTION 2: ADRESSE ENTREPRISE
+        adresse: {
+          numero: ensureString(data.adresse.num),
+          voie: ensureString(data.adresse.voie),
+          complement: ensureString(data.adresse.complement),
+          code_postal: ensureString(data.adresse.code_postal),
+          ville: ensureString(data.adresse.ville),
+          telephone: ensureString(data.adresse.telephone),
+          email: ensureString(data.adresse.email)
+        },
+
+        // SECTION 3: MAÎTRE D'APPRENTISSAGE
+        maitre_apprentissage: {
+          nom: ensureString(data.maitre_apprentissage.nom),
+          prenom: ensureString(data.maitre_apprentissage.prenom),
+          date_naissance: ensureString(data.maitre_apprentissage.date_naissance),
+          fonction: ensureString(data.maitre_apprentissage.fonction),
+          diplome_plus_eleve: ensureString(data.maitre_apprentissage.diplome),
+          annees_experience: data.maitre_apprentissage.experience ? parseInt(data.maitre_apprentissage.experience.toString()) : null,
+          telephone: ensureString(data.maitre_apprentissage.telephone),
+          email: ensureString(data.maitre_apprentissage.email)
+        },
+
+        // SECTION 4: OPCO
+        opco: {
+          nom_opco: ensureString(data.opco.nom),
+        },
+
+        // SECTION 5: CONTRAT
+        contrat: {
+          type_contrat: ensureString(data.contrat.type_contrat),
+          type_derogation: ensureString(data.contrat.type_derogation),
+          date_debut: ensureString(data.formation.date_debut),
+          date_fin: ensureString(data.formation.date_fin),
+          duree_hebdomadaire: ensureString(data.contrat.duree_hebdomadaire),
+          poste_occupe: ensureString(data.contrat.poste_occupe),
+          lieu_execution: ensureString(data.contrat.lieu_execution),
+          base_calcul_salaire: ensureString(data.contrat.base_calcul_salaire),
+          smic: ensureString(data.contrat.smic),
+          montant_salaire_brut: data.contrat.montant_salaire_brut ? parseFloat(data.contrat.montant_salaire_brut.toString()) : null,
+
+          date_conclusion: ensureString(data.contrat.date_conclusion),
+          date_debut_execution: ensureString(data.contrat.date_debut_execution),
+          numero_deca_ancien_contrat: ensureString(data.contrat.numero_deca_ancien_contrat),
+
+          travail_machine_dangereuse: data.contrat.machines_dangereuses === 'oui' ? 'oui' : 'non',
+          caisse_retraite: ensureString(data.contrat.caisse_retraite),
+          date_avenant: ensureString(data.contrat.date_avenant)
+        },
+
+        // SECTION 6: FORMATION & MISSIONS
+        formation_missions: {
+          formation_alternant: data.missions.selectionnees.length > 0 ? data.missions.selectionnees.join(', ') : "",
+          formation_choisie: ensureString(data.formation.choisie),
+          code_rncp: ensureString(data.formation.code_rncp),
+          code_diplome: ensureString(data.formation.code_diplome),
+          nombre_heures_formation: data.formation.nb_heures ? parseFloat(data.formation.nb_heures.toString()) : null,
+          jours_de_cours: data.formation.jours_cours ? parseFloat(data.formation.jours_cours.toString()) : null,
+
+          // Informations CFA
+          cfaEnterprise: data.cfa.entreprise === 'oui',
+          DenominationCFA: ensureString(data.cfa.denomination),
+          NumeroUAI: ensureString(data.cfa.uai),
+          NumeroSiretCFA: ensureString(data.cfa.siret),
+          AdresseCFA: ensureString(data.cfa.adresse),
+          complementAdresseCFA: ensureString(data.cfa.complement),
+          codePostalCFA: ensureString(data.cfa.code_postal),
+          communeCFA: ensureString(data.cfa.commune)
+        },
+
+        // RECORD ID ÉTUDIANT
+        record_id_etudiant: ensureString(data.record_id_etudiant)
+      };
+
+      console.log("📤 Submitting Company payload:", JSON.stringify(payload, null, 2));
+
       const response = await fetch(`${BASE_URL}/entreprise`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
         body: JSON.stringify(payload),
       });
+
       if (!response.ok) {
-        const txt = await response.text();
-        throw new Error(txt || response.statusText);
+        let errorMessage = `Erreur ${response.status}: ${response.statusText}`;
+        try {
+          const errorData = await response.json();
+          // Gestion des erreurs Pydantic détaillées
+          if (Array.isArray(errorData.detail)) {
+            const details = errorData.detail
+              .map((err: any) => {
+                const field = Array.isArray(err.loc) ? err.loc[err.loc.length - 1] : 'champ inconnu';
+                return `${field}: ${err.msg}`;
+              })
+              .join(', ');
+            if (details) errorMessage = details;
+          } else if (typeof errorData.detail === 'string' && errorData.detail) {
+            errorMessage = errorData.detail;
+          }
+        } catch (e) {
+          const text = await response.text();
+          if (text) errorMessage = `Erreur ${response.status}: ${text}`;
+        }
+        throw new Error(errorMessage);
       }
+
       const json = await response.json();
-      return { success: true, data: json };
+      return {
+        success: true,
+        data: json
+      };
     } catch (error: any) {
       console.error('❌ API Error (Submit Company):', error);
       throw error;
@@ -351,7 +522,9 @@ export const api = {
       });
       if (!response.ok) throw new Error('Failed to fetch companies');
       return await response.json();
-    } catch (error) { return []; }
+    } catch (error) {
+      return [];
+    }
   },
 
   // READ ONE (GET)

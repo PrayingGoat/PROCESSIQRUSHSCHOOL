@@ -25,7 +25,7 @@ import {
     Phone,
     Calculator
 } from 'lucide-react';
-import { AdmissionTab } from '../types';
+import { AdmissionTab, CompanyFormData } from '../types';
 import QuestionnaireForm from './QuestionnaireForm';
 import { api } from '../services/api';
 import Button from './ui/Button';
@@ -110,11 +110,11 @@ const StepLine = ({ isCompleted }: { isCompleted: boolean }) => (
 const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, studentRecordId: string | null }) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<CompanyFormData>({
         identification: {
             raison_sociale: "",
             siret: "",
-            code_ape: "",
+            code_ape_naf: "",
             type_employeur: "",
             effectif: "",
             convention: ""
@@ -128,7 +128,6 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
             telephone: "",
             email: ""
         },
-
         maitre_apprentissage: {
             nom: "",
             prenom: "",
@@ -152,10 +151,9 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
             jours_cours: ""
         },
         cfa: {
-            isRushSchool: true,
+            rush_school: "oui",
+            entreprise: "non",
             denomination: "RUSH SCHOOL",
-            diplome_vise: "",
-            intitule_formation: "",
             uai: "0932731W",
             siret: "91901416300018",
             adresse: "11-13 AVENUE DE LA DIVISION LECLERC",
@@ -164,20 +162,22 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
             commune: "BOBIGNY"
         },
         contrat: {
-            type: "",
-            derogation: "",
-            numero_deca_ancien: "",
+            type_contrat: "",
+            type_derogation: "",
+            date_debut: "",
+            date_fin: "",
+            duree_hebdomadaire: "35h",
+            poste_occupe: "",
+            lieu_execution: "",
+            base_calcul_salaire: "SMIC",
+            smic: "",
+            montant_salaire_brut: 0,
             date_conclusion: "",
             date_debut_execution: "",
-            date_formation_employeur: "",
-            date_fin_apprentissage: "",
-            date_avenant: "",
+            numero_deca_ancien_contrat: "",
             machines_dangereuses: "non",
-            duree_hebdo: "35h",
-            poste: "",
-            lieu: "",
-            nombre_mois: 12,
-            caisse_retraite: ""
+            caisse_retraite: "",
+            date_avenant: ""
         },
         salaire: {
             age: "",
@@ -189,14 +189,13 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
             formation_alternant: "",
             selectionnees: [] as string[]
         },
-        contact_rh: {
-            nom_prenom_rh: "",
-            email_rh: ""
-        },
+
         contact_taxe: {
             fonction_contact: "",
+            telephone_contact: "",
             email_contact: ""
-        }
+        },
+        record_id_etudiant: studentRecordId || ""
     });
 
     const FORMATION_DETAILS: Record<string, any> = {
@@ -292,18 +291,16 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
         }));
     };
 
-    // Calcul automatique du nombre de mois en fonction des dates de contrat
+    // Calcul automatique du nombre de mois en fonction des dates de formation
     useEffect(() => {
-        const { date_formation_employeur, date_fin_apprentissage } = formData.contrat;
-        if (date_formation_employeur && date_fin_apprentissage) {
-            const start = new Date(date_formation_employeur);
-            const end = new Date(date_fin_apprentissage);
+        const { date_debut, date_fin } = formData.formation;
+        if (date_debut && date_fin) {
+            const start = new Date(date_debut);
+            const end = new Date(date_fin);
 
             if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
                 let months = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
 
-                // Si on a commencé après le jour de fin dans le mois, on compte un mois de moins, 
-                // sauf si c'est le seul mois.
                 if (end.getDate() < start.getDate()) {
                     months--;
                 }
@@ -315,7 +312,7 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
                 }
             }
         }
-    }, [formData.contrat.date_formation_employeur, formData.contrat.date_fin_apprentissage]);
+    }, [formData.formation.date_debut, formData.formation.date_fin]);
 
     const handleSubmit = async () => {
         if (!formData.identification.raison_sociale || !formData.identification.siret) {
@@ -331,142 +328,7 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
         setIsSubmitting(true);
 
         try {
-            // Helpers for mapping codes to labels as per user JSON example
-            const mapTypeEmployeur = (val: string) => {
-                const map: Record<string, string> = {
-                    "11": "Entreprise répertoire des métiers",
-                    "12": "Entreprise registre du commerce",
-                    "13": "Entreprises secteur agricole (MSA)",
-                    "14": "Profession libérale",
-                    "15": "Association",
-                    "16": "Autre employeur privé",
-                    "21": "Service de l'Etat",
-                    "22": "Commune"
-                };
-                return map[val] || val;
-            };
-
-            const mapTypeContrat = (val: string) => {
-                const map: Record<string, string> = {
-                    "11": "Premier contrat d'apprentissage",
-                    "21": "Nouveau contrat (même employeur)",
-                    "22": "Nouveau contrat (autre employeur)",
-                    "23": "Nouveau contrat (précédent rompu)",
-                    "31": "Modification situation juridique employeur",
-                    "32": "Changement employeur (contrat saisonnier)",
-                    "33": "Prolongation (échec examen)",
-                    "34": "Prolongation (travailleur handicapé)",
-                    "35": "Diplôme supplémentaire préparé",
-                    "36": "Autres changements",
-                    "37": "Modification du lieu d'exécution",
-                    "38": "Modification du lieu de formation"
-                };
-                return map[val] || "Contrat d'apprentissage";
-            };
-
-            const mapNiveauDiplome = (val: string) => {
-                if (!val) return "";
-                return val.split(',')[0].trim();
-            };
-
-            const payload = {
-                identification: {
-                    raison_sociale: formData.identification.raison_sociale || null,
-                    nom_entreprise: formData.identification.raison_sociale || null,
-                    siret: formData.identification.siret || null,
-                    code_ape_naf: formData.identification.code_ape || null,
-                    type_employeur: mapTypeEmployeur(formData.identification.type_employeur) || null,
-                    employeur_specifique: null,
-                    nombre_salaries: parseInt(formData.identification.effectif.toString()) || 0,
-                    code_idcc: null,
-                    convention_collective: formData.identification.convention || null
-                },
-                adresse: {
-                    numero: formData.adresse.num || null,
-                    voie: "Voie",
-                    nom_rue: formData.adresse.voie || null,
-                    complement: formData.adresse.complement || null,
-                    code_postal: formData.adresse.code_postal || null,
-                    ville: formData.adresse.ville || null,
-                    telephone: formData.adresse.telephone || null,
-                    email: formData.adresse.email || null
-                },
-                representant_legal: null, // Section removed from UI
-                maitre_apprentissage: {
-                    nom: formData.maitre_apprentissage.nom || null,
-                    prenom: formData.maitre_apprentissage.prenom || null,
-                    date_naissance: formData.maitre_apprentissage.date_naissance || null,
-                    numero_securite_sociale: null,
-                    fonction: formData.maitre_apprentissage.fonction || null,
-                    diplome_plus_eleve: formData.maitre_apprentissage.diplome || null,
-                    niveau_diplome: mapNiveauDiplome(formData.maitre_apprentissage.diplome) || null,
-                    annees_experience: parseInt(formData.maitre_apprentissage.experience.toString()) || 0,
-                    telephone: formData.maitre_apprentissage.telephone || null,
-                    email: formData.maitre_apprentissage.email || null,
-                    deja_maitre_apprentissage: null
-                },
-                opco: {
-                    nom_opco: formData.opco.nom || null,
-                    adresse: null,
-                    code_postal: null,
-                    ville: null
-                },
-                facturation: null, // Not in form
-                contact_rh: formData.contact_rh.nom_prenom_rh ? {
-                    nom_prenom_rh: formData.contact_rh.nom_prenom_rh,
-                    fonction_rh: null,
-                    telephone_rh: null,
-                    email_rh: formData.contact_rh.email_rh || null
-                } : null,
-                contrat: {
-                    nature_contrat: "Contrat",
-                    type_contrat: mapTypeContrat(formData.contrat.type),
-                    type_derogation: formData.contrat.derogation || "Aucune dérogation",
-                    date_debut: formData.contrat.date_formation_employeur || null,
-                    date_fin: formData.contrat.date_fin_apprentissage || null,
-                    nombre_mois: formData.contrat.nombre_mois || 0,
-                    duree_hebdomadaire: formData.contrat.duree_hebdo || null,
-                    poste_occupe: formData.contrat.poste || null,
-                    lieu_execution: formData.contrat.lieu || null,
-                    base_calcul_salaire: "SMIC",
-                    montant_salaire_brut: formData.salaire.montant || 0,
-                    date_conclusion: formData.contrat.date_conclusion || null,
-                    date_debut_execution: formData.contrat.date_debut_execution || null,
-                    numero_deca_ancien_contrat: formData.contrat.numero_deca_ancien || null,
-                    travail_machine_dangereuse: formData.contrat.machines_dangereuses === 'oui' ? "Oui" : "Non",
-                    caisse_retraite: formData.contrat.caisse_retraite || null,
-                    date_avenant: formData.contrat.date_avenant || null
-                },
-                contact_taxe: formData.contact_taxe.email_contact ? {
-                    fonction_contact: formData.contact_taxe.fonction_contact || null,
-                    telephone_contact: null,
-                    email_contact: formData.contact_taxe.email_contact
-                } : null,
-                formation_missions: {
-                    formation_alternant: formData.formation.choisie || null,
-                    mission_suggere: formData.missions.selectionnees.join(", ") || null,
-                    formation_choisie: formData.formation.choisie || null,
-                    date_debut_formation: formData.formation.date_debut || null,
-                    date_fin_formation: formData.formation.date_fin || null,
-                    code_rncp: formData.formation.code_rncp || null,
-                    code_diplome: formData.formation.code_diplome || null,
-                    nombre_heures_formation: parseFloat(formData.formation.nb_heures.toString()) || 0,
-                    jours_de_cours: parseFloat(formData.formation.jours_cours.toString()) || 0,
-                    cfaEnterprise: formData.cfa.isRushSchool,
-                    DenominationCFA: formData.cfa.denomination || null,
-                    diplomeVise: formData.cfa.diplome_vise || null,
-                    intituleDiplome: formData.cfa.intitule_formation || null,
-                    NumeroUAI: formData.cfa.uai || null,
-                    NumeroSiretCFA: formData.cfa.siret || null,
-                    AdresseCFA: formData.cfa.adresse || null,
-                    complementAdresseCFA: formData.cfa.complement || null,
-                    codePostalCFA: formData.cfa.code_postal || null,
-                    communeCFA: formData.cfa.commune || null
-                },
-                record_id_etudiant: studentRecordId
-            };
-
-            await api.submitCompany(payload as any);
+            await api.submitCompany(formData);
             onNext();
         } catch (error) {
             console.error("Erreur soumission entreprise:", error);
@@ -501,7 +363,7 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
                             <Input label="Numéro SIRET" required placeholder="14 chiffres" value={formData.identification.siret} onChange={(e) => handleNestedChange('identification', 'siret', e.target.value)} />
                         </div>
                         <div className="col-span-12 md:col-span-6">
-                            <Input label="Code APE/NAF" required placeholder="Ex: 4711D" value={formData.identification.code_ape} onChange={(e) => handleNestedChange('identification', 'code_ape', e.target.value)} />
+                            <Input label="Code APE/NAF" required placeholder="Ex: 4711D" value={formData.identification.code_ape_naf} onChange={(e) => handleNestedChange('identification', 'code_ape_naf', e.target.value)} />
                         </div>
                         <div className="col-span-12">
                             <Select
@@ -523,10 +385,10 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
                             />
                         </div>
                         <div className="col-span-12 md:col-span-6">
-                            <Input label="Effectif salarié" required type="number" placeholder="Nombre de salariés" value={formData.identification.effectif} onChange={(e) => handleNestedChange('identification', 'effectif', e.target.value)} />
+                            <Input label="Effectif salarié" required type="number" placeholder="Nombre" value={formData.identification.effectif} onChange={(e) => handleNestedChange('identification', 'effectif', e.target.value)} />
                         </div>
                         <div className="col-span-12 md:col-span-6">
-                            <Input label="Convention collective" placeholder="Intitulé ou code IDCC" value={formData.identification.convention} onChange={(e) => handleNestedChange('identification', 'convention', e.target.value)} />
+                            <Input label="Convention collective" placeholder="Intitulé" value={formData.identification.convention} onChange={(e) => handleNestedChange('identification', 'convention', e.target.value)} />
                         </div>
                     </div>
                 </Card>
@@ -590,13 +452,13 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
                                 placeholder="Sélectionnez"
                             />
                         </div>
-                        <div className="col-span-12 md:col-span-6">
-                            <Input label="Années d'expérience" type="number" placeholder="Nombre d'années" value={formData.maitre_apprentissage.experience} onChange={(e) => handleNestedChange('maitre_apprentissage', 'experience', e.target.value)} />
+                        <div className="col-span-12 md:col-span-4">
+                            <Input label="Années d'expérience" type="number" placeholder="Années" value={formData.maitre_apprentissage.experience} onChange={(e) => handleNestedChange('maitre_apprentissage', 'experience', e.target.value)} />
                         </div>
-                        <div className="col-span-12 md:col-span-6">
-                            <Input label="Téléphone" required type="tel" placeholder="Téléphone direct" value={formData.maitre_apprentissage.telephone} onChange={(e) => handleNestedChange('maitre_apprentissage', 'telephone', e.target.value)} />
+                        <div className="col-span-12 md:col-span-4">
+                            <Input label="Téléphone" required type="tel" placeholder="Téléphone" value={formData.maitre_apprentissage.telephone} onChange={(e) => handleNestedChange('maitre_apprentissage', 'telephone', e.target.value)} />
                         </div>
-                        <div className="col-span-12 md:col-span-6">
+                        <div className="col-span-12 md:col-span-4">
                             <Input label="Email" required type="email" placeholder="Email" value={formData.maitre_apprentissage.email} onChange={(e) => handleNestedChange('maitre_apprentissage', 'email', e.target.value)} />
                         </div>
                     </div>
@@ -653,8 +515,11 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
                                     <input
                                         type="radio"
                                         name="cfa_choice"
-                                        checked={formData.cfa.isRushSchool}
-                                        onChange={() => handleNestedChange('cfa', 'isRushSchool', true)}
+                                        checked={formData.cfa.rush_school === 'oui'}
+                                        onChange={() => {
+                                            handleNestedChange('cfa', 'rush_school', 'oui');
+                                            handleNestedChange('cfa', 'entreprise', 'non');
+                                        }}
                                         className="w-5 h-5 accent-blue-600"
                                     />
                                     <span className="font-semibold text-slate-700">CFA Rush School</span>
@@ -663,15 +528,18 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
                                     <input
                                         type="radio"
                                         name="cfa_choice"
-                                        checked={!formData.cfa.isRushSchool}
-                                        onChange={() => handleNestedChange('cfa', 'isRushSchool', false)}
+                                        checked={formData.cfa.rush_school === 'non'}
+                                        onChange={() => {
+                                            handleNestedChange('cfa', 'rush_school', 'non');
+                                            handleNestedChange('cfa', 'entreprise', 'oui');
+                                        }}
                                         className="w-5 h-5 accent-blue-600"
                                     />
                                     <span className="font-semibold text-slate-700">Autre CFA</span>
                                 </label>
                             </div>
 
-                            {formData.cfa.isRushSchool ? (
+                            {formData.cfa.rush_school === 'oui' ? (
                                 <div className="bg-blue-50/50 p-6 rounded-2xl border border-blue-100 animate-fade-in">
                                     <div className="flex items-center gap-4 mb-4">
                                         <div className="w-10 h-10 bg-blue-500 text-white rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
@@ -802,84 +670,51 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
                     </div>
                 </Card>
 
-                <Card step={7} title="Informations sur le contrat">
+                <Card step={6} title="Contrat & Salaire">
                     <div className="grid grid-cols-12 gap-5">
-                        <div className="col-span-12">
+                        <div className="col-span-12 md:col-span-6">
                             <Select
-                                label="Type de contrat ou d'avenant"
+                                label="Type de contrat"
                                 required
-                                value={formData.contrat.type}
-                                onChange={(e) => handleNestedChange('contrat', 'type', e.target.value)}
-                                placeholder="Sélectionnez"
+                                value={formData.contrat.type_contrat}
+                                onChange={(e) => handleNestedChange('contrat', 'type_contrat', e.target.value)}
                                 options={[
-                                    { value: "11", label: "11 - Premier contrat d'apprentissage de l'apprenti" },
-                                    { value: "21", label: "21 - Nouveau contrat (même employeur)" },
-                                    { value: "22", label: "22 - Nouveau contrat (autre employeur)" },
-                                    { value: "23", label: "23 - Nouveau contrat (précédent rompu)" },
-                                    { value: "31", label: "31 - Modification situation juridique employeur" },
-                                    { value: "32", label: "32 - Changement employeur (contrat saisonnier)" },
-                                    { value: "33", label: "33 - Prolongation (échec examen)" },
-                                    { value: "34", label: "34 - Prolongation (travailleur handicapé)" },
-                                    { value: "35", label: "35 - Diplôme supplémentaire préparé" },
-                                    { value: "36", label: "36 - Autres changements (maître, durée, etc.)" },
-                                    { value: "37", label: "37 - Modification du lieu d'exécution" },
-                                    { value: "38", label: "38 - Modification du lieu de formation" }
+                                    { value: "11", label: "11 - Contrat initial" },
+                                    { value: "21", label: "21 - Avenant : modification" },
+                                    { value: "22", label: "22 - Avenant : changement maître" },
+                                    { value: "23", label: "23 - Avenant : prolongation" }
                                 ]}
                             />
                         </div>
-                        <div className="col-span-12">
-                            <Select
-                                label="Type de dérogation"
-                                value={formData.contrat.derogation}
-                                onChange={(e) => handleNestedChange('contrat', 'derogation', e.target.value)}
-                                placeholder="Aucune dérogation"
-                                options={[
-                                    { value: "11", label: "11 - Âge de l'apprenti inférieur à 16 ans" },
-                                    { value: "12", label: "12 - Âge supérieur à 29 ans" },
-                                    { value: "21", label: "21 - Réduction de la durée" },
-                                    { value: "22", label: "22 - Allongement de la durée" },
-                                    { value: "50", label: "50 - Cumul de dérogations" },
-                                    { value: "60", label: "60 - Autre dérogation" }
-                                ]}
-                            />
-                        </div>
-                        <div className="col-span-12">
-                            <Input
-                                label="Numéro DECA de l'ancien contrat"
-                                placeholder="Ex: 01234567890123"
-                                value={formData.contrat.numero_deca_ancien}
-                                onChange={(e) => handleNestedChange('contrat', 'numero_deca_ancien', e.target.value)}
-                            />
-                            <p className="text-[10px] text-slate-400 mt-1">À renseigner en cas de succession de contrats ou d'avenant</p>
+                        <div className="col-span-12 md:col-span-6">
+                            <Input label="Type de dérogation" placeholder="Si applicable" value={formData.contrat.type_derogation} onChange={(e) => handleNestedChange('contrat', 'type_derogation', e.target.value)} />
                         </div>
                         <div className="col-span-12 md:col-span-6">
-                            <Input label="Date de conclusion" required type="date" value={formData.contrat.date_conclusion} onChange={(e) => handleNestedChange('contrat', 'date_conclusion', e.target.value)} />
-                        </div>
-                        <div className="col-span-12 md:col-span-6">
-                            <Input label="Date de début d'exécution" required type="date" value={formData.contrat.date_debut_execution} onChange={(e) => handleNestedChange('contrat', 'date_debut_execution', e.target.value)} />
-                        </div>
-                        <div className="col-span-12 md:col-span-6">
-                            <Input label="Date début formation pratique" required type="date" value={formData.contrat.date_formation_employeur} onChange={(e) => handleNestedChange('contrat', 'date_formation_employeur', e.target.value)} />
-                        </div>
-                        <div className="col-span-12 md:col-span-6">
-                            <Input label="Fin du contrat" required type="date" value={formData.contrat.date_fin_apprentissage} onChange={(e) => handleNestedChange('contrat', 'date_fin_apprentissage', e.target.value)} />
+                            <Input label="Durée hebdomadaire" required placeholder="Ex: 35h" value={formData.contrat.duree_hebdomadaire} onChange={(e) => handleNestedChange('contrat', 'duree_hebdomadaire', e.target.value)} />
                         </div>
                         <div className="col-span-12">
-                            <Input label="Si c'est un avenant : date" type="date" value={formData.contrat.date_avenant} onChange={(e) => handleNestedChange('contrat', 'date_avenant', e.target.value)} />
+                            <Input label="Poste occupé" required placeholder="Intitulé exact du poste" value={formData.contrat.poste_occupe} onChange={(e) => handleNestedChange('contrat', 'poste_occupe', e.target.value)} />
                         </div>
                         <div className="col-span-12">
-                            <label className="block text-sm font-semibold text-slate-700 mb-3">Travail sur machines dangereuses ou risques particuliers</label>
-                            <div className="flex gap-3">
-                                {['oui', 'non'].map((val) => (
-                                    <label key={val} className="relative cursor-pointer group flex-1">
-                                        <input className="peer sr-only" type="radio" name="machines_dangereuses" value={val} checked={formData.contrat.machines_dangereuses === val} onChange={(e) => handleNestedChange('contrat', 'machines_dangereuses', e.target.value)} />
-                                        <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all ${formData.contrat.machines_dangereuses === val ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500' : 'bg-white border-slate-200 hover:border-blue-300'}`}>
-                                            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${formData.contrat.machines_dangereuses === val ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-400'}`}>{val === 'oui' ? 'A' : 'B'}</span>
-                                            <span className="font-medium text-slate-700 capitalize">{val}</span>
-                                        </div>
-                                    </label>
-                                ))}
-                            </div>
+                            <Input label="Lieu d'exécution" placeholder="Adresse si différente" value={formData.contrat.lieu_execution} onChange={(e) => handleNestedChange('contrat', 'lieu_execution', e.target.value)} />
+                        </div>
+                        <div className="col-span-12 md:col-span-6">
+                            <Input label="N° DECA ancien contrat" placeholder="Si applicable" value={formData.contrat.numero_deca_ancien_contrat} onChange={(e) => handleNestedChange('contrat', 'numero_deca_ancien_contrat', e.target.value)} />
+                        </div>
+                        <div className="col-span-12 md:col-span-6">
+                            <Input label="Date de conclusion" type="date" value={formData.contrat.date_conclusion} onChange={(e) => handleNestedChange('contrat', 'date_conclusion', e.target.value)} />
+                        </div>
+                        <div className="col-span-12 md:col-span-6">
+                            <Input label="Date début exécution" type="date" value={formData.contrat.date_debut_execution} onChange={(e) => handleNestedChange('contrat', 'date_debut_execution', e.target.value)} />
+                        </div>
+                        <div className="col-span-12 md:col-span-6">
+                            <Input label="Date avenant" type="date" value={formData.contrat.date_avenant} onChange={(e) => handleNestedChange('contrat', 'date_avenant', e.target.value)} />
+                        </div>
+                        <div className="col-span-12 md:col-span-6">
+                            <Input label="Caisse de retraite" placeholder="Nom de la caisse" value={formData.contrat.caisse_retraite} onChange={(e) => handleNestedChange('contrat', 'caisse_retraite', e.target.value)} />
+                        </div>
+                        <div className="col-span-12 md:col-span-6">
+                            <Input label="SMIC" placeholder="Montant SMIC" value={formData.contrat.smic} onChange={(e) => handleNestedChange('contrat', 'smic', e.target.value)} />
                         </div>
 
                         {/* Simulateur de salaire */}
@@ -932,28 +767,10 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
                                 </div>
                             </div>
                         </div>
-
-                        <div className="col-span-12 mt-4">
-                            <Input
-                                label="Caisse de retraite"
-                                placeholder="Nom de la caisse de retraite complémentaire"
-                                value={formData.contrat.caisse_retraite}
-                                onChange={(e) => handleNestedChange('contrat', 'caisse_retraite', e.target.value)}
-                            />
-                        </div>
-                        <div className="col-span-12 md:col-span-6">
-                            <Input label="Durée hebdomadaire" required placeholder="Ex: 35h" value={formData.contrat.duree_hebdo} onChange={(e) => handleNestedChange('contrat', 'duree_hebdo', e.target.value)} />
-                        </div>
-                        <div className="col-span-12 md:col-span-6">
-                            <Input label="Poste occupé" required placeholder="Intitulé du poste" value={formData.contrat.poste} onChange={(e) => handleNestedChange('contrat', 'poste', e.target.value)} />
-                        </div>
-                        <div className="col-span-12">
-                            <Input label="Lieu d'exécution du contrat" placeholder="Adresse du lieu de travail (si différent du siège)" value={formData.contrat.lieu} onChange={(e) => handleNestedChange('contrat', 'lieu', e.target.value)} />
-                        </div>
                     </div>
                 </Card>
 
-                <Card step={8} title="Missions en entreprise">
+                <Card step={7} title="Missions en entreprise">
                     <div className="space-y-8">
                         <div className="bg-slate-50/50 p-6 md:p-8 rounded-2xl border border-slate-100">
                             <div className="flex items-center justify-between mb-8">
@@ -1006,26 +823,6 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
                                 className="w-full px-6 py-4 bg-white/5 border-2 border-white/10 rounded-2xl focus:border-blue-400 outline-none transition-all font-medium text-white placeholder:text-slate-600 resize-none h-32"
                                 placeholder="Décrivez ici les spécificités de votre poste..."
                             />
-                        </div>
-                    </div>
-                </Card>
-
-                <Card step={9} title="Contacts RH & Administratif">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div className="bg-slate-50/50 p-6 md:p-8 rounded-2xl border border-slate-100">
-                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6 ml-1">Contact RH (Optionnel)</h4>
-                            <div className="space-y-4">
-                                <Input placeholder="Nom & Prénom RH" value={formData.contact_rh.nom_prenom_rh} onChange={(e) => handleNestedChange('contact_rh', 'nom_prenom_rh', e.target.value)} />
-                                <Input type="email" placeholder="Email RH" value={formData.contact_rh.email_rh} onChange={(e) => handleNestedChange('contact_rh', 'email_rh', e.target.value)} />
-                            </div>
-                        </div>
-
-                        <div className="bg-slate-50/50 p-6 md:p-8 rounded-2xl border border-slate-100">
-                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6 ml-1">Contact Taxe / Administratif</h4>
-                            <div className="space-y-4">
-                                <Input placeholder="Fonction (ex: Comptable)" value={formData.contact_taxe.fonction_contact} onChange={(e) => handleNestedChange('contact_taxe', 'fonction_contact', e.target.value)} />
-                                <Input type="email" placeholder="Email administratif" value={formData.contact_taxe.email_contact} onChange={(e) => handleNestedChange('contact_taxe', 'email_contact', e.target.value)} />
-                            </div>
                         </div>
                     </div>
                 </Card>
