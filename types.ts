@@ -88,28 +88,7 @@ export interface StudentFormData {
   commune_legal?: string;
   courriel_legal?: string;
 
-  representant_legal_1?: {
-    nom: string;
-    prenom: string;
-    numero: string;
-    voie: string;
-    complement: string;
-    code_postal: string;
-    ville: string;
-    email: string;
-    telephone: string;
-  };
-  representant_legal_2?: {
-    nom: string;
-    prenom: string;
-    numero: string;
-    voie: string;
-    complement: string;
-    code_postal: string;
-    ville: string;
-    email: string;
-    telephone: string;
-  };
+
 }
 
 export interface CompanyFormData {

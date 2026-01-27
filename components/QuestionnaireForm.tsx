@@ -45,29 +45,13 @@ const studentSchema = z.object({
     agreement: z.boolean().refine(val => val === true, {
         message: "Vous devez attester sur l'honneur l'exactitude des informations"
     }),
-    add_second_representative: z.boolean().optional(),
-    representant_legal_1: z.object({
-        nom: z.string().optional(),
-        prenom: z.string().optional(),
-        numero: z.string().optional(),
-        voie: z.string().optional(),
-        complement: z.string().optional(),
-        code_postal: z.string().optional(),
-        ville: z.string().optional(),
-        email: z.string().optional(),
-        telephone: z.string().optional(),
-    }).optional(),
-    representant_legal_2: z.object({
-        nom: z.string().optional(),
-        prenom: z.string().optional(),
-        numero: z.string().optional(),
-        voie: z.string().optional(),
-        complement: z.string().optional(),
-        code_postal: z.string().optional(),
-        ville: z.string().optional(),
-        email: z.string().optional(),
-        telephone: z.string().optional(),
-    }).optional()
+    nom_representant_legal: z.string().optional(),
+    numero_legal: z.string().optional(),
+    voie_representant_legal: z.string().optional(),
+    complement_adresse_legal: z.string().optional(),
+    code_postal_legal: z.string().optional(),
+    commune_legal: z.string().optional(),
+    courriel_legal: z.string().optional(),
 });
 
 type StudentFormValues = z.infer<typeof studentSchema>;
@@ -120,13 +104,13 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
             connaissance_rush_how: '',
             motivation_projet_professionnel: '',
             agreement: false as any,
-            add_second_representative: false,
-            representant_legal_1: {
-                nom: '', prenom: '', numero: '', voie: '', complement: '', code_postal: '', ville: '', email: '', telephone: ''
-            },
-            representant_legal_2: {
-                nom: '', prenom: '', numero: '', voie: '', complement: '', code_postal: '', ville: '', email: '', telephone: ''
-            }
+            nom_representant_legal: '',
+            numero_legal: '',
+            voie_representant_legal: '',
+            complement_adresse_legal: '',
+            code_postal_legal: '',
+            commune_legal: '',
+            courriel_legal: ''
         }
     });
 
@@ -151,7 +135,7 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
     const selectedEntreprise = watch('entreprise_d_accueil');
     const declarations = watch();
     const dateNaissance = watch('date_naissance');
-    const addSecondRep = watch('add_second_representative');
+
 
     const isMinor = React.useMemo(() => {
         if (!dateNaissance) return false;
@@ -263,84 +247,31 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
                     <Card step={3} title="Représentants Légaux">
                         <div className="space-y-8">
                             <div>
-                                <h3 className="text-lg font-semibold text-slate-800 mb-4">Représentant légal 1</h3>
+                                <h3 className="text-lg font-semibold text-slate-800 mb-4">Représentant légal</h3>
                                 <div className="grid grid-cols-12 gap-5">
                                     <div className="col-span-12 md:col-span-6">
-                                        <Input label="Nom" required={isMinor} {...register('representant_legal_1.nom')} />
+                                        <Input label="Nom Prénom" required={isMinor} {...register('nom_representant_legal')} />
                                     </div>
                                     <div className="col-span-12 md:col-span-6">
-                                        <Input label="Prénom" required={isMinor} {...register('representant_legal_1.prenom')} />
+                                        <Input label="Email" required={isMinor} type="email" {...register('courriel_legal')} />
                                     </div>
                                     <div className="col-span-12 md:col-span-4">
-                                        <Input label="Numéro" required={isMinor} {...register('representant_legal_1.numero')} />
+                                        <Input label="Numéro" required={isMinor} {...register('numero_legal')} />
                                     </div>
                                     <div className="col-span-12 md:col-span-8">
-                                        <Input label="Voie" required={isMinor} {...register('representant_legal_1.voie')} />
+                                        <Input label="Voie" required={isMinor} {...register('voie_representant_legal')} />
                                     </div>
                                     <div className="col-span-12">
-                                        <Input label="Complément d'adresse" {...register('representant_legal_1.complement')} />
+                                        <Input label="Complément d'adresse" {...register('complement_adresse_legal')} />
                                     </div>
                                     <div className="col-span-12 md:col-span-4">
-                                        <Input label="Code postal" required={isMinor} {...register('representant_legal_1.code_postal')} />
+                                        <Input label="Code postal" required={isMinor} {...register('code_postal_legal')} />
                                     </div>
                                     <div className="col-span-12 md:col-span-8">
-                                        <Input label="Ville" required={isMinor} {...register('representant_legal_1.ville')} />
-                                    </div>
-                                    <div className="col-span-12 md:col-span-6">
-                                        <Input label="Email" required={isMinor} type="email" {...register('representant_legal_1.email')} />
-                                    </div>
-                                    <div className="col-span-12 md:col-span-6">
-                                        <Input label="Téléphone" required={isMinor} type="tel" {...register('representant_legal_1.telephone')} />
+                                        <Input label="Ville" required={isMinor} {...register('commune_legal')} />
                                     </div>
                                 </div>
                             </div>
-
-                            <div className="flex items-center gap-3">
-                                <input
-                                    type="checkbox"
-                                    id="add_second_rep"
-                                    className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                                    {...register('add_second_representative')}
-                                />
-                                <label htmlFor="add_second_rep" className="text-slate-700 font-medium cursor-pointer">
-                                    Ajouter un second représentant légal
-                                </label>
-                            </div>
-
-                            {addSecondRep && (
-                                <div className="animate-fade-in">
-                                    <h3 className="text-lg font-semibold text-slate-800 mb-4">Représentant légal 2</h3>
-                                    <div className="grid grid-cols-12 gap-5">
-                                        <div className="col-span-12 md:col-span-6">
-                                            <Input label="Nom" {...register('representant_legal_2.nom')} />
-                                        </div>
-                                        <div className="col-span-12 md:col-span-6">
-                                            <Input label="Prénom" {...register('representant_legal_2.prenom')} />
-                                        </div>
-                                        <div className="col-span-12 md:col-span-4">
-                                            <Input label="Numéro" {...register('representant_legal_2.numero')} />
-                                        </div>
-                                        <div className="col-span-12 md:col-span-8">
-                                            <Input label="Voie" {...register('representant_legal_2.voie')} />
-                                        </div>
-                                        <div className="col-span-12">
-                                            <Input label="Complément d'adresse" {...register('representant_legal_2.complement')} />
-                                        </div>
-                                        <div className="col-span-12 md:col-span-4">
-                                            <Input label="Code postal" {...register('representant_legal_2.code_postal')} />
-                                        </div>
-                                        <div className="col-span-12 md:col-span-8">
-                                            <Input label="Ville" {...register('representant_legal_2.ville')} />
-                                        </div>
-                                        <div className="col-span-12 md:col-span-6">
-                                            <Input label="Email" type="email" {...register('representant_legal_2.email')} />
-                                        </div>
-                                        <div className="col-span-12 md:col-span-6">
-                                            <Input label="Téléphone" type="tel" {...register('representant_legal_2.telephone')} />
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
                         </div>
                     </Card>
                 )}
@@ -354,10 +285,10 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
                                 error={errors.situation?.message}
                                 {...register('situation')}
                                 options={[
-                                    { value: 'Etudiant', label: 'Etudiant : (Etude supérieur)' },
-                                    { value: 'Scolaire', label: 'Scolaire : (Bac / brevet...)' },
-                                    { value: 'contrat_pro', label: 'Contrat pro' },
-                                    { value: 'Salarié', label: 'Salarié : (CDD/CDI)' },
+                                    { value: 'Etudiant : (Etude supérieur)', label: 'Etudiant : (Etude supérieur)' },
+                                    { value: 'Scolaire : (Bac / brevet...)', label: 'Scolaire : (Bac / brevet...)' },
+                                    { value: 'Contrat pro', label: 'Contrat pro' },
+                                    { value: 'Salarié : (CDD/CDI)', label: 'Salarié : (CDD/CDI)' },
                                     { value: 'Contrat d\'apprentissage', label: 'Contrat apprentissage' }
                                 ]}
                                 placeholder="Sélectionnez votre situation"

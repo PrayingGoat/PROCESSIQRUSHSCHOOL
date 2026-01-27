@@ -130,6 +130,14 @@ export const api = {
         commune_naissance: data.commune_naissance,
         departement: data.departement,
 
+        // representant legal
+        nom_representant_legal: data.nom_representant_legal || "",
+        numero_legal: data.numero_legal || "",
+        voie_representant_legal: data.voie_representant_legal || "",
+        complement_adresse_legal: data.complement_adresse_legal || "",
+        code_postal_legal: data.code_postal_legal || 0,
+        courriel_legal: data.courriel_legal || "",
+
         // Coordonnées
         adresse_residence: data.adresse_residence,
         code_postal: data.code_postal,
@@ -149,9 +157,9 @@ export const api = {
 
         // Scolarité
         dernier_diplome_prepare: mapDiplome(data.dernier_diplome_prepare),
-        intitulePrecisDernierDiplome: data.intitulePrecisDernierDiplome || "",
         derniere_classe: data.derniere_classe || "",
         bac: mapNiveau(data.bac) || "",
+        intitulePrecisDernierDiplome: data.intitulePrecisDernierDiplome || "",
 
         // Projet
         formation_souhaitee: mapFormation(data.formation_souhaitee),
@@ -412,7 +420,7 @@ export const api = {
           date_naissance: ensureString(data.maitre_apprentissage.date_naissance),
           fonction: ensureString(data.maitre_apprentissage.fonction),
           diplome_plus_eleve: ensureString(data.maitre_apprentissage.diplome),
-          annees_experience: data.maitre_apprentissage.experience ? parseInt(data.maitre_apprentissage.experience.toString()) : null,
+          annees_experience: ensureString(data.maitre_apprentissage.experience),
           telephone: ensureString(data.maitre_apprentissage.telephone),
           email: ensureString(data.maitre_apprentissage.email)
         },
