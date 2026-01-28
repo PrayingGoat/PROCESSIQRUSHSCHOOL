@@ -130,17 +130,33 @@ export const api = {
         commune_naissance: data.commune_naissance,
         departement: data.departement,
 
-        // representant legal
-        nom_representant_legal: data.nom_representant_legal || "",
-        numero_legal: data.numero_legal || "",
-        voie_representant_legal: data.voie_representant_legal || "",
-        complement_adresse_legal: data.complement_adresse_legal || "",
-        code_postal_legal: data.code_postal_legal || 0,
-        courriel_legal: data.courriel_legal || "",
+        // representant legal 1
+        nom_representant_legal: data.nom_representant_legal || data.representant_legal_1?.nom || "",
+        prenom_representant_legal: data.prenom_representant_legal || data.representant_legal_1?.prenom || "",
+        voie_representant_legal: data.voie_representant_legal || data.representant_legal_1?.voie || "",
+        lien_parente_legal: data.lien_parente_legal || data.representant_legal_1?.lien_parente || "",
+        numero_legal: data.numero_legal || data.representant_legal_1?.telephone || "",
+        numero_adress_legal: data.numero_adress_legal || data.representant_legal_1?.numero || "",
+        complement_adresse_legal: data.complement_adresse_legal || data.representant_legal_1?.complement || "",
+        code_postal_legal: parseInt(data.code_postal_legal?.toString() || data.representant_legal_1?.code_postal || "0", 10),
+        commune_legal: data.commune_legal || data.representant_legal_1?.ville || "",
+        courriel_legal: data.courriel_legal || data.representant_legal_1?.email || "",
+
+        // representant legal 2
+        nom_representant_legal2: data.nom_representant_legal2 || data.representant_legal_2?.nom || "",
+        prenom_representant_legal2: data.prenom_representant_legal2 || data.representant_legal_2?.prenom || "",
+        voie_representant_legal2: data.voie_representant_legal2 || data.representant_legal_2?.voie || "",
+        lien_parente_legal2: data.lien_parente_legal2 || data.representant_legal_2?.lien_parente || "",
+        numero_legal2: data.numero_legal2 || data.representant_legal_2?.telephone || "",
+        numero_adress_legal2: data.numero_adress_legal2 || data.representant_legal_2?.numero || "",
+        complement_adresse_legal2: data.complement_adresse_legal2 || data.representant_legal_2?.complement || "",
+        code_postal_legal2: parseInt(data.code_postal_legal2?.toString() || data.representant_legal_2?.code_postal || "0", 10),
+        commune_legal2: data.commune_legal2 || data.representant_legal_2?.ville || "",
+        courriel_legal2: data.courriel_legal2 || data.representant_legal_2?.email || "",
 
         // Coordonnées
         adresse_residence: data.adresse_residence,
-        code_postal: data.code_postal,
+        code_postal: parseInt(data.code_postal?.toString() || "0", 10),
         ville: data.ville,
         email: data.email,
         telephone: cleanPhone(data.telephone),
@@ -174,6 +190,8 @@ export const api = {
 
       console.log("📤 Submitting payload:", payload);
 
+      console.log("📤 [API] Submitting Student payload:", payload);
+
       const response = await fetch(`${BASE_URL}/candidates`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
@@ -181,24 +199,15 @@ export const api = {
       });
 
       if (!response.ok) {
-        let errorMessage = `Erreur ${response.status}: ${response.statusText}`;
+        let errorMessage = `Erreur ${response.status}`;
         try {
           const errorData = await response.json();
-          // Gestion des erreurs Pydantic détaillées
-          if (Array.isArray(errorData.detail)) {
-            const details = errorData.detail
-              .map((err: any) => {
-                const field = Array.isArray(err.loc) ? err.loc[err.loc.length - 1] : 'champ inconnu';
-                return `${field}: ${err.msg}`;
-              })
-              .join(', ');
-            if (details) errorMessage = details;
-          } else if (typeof errorData.detail === 'string' && errorData.detail) {
-            errorMessage = errorData.detail;
-          }
+          console.error("❌ [API] Student Submission Error Details:", errorData);
+          if (errorData.detail) errorMessage = Array.isArray(errorData.detail) ? errorData.detail.map((err: any) => `${err.loc.join('.')}: ${err.msg}`).join(', ') : errorData.detail;
         } catch (e) {
           const text = await response.text();
-          if (text) errorMessage = `Erreur ${response.status}: ${text}`;
+          console.error("❌ [API] Raw Error Text:", text);
+          if (text) errorMessage = text;
         }
         throw new Error(errorMessage);
       }
@@ -439,16 +448,15 @@ export const api = {
           duree_hebdomadaire: ensureString(data.contrat.duree_hebdomadaire),
           poste_occupe: ensureString(data.contrat.poste_occupe),
           lieu_execution: ensureString(data.contrat.lieu_execution),
-          base_calcul_salaire: ensureString(data.contrat.base_calcul_salaire),
+          pourcentage_smic: data.contrat.pourcentage_smic || 0,
           smic: ensureString(data.contrat.smic),
           montant_salaire_brut: data.contrat.montant_salaire_brut ? parseFloat(data.contrat.montant_salaire_brut.toString()) : null,
 
           date_conclusion: ensureString(data.contrat.date_conclusion),
-          date_debut_execution: ensureString(data.contrat.date_debut_execution),
-          numero_deca_ancien_contrat: ensureString(data.contrat.numero_deca_ancien_contrat),
-
-          travail_machine_dangereuse: data.contrat.machines_dangereuses === 'oui' ? 'oui' : 'non',
-          caisse_retraite: ensureString(data.contrat.caisse_retraite),
+                    date_debut_execution: ensureString(data.contrat.date_debut_execution),
+                    numero_deca_ancien_contrat: ensureString(data.contrat.numero_deca_ancien_contrat),
+                    travail_machine_dangereuse: ensureString(data.contrat.machines_dangereuses),
+                    caisse_retraite: ensureString(data.contrat.caisse_retraite),
           date_avenant: ensureString(data.contrat.date_avenant)
         },
 
@@ -458,8 +466,15 @@ export const api = {
           formation_choisie: ensureString(data.formation.choisie),
           code_rncp: ensureString(data.formation.code_rncp),
           code_diplome: ensureString(data.formation.code_diplome),
-          nombre_heures_formation: data.formation.nb_heures ? parseFloat(data.formation.nb_heures.toString()) : null,
-          jours_de_cours: data.formation.jours_cours ? parseFloat(data.formation.jours_cours.toString()) : null,
+          nombre_heures_formation: data.formation.nb_heures ? parseFloat(data.formation.nb_heures.toString()) : 0,
+          jours_de_cours: (() => {
+            const val = data.formation.jours_cours;
+            if (!val) return 0;
+            const strVal = String(val);
+            if (strVal.includes('/')) return strVal.split('/').length;
+            const parsed = parseFloat(strVal);
+            return isNaN(parsed) ? 0 : parsed;
+          })(),
 
           // Informations CFA
           cfaEnterprise: data.cfa.entreprise === 'oui',
@@ -476,36 +491,24 @@ export const api = {
         record_id_etudiant: ensureString(data.record_id_etudiant)
       };
 
-      console.log("📤 Submitting Company payload:", JSON.stringify(payload, null, 2));
+      console.log("📤 [API] Submitting Company payload:", payload);
 
       const response = await fetch(`${BASE_URL}/entreprise`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
-        let errorMessage = `Erreur ${response.status}: ${response.statusText}`;
+        let errorMessage = `Erreur ${response.status}`;
         try {
           const errorData = await response.json();
-          // Gestion des erreurs Pydantic détaillées
-          if (Array.isArray(errorData.detail)) {
-            const details = errorData.detail
-              .map((err: any) => {
-                const field = Array.isArray(err.loc) ? err.loc[err.loc.length - 1] : 'champ inconnu';
-                return `${field}: ${err.msg}`;
-              })
-              .join(', ');
-            if (details) errorMessage = details;
-          } else if (typeof errorData.detail === 'string' && errorData.detail) {
-            errorMessage = errorData.detail;
-          }
+          console.error("❌ [API] Company Submission Error Details:", errorData);
+          if (errorData.detail) errorMessage = Array.isArray(errorData.detail) ? errorData.detail.map((err: any) => `${err.loc.join('.')}: ${err.msg}`).join(', ') : errorData.detail;
         } catch (e) {
           const text = await response.text();
-          if (text) errorMessage = `Erreur ${response.status}: ${text}`;
+          console.error("❌ [API] Raw Error Text:", text);
+          if (text) errorMessage = text;
         }
         throw new Error(errorMessage);
       }

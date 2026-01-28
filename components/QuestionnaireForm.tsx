@@ -45,13 +45,32 @@ const studentSchema = z.object({
     agreement: z.boolean().refine(val => val === true, {
         message: "Vous devez attester sur l'honneur l'exactitude des informations"
     }),
-    nom_representant_legal: z.string().optional(),
-    numero_legal: z.string().optional(),
-    voie_representant_legal: z.string().optional(),
-    complement_adresse_legal: z.string().optional(),
-    code_postal_legal: z.string().optional(),
-    commune_legal: z.string().optional(),
-    courriel_legal: z.string().optional(),
+    
+    add_second_representative: z.boolean().optional(),
+    representant_legal_1: z.object({
+        nom: z.string().optional(),
+        prenom: z.string().optional(),
+        lien_parente: z.string().optional(),
+        numero: z.string().optional(),
+        voie: z.string().optional(),
+        complement: z.string().optional(),
+        code_postal: z.string().optional(),
+        ville: z.string().optional(),
+        email: z.string().optional(),
+        telephone: z.string().optional(),
+    }).optional(),
+    representant_legal_2: z.object({
+        nom: z.string().optional(),
+        prenom: z.string().optional(),
+        lien_parente: z.string().optional(),
+        numero: z.string().optional(),
+        voie: z.string().optional(),
+        complement: z.string().optional(),
+        code_postal: z.string().optional(),
+        ville: z.string().optional(),
+        email: z.string().optional(),
+        telephone: z.string().optional(),
+    }).optional()
 });
 
 type StudentFormValues = z.infer<typeof studentSchema>;
@@ -73,51 +92,28 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
     } = useForm<StudentFormValues>({
         resolver: zodResolver(studentSchema),
         defaultValues: {
-            prenom: '',
-            nom_naissance: '',
-            nom_usage: '',
-            sexe: '',
-            date_naissance: '',
-            nationalite: '',
-            commune_naissance: '',
-            departement: '',
-            adresse_residence: '',
-            code_postal: '',
-            ville: '',
-            email: '',
-            telephone: '',
-            nir: '',
-            situation: '',
-            regime_social: '',
+            prenom: '', nom_naissance: '', nom_usage: '', sexe: '', date_naissance: '',
+            nationalite: '', commune_naissance: '', departement: '', adresse_residence: '',
+            code_postal: '', ville: '', email: '', telephone: '', nir: '',
+            situation: '', regime_social: '',
             declare_inscription_sportif_haut_niveau: false,
             declare_avoir_projet_creation_reprise_entreprise: false,
             declare_travailleur_handicape: false,
             alternance: false,
-            dernier_diplome_prepare: '',
-            derniere_classe: '',
-            intitulePrecisDernierDiplome: '',
-            bac: '',
-            formation_souhaitee: '',
-            date_de_visite: '',
-            date_de_reglement: '',
-            entreprise_d_accueil: '',
-            connaissance_rush_how: '',
-            motivation_projet_professionnel: '',
+            dernier_diplome_prepare: '', derniere_classe: '', intitulePrecisDernierDiplome: '',
+            bac: '', formation_souhaitee: '', date_de_visite: '', date_de_reglement: '',
+            entreprise_d_accueil: '', connaissance_rush_how: '', motivation_projet_professionnel: '',
             agreement: false as any,
-            nom_representant_legal: '',
-            numero_legal: '',
-            voie_representant_legal: '',
-            complement_adresse_legal: '',
-            code_postal_legal: '',
-            commune_legal: '',
-            courriel_legal: ''
+            add_second_representative: false,
+            representant_legal_1: { nom: '', prenom: '', lien_parente: '', numero: '', voie: '', complement: '', code_postal: '', ville: '', email: '', telephone: '' },
+            representant_legal_2: { nom: '', prenom: '', lien_parente: '', numero: '', voie: '', complement: '', code_postal: '', ville: '', email: '', telephone: '' }
         }
     });
 
     const onSubmit = async (data: StudentFormValues) => {
         setIsSubmitting(true);
         try {
-            const response = await api.submitStudent(data as StudentFormData);
+            const response = await api.submitStudent(data as any);
             if (response && response.record_id) {
                 localStorage.setItem('candidateRecordId', response.record_id);
             }
@@ -135,7 +131,7 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
     const selectedEntreprise = watch('entreprise_d_accueil');
     const declarations = watch();
     const dateNaissance = watch('date_naissance');
-
+    const addSecondRep = watch('add_second_representative');
 
     const isMinor = React.useMemo(() => {
         if (!dateNaissance) return false;
@@ -143,9 +139,7 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
         const today = new Date();
         let age = today.getFullYear() - birth.getFullYear();
         const m = today.getMonth() - birth.getMonth();
-        if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
-            age--;
-        }
+        if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
         return age < 18;
     }, [dateNaissance]);
 
@@ -247,31 +241,90 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
                     <Card step={3} title="Représentants Légaux">
                         <div className="space-y-8">
                             <div>
-                                <h3 className="text-lg font-semibold text-slate-800 mb-4">Représentant légal</h3>
+                                <h3 className="text-lg font-semibold text-slate-800 mb-4">Représentant légal 1</h3>
                                 <div className="grid grid-cols-12 gap-5">
                                     <div className="col-span-12 md:col-span-6">
-                                        <Input label="Nom Prénom" required={isMinor} {...register('nom_representant_legal')} />
+                                        <Input label="Nom" required={isMinor} {...register('representant_legal_1.nom')} />
                                     </div>
                                     <div className="col-span-12 md:col-span-6">
-                                        <Input label="Email" required={isMinor} type="email" {...register('courriel_legal')} />
+                                        <Input label="Prénom" required={isMinor} {...register('representant_legal_1.prenom')} />
+                                    </div>
+                                    <div className="col-span-12 md:col-span-6">
+                                        <Input label="Lien de parenté" placeholder="Père, Mère, Tuteur..." required={isMinor} {...register('representant_legal_1.lien_parente')} />
+                                    </div>
+                                    <div className="col-span-12 md:col-span-6">
+                                        <Input label="Téléphone" required={isMinor} type="tel" {...register('representant_legal_1.telephone')} />
                                     </div>
                                     <div className="col-span-12 md:col-span-4">
-                                        <Input label="Numéro" required={isMinor} {...register('numero_legal')} />
+                                        <Input label="Numéro" required={isMinor} {...register('representant_legal_1.numero')} />
                                     </div>
                                     <div className="col-span-12 md:col-span-8">
-                                        <Input label="Voie" required={isMinor} {...register('voie_representant_legal')} />
+                                        <Input label="Voie" required={isMinor} {...register('representant_legal_1.voie')} />
                                     </div>
                                     <div className="col-span-12">
-                                        <Input label="Complément d'adresse" {...register('complement_adresse_legal')} />
+                                        <Input label="Complément d'adresse" {...register('representant_legal_1.complement')} />
                                     </div>
                                     <div className="col-span-12 md:col-span-4">
-                                        <Input label="Code postal" required={isMinor} {...register('code_postal_legal')} />
+                                        <Input label="Code postal" required={isMinor} {...register('representant_legal_1.code_postal')} />
                                     </div>
                                     <div className="col-span-12 md:col-span-8">
-                                        <Input label="Ville" required={isMinor} {...register('commune_legal')} />
+                                        <Input label="Ville" required={isMinor} {...register('representant_legal_1.ville')} />
+                                    </div>
+                                    <div className="col-span-12">
+                                        <Input label="Email" required={isMinor} type="email" {...register('representant_legal_1.email')} />
                                     </div>
                                 </div>
                             </div>
+
+                            <div className="flex items-center gap-3">
+                                <input
+                                    type="checkbox"
+                                    id="add_second_rep"
+                                    className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                                    {...register('add_second_representative')}
+                                />
+                                <label htmlFor="add_second_rep" className="text-slate-700 font-medium cursor-pointer">
+                                    Ajouter un second représentant légal
+                                </label>
+                            </div>
+
+                            {addSecondRep && (
+                                <div className="animate-fade-in border-t border-slate-100 pt-8">
+                                    <h3 className="text-lg font-semibold text-slate-800 mb-4">Représentant légal 2</h3>
+                                    <div className="grid grid-cols-12 gap-5">
+                                        <div className="col-span-12 md:col-span-6">
+                                            <Input label="Nom" {...register('representant_legal_2.nom')} />
+                                        </div>
+                                        <div className="col-span-12 md:col-span-6">
+                                            <Input label="Prénom" {...register('representant_legal_2.prenom')} />
+                                        </div>
+                                        <div className="col-span-12 md:col-span-6">
+                                            <Input label="Lien de parenté" placeholder="Père, Mère, Tuteur..." {...register('representant_legal_2.lien_parente')} />
+                                        </div>
+                                        <div className="col-span-12 md:col-span-6">
+                                            <Input label="Téléphone" type="tel" {...register('representant_legal_2.telephone')} />
+                                        </div>
+                                        <div className="col-span-12 md:col-span-4">
+                                            <Input label="Numéro" {...register('representant_legal_2.numero')} />
+                                        </div>
+                                        <div className="col-span-12 md:col-span-8">
+                                            <Input label="Voie" {...register('representant_legal_2.voie')} />
+                                        </div>
+                                        <div className="col-span-12">
+                                            <Input label="Complément d'adresse" {...register('representant_legal_2.complement')} />
+                                        </div>
+                                        <div className="col-span-12 md:col-span-4">
+                                            <Input label="Code postal" {...register('representant_legal_2.code_postal')} />
+                                        </div>
+                                        <div className="col-span-12 md:col-span-8">
+                                            <Input label="Ville" {...register('representant_legal_2.ville')} />
+                                        </div>
+                                        <div className="col-span-12">
+                                            <Input label="Email" type="email" {...register('representant_legal_2.email')} />
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </Card>
                 )}
@@ -285,10 +338,10 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
                                 error={errors.situation?.message}
                                 {...register('situation')}
                                 options={[
-                                    { value: 'Etudiant : (Etude supérieur)', label: 'Etudiant : (Etude supérieur)' },
-                                    { value: 'Scolaire : (Bac / brevet...)', label: 'Scolaire : (Bac / brevet...)' },
-                                    { value: 'Contrat pro', label: 'Contrat pro' },
-                                    { value: 'Salarié : (CDD/CDI)', label: 'Salarié : (CDD/CDI)' },
+                                    { value: 'Etudiant', label: 'Etudiant : (Etude supérieur)' },
+                                    { value: 'Scolaire', label: 'Scolaire : (Bac / brevet...)' },
+                                    { value: 'contrat_pro', label: 'Contrat pro' },
+                                    { value: 'Salarié', label: 'Salarié : (CDD/CDI)' },
                                     { value: 'Contrat d\'apprentissage', label: 'Contrat apprentissage' }
                                 ]}
                                 placeholder="Sélectionnez votre situation"
@@ -305,11 +358,10 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
                                 placeholder="Sélectionnez"
                             />
                         </div>
-                        {[
-                            { label: "Déclare être inscrit(e) sur la liste des sportifs de haut niveau", name: "declare_inscription_sportif_haut_niveau" },
-                            { label: "Déclare avoir un projet de création ou de reprise d'entreprise", name: "declare_avoir_projet_creation_reprise_entreprise" },
-                            { label: "Déclare bénéficier de la reconnaissance travailleur handicapé (RQTH)", name: "declare_travailleur_handicape" },
-                            { label: "Alternance", name: "alternance" }
+                        {[{"label": "Déclare être inscrit(e) sur la liste des sportifs de haut niveau", "name": "declare_inscription_sportif_haut_niveau"},
+                            {"label": "Déclare avoir un projet de création ou de reprise d'entreprise", "name": "declare_avoir_projet_creation_reprise_entreprise"},
+                            {"label": "Déclare bénéficier de la reconnaissance travailleur handicapé (RQTH)", "name": "declare_travailleur_handicape"},
+                            {"label": "Alternance", "name": "alternance"}
                         ].map((item) => (
                             <div key={item.name} className="col-span-12 space-y-4 pt-2">
                                 <div className="bg-slate-50/50 p-5 rounded-xl border border-slate-100">
@@ -365,10 +417,10 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
                                 error={errors.derniere_classe?.message}
                                 {...register('derniere_classe')}
                                 options={[
-                                    { value: 'Diplôme obtenu', label: 'Dernière année du cycle de formation - diplôme obtenu' },
-                                    { value: 'Terminale', label: 'Terminale' },
-                                    { value: '1ère année validée', label: '1ère année du cycle validée' },
-                                    { value: 'Classe de 3ème', label: 'Études interrompues en classe de 3ème' }
+                                    { value: 'derniere_annee_obtenu', label: 'Dernière année du cycle de formation - diplôme obtenu' },
+                                    { value: 'terminale', label: 'Terminale' },
+                                    { value: '1ere_annee_validee', label: '1ère année du cycle validée' },
+                                    { value: '3e', label: 'Études interrompues en classe de 3ème' }
                                 ]}
                                 placeholder="Sélectionnez"
                             />
@@ -416,10 +468,10 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
                                 error={errors.formation_souhaitee?.message}
                                 {...register('formation_souhaitee')}
                                 options={[
-                                    { value: 'bts_mco', label: 'BTS MCO - Management Commercial Opérationnel' },
-                                    { value: 'bts_ndrc', label: 'BTS NDRC - Négociation et Digitalisation de la Relation Client' },
-                                    { value: 'bachelor_rdc', label: 'BACHELOR RDC - Responsable Développement Commercial' },
-                                    { value: 'tp_ntc', label: 'TP NTC - Négociateur Technico-Commercial' }
+                                    { value: 'BTS MCO', label: 'BTS MCO - Management Commercial Opérationnel' },
+                                    { value: 'BTS NDRC', label: 'BTS NDRC - Négociation et Digitalisation de la Relation Client' },
+                                    { value: 'BACHELOR RDC', label: 'BACHELOR RDC - Responsable Développement Commercial' },
+                                    { value: 'TP NTC', label: 'TP NTC - Négociateur Technico-Commercial' }
                                 ]}
                                 placeholder="Sélectionnez une formation"
                             />

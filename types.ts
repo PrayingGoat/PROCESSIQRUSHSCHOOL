@@ -81,14 +81,53 @@ export interface StudentFormData {
 
   // Représentant légal (Champs à plat)
   nom_representant_legal?: string;
-  numero_legal?: string;
+  prenom_representant_legal?: string;
+  lien_parente_legal?: string;
+  numero_legal?: string; // Téléphone dans votre api.ts
+  numero_adress_legal?: string; // Numéro de rue
   voie_representant_legal?: string;
   complement_adresse_legal?: string;
-  code_postal_legal?: string;
+  code_postal_legal?: string | number;
   commune_legal?: string;
   courriel_legal?: string;
 
+  // Représentant légal 2 (Champs à plat)
+  nom_representant_legal2?: string;
+  prenom_representant_legal2?: string;
+  lien_parente_legal2?: string;
+  numero_legal2?: string;
+  numero_adress_legal2?: string;
+  voie_representant_legal2?: string;
+  complement_adresse_legal2?: string;
+  code_postal_legal2?: string | number;
+  commune_legal2?: string;
+  courriel_legal2?: string;
 
+  // Structure imbriquée utilisée par le formulaire
+  representant_legal_1?: {
+    nom?: string;
+    prenom?: string;
+    lien_parente?: string;
+    telephone?: string;
+    numero?: string;
+    voie?: string;
+    complement?: string;
+    code_postal?: string;
+    ville?: string;
+    email?: string;
+  };
+  representant_legal_2?: {
+    nom?: string;
+    prenom?: string;
+    lien_parente?: string;
+    telephone?: string;
+    numero?: string;
+    voie?: string;
+    complement?: string;
+    code_postal?: string;
+    ville?: string;
+    email?: string;
+  };
 }
 
 export interface CompanyFormData {
@@ -131,7 +170,7 @@ export interface CompanyFormData {
     duree_hebdomadaire?: string;
     poste_occupe: string;
     lieu_execution?: string;
-    base_calcul_salaire?: string;
+    pourcentage_smic?: number;
     smic?: string;
     montant_salaire_brut?: number;
 
@@ -166,10 +205,10 @@ export interface CompanyFormData {
     commune: string;
   };
   salaire: {
-    age: string;
-    annee: string;
-    pourcentage: number;
-    montant: number;
+    salaire_age: string;
+    salaire_annee: string;
+    salaire_pourcentage: number;
+    salaire_brut: number;
   };
   missions: {
     formation_alternant?: string;

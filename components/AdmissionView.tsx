@@ -169,13 +169,13 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
             duree_hebdomadaire: "35h",
             poste_occupe: "",
             lieu_execution: "",
-            base_calcul_salaire: "SMIC",
-            smic: "",
+            pourcentage_smic: 0,
+            smic: "1823.03",
             montant_salaire_brut: 0,
             date_conclusion: "",
             date_debut_execution: "",
             numero_deca_ancien_contrat: "",
-            machines_dangereuses: "non",
+            machines_dangereuses: "Non",
             caisse_retraite: "",
             date_avenant: ""
         },
@@ -195,8 +195,8 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
     });
 
     const FORMATION_DETAILS: Record<string, any> = {
-        "BTS MCO": { debut: "2024-09-02", fin: "2026-08-31", rncp: "RNCP38368", diplome: "32031310", heures: "1350", jours: "Lundi/Mardi" },
-        "BTS NDRC": { debut: "2024-09-02", fin: "2026-08-31", rncp: "RNCP38368", diplome: "32031310", heures: "1350", jours: "Mercredi/Jeudi" },
+        "BTS MCO A": { debut: "2024-09-02", fin: "2026-08-31", rncp: "RNCP38368", diplome: "32031310", heures: "1350", jours: "Lundi/Mardi" },
+        "BTS NDRC 1": { debut: "2024-09-02", fin: "2026-08-31", rncp: "RNCP38368", diplome: "32031310", heures: "1350", jours: "Mercredi/Jeudi" },
         "Titre Pro NTC": { debut: "2024-09-02", fin: "2025-08-31", rncp: "RNCP34059", diplome: "46T31201", heures: "600", jours: "Lundi/Mardi" },
         "Bachelor RDC": { debut: "2024-09-16", fin: "2025-09-12", rncp: "RNCP36504", diplome: "26X31204", heures: "525", jours: "Vendredi" }
     };
@@ -233,29 +233,41 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
     };
 
     const handleSalaryCalc = (age: string, annee: string) => {
-        if (!age || !annee) return;
-        const smic = 1823.03;
-        let pct = 0;
+        // On met à jour l'âge et l'année immédiatement pour que les Select reflètent la sélection
+        const newSalaire = { ...formData.salaire, age, annee };
+        let montantCalc = newSalaire.montant;
+        let pctCalc = newSalaire.pourcentage;
 
-        if (age === "16-17") {
-            pct = annee === "1" ? 27 : annee === "2" ? 39 : 55;
-        } else if (age === "18-20") {
-            pct = annee === "1" ? 43 : annee === "2" ? 51 : 67;
-        } else if (age === "21-25") {
-            pct = annee === "1" ? 53 : annee === "2" ? 61 : 78;
-        } else if (age === "26+") {
-            pct = 100;
+        if (age && annee) {
+            const smicBrut = 1823.03;
+            let pct = 0;
+
+            if (age === "16-17") {
+                pct = annee === "1" ? 27 : annee === "2" ? 39 : 55;
+            } else if (age === "18-20") {
+                pct = annee === "1" ? 43 : annee === "2" ? 51 : 67;
+            } else if (age === "21-25") {
+                pct = annee === "1" ? 53 : annee === "2" ? 61 : 78;
+            } else if (age === "26+") {
+                pct = 100;
+            }
+
+            pctCalc = pct;
+            montantCalc = parseFloat(((smicBrut * pct) / 100).toFixed(2));
         }
 
-        const montant = (smic * pct) / 100;
         setFormData(prev => ({
             ...prev,
             salaire: {
-                ...prev.salaire,
-                age,
-                annee,
-                pourcentage: pct,
-                montant: montant
+                ...newSalaire,
+                pourcentage: pctCalc,
+                montant: montantCalc
+            },
+            // On synchronise aussi avec le contrat pour api.ts
+            contrat: {
+                ...prev.contrat,
+                pourcentage_smic: pctCalc,
+                montant_salaire_brut: montantCalc
             }
         }));
     };
@@ -369,14 +381,22 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
                                 onChange={(e) => handleNestedChange('identification', 'type_employeur', e.target.value)}
                                 placeholder="Sélectionnez"
                                 options={[
-                                    { value: "11", label: "11 - Entreprise répertoire des métiers" },
-                                    { value: "12", label: "12 - Entreprise registre du commerce" },
-                                    { value: "13", label: "13 - Entreprises secteur agricole (MSA)" },
-                                    { value: "14", label: "14 - Profession libérale" },
-                                    { value: "15", label: "15 - Association" },
-                                    { value: "16", label: "16 - Autre employeur privé" },
-                                    { value: "21", label: "21 - Service de l'Etat" },
-                                    { value: "22", label: "22 - Commune" }
+                                    { value: "11 Entreprise inscrite au répertoire des métiers ou au registre des entreprises pour l Alsace-Moselle", label: "11 - Entreprise inscrite au répertoire des métiers ou au registre des entreprises pour l'Alsace-Moselle" },
+                                    { value: "12 Entreprise inscrite uniquement au registre du commerce et des sociétés", label: "12 - Entreprise inscrite uniquement au registre du commerce et des sociétés" },
+                                    { value: "13 Entreprises dont les salariés relèvent de la mutualité sociale agricole", label: "13 - Entreprises dont les salariés relèvent de la mutualité sociale agricole" },
+                                    { value: "14 Profession libérale", label: "14 - Profession libérale" },
+                                    { value: "15 Association", label: "15 - Association" },
+                                    { value: "16 Autre employeur privé", label: "16 - Autre employeur privé" },
+                                    { value: "21 Service de l État (administrations centrales et leurs services déconcentrés)", label: "21 - Service de l'État (administrations centrales et leurs services déconcentrés)" },
+                                    { value: "22 Commune", label: "22 - Commune" },
+                                    { value: "23 Département", label: "23 - Département" },
+                                    { value: "24 Région", label: "24 - Région" },
+                                    { value: "25 Etablissement public hospitalier", label: "25 - Etablissement public hospitalier" },
+                                    { value: "26 Etablissement public local d enseignement", label: "26 - Etablissement public local d'enseignement" },
+                                    { value: "27 Etablissement public administratif de l Etat", label: "27 - Etablissement public administratif de l'État" },
+                                    { value: "28 Etablissement public administratif local (y compris établissement public de coopération intercommunale EPCI)", label: "28 - Etablissement public administratif local (y compris EPCI)" },
+                                    { value: "29 Autre employeur public", label: "29 - Autre employeur public" },
+                                    { value: "30 Etablissement public industriel et commercial", label: "30 - Etablissement public industriel et commercial" }
                                 ]}
                             />
                         </div>
@@ -442,7 +462,7 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
                                     { value: "Baccalauréat", label: "Baccalauréat" },
                                     { value: "DEUG, BTS, DUT, DEUST", label: "DEUG, BTS, DUT, DEUST" },
                                     { value: "Licence, Licence professionnelle, BUT, Maîtrise", label: "Licence, Licence professionnelle, BUT, Maîtrise" },
-                                    { value: "Master, Diplôme d'études approfondies, Diplôme d'études spécialisées, Diplôme d'ingénieur", label: "Master, DEA, DESS, Diplôme d'ingénieur" },
+                                    { value: "Master, Diplôme d'études approfondies, Diplôme d études spécialisées, Diplôme d ingénieur", label: "Master, DEA, DESS, Diplôme d'ingénieur" },
                                     { value: "Doctorat, Habilitation à diriger des recherches", label: "Doctorat, HDR" }
                                 ]}
                                 placeholder="Sélectionnez"
@@ -470,12 +490,17 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
                                 onChange={(e) => handleNestedChange('opco', 'nom', e.target.value)}
                                 placeholder="Choisir un OPCO"
                                 options={[
-                                    { value: "AFDAS", label: "AFDAS (Culture, médias, loisirs, sport)" },
-                                    { value: "AKTO", label: "AKTO (Services à forte intensité de main-d'œuvre)" },
-                                    { value: "ATLAS", label: "ATLAS (Services financiers et conseil)" },
-                                    { value: "CONSTRUCTYS", label: "CONSTRUCTYS (Bâtiment, travaux publics)" },
-                                    { value: "OPCO EP", label: "OPCO EP (Entreprises de proximité)" },
-                                    { value: "OPCOMMERCE", label: "OPCOMMERCE (Commerce)" }
+                                    { value: "AFDAS - Culture, médias, loisirs", label: "AFDAS (Culture, médias, loisirs, sport)" },
+                                    { value: "AKTO - Services à forte intensité de main-d œuvre", label: "AKTO (Services à forte intensité de main-d'œuvre)" },
+                                    { value: "ATLAS - Services financiers et conseil", label: "ATLAS (Services financiers et conseil)" },
+                                    { value: "CONSTRUCTYS - Construction", label: "CONSTRUCTYS (Construction)" },
+                                    { value: "OCAPIAT - Agriculture, pêche, agroalimentaire", label: "OCAPIAT (Agricole, pêche, agroalimentaire)" },
+                                    { value: "OPCO 2i - Interindustriel", label: "OPCO 2i (Interindustriel)" },
+                                    { value: "OPCO EP - Entreprises de proximité", label: "OPCO EP (Entreprises de proximité)" },
+                                    { value: "OPCO Mobilités - Transports", label: "OPCO Mobilités (Transports)" },
+                                    { value: "OPCO Santé - Santé", label: "OPCO Santé (Santé)" },
+                                    { value: "OPCOMMERCE - Commerce", label: "OPCOMMERCE (Commerce)" },
+                                    { value: "UNIFORMATION - Cohésion sociale", label: "UNIFORMATION (Cohésion sociale)" }
                                 ]}
                             />
                         </div>
@@ -487,7 +512,7 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
                         <div className="col-span-12">
                             <label className="block text-sm font-semibold text-slate-700 mb-3">Formation suivie *</label>
                             <div className="flex gap-3 flex-wrap">
-                                {['BTS MCO', 'BTS NDRC', 'Titre Pro NTC', 'Bachelor RDC'].map((f, idx) => (
+                                {['BTS MCO A', 'BTS NDRC 1', 'Titre Pro NTC', 'Bachelor RDC'].map((f, idx) => (
                                     <label key={f} className="relative cursor-pointer group flex-1 min-w-[120px]">
                                         <input className="peer sr-only" type="radio" name="formation_choisie" value={f} checked={formData.formation.choisie === f} onChange={() => handleFormationChange(f)} />
                                         <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all ${formData.formation.choisie === f ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500' : 'bg-white border-slate-200 hover:border-blue-300 hover:bg-slate-50'}`}>
@@ -602,15 +627,38 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
                                 value={formData.contrat.type_contrat}
                                 onChange={(e) => handleNestedChange('contrat', 'type_contrat', e.target.value)}
                                 options={[
-                                    { value: "11", label: "11 - Contrat initial" },
-                                    { value: "21", label: "21 - Avenant : modification" },
-                                    { value: "22", label: "22 - Avenant : changement maître" },
-                                    { value: "23", label: "23 - Avenant : prolongation" }
+                                    { value: "11 Premier contrat d apprentissage de l apprenti", label: "11 Premier contrat d'apprentissage de l'apprenti" },
+                                    { value: "21 Nouveau contrat avec un apprenti qui a terminé son précédent contrat auprès d un même employeur", label: "21 Nouveau contrat avec un apprenti qui a terminé son précédent contrat auprès d'un même employeur" },
+                                    { value: "22 Nouveau contrat avec un apprenti qui a terminé son précédent contrat auprès d un autre employeur", label: "22 Nouveau contrat avec un apprenti qui a terminé son précédent contrat auprès d'un autre employeur" },
+                                    { value: "23 Nouveau contrat avec un apprenti dont le précédent contrat a été rompu", label: "23 Nouveau contrat avec un apprenti dont le précédent contrat a été rompu" },
+                                    { value: "31 Modification de la situation juridique de l employeur", label: "31	Modification de la situation juridique de l'employeur" },
+                                    { value: "32 Changement d employeur dans le cadre d un contrat saisonnier", label: "32 Changement d'employeur dans le cadre d'un contrat saisonnier" },
+                                    { value: "33 Prolongation du contrat suite à un échec à l examen de l apprenti", label: "33	Prolongation du contrat suite à un échec à l'examen de l'apprenti" },
+                                    { value: "34 Prolongation du contrat suite à la reconnaissance de l apprenti comme travailleur handicapé", label: "34 Prolongation du contrat suite à la reconnaissance de l'apprenti comme travailleur handicapé" },
+                                    { value: "35 Diplôme supplémentaire préparé par l apprenti dans le cadre de l article L. 6222-22-1 du code du travail", label: "35 Diplôme supplémentaire préparé par l'apprenti dans le cadre de l'article L. 6222-22-1 du code du travail" },
+                                    { value: "36 Autres changements : changement de maître d apprentissage, de durée de travail hebdomadaire, réduction de durée, etc.", label: "36	Autres changements : changement de maître d'apprentissage, de durée de travail hebdomadaire, réduction de durée, etc." },
+                                    { value: "37 Modifications de lieu d exécution du contrat", label: "37 Modifications de lieu d'exécution du contrat" },
+                                    { value: "38 Modification du lieu principale de réalisation de la formation théorique", label: "38 Modification du lieu principal de réalisation de la formation théorique" }
+
                                 ]}
                             />
                         </div>
                         <div className="col-span-12 md:col-span-6">
-                            <Input label="Type de dérogation" placeholder="Si applicable" value={formData.contrat.type_derogation} onChange={(e) => handleNestedChange('contrat', 'type_derogation', e.target.value)} />
+                            <Select
+                                label="Type de dérogation"
+                                value={formData.contrat.type_derogation}
+                                onChange={(e) => handleNestedChange('contrat', 'type_derogation', e.target.value)}
+                                placeholder="Sélectionnez si applicable"
+                                options={[
+                                    { value: "0 - Aucune dérogation", label: "0 - Aucune dérogation" },
+                                    { value: "11 - Âge de l apprenti inférieur à 16 ans", label: "11 - Âge de l'apprenti inférieur à 16 ans" },
+                                    { value: "12 - Âge supérieur à 29 ans : cas spécifiques prévus dans le code du travail", label: "12 - Âge supérieur à 29 ans : cas spécifiques prévus dans le code du travail" },
+                                    { value: "21 - Réduction de la durée du contrat ou de la période d apprentissage", label: "21 - Réduction de la durée du contrat ou de la période d'apprentissage" },
+                                    { value: "22 - Allongement de la durée du contrat ou de la période d apprentissage", label: "22 - Allongement de la durée du contrat ou de la période d'apprentissage" },
+                                    { value: "50 - Cumul de dérogations", label: "50 - Cumul de dérogations" },
+                                    { value: "60 - Autre dérogation", label: "60 - Autre dérogation" }
+                                ]}
+                            />
                         </div>
                         <div className="col-span-12 md:col-span-6">
                             <Input label="Durée hebdomadaire" required placeholder="Ex: 35h" value={formData.contrat.duree_hebdomadaire} onChange={(e) => handleNestedChange('contrat', 'duree_hebdomadaire', e.target.value)} />
@@ -637,60 +685,134 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
                             <Input label="Caisse de retraite" placeholder="Nom de la caisse" value={formData.contrat.caisse_retraite} onChange={(e) => handleNestedChange('contrat', 'caisse_retraite', e.target.value)} />
                         </div>
                         <div className="col-span-12 md:col-span-6">
-                            <Input label="SMIC" placeholder="Montant SMIC" value={formData.contrat.smic} onChange={(e) => handleNestedChange('contrat', 'smic', e.target.value)} />
+                            <Select
+                                label="Travail sur machines dangereuses"
+                                required
+                                value={formData.contrat.machines_dangereuses}
+                                onChange={(e) => handleNestedChange('contrat', 'machines_dangereuses', e.target.value)}
+                                options={[
+                                    { value: "Oui", label: "Oui" },
+                                    { value: "Non", label: "Non" }
+                                ]}
+                            />
                         </div>
 
                         {/* Simulateur de salaire */}
-                        <div className="col-span-12 mt-4 bg-emerald-50/50 p-6 md:p-8 rounded-2xl border-2 border-emerald-200">
-                            <div className="flex items-center gap-4 mb-8">
-                                <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
-                                    <Calculator size={24} />
-                                </div>
-                                <div>
-                                    <h4 className="text-lg font-bold text-emerald-900">Simulateur de salaire apprenti</h4>
-                                    <p className="text-emerald-700 text-xs font-medium">Calcul basé sur le SMIC 2024 : 1 823,03 €</p>
-                                </div>
+                        <div className="col-span-12 mt-6 p-6 rounded-xl border-2 border-[#86efac]" style={{ background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)' }}>
+
+                            <label className="text-base font-bold text-[#166534] mb-4 flex items-center gap-2.5">
+
+                                <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#22c55e] to-[#16a34a] flex items-center justify-center shadow-md">
+
+                                    <Calculator size={18} className="text-white" />
+
+                                </span>
+
+                                Simulateur de salaire apprenti
+
+                            </label>
+
+
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+
+                                <Select
+
+                                    label="Tranche d'âge"
+
+                                    required
+
+                                    value={formData.salaire.age}
+
+                                    onChange={(e) => handleSalaryCalc(e.target.value, formData.salaire.annee)}
+
+                                    options={[
+
+                                        { value: "16-17", label: "De 16 à 17 ans" },
+
+                                        { value: "18-20", label: "De 18 à 20 ans" },
+
+                                        { value: "21-25", label: "De 21 à 25 ans" },
+
+                                        { value: "26+", label: "26 ans et plus" }
+
+                                    ]}
+
+                                    className="!bg-white"
+
+                                />
+
+                                <Select
+
+                                    label="Année d'apprentissage"
+
+                                    required
+
+                                    value={formData.salaire.annee}
+
+                                    onChange={(e) => handleSalaryCalc(formData.salaire.age, e.target.value)}
+
+                                    options={[
+
+                                        { value: "1", label: "1ère année" },
+
+                                        { value: "2", label: "2ème année" },
+
+                                        { value: "3", label: "3ème année" }
+
+                                    ]}
+
+                                    className="!bg-white"
+
+                                />
+
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <div className="space-y-6">
-                                    <Select
-                                        label="Tranche d'âge"
-                                        required
-                                        value={formData.salaire.age}
-                                        onChange={(e) => handleSalaryCalc(e.target.value, formData.salaire.annee)}
-                                        options={[
-                                            { value: "16-17", label: "De 16 à 17 ans" },
-                                            { value: "18-20", label: "De 18 à 20 ans" },
-                                            { value: "21-25", label: "De 21 à 25 ans" },
-                                            { value: "26+", label: "26 ans et plus" }
-                                        ]}
+
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                                <div className="flex flex-col gap-2">
+
+                                    <label className="text-sm font-semibold text-slate-700 ml-1">Pourcentage du SMIC</label>
+
+                                    <input
+
+                                        type="text"
+
+                                        readOnly
+
+                                        value={formData.salaire.pourcentage ? `${formData.salaire.pourcentage}%` : ""}
+
+                                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl font-bold text-[#166534] outline-none"
+
                                     />
-                                    <Select
-                                        label="Année d'apprentissage"
-                                        required
-                                        value={formData.salaire.annee}
-                                        onChange={(e) => handleSalaryCalc(formData.salaire.age, e.target.value)}
-                                        options={[
-                                            { value: "1", label: "1ère année" },
-                                            { value: "2", label: "2ème année" },
-                                            { value: "3", label: "3ème année" }
-                                        ]}
-                                    />
+
                                 </div>
 
-                                <div className="bg-white p-6 rounded-2xl shadow-sm border border-emerald-100 flex flex-col justify-center items-center text-center">
-                                    <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-2">Salaire mensuel brut estimé</span>
-                                    <div className="text-4xl font-bold text-emerald-900 mb-1">
-                                        {formData.salaire.montant.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}
-                                    </div>
-                                    <div className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-[10px] font-bold uppercase tracking-tighter">
-                                        {formData.salaire.pourcentage}% du SMIC
-                                    </div>
+                                <div className="flex flex-col gap-2">
+
+                                    <label className="text-sm font-semibold text-slate-700 ml-1">Salaire brut mensuel</label>
+
+                                    <input
+
+                                        type="text"
+
+                                        readOnly
+
+                                        value={formData.salaire.montant ? `${formData.salaire.montant.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}` : ""}
+
+                                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl font-bold text-lg text-[#166534] outline-none"
+
+                                    />
+
                                 </div>
+
                             </div>
-                        </div>
-                    </div>
+
+                            <span className="text-xs text-[#15803d] font-medium mt-3 block">Basé sur le SMIC 2024 : 1 823,03 € brut mensuel</span>
+
+                        </div>                    </div>
                 </Card>
 
                 <Card step={7} title="Missions en entreprise">
@@ -711,12 +833,12 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
                                     "Prospection et développement commercial",
                                     "Gestion et suivi de la relation client",
                                     "Vente en face à face ou à distance",
-                                    "Animation et gestion d'un espace de vente",
-                                    "Mise en place d'opérations promotionnelles",
+                                    "Animation et gestion d un espace de vente",
+                                    "Mise en place d opérations promotionnelles",
                                     "Analyse des performances commerciales",
                                     "Veille concurrentielle et étude de marché",
                                     "Gestion des stocks et approvisionnements",
-                                    "Management d'une petite équipe",
+                                    "Management d une petite équipe",
                                     "Reporting et tableaux de bord"
                                 ].map((mission) => (
                                     <label key={mission} className={`flex items-center gap-4 p-4 rounded-xl border transition-all cursor-pointer group ${formData.missions.selectionnees.includes(mission) ? 'bg-white border-blue-500 shadow-md ring-1 ring-blue-500/10' : 'bg-white/50 border-slate-200 hover:border-blue-300'}`}>
