@@ -317,10 +317,21 @@ export const api = {
   // DELETE (DELETE)
   async deleteCandidate(id: string): Promise<boolean> {
     try {
-      const response = await fetch(`${BASE_URL}/candidates/${id}`, {
+      const url = `${BASE_URL}/candidates/${id}`;
+      console.log(`🗑️ [API] Attempting to delete candidate at: ${url}`);
+      
+      const response = await fetch(url, {
         method: 'DELETE',
+        headers: { 'Accept': 'application/json' }
       });
-      if (!response.ok) throw new Error('Delete failed');
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`❌ [API] Delete failed with status ${response.status}:`, errorText);
+        throw new Error(`Delete failed: ${response.status}`);
+      }
+
+      console.log("✅ [API] Candidate deleted successfully");
       return true;
     } catch (error) {
       console.error('❌ API Error (Delete Candidate):', error);
