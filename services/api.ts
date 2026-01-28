@@ -155,7 +155,7 @@ export const api = {
         courriel_legal2: data.courriel_legal2 || data.representant_legal_2?.email || "",
 
         // Coordonnées
-        adresse_residence: data.adresse_residence,
+        adresse_residence: [data.num_residence, data.rue_residence, data.complement_residence].filter(Boolean).join(', '),
         code_postal: parseInt(data.code_postal?.toString() || "0", 10),
         ville: data.ville,
         email: data.email,

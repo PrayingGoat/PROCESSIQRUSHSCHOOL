@@ -56,6 +56,9 @@ export interface StudentFormData {
   commune_naissance: string;
   departement: string;
   adresse_residence: string;
+  num_residence?: string;
+  rue_residence?: string;
+  complement_residence?: string;
   code_postal: string;
   ville: string;
   email: string;

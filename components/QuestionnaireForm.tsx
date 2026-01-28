@@ -20,7 +20,10 @@ const studentSchema = z.object({
     nationalite: z.string().min(1, "Veuillez sélectionner votre nationalité"),
     commune_naissance: z.string().min(1, "La commune de naissance est requise"),
     departement: z.string().min(1, "Le département est requis"),
-    adresse_residence: z.string().min(5, "L'adresse est requise"),
+    num_residence: z.string().optional().or(z.literal("")),
+    rue_residence: z.string().min(2, "La rue est requise"),
+    complement_residence: z.string().optional().or(z.literal("")),
+    adresse_residence: z.string().optional().or(z.literal("")),
     code_postal: z.string().min(5, "Code postal invalide"),
     ville: z.string().min(1, "La ville est requise"),
     email: z.string().email("Email invalide"),
@@ -93,7 +96,8 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
         resolver: zodResolver(studentSchema),
         defaultValues: {
             prenom: '', nom_naissance: '', nom_usage: '', sexe: '', date_naissance: '',
-            nationalite: '', commune_naissance: '', departement: '', adresse_residence: '',
+            nationalite: '', commune_naissance: '', departement: '', 
+            num_residence: '', rue_residence: '', complement_residence: '', adresse_residence: '',
             code_postal: '', ville: '', email: '', telephone: '', nir: '',
             situation: '', regime_social: '',
             declare_inscription_sportif_haut_niveau: false,
@@ -216,8 +220,14 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
 
                 <Card step={2} title="Coordonnées">
                     <div className="grid grid-cols-12 gap-5">
+                        <div className="col-span-12 md:col-span-3">
+                            <Input label="Numéro" placeholder="N°" {...register('num_residence')} />
+                        </div>
+                        <div className="col-span-12 md:col-span-9">
+                            <Input label="Rue" required placeholder="Nom de la rue, avenue..." error={errors.rue_residence?.message} {...register('rue_residence')} />
+                        </div>
                         <div className="col-span-12">
-                            <Input label="Adresse de résidence" required placeholder="Numéro et nom de rue" error={errors.adresse_residence?.message} {...register('adresse_residence')} />
+                            <Input label="Complément d'adresse" placeholder="Bâtiment, escalier, appartement..." {...register('complement_residence')} />
                         </div>
                         <div className="col-span-12 md:col-span-4">
                             <Input label="Code postal" required placeholder="Ex: 75001" error={errors.code_postal?.message} {...register('code_postal')} />
