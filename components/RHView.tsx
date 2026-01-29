@@ -32,6 +32,9 @@ const RHView: React.FC<{ activeSubView: ViewId }> = ({ activeSubView }) => {
     const [companies, setCompanies] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [filterStatus, setFilterStatus] = useState<string>('all');
+    
+    const [selectedCompany, setSelectedCompany] = useState<any>(null);
+    const [isViewModalOpen, setIsViewModalOpen] = useState(false);
 
     useEffect(() => {
         if (activeSubView === 'rh-cerfa') {
@@ -42,6 +45,197 @@ const RHView: React.FC<{ activeSubView: ViewId }> = ({ activeSubView }) => {
             fetchCompanies();
         }
     }, [activeSubView]);
+
+    const handleViewCompany = async (companyId: string) => {
+        setLoading(true);
+        try {
+            const data = await api.getCompanyById(companyId);
+            setSelectedCompany(data);
+            setIsViewModalOpen(true);
+        } catch (error) {
+            console.error("Failed to fetch company details", error);
+            alert("Erreur lors de la récupération des détails de l'entreprise.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const CompanyDetailModal = ({ company, isOpen, onClose }: { company: any, isOpen: boolean, onClose: () => void }) => {
+        if (!isOpen || !company) return null;
+        const f = company.fields || {};
+
+        return (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+                <div className="bg-white rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl animate-slide-up">
+                    {/* Header */}
+                    <div className="sticky top-0 bg-white px-8 py-6 border-b border-slate-100 flex justify-between items-center z-10">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-teal-50 text-teal-600 rounded-2xl flex items-center justify-center">
+                                <Building size={24} />
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-black text-slate-800">{f['Raison sociale']}</h3>
+                                <p className="text-sm text-slate-500 font-medium tracking-tight">SIRET: {f['Numéro SIRET']}</p>
+                            </div>
+                        </div>
+                        <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+                            <Trash2 size={24} className="text-slate-400" /> {/* Using Trash2 as a close icon replacement or better use X if available */}
+                        </button>
+                    </div>
+
+                    <div className="p-8 space-y-8">
+                        {/* Section Identification */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className="space-y-6">
+                                <h4 className="text-xs font-black uppercase tracking-widest text-teal-600 border-b border-teal-100 pb-2">Identification</h4>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase">Code APE/NAF</p>
+                                        <p className="text-sm font-semibold text-slate-700">{f['Code APE/NAF']}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase">Type Employeur</p>
+                                        <p className="text-sm font-semibold text-slate-700">{f['Type demployeur']}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase">Effectif</p>
+                                        <p className="text-sm font-semibold text-slate-700">{f['Effectif salarié de l\'entreprise']} salariés</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase">Convention</p>
+                                        <p className="text-sm font-semibold text-slate-700">{f['Convention collective']}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-6">
+                                <h4 className="text-xs font-black uppercase tracking-widest text-teal-600 border-b border-teal-100 pb-2">Adresse & Contact</h4>
+                                <div className="space-y-3">
+                                    <div>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase">Adresse</p>
+                                        <p className="text-sm font-semibold text-slate-700">
+                                            {f['Numéro entreprise']} {f['Voie entreprise']}<br />
+                                            {f['Complément dadresse entreprise'] && <>{f['Complément dadresse entreprise']}<br /></>}
+                                            {f['Code postal entreprise']} {f['Ville entreprise']}
+                                        </p>
+                                    </div>
+                                    <div className="flex gap-6">
+                                        <div>
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase">Téléphone</p>
+                                            <p className="text-sm font-semibold text-slate-700">{f['Téléphone entreprise']}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase">Email</p>
+                                            <p className="text-sm font-semibold text-slate-700">{f['Email entreprise']}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Section Maître Apprentissage */}
+                        <div className="bg-slate-50 rounded-2xl p-6">
+                            <h4 className="text-xs font-black uppercase tracking-widest text-indigo-600 border-b border-indigo-100 pb-2 mb-4">Maître d'Apprentissage</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase">Identité</p>
+                                    <p className="text-sm font-bold text-slate-800">{f['Prénom Maître apprentissage']} {f['Nom Maître apprentissage']}</p>
+                                    <p className="text-xs font-medium text-slate-500">{f['Fonction Maître apprentissage']}</p>
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase">Coordonnées</p>
+                                    <p className="text-sm font-semibold text-slate-700">{f['Téléphone Maître apprentissage']}</p>
+                                    <p className="text-sm font-semibold text-slate-700">{f['Email Maître apprentissage']}</p>
+                                </div>
+                                <div>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase">Expérience & Diplôme</p>
+                                    <p className="text-sm font-semibold text-slate-700">{f['Année experience pro Maître apprentissage']} ans d'expérience</p>
+                                    <p className="text-xs text-slate-500">{f['Diplôme Maître apprentissage']}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Section Contrat & Formation */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className="space-y-6">
+                                <h4 className="text-xs font-black uppercase tracking-widest text-emerald-600 border-b border-emerald-100 pb-2">Contrat</h4>
+                                <div className="space-y-4">
+                                    <div className="bg-emerald-50/50 p-4 rounded-xl border border-emerald-100">
+                                        <p className="text-[10px] font-bold text-emerald-600 uppercase mb-1">Type de Contrat</p>
+                                        <p className="text-sm font-bold text-slate-800 leading-tight">{f['Type de contrat']}</p>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase">Date Début</p>
+                                            <p className="text-sm font-semibold text-slate-700">{f['Date de début exécution']}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase">Date Fin</p>
+                                            <p className="text-sm font-semibold text-slate-700">{f['Fin du contrat apprentissage']}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase">Durée Hebdo</p>
+                                            <p className="text-sm font-semibold text-slate-700">{f['Durée hebdomadaire']}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase">Poste</p>
+                                            <p className="text-sm font-semibold text-slate-700">{f['Poste occupé']}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-6">
+                                <h4 className="text-xs font-black uppercase tracking-widest text-blue-600 border-b border-blue-100 pb-2">Formation & Salaire</h4>
+                                <div className="space-y-4">
+                                    <div>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase">Formation Suivie</p>
+                                        <p className="text-sm font-bold text-blue-600">{f['Formation']}</p>
+                                        <p className="text-[10px] font-medium text-slate-400">RNCP: {f['Code Rncp']} • Diplôme: {f['Code  diplome']}</p>
+                                    </div>
+                                    <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100 flex justify-between items-center">
+                                        <div>
+                                            <p className="text-[10px] font-bold text-blue-600 uppercase">Salaire Brut</p>
+                                            <p className="text-xl font-black text-slate-800">{f['Salaire brut mensuel']?.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase">% SMIC</p>
+                                            <p className="text-lg font-bold text-slate-700">{f['Pourcentage du SMIC']}%</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <div>
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase">OPCO</p>
+                                            <p className="text-xs font-bold text-slate-700">{f['Nom OPCO']}</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase">Caisse Retraite</p>
+                                            <p className="text-xs font-bold text-slate-700">{f['Caisse de retraite']}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Missions */}
+                        <div className="space-y-4">
+                            <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 border-b border-slate-100 pb-2">Missions de l'alternant</h4>
+                            <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100">
+                                <p className="text-sm font-medium text-slate-600 leading-relaxed italic">
+                                    "{f['Formation de lalternant(e) (pour les missions)']}"
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="sticky bottom-0 bg-white border-t border-slate-100 p-6 flex justify-end gap-3 rounded-b-3xl">
+                        <Button variant="ghost" onClick={onClose}>Fermer</Button>
+                        <Button variant="primary" leftIcon={<Download size={18} />}>Exporter PDF</Button>
+                    </div>
+                </div>
+            </div>
+        );
+    };
 
     const fetchFichesData = async () => {
         setLoading(true);
@@ -382,8 +576,8 @@ const RHView: React.FC<{ activeSubView: ViewId }> = ({ activeSubView }) => {
                                             <tr key={c.id || idx} className="hover:bg-teal-50/30 transition-colors group">
                                                 <td className="px-6 py-4">
                                                     <div className="flex flex-col">
-                                                        <span className="font-bold text-slate-800 text-sm">{f['Raison sociale entreprise'] || 'N/A'}</span>
-                                                        <span className="text-[10px] font-mono text-slate-400 uppercase tracking-tighter">SIRET: {f['SIRET de lentreprise'] || 'N/A'}</span>
+                                                        <span className="font-bold text-slate-800 text-sm">{f['Raison sociale'] || 'N/A'}</span>
+                                                        <span className="text-[10px] font-mono text-slate-400 uppercase tracking-tighter">SIRET: {f['Numéro SIRET'] || 'N/A'}</span>
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4">
@@ -395,33 +589,38 @@ const RHView: React.FC<{ activeSubView: ViewId }> = ({ activeSubView }) => {
                                                 <td className="px-6 py-4">
                                                     <div className="flex flex-col gap-1">
                                                         <div className="flex items-center gap-1.5 text-[11px] text-slate-600 font-medium">
-                                                            <Mail size={12} className="text-slate-300" /> {f['E-mail entreprise'] || 'N/A'}
+                                                            <Mail size={12} className="text-slate-300" /> {f['Email entreprise'] || 'N/A'}
                                                         </div>
                                                         <div className="flex items-center gap-1.5 text-[11px] text-slate-600 font-medium">
-                                                            <Phone size={12} className="text-slate-300" /> {f['Numéro de téléphone entreprise'] || 'N/A'}
+                                                            <Phone size={12} className="text-slate-300" /> {f['Téléphone entreprise'] || 'N/A'}
                                                         </div>
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4">
                                                     <div className="flex flex-col">
-                                                        <span className="text-xs font-bold text-slate-700">{f['Prenom du maitre dapprentissage']} {f['Nom du maitre dapprentissage']}</span>
-                                                        <span className="text-[10px] text-slate-400 italic">{f['Fonction maitre dapprentissage'] || 'Tuteur'}</span>
+                                                        <span className="text-xs font-bold text-slate-700">{f['Prénom Maître apprentissage']} {f['Nom Maître apprentissage']}</span>
+                                                        <span className="text-[10px] text-slate-400 italic">{f['Fonction Maître apprentissage'] || 'Tuteur'}</span>
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4">
                                                     <div className="flex flex-col">
                                                         <span className="text-xs font-bold text-teal-600">{f['Poste occupé'] || 'N/A'}</span>
-                                                        <span className="text-[10px] text-slate-400">{f['Type de contrat']} • {f['Nombre de mois du contrat']} mois</span>
+                                                        <span className="text-[10px] text-slate-400">{f['Formation']}</span>
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4">
                                                     <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded text-[10px] font-black uppercase tracking-wider border border-slate-200">
-                                                        {f['Nom de lOPCO'] || 'N/A'}
+                                                        {f['Nom OPCO'] || 'N/A'}
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-4">
                                                     <div className="flex gap-2">
-                                                        <button className="w-8 h-8 rounded-xl border border-slate-200 bg-white hover:border-teal-500 text-slate-400 flex items-center justify-center transition-all shadow-sm"><Eye size={16} /></button>
+                                                        <button 
+                                                            onClick={() => handleViewCompany(c.id)}
+                                                            className="w-8 h-8 rounded-xl border border-slate-200 bg-white hover:border-teal-500 text-slate-400 flex items-center justify-center transition-all shadow-sm"
+                                                        >
+                                                            <Eye size={16} />
+                                                        </button>
                                                         <button className="w-8 h-8 rounded-xl border border-slate-200 bg-white hover:border-teal-500 text-slate-400 flex items-center justify-center transition-all shadow-sm"><FileText size={16} /></button>
                                                     </div>
                                                 </td>
@@ -433,6 +632,12 @@ const RHView: React.FC<{ activeSubView: ViewId }> = ({ activeSubView }) => {
                         </table>
                     </div>
                 </div>
+
+                <CompanyDetailModal 
+                    company={selectedCompany} 
+                    isOpen={isViewModalOpen} 
+                    onClose={() => setIsViewModalOpen(false)} 
+                />
             </div>
         );
     }
