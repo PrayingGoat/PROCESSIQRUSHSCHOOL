@@ -12,7 +12,7 @@ import Card from './ui/Card';
 
 // Validation Schema with Zod
 const studentSchema = z.object({
-    prenom: z.string().min(2, "Le prénom est requis"),
+    prenom: z.string().min(2, "Le prénom doit contenir au moins 2 caractères"),
     nom_naissance: z.string().min(2, "Le nom de naissance est requis"),
     nom_usage: z.string().optional().or(z.literal("")),
     sexe: z.string().min(1, "Veuillez sélectionner votre sexe"),
@@ -24,11 +24,15 @@ const studentSchema = z.object({
     rue_residence: z.string().min(2, "La rue est requise"),
     complement_residence: z.string().optional().or(z.literal("")),
     adresse_residence: z.string().optional().or(z.literal("")),
-    code_postal: z.string().min(5, "Code postal invalide"),
+    code_postal: z.string().regex(/^[0-9]{5}$/, "Le code postal doit contenir 5 chiffres"),
     ville: z.string().min(1, "La ville est requise"),
-    email: z.string().email("Email invalide"),
-    telephone: z.string().min(10, "Téléphone invalide"),
-    nir: z.string().optional().or(z.literal("")),
+    email: z.string().email("L'adresse e-mail est invalide"),
+    telephone: z.string().regex(/^(?:(?:\+|00)33|0)\s*[1-9](?:[\s.-]*\d{2}){4}$/, "Numéro de téléphone français invalide"),
+    nir: z.string().optional().or(z.literal("")).refine(val => {
+        if (!val) return true;
+        const cleaned = val.replace(/\s/g, '');
+        return /^[0-9]{15}$/.test(cleaned);
+    }, { message: "Le NIR doit contenir 15 chiffres" }),
     situation: z.string().min(1, "Veuillez sélectionner votre situation"),
     regime_social: z.string().optional().or(z.literal("")),
     declare_inscription_sportif_haut_niveau: z.boolean(),
@@ -242,7 +246,7 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
                             <Input label="Téléphone" required type="tel" placeholder="06 12 34 56 78" error={errors.telephone?.message} {...register('telephone')} />
                         </div>
                         <div className="col-span-12">
-                            <Input label="NIR (Numéro de Sécurité Sociale)" placeholder="1 85 12 75 108 123 45" {...register('nir')} />
+                            <Input label="NIR (Numéro de Sécurité Sociale)" placeholder="1 85 12 75 108 123 45" error={errors.nir?.message} {...register('nir')} />
                         </div>
                     </div>
                 </Card>

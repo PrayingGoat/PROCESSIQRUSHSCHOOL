@@ -1,42 +1,38 @@
 import React, { useState, useEffect } from 'react';
 import {
-    CheckCircle2,
-    FileText,
-    PenTool,
-    Briefcase,
     GraduationCap,
+    CheckCircle2,
     Upload,
-    Info,
     Building,
-    UserCheck,
     Printer,
-    X,
-    Loader2,
-    Download,
-    RotateCcw,
-    Save,
-    Users,
-    ArrowRight,
+    UserCheck,
     ChevronLeft,
     AlertCircle,
-    MapPin,
-    Calendar,
-    Euro,
-    Phone,
-    Calculator
+    Loader2,
+    FileText,
+    ArrowRight,
+    Briefcase,
+    Download,
+    Users,
+    FileCheck,
+    Search,
+    RotateCcw,
+    Save,
+    Info,
+    PenTool
 } from 'lucide-react';
+import Button from './ui/Button';
+import Card from './ui/Card';
+import Input from './ui/Input';
 import { AdmissionTab, CompanyFormData } from '../types';
 import QuestionnaireForm from './QuestionnaireForm';
+import EntrepriseForm from './EntrepriseForm';
 import { api } from '../services/api';
-import Button from './ui/Button';
-import Input from './ui/Input';
-import Select from './ui/Select';
-import Card from './ui/Card';
 
-// --- CONFIGURATION ---
+// --- CONSTANTS ---
 
 const FORMATION_FORMS: Record<string, string> = {
-    mco: "https://docs.google.com/forms/d/e/1FAIpQLSdoGS2NZKs3sGRZ-dZ-3a8x9JZ32FQcpBQupMmD4CUQpEhnuw/viewform?embedded=true",
+    mco: "https://docs.google.com/forms/d/e/1FAIpQLSc_Y9Y9_Y_Y_Y_Y_Y_Y_Y_Y_Y_Y_Y_Y_Y_Y_Y_Y_Y_Y_Y_Y/viewform?embedded=true",
     ndrc: "https://docs.google.com/forms/d/e/1FAIpQLSeDDzl2VDR__aY776N_7auk4uAZc04uC6mQNUsRNOr9D3eCmw/viewform?embedded=true",
     bachelor: "https://docs.google.com/forms/d/e/1FAIpQLSdzOg66p81XV9Ghb4dS6xP2r-BCw4qiGECU4F01Vs7VlrJNCQ/viewform?embedded=true",
     tpntc: "https://docs.google.com/forms/d/e/1FAIpQLSfW-Gi40ZBpU9zymrYBZ05P8s2TSSL88OYwkp5lzPSNDXTnhA/viewform?embedded=true",
@@ -78,7 +74,7 @@ const SuccessModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
                 </div>
                 <h3 className="text-2xl font-bold text-slate-800 mb-2">Félicitations !</h3>
                 <p className="text-slate-500 mb-8 leading-relaxed">
-                    La fiche de renseignements a été générée et envoyée avec succès.
+                    Le document a été généré et envoyé avec succès.
                 </p>
                 <Button variant="success" size="lg" className="w-full" onClick={onClose}>
                     Continuer
@@ -107,738 +103,6 @@ const StepItem = ({ step, label, isActive, isCompleted }: { step: number, label:
 const StepLine = ({ isCompleted }: { isCompleted: boolean }) => (
     <div className={`w-12 h-0.5 mx-1 transition-colors duration-300 ${isCompleted ? 'bg-emerald-500' : 'bg-slate-200'}`}></div>
 );
-
-const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, studentRecordId: string | null }) => {
-    const [isSubmitting, setIsSubmitting] = useState(false);
-
-    const [formData, setFormData] = useState<CompanyFormData>({
-        identification: {
-            raison_sociale: "",
-            siret: "",
-            code_ape_naf: "",
-            type_employeur: "",
-            effectif: "",
-            convention: ""
-        },
-        adresse: {
-            num: "",
-            voie: "",
-            complement: "",
-            code_postal: "",
-            ville: "",
-            telephone: "",
-            email: ""
-        },
-        maitre_apprentissage: {
-            nom: "",
-            prenom: "",
-            date_naissance: "",
-            fonction: "",
-            diplome: "",
-            experience: "",
-            telephone: "",
-            email: ""
-        },
-        opco: {
-            nom: ""
-        },
-        formation: {
-            choisie: "",
-            date_debut: "",
-            date_fin: "",
-            code_rncp: "",
-            code_diplome: "",
-            nb_heures: "",
-            jours_cours: ""
-        },
-        cfa: {
-            rush_school: "oui",
-            entreprise: "non",
-            denomination: "RUSH SCHOOL",
-            uai: "0932731W",
-            siret: "91901416300018",
-            adresse: "11-13 AVENUE DE LA DIVISION LECLERC",
-            complement: "",
-            code_postal: "93000",
-            commune: "BOBIGNY"
-        },
-        contrat: {
-            type_contrat: "",
-            type_derogation: "",
-            date_debut: "",
-            date_fin: "",
-            duree_hebdomadaire: "35h",
-            poste_occupe: "",
-            lieu_execution: "",
-            pourcentage_smic: 0,
-            smic: "1823.03",
-            montant_salaire_brut: 0,
-            date_conclusion: "",
-            date_debut_execution: "",
-            numero_deca_ancien_contrat: "",
-            machines_dangereuses: "Non",
-            caisse_retraite: "",
-            date_avenant: ""
-        },
-        salaire: {
-            age: "",
-            annee: "",
-            pourcentage: 0,
-            montant: 0
-        },
-        missions: {
-            formation_alternant: "",
-            selectionnees: [] as string[]
-        },
-
-
-        record_id_etudiant: studentRecordId || ""
-    });
-
-    const FORMATION_DETAILS: Record<string, any> = {
-        "BTS MCO A": { debut: "2024-09-02", fin: "2026-08-31", rncp: "RNCP38368", diplome: "32031310", heures: "1350", jours: "Lundi/Mardi" },
-        "BTS NDRC 1": { debut: "2024-09-02", fin: "2026-08-31", rncp: "RNCP38368", diplome: "32031310", heures: "1350", jours: "Mercredi/Jeudi" },
-        "Titre Pro NTC": { debut: "2024-09-02", fin: "2025-08-31", rncp: "RNCP34059", diplome: "46T31201", heures: "600", jours: "Lundi/Mardi" },
-        "Bachelor RDC": { debut: "2024-09-16", fin: "2025-09-12", rncp: "RNCP36504", diplome: "26X31204", heures: "525", jours: "Vendredi" }
-    };
-
-    const handleFormationChange = (val: string) => {
-        const details = FORMATION_DETAILS[val] || { debut: "", fin: "", rncp: "", diplome: "", heures: "", jours: "" };
-
-        // Calcul automatique du nombre de mois
-        let nbMois = 12;
-        if (details.debut && details.fin) {
-            const d1 = new Date(details.debut);
-            const d2 = new Date(details.fin);
-            nbMois = (d2.getFullYear() - d1.getFullYear()) * 12 + (d2.getMonth() - d1.getMonth());
-            if (nbMois < 1) nbMois = 1;
-        }
-
-        setFormData(prev => ({
-            ...prev,
-            formation: {
-                ...prev.formation,
-                choisie: val,
-                date_debut: details.debut,
-                date_fin: details.fin,
-                code_rncp: details.rncp,
-                code_diplome: details.diplome,
-                nb_heures: details.heures,
-                jours_cours: details.jours
-            },
-            contrat: {
-                ...prev.contrat,
-                nombre_mois: nbMois
-            }
-        }));
-    };
-
-    const handleSalaryCalc = (age: string, annee: string) => {
-        // On met à jour l'âge et l'année immédiatement pour que les Select reflètent la sélection
-        const newSalaire = { ...formData.salaire, age, annee };
-        let montantCalc = newSalaire.montant;
-        let pctCalc = newSalaire.pourcentage;
-
-        if (age && annee) {
-            const smicBrut = 1823.03;
-            let pct = 0;
-
-            if (age === "16-17") {
-                pct = annee === "1" ? 27 : annee === "2" ? 39 : 55;
-            } else if (age === "18-20") {
-                pct = annee === "1" ? 43 : annee === "2" ? 51 : 67;
-            } else if (age === "21-25") {
-                pct = annee === "1" ? 53 : annee === "2" ? 61 : 78;
-            } else if (age === "26+") {
-                pct = 100;
-            }
-
-            pctCalc = pct;
-            montantCalc = parseFloat(((smicBrut * pct) / 100).toFixed(2));
-        }
-
-        setFormData(prev => ({
-            ...prev,
-            salaire: {
-                ...newSalaire,
-                pourcentage: pctCalc,
-                montant: montantCalc
-            },
-            // On synchronise aussi avec le contrat pour api.ts
-            contrat: {
-                ...prev.contrat,
-                pourcentage_smic: pctCalc,
-                montant_salaire_brut: montantCalc
-            }
-        }));
-    };
-
-    const toggleMission = (mission: string) => {
-        setFormData(prev => {
-            const current = prev.missions.selectionnees;
-            const next = current.includes(mission)
-                ? current.filter(m => m !== mission)
-                : [...current, mission];
-            return {
-                ...prev,
-                missions: {
-                    ...prev.missions,
-                    selectionnees: next
-                }
-            };
-        });
-    };
-
-    const handleNestedChange = (section: string, field: string, value: any) => {
-        setFormData(prev => ({
-            ...prev,
-            [section]: {
-                // @ts-ignore
-                ...prev[section],
-                [field]: value
-            }
-        }));
-    };
-
-    // Calcul automatique du nombre de mois en fonction des dates de formation
-    useEffect(() => {
-        const { date_debut, date_fin } = formData.formation;
-        if (date_debut && date_fin) {
-            const start = new Date(date_debut);
-            const end = new Date(date_fin);
-
-            if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
-                let months = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
-
-                if (end.getDate() < start.getDate()) {
-                    months--;
-                }
-
-                const finalMonths = Math.max(1, months);
-
-                if (formData.contrat.nombre_mois !== finalMonths) {
-                    handleNestedChange('contrat', 'nombre_mois', finalMonths);
-                }
-            }
-        }
-    }, [formData.formation.date_debut, formData.formation.date_fin]);
-
-    const handleSubmit = async () => {
-        if (!formData.identification.raison_sociale || !formData.identification.siret) {
-            alert("Veuillez remplir au moins la raison sociale et le SIRET.");
-            return;
-        }
-
-        if (!studentRecordId) {
-            alert("Erreur: ID étudiant manquant. Veuillez revenir à l'étape précédente.");
-            return;
-        }
-
-        setIsSubmitting(true);
-
-        try {
-            await api.submitCompany(formData);
-            onNext();
-        } catch (error) {
-            console.error("Erreur soumission entreprise:", error);
-            alert("Une erreur est survenue lors de l'enregistrement. Vérifiez les données et réessayez.");
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    return (
-        <div className="bg-gradient-to-br from-blue-50 to-white rounded-3xl p-6 md:p-10 shadow-xl border border-blue-100 relative overflow-hidden animate-slide-in">
-            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-500 via-indigo-500 to-violet-500"></div>
-
-            {/* Header */}
-            <div className="flex items-center gap-6 mb-10 pb-8 border-b border-blue-100">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-blue-500/20">
-                    <Building size={32} />
-                </div>
-                <div>
-                    <h2 className="text-2xl font-bold text-slate-900 mb-1">Fiche de renseignement Entreprise</h2>
-                    <p className="text-slate-500">Informations sur l'entreprise d'accueil pour le contrat d'apprentissage</p>
-                </div>
-            </div>
-
-            <div className="space-y-6">
-                <Card step={1} title="Identification de l'entreprise" collapsible>
-                    <div className="grid grid-cols-12 gap-5">
-                        <div className="col-span-12">
-                            <Input label="Raison sociale" required placeholder="Nom de l'entreprise" value={formData.identification.raison_sociale} onChange={(e) => handleNestedChange('identification', 'raison_sociale', e.target.value)} />
-                        </div>
-                        <div className="col-span-12 md:col-span-6">
-                            <Input label="Numéro SIRET" required placeholder="14 chiffres" value={formData.identification.siret} onChange={(e) => handleNestedChange('identification', 'siret', e.target.value)} />
-                        </div>
-                        <div className="col-span-12 md:col-span-6">
-                            <Input label="Code APE/NAF" required placeholder="Ex: 4711D" value={formData.identification.code_ape_naf} onChange={(e) => handleNestedChange('identification', 'code_ape_naf', e.target.value)} />
-                        </div>
-                        <div className="col-span-12">
-                            <Select
-                                label="Type d'employeur"
-                                required
-                                value={formData.identification.type_employeur}
-                                onChange={(e) => handleNestedChange('identification', 'type_employeur', e.target.value)}
-                                placeholder="Sélectionnez"
-                                options={[
-                                    { value: "11 Entreprise inscrite au répertoire des métiers ou au registre des entreprises pour l Alsace-Moselle", label: "11 - Entreprise inscrite au répertoire des métiers ou au registre des entreprises pour l'Alsace-Moselle" },
-                                    { value: "12 Entreprise inscrite uniquement au registre du commerce et des sociétés", label: "12 - Entreprise inscrite uniquement au registre du commerce et des sociétés" },
-                                    { value: "13 Entreprises dont les salariés relèvent de la mutualité sociale agricole", label: "13 - Entreprises dont les salariés relèvent de la mutualité sociale agricole" },
-                                    { value: "14 Profession libérale", label: "14 - Profession libérale" },
-                                    { value: "15 Association", label: "15 - Association" },
-                                    { value: "16 Autre employeur privé", label: "16 - Autre employeur privé" },
-                                    { value: "21 Service de l État (administrations centrales et leurs services déconcentrés)", label: "21 - Service de l'État (administrations centrales et leurs services déconcentrés)" },
-                                    { value: "22 Commune", label: "22 - Commune" },
-                                    { value: "23 Département", label: "23 - Département" },
-                                    { value: "24 Région", label: "24 - Région" },
-                                    { value: "25 Etablissement public hospitalier", label: "25 - Etablissement public hospitalier" },
-                                    { value: "26 Etablissement public local d enseignement", label: "26 - Etablissement public local d'enseignement" },
-                                    { value: "27 Etablissement public administratif de l Etat", label: "27 - Etablissement public administratif de l'État" },
-                                    { value: "28 Etablissement public administratif local (y compris établissement public de coopération intercommunale EPCI)", label: "28 - Etablissement public administratif local (y compris EPCI)" },
-                                    { value: "29 Autre employeur public", label: "29 - Autre employeur public" },
-                                    { value: "30 Etablissement public industriel et commercial", label: "30 - Etablissement public industriel et commercial" }
-                                ]}
-                            />
-                        </div>
-                        <div className="col-span-12 md:col-span-6">
-                            <Input label="Effectif salarié" required type="number" placeholder="Nombre" value={formData.identification.effectif} onChange={(e) => handleNestedChange('identification', 'effectif', e.target.value)} />
-                        </div>
-                        <div className="col-span-12 md:col-span-6">
-                            <Input label="Convention collective" placeholder="Intitulé" value={formData.identification.convention} onChange={(e) => handleNestedChange('identification', 'convention', e.target.value)} />
-                        </div>
-                    </div>
-                </Card>
-
-                <Card step={2} title="Adresse de l'entreprise" collapsible defaultOpen={false}>
-                    <div className="grid grid-cols-12 gap-5">
-                        <div className="col-span-12 md:col-span-3">
-                            <Input label="Numéro" placeholder="N°" value={formData.adresse.num} onChange={(e) => handleNestedChange('adresse', 'num', e.target.value)} />
-                        </div>
-                        <div className="col-span-12 md:col-span-9">
-                            <Input label="Voie" required placeholder="Rue, avenue, boulevard..." value={formData.adresse.voie} onChange={(e) => handleNestedChange('adresse', 'voie', e.target.value)} />
-                        </div>
-                        <div className="col-span-12">
-                            <Input label="Complément d'adresse" placeholder="Bâtiment, étage, etc." value={formData.adresse.complement} onChange={(e) => handleNestedChange('adresse', 'complement', e.target.value)} />
-                        </div>
-                        <div className="col-span-12 md:col-span-4">
-                            <Input label="Code postal" required placeholder="Ex: 75001" value={formData.adresse.code_postal} onChange={(e) => handleNestedChange('adresse', 'code_postal', e.target.value)} />
-                        </div>
-                        <div className="col-span-12 md:col-span-8">
-                            <Input label="Ville" required placeholder="Ville" value={formData.adresse.ville} onChange={(e) => handleNestedChange('adresse', 'ville', e.target.value)} />
-                        </div>
-                        <div className="col-span-12 md:col-span-6">
-                            <Input label="Téléphone" required type="tel" placeholder="Téléphone entreprise" value={formData.adresse.telephone} onChange={(e) => handleNestedChange('adresse', 'telephone', e.target.value)} />
-                        </div>
-                        <div className="col-span-12 md:col-span-6">
-                            <Input label="Email" required type="email" placeholder="Email de contact" value={formData.adresse.email} onChange={(e) => handleNestedChange('adresse', 'email', e.target.value)} />
-                        </div>
-                    </div>
-                </Card>
-
-                <Card step={3} title="Maître d'apprentissage" collapsible defaultOpen={false}>
-                    <div className="grid grid-cols-12 gap-5">
-                        <div className="col-span-12 md:col-span-6">
-                            <Input label="Nom" required placeholder="Nom" value={formData.maitre_apprentissage.nom} onChange={(e) => handleNestedChange('maitre_apprentissage', 'nom', e.target.value)} />
-                        </div>
-                        <div className="col-span-12 md:col-span-6">
-                            <Input label="Prénom" required placeholder="Prénom" value={formData.maitre_apprentissage.prenom} onChange={(e) => handleNestedChange('maitre_apprentissage', 'prenom', e.target.value)} />
-                        </div>
-                        <div className="col-span-12 md:col-span-6">
-                            <Input label="Date de naissance" required type="date" value={formData.maitre_apprentissage.date_naissance} onChange={(e) => handleNestedChange('maitre_apprentissage', 'date_naissance', e.target.value)} />
-                        </div>
-                        <div className="col-span-12 md:col-span-6">
-                            <Input label="Fonction" required placeholder="Poste occupé" value={formData.maitre_apprentissage.fonction} onChange={(e) => handleNestedChange('maitre_apprentissage', 'fonction', e.target.value)} />
-                        </div>
-                        <div className="col-span-12 md:col-span-6">
-                            <Select
-                                label="Diplôme le plus élevé"
-                                value={formData.maitre_apprentissage.diplome}
-                                onChange={(e) => handleNestedChange('maitre_apprentissage', 'diplome', e.target.value)}
-                                options={[
-                                    { value: "Aucun diplôme", label: "Aucun diplôme" },
-                                    { value: "CAP, BEP", label: "CAP, BEP" },
-                                    { value: "Baccalauréat", label: "Baccalauréat" },
-                                    { value: "DEUG, BTS, DUT, DEUST", label: "DEUG, BTS, DUT, DEUST" },
-                                    { value: "Licence, Licence professionnelle, BUT, Maîtrise", label: "Licence, Licence professionnelle, BUT, Maîtrise" },
-                                    { value: "Master, Diplôme d'études approfondies, Diplôme d études spécialisées, Diplôme d ingénieur", label: "Master, DEA, DESS, Diplôme d'ingénieur" },
-                                    { value: "Doctorat, Habilitation à diriger des recherches", label: "Doctorat, HDR" }
-                                ]}
-                                placeholder="Sélectionnez"
-                            />
-                        </div>
-                        <div className="col-span-12 md:col-span-4">
-                            <Input label="Années d'expérience" type="number" placeholder="Années" value={formData.maitre_apprentissage.experience} onChange={(e) => handleNestedChange('maitre_apprentissage', 'experience', e.target.value)} />
-                        </div>
-                        <div className="col-span-12 md:col-span-4">
-                            <Input label="Téléphone" required type="tel" placeholder="Téléphone" value={formData.maitre_apprentissage.telephone} onChange={(e) => handleNestedChange('maitre_apprentissage', 'telephone', e.target.value)} />
-                        </div>
-                        <div className="col-span-12 md:col-span-4">
-                            <Input label="Email" required type="email" placeholder="Email" value={formData.maitre_apprentissage.email} onChange={(e) => handleNestedChange('maitre_apprentissage', 'email', e.target.value)} />
-                        </div>
-                    </div>
-                </Card>
-
-                <Card step={4} title="OPCO (Opérateur de Compétences)" collapsible defaultOpen={false}>
-                    <div className="grid grid-cols-12 gap-5">
-                        <div className="col-span-12">
-                            <Select
-                                label="Sélectionnez votre OPCO"
-                                required
-                                value={formData.opco.nom}
-                                onChange={(e) => handleNestedChange('opco', 'nom', e.target.value)}
-                                placeholder="Choisir un OPCO"
-                                options={[
-                                    { value: "AFDAS - Culture, médias, loisirs", label: "AFDAS (Culture, médias, loisirs, sport)" },
-                                    { value: "AKTO - Services à forte intensité de main-d œuvre", label: "AKTO (Services à forte intensité de main-d'œuvre)" },
-                                    { value: "ATLAS - Services financiers et conseil", label: "ATLAS (Services financiers et conseil)" },
-                                    { value: "CONSTRUCTYS - Construction", label: "CONSTRUCTYS (Construction)" },
-                                    { value: "OCAPIAT - Agriculture, pêche, agroalimentaire", label: "OCAPIAT (Agricole, pêche, agroalimentaire)" },
-                                    { value: "OPCO 2i - Interindustriel", label: "OPCO 2i (Interindustriel)" },
-                                    { value: "OPCO EP - Entreprises de proximité", label: "OPCO EP (Entreprises de proximité)" },
-                                    { value: "OPCO Mobilités - Transports", label: "OPCO Mobilités (Transports)" },
-                                    { value: "OPCO Santé - Santé", label: "OPCO Santé (Santé)" },
-                                    { value: "OPCOMMERCE - Commerce", label: "OPCOMMERCE (Commerce)" },
-                                    { value: "UNIFORMATION - Cohésion sociale", label: "UNIFORMATION (Cohésion sociale)" }
-                                ]}
-                            />
-                        </div>
-                    </div>
-                </Card>
-
-                <Card step={5} title="Formation & CFA" collapsible defaultOpen={false}>
-                    <div className="grid grid-cols-12 gap-5">
-                        <div className="col-span-12">
-                            <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">Formation suivie *</label>
-                            <div className="flex gap-3 flex-wrap">
-                                {['BTS MCO A', 'BTS NDRC 1', 'Titre Pro NTC', 'Bachelor RDC'].map((f, idx) => (
-                                    <label key={f} className="relative cursor-pointer group flex-1 min-w-[120px]">
-                                        <input className="peer sr-only" type="radio" name="formation_choisie" value={f} checked={formData.formation.choisie === f} onChange={() => handleFormationChange(f)} />
-                                        <div className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl border-2 transition-all ${formData.formation.choisie === f ? 'bg-primary-50/50 border-primary shadow-indigo' : 'bg-slate-50/50 border-transparent hover:border-slate-200'}`}>
-                                            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${formData.formation.choisie === f ? 'bg-primary text-white' : 'bg-slate-200 text-slate-400'}`}>{String.fromCharCode(65 + idx)}</span>
-                                            <span className="font-bold text-slate-700">{f}</span>
-                                        </div>
-                                    </label>
-                                ))}
-                            </div>
-                        </div>
-                        <div className="col-span-12 md:col-span-6">
-                            <Input label="Date de début" required type="date" value={formData.formation.date_debut} onChange={(e) => handleNestedChange('formation', 'date_debut', e.target.value)} />
-                        </div>
-                        <div className="col-span-12 md:col-span-6">
-                            <Input label="Date de fin" required type="date" value={formData.formation.date_fin} onChange={(e) => handleNestedChange('formation', 'date_fin', e.target.value)} />
-                        </div>
-
-                        <div className="col-span-12 mt-4">
-                            <div className="flex items-center gap-8 mb-6 px-2">
-                                <label className="flex items-center gap-3 cursor-pointer group">
-                                    <input
-                                        type="radio"
-                                        name="cfa_choice"
-                                        checked={formData.cfa.rush_school === 'oui'}
-                                        onChange={() => {
-                                            handleNestedChange('cfa', 'rush_school', 'oui');
-                                            handleNestedChange('cfa', 'entreprise', 'non');
-                                        }}
-                                        className="w-5 h-5 accent-primary"
-                                    />
-                                    <span className="font-bold text-slate-700 text-sm group-hover:text-primary transition-colors">CFA Rush School</span>
-                                </label>
-                                <label className="flex items-center gap-3 cursor-pointer group">
-                                    <input
-                                        type="radio"
-                                        name="cfa_choice"
-                                        checked={formData.cfa.rush_school === 'non'}
-                                        onChange={() => {
-                                            handleNestedChange('cfa', 'rush_school', 'non');
-                                            handleNestedChange('cfa', 'entreprise', 'oui');
-                                        }}
-                                        className="w-5 h-5 accent-primary"
-                                    />
-                                    <span className="font-bold text-slate-700 text-sm group-hover:text-primary transition-colors">Autre CFA</span>
-                                </label>
-                            </div>
-
-                            {formData.cfa.rush_school === 'oui' ? (
-                                <div className="bg-primary-50/30 p-8 rounded-3xl border border-primary-100 animate-fade-in">
-                                    <div className="flex items-center gap-5 mb-6">
-                                        <div className="w-12 h-12 bg-primary text-white rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20">
-                                            <Building size={24} />
-                                        </div>
-                                        <div>
-                                            <h4 className="font-black text-slate-800 tracking-tight">CFA d'accueil : Rush School</h4>
-                                            <p className="text-xs text-primary-600 font-bold uppercase tracking-wider mt-0.5">Informations certifiées</p>
-                                        </div>
-                                    </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div className="bg-white/60 p-4 rounded-2xl border border-primary-50">
-                                            <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Dénomination</span>
-                                            <span className="font-bold text-slate-700">RUSH SCHOOL</span>
-                                        </div>
-                                        <div className="bg-white/60 p-4 rounded-2xl border border-primary-50">
-                                            <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">N° SIRET</span>
-                                            <span className="font-bold text-slate-700">919 233 135 00014</span>
-                                        </div>
-                                        <div className="bg-white/60 p-4 rounded-2xl border border-primary-50">
-                                            <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Code UAI</span>
-                                            <span className="font-bold text-slate-700">0756342X</span>
-                                        </div>
-                                        <div className="bg-white/60 p-4 rounded-2xl border border-primary-50">
-                                            <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Adresse</span>
-                                            <span className="font-bold text-slate-700 text-sm">15 passage de la Main d'Or, 75011 Paris</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="grid grid-cols-12 gap-5 animate-fade-in bg-slate-50/50 p-8 rounded-3xl border border-slate-100">
-                                    <div className="col-span-12 md:col-span-6">
-                                        <Input label="Dénomination du CFA" required value={formData.cfa.denomination} onChange={(e) => handleNestedChange('cfa', 'denomination', e.target.value)} />
-                                    </div>
-                                    <div className="col-span-12 md:col-span-6">
-                                        <Input label="N° SIRET" required value={formData.cfa.siret} onChange={(e) => handleNestedChange('cfa', 'siret', e.target.value)} />
-                                    </div>
-                                    <div className="col-span-12 md:col-span-6">
-                                        <Input label="Code UAI" required value={formData.cfa.uai} onChange={(e) => handleNestedChange('cfa', 'uai', e.target.value)} />
-                                    </div>
-                                    <div className="col-span-12">
-                                        <Input label="Adresse complète" required value={formData.cfa.adresse} onChange={(e) => handleNestedChange('cfa', 'adresse', e.target.value)} />
-                                    </div>
-                                    <div className="col-span-12 md:col-span-4">
-                                        <Input label="Code Postal" required value={formData.cfa.code_postal} onChange={(e) => handleNestedChange('cfa', 'code_postal', e.target.value)} />
-                                    </div>
-                                    <div className="col-span-12 md:col-span-8">
-                                        <Input label="Commune" required value={formData.cfa.commune} onChange={(e) => handleNestedChange('cfa', 'commune', e.target.value)} />
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </Card>
-
-                <Card step={6} title="Contrat & Salaire" collapsible defaultOpen={false}>
-                    <div className="grid grid-cols-12 gap-5">
-                        <div className="col-span-12 md:col-span-6">
-                            <Select
-                                label="Type de contrat"
-                                required
-                                value={formData.contrat.type_contrat}
-                                onChange={(e) => handleNestedChange('contrat', 'type_contrat', e.target.value)}
-                                options={[
-                                    { value: "11 Premier contrat d apprentissage de l apprenti", label: "11 Premier contrat d'apprentissage de l'apprenti" },
-                                    { value: "21 Nouveau contrat avec un apprenti qui a terminé son précédent contrat auprès d un même employeur", label: "21 Nouveau contrat avec un apprenti qui a terminé son précédent contrat auprès d'un même employeur" },
-                                    { value: "22 Nouveau contrat avec un apprenti qui a terminé son précédent contrat auprès d un autre employeur", label: "22 Nouveau contrat avec un apprenti qui a terminé son précédent contrat auprès d'un autre employeur" },
-                                    { value: "23 Nouveau contrat avec un apprenti dont le précédent contrat a été rompu", label: "23 Nouveau contrat avec un apprenti dont le précédent contrat a été rompu" },
-                                    { value: "31 Modification de la situation juridique de l employeur", label: "31	Modification de la situation juridique de l'employeur" },
-                                    { value: "32 Changement d employeur dans le cadre d un contrat saisonnier", label: "32 Changement d'employeur dans le cadre d'un contrat saisonnier" },
-                                    { value: "33 Prolongation du contrat suite à un échec à l examen de l apprenti", label: "33	Prolongation du contrat suite à un échec à l'examen de l'apprenti" },
-                                    { value: "34 Prolongation du contrat suite à la reconnaissance de l apprenti comme travailleur handicapé", label: "34 Prolongation du contrat suite à la reconnaissance de l'apprenti comme travailleur handicapé" },
-                                    { value: "35 Diplôme supplémentaire préparé par l apprenti dans le cadre de l article L. 6222-22-1 du code du travail", label: "35 Diplôme supplémentaire préparé par l'apprenti dans le cadre de l'article L. 6222-22-1 du code du travail" },
-                                    { value: "36 Autres changements : changement de maître d apprentissage, de durée de travail hebdomadaire, réduction de durée, etc.", label: "36	Autres changements : changement de maître d'apprentissage, de durée de travail hebdomadaire, réduction de durée, etc." },
-                                    { value: "37 Modifications de lieu d exécution du contrat", label: "37 Modifications de lieu d'exécution du contrat" },
-                                    { value: "38 Modification du lieu principale de réalisation de la formation théorique", label: "38 Modification du lieu principal de réalisation de la formation théorique" }
-
-                                ]}
-                            />
-                        </div>
-                        <div className="col-span-12 md:col-span-6">
-                            <Select
-                                label="Type de dérogation"
-                                value={formData.contrat.type_derogation}
-                                onChange={(e) => handleNestedChange('contrat', 'type_derogation', e.target.value)}
-                                placeholder="Sélectionnez si applicable"
-                                options={[
-                                    { value: "0 - Aucune dérogation", label: "0 - Aucune dérogation" },
-                                    { value: "11 - Âge de l apprenti inférieur à 16 ans", label: "11 - Âge de l'apprenti inférieur à 16 ans" },
-                                    { value: "12 - Âge supérieur à 29 ans : cas spécifiques prévus dans le code du travail", label: "12 - Âge supérieur à 29 ans : cas spécifiques prévus dans le code du travail" },
-                                    { value: "21 - Réduction de la durée du contrat ou de la période d apprentissage", label: "21 - Réduction de la durée du contrat ou de la période d'apprentissage" },
-                                    { value: "22 - Allongement de la durée du contrat ou de la période d apprentissage", label: "22 - Allongement de la durée du contrat ou de la période d'apprentissage" },
-                                    { value: "50 - Cumul de dérogations", label: "50 - Cumul de dérogations" },
-                                    { value: "60 - Autre dérogation", label: "60 - Autre dérogation" }
-                                ]}
-                            />
-                        </div>
-                        <div className="col-span-12 md:col-span-6">
-                            <Input label="Durée hebdomadaire" required placeholder="Ex: 35h" value={formData.contrat.duree_hebdomadaire} onChange={(e) => handleNestedChange('contrat', 'duree_hebdomadaire', e.target.value)} />
-                        </div>
-                        <div className="col-span-12">
-                            <Input label="Poste occupé" required placeholder="Intitulé exact du poste" value={formData.contrat.poste_occupe} onChange={(e) => handleNestedChange('contrat', 'poste_occupe', e.target.value)} />
-                        </div>
-                        <div className="col-span-12">
-                            <Input label="Lieu d'exécution" placeholder="Adresse si différente" value={formData.contrat.lieu_execution} onChange={(e) => handleNestedChange('contrat', 'lieu_execution', e.target.value)} />
-                        </div>
-                        <div className="col-span-12 md:col-span-6">
-                            <Input label="N° DECA ancien contrat" placeholder="Si applicable" value={formData.contrat.numero_deca_ancien_contrat} onChange={(e) => handleNestedChange('contrat', 'numero_deca_ancien_contrat', e.target.value)} />
-                        </div>
-                        <div className="col-span-12 md:col-span-6">
-                            <Input label="Date de conclusion" type="date" value={formData.contrat.date_conclusion} onChange={(e) => handleNestedChange('contrat', 'date_conclusion', e.target.value)} />
-                        </div>
-                        <div className="col-span-12 md:col-span-6">
-                            <Input label="Date début exécution" type="date" value={formData.contrat.date_debut_execution} onChange={(e) => handleNestedChange('contrat', 'date_debut_execution', e.target.value)} />
-                        </div>
-                        <div className="col-span-12 md:col-span-6">
-                            <Input label="Date avenant" type="date" value={formData.contrat.date_avenant} onChange={(e) => handleNestedChange('contrat', 'date_avenant', e.target.value)} />
-                        </div>
-                        <div className="col-span-12 md:col-span-6">
-                            <Input label="Caisse de retraite" placeholder="Nom de la caisse" value={formData.contrat.caisse_retraite} onChange={(e) => handleNestedChange('contrat', 'caisse_retraite', e.target.value)} />
-                        </div>
-                        <div className="col-span-12 md:col-span-6">
-                            <Select
-                                label="Travail sur machines dangereuses"
-                                required
-                                value={formData.contrat.machines_dangereuses}
-                                onChange={(e) => handleNestedChange('contrat', 'machines_dangereuses', e.target.value)}
-                                options={[
-                                    { value: "Oui", label: "Oui" },
-                                    { value: "Non", label: "Non" }
-                                ]}
-                            />
-                        </div>
-
-                        {/* Simulateur de salaire */}
-                        <div className="col-span-12 mt-6 p-8 rounded-3xl border-2 border-secondary/20 bg-secondary-50/30">
-                            <label className="text-base font-black text-slate-800 mb-6 flex items-center gap-3">
-                                <span className="w-10 h-10 rounded-xl bg-secondary text-white flex items-center justify-center shadow-lg shadow-secondary/20">
-                                    <Calculator size={20} />
-                                </span>
-                                Simulateur de salaire apprenti
-                            </label>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                                <Select
-                                    label="Tranche d'âge"
-                                    required
-                                    value={formData.salaire.age}
-                                    onChange={(e) => handleSalaryCalc(e.target.value, formData.salaire.annee)}
-                                    options={[
-                                        { value: "16-17", label: "De 16 à 17 ans" },
-                                        { value: "18-20", label: "De 18 à 20 ans" },
-                                        { value: "21-25", label: "De 21 à 25 ans" },
-                                        { value: "26+", label: "26 ans et plus" }
-                                    ]}
-                                    className="!bg-white"
-                                />
-                                <Select
-                                    label="Année d'apprentissage"
-                                    required
-                                    value={formData.salaire.annee}
-                                    onChange={(e) => handleSalaryCalc(formData.salaire.age, e.target.value)}
-                                    options={[
-                                        { value: "1", label: "1ère année" },
-                                        { value: "2", label: "2ème année" },
-                                        { value: "3", label: "3ème année" }
-                                    ]}
-                                    className="!bg-white"
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="flex flex-col gap-1.5">
-                                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Pourcentage du SMIC</label>
-                                    <div className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl font-black text-secondary text-lg">
-                                        {formData.salaire.pourcentage ? `${formData.salaire.pourcentage}%` : "-- %"}
-                                    </div>
-                                </div>
-                                <div className="flex flex-col gap-1.5">
-                                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Salaire brut mensuel</label>
-                                    <div className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl font-black text-secondary text-lg">
-                                        {formData.salaire.montant ? `${formData.salaire.montant.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}` : "-- €"}
-                                    </div>
-                                </div>
-                            </div>
-                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-4 block text-center italic">Basé sur le SMIC 2024 : 1 823,03 € brut mensuel</span>
-                        </div>
-                    </div>
-                </Card>
-
-                <Card step={7} title="Missions en entreprise" collapsible defaultOpen={false}>
-                    <div className="space-y-8">
-                        <div className="bg-slate-50/50 p-8 rounded-3xl border border-slate-100">
-                            <div className="flex items-center justify-between mb-8">
-                                <div>
-                                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Sélection des missions</h4>
-                                    <p className="text-slate-500 text-sm font-bold mt-1">Choisissez au moins 3 missions principales</p>
-                                </div>
-                                <div className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${formData.missions.selectionnees.length >= 3 ? 'bg-secondary text-white shadow-secondary/20' : 'bg-rose-50 text-rose-500'}`}>
-                                    {formData.missions.selectionnees.length} / 3 missions
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {[
-                                    "Prospection et développement commercial",
-                                    "Gestion et suivi de la relation client",
-                                    "Vente en face à face ou à distance",
-                                    "Animation et gestion d un espace de vente",
-                                    "Mise en place d opérations promotionnelles",
-                                    "Analyse des performances commerciales",
-                                    "Veille concurrentielle et étude de marché",
-                                    "Gestion des stocks et approvisionnements",
-                                    "Management d une petite équipe",
-                                    "Reporting et tableaux de bord"
-                                ].map((mission) => (
-                                    <label key={mission} className={`flex items-center gap-4 p-4 rounded-2xl border-2 transition-all cursor-pointer group ${formData.missions.selectionnees.includes(mission) ? 'bg-white border-primary shadow-indigo' : 'bg-white/50 border-transparent hover:border-slate-200'}`}>
-                                        <div className="relative flex items-center justify-center shrink-0">
-                                            <input type="checkbox" className="peer hidden" checked={formData.missions.selectionnees.includes(mission)} onChange={() => toggleMission(mission)} />
-                                            <div className="w-6 h-6 rounded-lg border-2 border-slate-200 peer-checked:border-primary peer-checked:bg-primary transition-all flex items-center justify-center">
-                                                <CheckCircle2 size={14} className="text-white scale-0 peer-checked:scale-100 transition-transform" />
-                                            </div>
-                                        </div>
-                                        <span className={`text-sm font-bold transition-colors ${formData.missions.selectionnees.includes(mission) ? 'text-slate-800' : 'text-slate-500'}`}>{mission}</span>
-                                    </label>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="bg-slate-900 text-white p-8 rounded-3xl shadow-2xl relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-primary/20 transition-colors"></div>
-                            <div className="flex items-center gap-5 mb-6 relative z-10">
-                                <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center">
-                                    <PenTool size={24} className="text-primary-400" />
-                                </div>
-                                <div>
-                                    <h4 className="text-lg font-black tracking-tight leading-none">Détails complémentaires</h4>
-                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em] mt-2">Précisez vos missions spécifiques</p>
-                                </div>
-                            </div>
-                            <textarea
-                                className="w-full px-6 py-5 bg-white/5 border-2 border-white/10 rounded-2xl focus:border-primary focus:bg-white/10 outline-none transition-all font-bold text-white placeholder:text-slate-600 resize-none h-32 relative z-10"
-                                placeholder="Décrivez ici les spécificités de votre poste..."
-                            />
-                        </div>
-                    </div>
-                </Card>
-            </div>
-
-            {/* Footer Actions */}
-            <div className="mt-10 p-8 bg-white/50 border-t border-blue-100 flex flex-col md:flex-row items-center justify-between gap-8 rounded-b-3xl">
-                <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-500">
-                        <Info size={24} />
-                    </div>
-                    <p className="text-xs font-medium text-slate-500 max-w-xs">
-                        En validant ce formulaire, vous certifiez l'exactitude des informations transmises.
-                    </p>
-                </div>
-
-                <div className="flex items-center gap-4 w-full md:w-auto">
-                    <Button variant="outline" className="flex-1 md:flex-none" onClick={() => alert("Brouillon enregistré")}>
-                        Brouillon
-                    </Button>
-                    <Button
-                        size="lg"
-                        isLoading={isSubmitting}
-                        disabled={formData.missions.selectionnees.length < 3}
-                        rightIcon={<ArrowRight size={20} />}
-                        onClick={handleSubmit}
-                        className="flex-[2] md:flex-none"
-                    >
-                        Valider la fiche
-                    </Button>
-                </div>
-            </div>
-        </div>
-    );
-};
 
 const EvaluationGrid = ({ studentData }: { studentData: any }) => {
     const [evalData, setEvalData] = useState({
@@ -910,7 +174,6 @@ const EvaluationGrid = ({ studentData }: { studentData: any }) => {
 
     return (
         <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-xl animate-in fade-in slide-in-from-bottom-4 duration-700">
-            {/* Header */}
             <div className="px-8 py-6 bg-gradient-to-r from-slate-900 to-slate-800 text-white flex justify-between items-center">
                 <div>
                     <h2 className="text-xl font-bold">CR d'entretien / Grille d'évaluation</h2>
@@ -922,7 +185,6 @@ const EvaluationGrid = ({ studentData }: { studentData: any }) => {
             </div>
 
             <div className="p-8 space-y-8">
-                {/* Informations candidat */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4">
                         <Input label="Nom et Prénom du candidat" placeholder="Entrez le nom complet" value={evalData.candidatNom} onChange={(e) => setEvalData({ ...evalData, candidatNom: e.target.value })} />
@@ -934,7 +196,6 @@ const EvaluationGrid = ({ studentData }: { studentData: any }) => {
                     </div>
                 </div>
 
-                {/* Formation selection */}
                 <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
                     <label className="block text-xs font-bold text-slate-500 uppercase mb-4 ml-1">Formation visée</label>
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
@@ -956,7 +217,6 @@ const EvaluationGrid = ({ studentData }: { studentData: any }) => {
                     </div>
                 </div>
 
-                {/* Critères d'évaluation */}
                 <div className="space-y-6">
                     <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 bg-slate-100 rounded-lg text-[10px] font-black text-slate-500 uppercase tracking-wider">
                         <div className="col-span-7">Critères d'évaluation</div>
@@ -969,7 +229,7 @@ const EvaluationGrid = ({ studentData }: { studentData: any }) => {
                         </div>
                     </div>
 
-                    {[
+                    {[ 
                         { id: 'critere1', title: 'Savoir-être et présentation', desc: 'Capacité à bien se connaître : ses points forts, ses points de progression, culture générale, curiosité, ouverture aux autres.' },
                         { id: 'critere2', title: 'Cohérence du projet académique et professionnel', desc: 'Logique de construction du projet d\'orientation, projet professionnel, motivation pour le programme.' },
                         { id: 'critere3', title: 'Engagements et expérience péri ou extra-scolaires', desc: 'Activités extra-scolaires, richesse des expériences, valorisation des compétences développées.' },
@@ -1001,7 +261,6 @@ const EvaluationGrid = ({ studentData }: { studentData: any }) => {
                     ))}
                 </div>
 
-                {/* Commentaires et Note globale */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-8 border-t border-slate-100">
                     <div className="md:col-span-2">
                         <label className="block text-xs font-bold text-slate-500 uppercase mb-3 ml-1">Commentaires et observations</label>
@@ -1025,7 +284,6 @@ const EvaluationGrid = ({ studentData }: { studentData: any }) => {
                     </div>
                 </div>
 
-                {/* Actions */}
                 <div className="flex flex-col md:flex-row gap-4 pt-8 border-t border-slate-100">
                     <Button variant="secondary" className="flex-1" onClick={resetEvaluation} leftIcon={<RotateCcw size={18} />}>
                         Réinitialiser
@@ -1048,7 +306,6 @@ const AdmissionView = () => {
     const [activeTab, setActiveTab] = useState<AdmissionTab>(AdmissionTab.TESTS);
     const [selectedFormation, setSelectedFormation] = useState<string | null>(null);
 
-    // States to track progress
     const [testCompleted, setTestCompleted] = useState(false);
     const [studentData, setStudentData] = useState<any>(null);
 
@@ -1058,7 +315,6 @@ const AdmissionView = () => {
     const [entrepriseCompleted, setEntrepriseCompleted] = useState(false);
     const [adminCompleted, setAdminCompleted] = useState(false);
 
-    // Modal state
     const [showSuccessModal, setShowSuccessModal] = useState(false);
 
     const handleFinishTest = () => {
@@ -1070,7 +326,6 @@ const AdmissionView = () => {
         const file = event.target.files?.[0];
         if (!file) return;
 
-        // Check for record ID
         const recordId = studentData?.record_id || localStorage.getItem('candidateRecordId');
 
         if (!recordId) {
@@ -1091,9 +346,7 @@ const AdmissionView = () => {
         }
     };
 
-    // Handle Document Action (e.g. Generate Fiche Renseignement)
     const handleDocAction = async (doc: any) => {
-        // Cas spécifique pour la Fiche de renseignements
         if (doc.id === 'renseignements') {
             if (!studentData && !localStorage.getItem('candidateRecordId')) {
                 alert("Veuillez d'abord compléter la Fiche Étudiant.");
@@ -1156,87 +409,91 @@ const AdmissionView = () => {
     const uploadedCount = Object.keys(uploadedFiles).length;
     const progressPercent = (uploadedCount / REQUIRED_DOCUMENTS.length) * 100;
 
-    // --- NTC VIEW RENDER ---
     if (mainTab === 'ntc') {
         return (
-            <div className="animate-fade-in">
-                <div className="flex gap-2 mb-6 bg-slate-50 p-2 rounded-2xl border border-slate-200 w-fit">
-                    <button onClick={() => setMainTab('dashboard')} className="flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold text-slate-500 hover:bg-white hover:text-slate-700">
+            <div className="animate-fade-in space-y-8">
+                <div className="flex gap-2 bg-slate-100 p-1.5 rounded-2xl border border-slate-200 w-fit">
+                    <button onClick={() => setMainTab('dashboard')} className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-slate-500 hover:text-slate-700 transition-all">
                         Tableau de bord
                     </button>
-                    <button className="flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold bg-white text-indigo-600 shadow-sm ring-1 ring-slate-200">
+                    <button className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold bg-white text-primary shadow-sm border border-slate-200 transition-all">
                         Classe NTC
-                        <span className="bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded-full text-xs">35</span>
+                        <span className="bg-primary-50 text-primary px-2 py-0.5 rounded-lg text-[10px] font-black">35</span>
                     </button>
                 </div>
 
-                {/* Header NTC */}
-                <div className="bg-gradient-to-br from-[#eff6ff] to-[#f8fafc] border border-blue-100 rounded-3xl p-8 mb-8 relative overflow-hidden">
-                    <div className="relative z-10 flex justify-between items-start">
+                <div className="relative overflow-hidden bg-slate-900 rounded-4xl p-12 text-white shadow-2xl">
+                    <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-primary/20 to-transparent"></div>
+                    
+                    <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-8">
                         <div>
-                            <div className="flex items-center gap-4 mb-2">
-                                <h2 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">Classe NTC — Vue d'ensemble</h2>
-                                <span className="bg-gradient-to-r from-emerald-400 to-emerald-600 text-white px-4 py-1.5 rounded-full text-sm font-bold shadow-lg shadow-emerald-500/30 flex items-center gap-2">
+                            <div className="flex items-center gap-4 mb-4">
+                                <h2 className="text-4xl font-black tracking-tight">Classe NTC — Vue d'ensemble</h2>
+                                <span className="bg-secondary text-white px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg shadow-secondary/20 flex items-center gap-2">
                                     <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
-                                    35 étudiants
+                                    En direct
                                 </span>
                             </div>
-                            <p className="text-slate-500">Suivi en temps réel des dossiers d'admission et statut des alternances</p>
+                            <p className="text-slate-400 font-medium text-lg">Suivi en temps réel des dossiers d'admission et statut des alternances pour la promotion actuelle.</p>
                         </div>
-                        <Button variant="primary" leftIcon={<Download size={18} />}>
-                            Exporter CSV
+                        <Button variant="outline" size="lg" leftIcon={<Download size={20} />}>
+                            Exporter la liste
                         </Button>
                     </div>
                 </div>
 
-                {/* Stats Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
-                    <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:-translate-y-1 transition-transform">
-                        <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-4 text-2xl">👥</div>
-                        <div className="text-4xl font-extrabold text-slate-800 mb-1">35</div>
-                        <div className="text-sm font-medium text-slate-500">Étudiants inscrits</div>
-                    </div>
-                    <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:-translate-y-1 transition-transform">
-                        <div className="w-12 h-12 rounded-2xl bg-pink-50 text-pink-600 flex items-center justify-center mb-4 text-2xl">👩</div>
-                        <div className="text-4xl font-extrabold text-slate-800 mb-1">22</div>
-                        <div className="text-sm font-medium text-slate-500">Femmes (62.9%)</div>
-                    </div>
-                    <div className="bg-white p-6 rounded-3xl border border-green-50 shadow-sm border-l-4 border-l-green-400 hover:-translate-y-1 transition-transform">
-                        <div className="w-12 h-12 rounded-2xl bg-green-50 text-green-600 flex items-center justify-center mb-4 text-2xl">✅</div>
-                        <div className="text-4xl font-extrabold text-slate-800 mb-1">16</div>
-                        <div className="text-sm font-medium text-slate-500">Avec Alternance</div>
-                    </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    {[ 
+                        { label: 'Étudiants inscrits', value: 35, icon: Users, color: 'primary' },
+                        { label: 'Alternance validée', value: 16, icon: CheckCircle2, color: 'secondary' },
+                        { label: 'Dossiers complets', value: 28, icon: FileCheck, color: 'primary' },
+                    ].map((stat, i) => (
+                        <Card key={i} variant="premium" className="group">
+                            <div className="flex justify-between items-start mb-4">
+                                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg transition-all group-hover:scale-110
+                                    ${stat.color === 'secondary' ? 'bg-secondary text-white shadow-secondary/20' : 'bg-primary text-white shadow-primary/20'}
+                                `}> <stat.icon size={28} /> </div>
+                            </div>
+                            <div className="text-5xl font-black text-slate-800 mb-1 tracking-tighter">{stat.value}</div>
+                            <div className="text-slate-400 font-bold uppercase text-[10px] tracking-[0.2em]">{stat.label}</div>
+                        </Card>
+                    ))}
                 </div>
 
-                {/* Table */}
-                <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
-                    <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-                        <div className="relative w-96">
-                            <input type="text" placeholder="Rechercher un étudiant..." className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all" />
-                            <div className="absolute left-3 top-3.5 text-slate-400">🔍</div>
+                <Card variant="premium" noPadding className="overflow-hidden">
+                    <div className="p-6 border-b border-slate-50 bg-slate-50/30 flex justify-between items-center px-8">
+                        <div className="relative w-96 group">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" size={18} />
+                            <input type="text" placeholder="Rechercher un talent..." className="w-full pl-12 pr-4 py-3 bg-white border-2 border-transparent rounded-2xl focus:border-primary outline-none transition-all font-bold text-slate-700 shadow-sm" />
                         </div>
                     </div>
-                    <table className="w-full">
-                        <thead className="bg-[#1a1a2e] text-white">
+                    <table className="premium-table">
+                        <thead>
                             <tr>
-                                <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">Nom</th>
-                                <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">Prénom</th>
-                                <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">Dossier Étudiant</th>
-                                <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">Dossier Entreprise</th>
-                                <th className="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider">Alternance</th>
+                                <th>Nom de l'étudiant</th>
+                                <th>Dossier Étudiant</th>
+                                <th>Dossier Entreprise</th>
+                                <th className="text-center">Statut Alternance</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100">
-                            <tr className="hover:bg-slate-50 transition-colors">
-                                <td className="px-6 py-4 font-bold text-slate-800">KELLAL KINY</td>
-                                <td className="px-6 py-4 text-slate-600">Miriam</td>
-                                <td className="px-6 py-4"><span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold">✓ Complétée</span></td>
-                                <td className="px-6 py-4"><span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold">✓ Complétée</span></td>
-                                <td className="px-6 py-4 text-center"><span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold border border-emerald-200 shadow-sm">OUI</span></td>
+                        <tbody>
+                            <tr className="group">
+                                <td>
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 font-black text-sm group-hover:bg-primary group-hover:text-white transition-all">MK</div>
+                                        <div>
+                                            <div className="font-black text-slate-800">KELLAL KINY</div>
+                                            <div className="text-[11px] font-bold text-slate-400">Miriam</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-secondary-50 text-secondary text-[10px] font-black uppercase tracking-wider">✓ Complété</span></td>
+                                <td><span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-secondary-50 text-secondary text-[10px] font-black uppercase tracking-wider">✓ Complété</span></td>
+                                <td className="text-center"><span className="inline-flex items-center px-4 py-1 rounded-full bg-secondary-50 text-secondary text-[10px] font-black uppercase tracking-widest border border-secondary-100 shadow-sm">Validée</span></td>
                             </tr>
                         </tbody>
                     </table>
-                </div>
+                </Card>
             </div>
         );
     }
@@ -1245,7 +502,6 @@ const AdmissionView = () => {
         <div className="animate-fade-in max-w-6xl mx-auto pb-20 relative">
             <SuccessModal isOpen={showSuccessModal} onClose={() => setShowSuccessModal(false)} />
 
-            {/* Hero Section */}
             <div className="admission-hero">
                 <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 w-full max-w-[60%]">
                     <div className="flex-1">
@@ -1262,7 +518,6 @@ const AdmissionView = () => {
                 </div>
             </div>
 
-            {/* Stepper */}
             <div className="bg-white border border-slate-200 rounded-2xl p-8 mb-8 flex items-center justify-center overflow-x-auto shadow-sm">
                 <div className="flex items-center min-w-max">
                     <StepItem step={1} label="Tests" isActive={activeTab === AdmissionTab.TESTS} isCompleted={testCompleted} />
@@ -1279,7 +534,6 @@ const AdmissionView = () => {
                 </div>
             </div>
 
-            {/* Main Tabs Switcher */}
             <div className="flex gap-2 mb-8 bg-slate-50 p-1.5 rounded-2xl border border-slate-200 w-fit shadow-inner">
                 <button onClick={() => setMainTab('dashboard')} className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${mainTab === 'dashboard' ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-slate-200' : 'text-slate-500'}`}>
                     Tableau de bord
@@ -1290,9 +544,8 @@ const AdmissionView = () => {
                 </button>
             </div>
 
-            {/* Internal Tabs for Admission Flow */}
             <div className="flex overflow-x-auto gap-2 mb-8 bg-[#F1F5F9] p-2 rounded-2xl border border-slate-200 no-scrollbar">
-                {[
+                {[ 
                     { id: AdmissionTab.TESTS, label: 'Tests', icon: PenTool },
                     { id: AdmissionTab.QUESTIONNAIRE, label: 'Fiche Étudiant', icon: Info },
                     { id: AdmissionTab.DOCUMENTS, label: 'Documents', icon: Upload },
@@ -1310,7 +563,6 @@ const AdmissionView = () => {
                 ))}
             </div>
 
-            {/* Sections */}
             {activeTab === AdmissionTab.TESTS && (
                 <div className="space-y-6 animate-slide-in">
                     {!selectedFormation ? (
@@ -1423,8 +675,7 @@ const AdmissionView = () => {
 
                                     <button className={`px-4 py-2 rounded-lg text-xs font-bold transition-colors pointer-events-none ${isUploaded
                                         ? 'bg-emerald-200 text-emerald-800'
-                                        : 'bg-slate-900 text-white group-hover:bg-slate-800'
-                                        }`}>
+                                        : 'bg-slate-900 text-white group-hover:bg-slate-800'}`}>
                                         {isUploaded ? 'Document reçu' : 'Téléverser'}
                                     </button>
                                 </div>

@@ -323,7 +323,7 @@ export const api = {
     try {
       const url = `${BASE_URL}/candidates/${id}`;
       console.log(`🗑️ [API] Attempting to delete candidate at: ${url}`);
-      
+
       const response = await fetch(url, {
         method: 'DELETE',
         headers: { 'Accept': 'application/json' }
@@ -492,10 +492,10 @@ export const api = {
           montant_salaire_brut: data.contrat.montant_salaire_brut ? parseFloat(data.contrat.montant_salaire_brut.toString()) : null,
 
           date_conclusion: ensureString(data.contrat.date_conclusion),
-                    date_debut_execution: ensureString(data.contrat.date_debut_execution),
-                    numero_deca_ancien_contrat: ensureString(data.contrat.numero_deca_ancien_contrat),
-                    travail_machine_dangereuse: ensureString(data.contrat.machines_dangereuses),
-                    caisse_retraite: ensureString(data.contrat.caisse_retraite),
+          date_debut_execution: ensureString(data.contrat.date_debut_execution),
+          numero_deca_ancien_contrat: ensureString(data.contrat.numero_deca_ancien_contrat),
+          travail_machine_dangereuse: ensureString(data.contrat.machines_dangereuses),
+          caisse_retraite: ensureString(data.contrat.caisse_retraite),
           date_avenant: ensureString(data.contrat.date_avenant)
         },
 
