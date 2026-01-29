@@ -905,7 +905,7 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
     );
 };
 
-const EvaluationGrid = () => {
+const EvaluationGrid = ({ studentData }: { studentData: any }) => {
     const [evalData, setEvalData] = useState({
         candidatNom: '',
         heureEntretien: '',
@@ -918,6 +918,18 @@ const EvaluationGrid = () => {
         critere4: 0,
         commentaires: ''
     });
+
+    useEffect(() => {
+        if (studentData) {
+            const data = studentData.data || studentData;
+            setEvalData(prev => ({
+                ...prev,
+                candidatNom: `${data.prenom || ''} ${data.nom_naissance || ''}`.trim(),
+                formation: data.formation_souhaitee || '',
+                dateEntretien: new Date().toISOString().split('T')[0]
+            }));
+        }
+    }, [studentData]);
 
     const totalScore = (Number(evalData.critere1) || 0) +
         (Number(evalData.critere2) || 0) +
@@ -1535,7 +1547,7 @@ const AdmissionView = () => {
 
             {activeTab === AdmissionTab.ENTRETIEN && (
                 <div className="animate-slide-in">
-                    <EvaluationGrid />
+                    <EvaluationGrid studentData={studentData} />
                 </div>
             )}
 

@@ -46,7 +46,7 @@ const RHView: React.FC<{ activeSubView: ViewId }> = ({ activeSubView }) => {
     const fetchFichesData = async () => {
         setLoading(true);
         try {
-            const data = await api.getEtudiantsFiches(false);
+            const data = await api.getEtudiantsFiches(false, false, false);
             setFichesData(data);
             setCandidates(data.etudiants || []);
         } catch (error) {
@@ -206,13 +206,10 @@ const RHView: React.FC<{ activeSubView: ViewId }> = ({ activeSubView }) => {
                             <thead className="bg-gradient-to-r from-[#6B5B73] to-[#8B7B93] text-white sticky top-0 z-10">
                                 <tr>
                                     {[
-                                        "Formation", "Référent", "Chargé", "Nom Apprenti", "Date Naissance",
-                                        "Coord. Apprenti", "Statut Contrat", "Statut Convention", "Date Signature",
-                                        "Date Début", "Date Fin", "Entreprise & SIRET", "Maître Apprentissage",
-                                        "Coord. Entreprise", "OPCO", "État PEC", "Montant PEC", "Date Transm.",
-                                        "Priorité", "Commentaires", "Actions"
+                                        "Formation", "Apprenti", "Entreprise", 
+                                        "Fiche Renseign.", "Statut CERFA", "CERFA PDF", "Dossier", "Actions"
                                     ].map((header) => (
-                                        <th key={header} className="px-3 py-3 text-left text-[11px] font-bold uppercase tracking-wider whitespace-nowrap">
+                                        <th key={header} className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider whitespace-nowrap">
                                             {header}
                                         </th>
                                     ))}
@@ -220,120 +217,81 @@ const RHView: React.FC<{ activeSubView: ViewId }> = ({ activeSubView }) => {
                             </thead>
                             <tbody className="divide-y divide-slate-100">
                                 {loading ? (
-                                    <tr><td colSpan={21} className="p-8 text-center text-slate-500">Chargement des données...</td></tr>
+                                    <tr><td colSpan={8} className="p-12 text-center text-slate-500"><Loader2 className="animate-spin mx-auto mb-4 text-[#6B5B73]" size={32} />Chargement des données...</td></tr>
                                 ) : candidates.length === 0 ? (
-                                    <tr><td colSpan={21} className="p-8 text-center text-slate-500">Aucun dossier trouvé</td></tr>
+                                    <tr><td colSpan={8} className="p-12 text-center text-slate-500">Aucun dossier trouvé</td></tr>
                                 ) : (
                                     candidates.map((c: any, idx: number) => (
                                         <tr key={c.record_id || idx} className="hover:bg-[#FAFBFC] transition-colors group">
-                                            <td className="p-2">
-                                                <select className="w-full bg-[#F9FAFB] border border-transparent group-hover:border-slate-300 rounded text-[11px] py-1 px-1 outline-none" defaultValue={c.formation || "NDRC"}>
-                                                    <option value="NDRC">BTS NDRC</option>
-                                                    <option value="MCO">BTS MCO</option>
-                                                    <option value="BACHELOR">BACHELOR RDC</option>
-                                                    <option value="NTC">TP NTC</option>
-                                                </select>
+                                            <td className="px-6 py-4">
+                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                                                    {c.formation || "N/A"}
+                                                </span>
                                             </td>
-                                            <td className="p-2">
-                                                <select className="w-full bg-[#F9FAFB] border border-transparent group-hover:border-slate-300 rounded text-[11px] py-1 px-1 outline-none">
-                                                    <option>Alex</option>
-                                                    <option>Bilal</option>
-                                                    <option>Maxime</option>
-                                                    <option>Arsène</option>
-                                                </select>
-                                            </td>
-                                            <td className="p-2">
-                                                <select className="w-full bg-[#F9FAFB] border border-transparent group-hover:border-slate-300 rounded text-[11px] py-1 px-1 outline-none">
-                                                    <option>Chaima</option>
-                                                    <option>Rania</option>
-                                                </select>
-                                            </td>
-                                            <td className="p-2">
-                                                <input type="text" defaultValue={((c.prenom || '') + ' ' + (c.nom || '')).trim().toUpperCase() || "SANS NOM"} className="w-full bg-[#F9FAFB] border border-transparent group-hover:border-slate-300 rounded text-[11px] font-semibold py-1 px-2 outline-none min-w-[120px]" />
-                                            </td>
-                                            <td className="p-2">
-                                                <input type="date" defaultValue={formatDate(c.date_naissance)} className="bg-[#F9FAFB] border border-transparent group-hover:border-slate-300 rounded text-[11px] py-1 px-1 outline-none w-[95px]" />
-                                            </td>
-                                            <td className="p-2">
-                                                <div className="flex flex-col gap-1">
-                                                    <input type="tel" defaultValue={c.telephone} placeholder="Tél" className="bg-[#F9FAFB] border border-transparent rounded text-[10px] py-0.5 px-1 outline-none w-[90px]" />
-                                                    <input type="email" defaultValue={c.email} placeholder="Email" className="bg-[#F9FAFB] border border-transparent rounded text-[10px] py-0.5 px-1 outline-none w-[120px]" />
+                                            <td className="px-6 py-4">
+                                                <div className="flex flex-col">
+                                                    <span className="font-bold text-slate-800 text-sm">{((c.prenom || '') + ' ' + (c.nom || '')).trim().toUpperCase()}</span>
+                                                    <span className="text-[10px] text-slate-400 font-medium">{c.email}</span>
                                                 </div>
                                             </td>
-                                            <td className="p-2 text-center">
-                                                <select className="bg-[#F9FAFB] border border-transparent rounded text-[10px] py-1 px-1 outline-none w-full" defaultValue={c.has_cerfa ? "signe" : "attente"}>
-                                                    <option value="attente">Attente fiche</option>
-                                                    <option value="prep">Prép. entreprise</option>
-                                                    <option value="signe">Signé</option>
-                                                </select>
-                                            </td>
-                                            <td className="p-2 text-center">
-                                                <select className="bg-[#F9FAFB] border border-transparent rounded text-[10px] py-1 px-1 outline-none w-full" defaultValue={c.has_fiche_renseignement ? "signe" : "attente"}>
-                                                    <option value="attente">Attente</option>
-                                                    <option value="prep">Prép. CFA</option>
-                                                    <option value="signe">Signé</option>
-                                                </select>
-                                            </td>
-                                            <td className="p-2">
-                                                <input type="date" className="bg-[#F9FAFB] border border-transparent rounded text-[11px] py-1 px-1 outline-none w-[95px]" />
-                                            </td>
-                                            <td className="p-2">
-                                                <input type="date" className="bg-[#F9FAFB] border border-transparent rounded text-[11px] py-1 px-1 outline-none w-[95px]" />
-                                            </td>
-                                            <td className="p-2">
-                                                <input type="date" className="bg-[#F9FAFB] border border-transparent rounded text-[11px] py-1 px-1 outline-none w-[95px]" />
-                                            </td>
-                                            <td className="p-2">
-                                                <div className="flex flex-col gap-1">
-                                                    <input type="text" defaultValue={c.entreprise_raison_sociale || ''} placeholder="Entreprise" className="bg-[#F9FAFB] border border-transparent rounded text-[11px] font-semibold py-0.5 px-1 outline-none w-[120px]" />
-                                                    <input type="text" placeholder="SIRET" className="bg-[#F9FAFB] border border-transparent rounded text-[10px] font-mono py-0.5 px-1 outline-none w-[110px]" />
+                                            <td className="px-6 py-4">
+                                                <div className="flex flex-col">
+                                                    <span className="text-sm font-bold text-slate-700">{c.entreprise_raison_sociale || 'Non renseignée'}</span>
+                                                    {c.alternance && <span className="text-[10px] text-emerald-600 font-bold uppercase tracking-tighter">En alternance</span>}
                                                 </div>
                                             </td>
-                                            <td className="p-2">
-                                                <input type="text" className="bg-[#F9FAFB] border border-transparent rounded text-[11px] py-1 px-1 outline-none w-[100px]" />
+                                            <td className="px-6 py-4 text-center">
+                                                {c.has_fiche_renseignement ? (
+                                                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-50 text-emerald-600 text-[10px] font-black uppercase border border-emerald-100">
+                                                        <CheckCircle2 size={10} /> Reçue
+                                                    </span>
+                                                ) : (
+                                                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-amber-50 text-amber-600 text-[10px] font-black uppercase border border-amber-100">
+                                                        <Clock size={10} /> En attente
+                                                    </span>
+                                                )}
                                             </td>
-                                            <td className="p-2">
-                                                <div className="flex flex-col gap-1">
-                                                    <input type="tel" placeholder="Tél" className="bg-[#F9FAFB] border border-transparent rounded text-[10px] py-0.5 px-1 outline-none w-[90px]" />
-                                                    <input type="email" placeholder="Email" className="bg-[#F9FAFB] border border-transparent rounded text-[10px] py-0.5 px-1 outline-none w-[120px]" />
-                                                </div>
+                                            <td className="px-6 py-4 text-center">
+                                                {c.has_cerfa ? (
+                                                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-blue-50 text-blue-600 text-[10px] font-black uppercase border border-blue-100">
+                                                        <CheckCircle2 size={10} /> Généré
+                                                    </span>
+                                                ) : (
+                                                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-50 text-slate-400 text-[10px] font-black uppercase border border-slate-200">
+                                                        À faire
+                                                    </span>
+                                                )}
                                             </td>
-                                            <td className="p-2">
-                                                <select className="bg-[#F9FAFB] border border-transparent rounded text-[11px] py-1 px-1 outline-none w-full">
-                                                    <option>ATLAS</option>
-                                                    <option>AKTO</option>
-                                                    <option>OPCOMMERCE</option>
-                                                    <option>OPCO 2i</option>
-                                                    <option>AFDAS</option>
-                                                </select>
+                                            <td className="px-6 py-4">
+                                                {c.cerfa ? (
+                                                    <a 
+                                                        href={c.cerfa.url} 
+                                                        target="_blank" 
+                                                        rel="noopener noreferrer"
+                                                        className="flex items-center gap-2 px-3 py-1.5 bg-white text-blue-600 rounded-xl border border-blue-200 hover:bg-blue-50 hover:border-blue-300 transition-all shadow-sm group/btn"
+                                                    >
+                                                        <Download size={14} className="group-hover/btn:scale-110 transition-transform" />
+                                                        <span className="text-[10px] font-black truncate max-w-[100px]">{c.cerfa.filename}</span>
+                                                    </a>
+                                                ) : (
+                                                    <span className="text-[10px] text-slate-300 font-bold italic">Indisponible</span>
+                                                )}
                                             </td>
-                                            <td className="p-2">
-                                                <select className="bg-[#F9FAFB] border border-transparent rounded text-[10px] py-1 px-1 outline-none w-full">
-                                                    <option>En analyse</option>
-                                                    <option>Accordé</option>
-                                                    <option>Refusé</option>
-                                                </select>
+                                            <td className="px-6 py-4 text-center">
+                                                {c.dossier_complet ? (
+                                                    <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto shadow-inner">
+                                                        <CheckCircle2 size={16} strokeWidth={3} />
+                                                    </div>
+                                                ) : (
+                                                    <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-300 flex items-center justify-center mx-auto">
+                                                        <Clock size={16} strokeWidth={3} />
+                                                    </div>
+                                                )}
                                             </td>
-                                            <td className="p-2">
-                                                <input type="number" placeholder="€" className="bg-[#F9FAFB] border border-transparent rounded text-[11px] text-right py-1 px-1 outline-none w-[60px]" />
-                                            </td>
-                                            <td className="p-2">
-                                                <input type="date" className="bg-[#F9FAFB] border border-transparent rounded text-[11px] py-1 px-1 outline-none w-[95px]" />
-                                            </td>
-                                            <td className="p-2 text-center">
-                                                <select className="bg-[#F9FAFB] border border-transparent rounded text-[10px] font-bold py-1 px-1 outline-none w-full">
-                                                    <option value="haute">🔴 Haute</option>
-                                                    <option value="moyenne">🟡 Moyenne</option>
-                                                    <option value="basse">🟢 Basse</option>
-                                                </select>
-                                            </td>
-                                            <td className="p-2">
-                                                <input type="text" placeholder="Notes..." className="bg-[#F9FAFB] border border-transparent rounded text-[11px] py-1 px-1 outline-none w-[100px]" />
-                                            </td>
-                                            <td className="p-2 text-center">
-                                                <div className="flex justify-center gap-1">
-                                                    <button className="w-7 h-7 rounded-lg border border-slate-200 bg-white hover:border-blue-500 text-slate-400 flex items-center justify-center transition-all"><Eye size={14} /></button>
-                                                    <button className="w-7 h-7 rounded-lg border border-slate-200 bg-white hover:border-red-500 text-slate-400 flex items-center justify-center transition-all"><Trash2 size={14} /></button>
+                                            <td className="px-6 py-4 text-center">
+                                                <div className="flex justify-center gap-2">
+                                                    <button className="w-9 h-9 rounded-xl border border-slate-200 bg-white hover:border-blue-500 hover:text-blue-500 text-slate-400 flex items-center justify-center transition-all shadow-sm hover:shadow-md"><Eye size={16} /></button>
+                                                    <button className="w-9 h-9 rounded-xl border border-slate-200 bg-white hover:border-red-500 hover:text-red-500 text-slate-400 flex items-center justify-center transition-all shadow-sm hover:shadow-md"><Trash2 size={16} /></button>
                                                 </div>
                                             </td>
                                         </tr>

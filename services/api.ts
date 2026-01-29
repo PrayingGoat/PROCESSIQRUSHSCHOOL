@@ -249,9 +249,13 @@ export const api = {
   },
 
   // GET ETUDIANTS FICHES (Document tracking)
-  async getEtudiantsFiches(avecFicheUniquement: boolean = false): Promise<any> {
+  async getEtudiantsFiches(
+    avecFicheUniquement: boolean = false,
+    avecCerfaUniquement: boolean = false,
+    dossierCompletUniquement: boolean = false
+  ): Promise<any> {
     try {
-      const url = `${BASE_API_URL}/rh/etudiants-fiches?avec_fiche_uniquement=${avecFicheUniquement}`;
+      const url = `${BASE_API_URL}/rh/etudiants-fiches?avec_fiche_uniquement=${avecFicheUniquement}&avec_cerfa_uniquement=${avecCerfaUniquement}&dossier_complet_uniquement=${dossierCompletUniquement}`;
       console.log(`🔍 Fetching étudiants fiches from: ${url}`);
 
       const response = await fetch(url, {
