@@ -363,7 +363,7 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
             </div>
 
             <div className="space-y-6">
-                <Card step={1} title="Identification de l'entreprise">
+                <Card step={1} title="Identification de l'entreprise" collapsible>
                     <div className="grid grid-cols-12 gap-5">
                         <div className="col-span-12">
                             <Input label="Raison sociale" required placeholder="Nom de l'entreprise" value={formData.identification.raison_sociale} onChange={(e) => handleNestedChange('identification', 'raison_sociale', e.target.value)} />
@@ -410,7 +410,7 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
                     </div>
                 </Card>
 
-                <Card step={2} title="Adresse de l'entreprise">
+                <Card step={2} title="Adresse de l'entreprise" collapsible defaultOpen={false}>
                     <div className="grid grid-cols-12 gap-5">
                         <div className="col-span-12 md:col-span-3">
                             <Input label="Numéro" placeholder="N°" value={formData.adresse.num} onChange={(e) => handleNestedChange('adresse', 'num', e.target.value)} />
@@ -436,9 +436,7 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
                     </div>
                 </Card>
 
-
-
-                <Card step={3} title="Maître d'apprentissage">
+                <Card step={3} title="Maître d'apprentissage" collapsible defaultOpen={false}>
                     <div className="grid grid-cols-12 gap-5">
                         <div className="col-span-12 md:col-span-6">
                             <Input label="Nom" required placeholder="Nom" value={formData.maitre_apprentissage.nom} onChange={(e) => handleNestedChange('maitre_apprentissage', 'nom', e.target.value)} />
@@ -481,7 +479,7 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
                     </div>
                 </Card>
 
-                <Card step={4} title="OPCO (Opérateur de Compétences)">
+                <Card step={4} title="OPCO (Opérateur de Compétences)" collapsible defaultOpen={false}>
                     <div className="grid grid-cols-12 gap-5">
                         <div className="col-span-12">
                             <Select
@@ -508,17 +506,17 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
                     </div>
                 </Card>
 
-                <Card step={5} title="Formation & CFA">
+                <Card step={5} title="Formation & CFA" collapsible defaultOpen={false}>
                     <div className="grid grid-cols-12 gap-5">
                         <div className="col-span-12">
-                            <label className="block text-sm font-semibold text-slate-700 mb-3">Formation suivie *</label>
+                            <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">Formation suivie *</label>
                             <div className="flex gap-3 flex-wrap">
                                 {['BTS MCO A', 'BTS NDRC 1', 'Titre Pro NTC', 'Bachelor RDC'].map((f, idx) => (
                                     <label key={f} className="relative cursor-pointer group flex-1 min-w-[120px]">
                                         <input className="peer sr-only" type="radio" name="formation_choisie" value={f} checked={formData.formation.choisie === f} onChange={() => handleFormationChange(f)} />
-                                        <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all ${formData.formation.choisie === f ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500' : 'bg-white border-slate-200 hover:border-blue-300 hover:bg-slate-50'}`}>
-                                            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${formData.formation.choisie === f ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-400'}`}>{String.fromCharCode(65 + idx)}</span>
-                                            <span className="font-medium text-slate-600">{f}</span>
+                                        <div className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl border-2 transition-all ${formData.formation.choisie === f ? 'bg-primary-50/50 border-primary shadow-indigo' : 'bg-slate-50/50 border-transparent hover:border-slate-200'}`}>
+                                            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${formData.formation.choisie === f ? 'bg-primary text-white' : 'bg-slate-200 text-slate-400'}`}>{String.fromCharCode(65 + idx)}</span>
+                                            <span className="font-bold text-slate-700">{f}</span>
                                         </div>
                                     </label>
                                 ))}
@@ -532,8 +530,8 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
                         </div>
 
                         <div className="col-span-12 mt-4">
-                            <div className="flex items-center gap-6 mb-4">
-                                <label className="flex items-center gap-3 cursor-pointer">
+                            <div className="flex items-center gap-8 mb-6 px-2">
+                                <label className="flex items-center gap-3 cursor-pointer group">
                                     <input
                                         type="radio"
                                         name="cfa_choice"
@@ -542,11 +540,11 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
                                             handleNestedChange('cfa', 'rush_school', 'oui');
                                             handleNestedChange('cfa', 'entreprise', 'non');
                                         }}
-                                        className="w-5 h-5 accent-blue-600"
+                                        className="w-5 h-5 accent-primary"
                                     />
-                                    <span className="font-semibold text-slate-700">CFA Rush School</span>
+                                    <span className="font-bold text-slate-700 text-sm group-hover:text-primary transition-colors">CFA Rush School</span>
                                 </label>
-                                <label className="flex items-center gap-3 cursor-pointer">
+                                <label className="flex items-center gap-3 cursor-pointer group">
                                     <input
                                         type="radio"
                                         name="cfa_choice"
@@ -555,44 +553,44 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
                                             handleNestedChange('cfa', 'rush_school', 'non');
                                             handleNestedChange('cfa', 'entreprise', 'oui');
                                         }}
-                                        className="w-5 h-5 accent-blue-600"
+                                        className="w-5 h-5 accent-primary"
                                     />
-                                    <span className="font-semibold text-slate-700">Autre CFA</span>
+                                    <span className="font-bold text-slate-700 text-sm group-hover:text-primary transition-colors">Autre CFA</span>
                                 </label>
                             </div>
 
                             {formData.cfa.rush_school === 'oui' ? (
-                                <div className="bg-blue-50/50 p-6 rounded-2xl border border-blue-100 animate-fade-in">
-                                    <div className="flex items-center gap-4 mb-4">
-                                        <div className="w-10 h-10 bg-blue-500 text-white rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
-                                            <Building size={20} />
+                                <div className="bg-primary-50/30 p-8 rounded-3xl border border-primary-100 animate-fade-in">
+                                    <div className="flex items-center gap-5 mb-6">
+                                        <div className="w-12 h-12 bg-primary text-white rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20">
+                                            <Building size={24} />
                                         </div>
                                         <div>
-                                            <h4 className="font-bold text-slate-900">CFA d'accueil : Rush School</h4>
-                                            <p className="text-xs text-slate-500 font-medium">Informations pré-remplies</p>
+                                            <h4 className="font-black text-slate-800 tracking-tight">CFA d'accueil : Rush School</h4>
+                                            <p className="text-xs text-primary-600 font-bold uppercase tracking-wider mt-0.5">Informations certifiées</p>
                                         </div>
                                     </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                                        <div className="bg-white p-3 rounded-xl border border-blue-50">
-                                            <span className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Dénomination</span>
-                                            <span className="font-semibold text-slate-700">RUSH SCHOOL</span>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="bg-white/60 p-4 rounded-2xl border border-primary-50">
+                                            <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Dénomination</span>
+                                            <span className="font-bold text-slate-700">RUSH SCHOOL</span>
                                         </div>
-                                        <div className="bg-white p-3 rounded-xl border border-blue-50">
-                                            <span className="block text-[10px] font-bold text-slate-400 uppercase mb-1">N° SIRET</span>
-                                            <span className="font-semibold text-slate-700">919 233 135 00014</span>
+                                        <div className="bg-white/60 p-4 rounded-2xl border border-primary-50">
+                                            <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">N° SIRET</span>
+                                            <span className="font-bold text-slate-700">919 233 135 00014</span>
                                         </div>
-                                        <div className="bg-white p-3 rounded-xl border border-blue-50">
-                                            <span className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Code UAI</span>
-                                            <span className="font-semibold text-slate-700">0756342X</span>
+                                        <div className="bg-white/60 p-4 rounded-2xl border border-primary-50">
+                                            <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Code UAI</span>
+                                            <span className="font-bold text-slate-700">0756342X</span>
                                         </div>
-                                        <div className="bg-white p-3 rounded-xl border border-blue-50">
-                                            <span className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Adresse</span>
-                                            <span className="font-semibold text-slate-700">15 passage de la Main d'Or, 75011 Paris</span>
+                                        <div className="bg-white/60 p-4 rounded-2xl border border-primary-50">
+                                            <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Adresse</span>
+                                            <span className="font-bold text-slate-700 text-sm">15 passage de la Main d'Or, 75011 Paris</span>
                                         </div>
                                     </div>
                                 </div>
                             ) : (
-                                <div className="grid grid-cols-12 gap-4 animate-fade-in bg-slate-50 p-6 rounded-2xl border border-slate-200">
+                                <div className="grid grid-cols-12 gap-5 animate-fade-in bg-slate-50/50 p-8 rounded-3xl border border-slate-100">
                                     <div className="col-span-12 md:col-span-6">
                                         <Input label="Dénomination du CFA" required value={formData.cfa.denomination} onChange={(e) => handleNestedChange('cfa', 'denomination', e.target.value)} />
                                     </div>
@@ -617,9 +615,7 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
                     </div>
                 </Card>
 
-
-
-                <Card step={6} title="Contrat & Salaire">
+                <Card step={6} title="Contrat & Salaire" collapsible defaultOpen={false}>
                     <div className="grid grid-cols-12 gap-5">
                         <div className="col-span-12 md:col-span-6">
                             <Select
@@ -699,132 +695,70 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
                         </div>
 
                         {/* Simulateur de salaire */}
-                        <div className="col-span-12 mt-6 p-6 rounded-xl border-2 border-[#86efac]" style={{ background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)' }}>
-
-                            <label className="text-base font-bold text-[#166534] mb-4 flex items-center gap-2.5">
-
-                                <span className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#22c55e] to-[#16a34a] flex items-center justify-center shadow-md">
-
-                                    <Calculator size={18} className="text-white" />
-
+                        <div className="col-span-12 mt-6 p-8 rounded-3xl border-2 border-secondary/20 bg-secondary-50/30">
+                            <label className="text-base font-black text-slate-800 mb-6 flex items-center gap-3">
+                                <span className="w-10 h-10 rounded-xl bg-secondary text-white flex items-center justify-center shadow-lg shadow-secondary/20">
+                                    <Calculator size={20} />
                                 </span>
-
                                 Simulateur de salaire apprenti
-
                             </label>
 
-
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                                 <Select
-
                                     label="Tranche d'âge"
-
                                     required
-
                                     value={formData.salaire.age}
-
                                     onChange={(e) => handleSalaryCalc(e.target.value, formData.salaire.annee)}
-
                                     options={[
-
                                         { value: "16-17", label: "De 16 à 17 ans" },
-
                                         { value: "18-20", label: "De 18 à 20 ans" },
-
                                         { value: "21-25", label: "De 21 à 25 ans" },
-
                                         { value: "26+", label: "26 ans et plus" }
-
                                     ]}
-
                                     className="!bg-white"
-
                                 />
-
                                 <Select
-
                                     label="Année d'apprentissage"
-
                                     required
-
                                     value={formData.salaire.annee}
-
                                     onChange={(e) => handleSalaryCalc(formData.salaire.age, e.target.value)}
-
                                     options={[
-
                                         { value: "1", label: "1ère année" },
-
                                         { value: "2", label: "2ème année" },
-
                                         { value: "3", label: "3ème année" }
-
                                     ]}
-
                                     className="!bg-white"
-
                                 />
-
                             </div>
 
-
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-                                <div className="flex flex-col gap-2">
-
-                                    <label className="text-sm font-semibold text-slate-700 ml-1">Pourcentage du SMIC</label>
-
-                                    <input
-
-                                        type="text"
-
-                                        readOnly
-
-                                        value={formData.salaire.pourcentage ? `${formData.salaire.pourcentage}%` : ""}
-
-                                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl font-bold text-[#166534] outline-none"
-
-                                    />
-
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Pourcentage du SMIC</label>
+                                    <div className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl font-black text-secondary text-lg">
+                                        {formData.salaire.pourcentage ? `${formData.salaire.pourcentage}%` : "-- %"}
+                                    </div>
                                 </div>
-
-                                <div className="flex flex-col gap-2">
-
-                                    <label className="text-sm font-semibold text-slate-700 ml-1">Salaire brut mensuel</label>
-
-                                    <input
-
-                                        type="text"
-
-                                        readOnly
-
-                                        value={formData.salaire.montant ? `${formData.salaire.montant.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}` : ""}
-
-                                        className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl font-bold text-lg text-[#166534] outline-none"
-
-                                    />
-
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Salaire brut mensuel</label>
+                                    <div className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl font-black text-secondary text-lg">
+                                        {formData.salaire.montant ? `${formData.salaire.montant.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}` : "-- €"}
+                                    </div>
                                 </div>
-
                             </div>
-
-                            <span className="text-xs text-[#15803d] font-medium mt-3 block">Basé sur le SMIC 2024 : 1 823,03 € brut mensuel</span>
-
-                        </div>                    </div>
+                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-4 block text-center italic">Basé sur le SMIC 2024 : 1 823,03 € brut mensuel</span>
+                        </div>
+                    </div>
                 </Card>
 
-                <Card step={7} title="Missions en entreprise">
+                <Card step={7} title="Missions en entreprise" collapsible defaultOpen={false}>
                     <div className="space-y-8">
-                        <div className="bg-slate-50/50 p-6 md:p-8 rounded-2xl border border-slate-100">
+                        <div className="bg-slate-50/50 p-8 rounded-3xl border border-slate-100">
                             <div className="flex items-center justify-between mb-8">
                                 <div>
-                                    <h4 className="text-sm font-bold text-slate-900 uppercase tracking-widest">Sélection des missions</h4>
-                                    <p className="text-slate-500 text-xs font-medium mt-1">Choisissez au moins 3 missions principales</p>
+                                    <h4 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Sélection des missions</h4>
+                                    <p className="text-slate-500 text-sm font-bold mt-1">Choisissez au moins 3 missions principales</p>
                                 </div>
-                                <div className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${formData.missions.selectionnees.length >= 3 ? 'bg-blue-500 text-white' : 'bg-rose-100 text-rose-600'}`}>
+                                <div className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${formData.missions.selectionnees.length >= 3 ? 'bg-secondary text-white shadow-secondary/20' : 'bg-rose-50 text-rose-500'}`}>
                                     {formData.missions.selectionnees.length} / 3 missions
                                 </div>
                             </div>
@@ -842,31 +776,32 @@ const EntrepriseForm = ({ onNext, studentRecordId }: { onNext: () => void, stude
                                     "Management d une petite équipe",
                                     "Reporting et tableaux de bord"
                                 ].map((mission) => (
-                                    <label key={mission} className={`flex items-center gap-4 p-4 rounded-xl border transition-all cursor-pointer group ${formData.missions.selectionnees.includes(mission) ? 'bg-white border-blue-500 shadow-md ring-1 ring-blue-500/10' : 'bg-white/50 border-slate-200 hover:border-blue-300'}`}>
-                                        <div className="relative flex items-center justify-center">
+                                    <label key={mission} className={`flex items-center gap-4 p-4 rounded-2xl border-2 transition-all cursor-pointer group ${formData.missions.selectionnees.includes(mission) ? 'bg-white border-primary shadow-indigo' : 'bg-white/50 border-transparent hover:border-slate-200'}`}>
+                                        <div className="relative flex items-center justify-center shrink-0">
                                             <input type="checkbox" className="peer hidden" checked={formData.missions.selectionnees.includes(mission)} onChange={() => toggleMission(mission)} />
-                                            <div className="w-6 h-6 rounded-lg border-2 border-slate-200 peer-checked:border-blue-500 peer-checked:bg-blue-500 transition-all flex items-center justify-center">
+                                            <div className="w-6 h-6 rounded-lg border-2 border-slate-200 peer-checked:border-primary peer-checked:bg-primary transition-all flex items-center justify-center">
                                                 <CheckCircle2 size={14} className="text-white scale-0 peer-checked:scale-100 transition-transform" />
                                             </div>
                                         </div>
-                                        <span className={`text-sm font-medium transition-colors ${formData.missions.selectionnees.includes(mission) ? 'text-slate-900' : 'text-slate-500'}`}>{mission}</span>
+                                        <span className={`text-sm font-bold transition-colors ${formData.missions.selectionnees.includes(mission) ? 'text-slate-800' : 'text-slate-500'}`}>{mission}</span>
                                     </label>
                                 ))}
                             </div>
                         </div>
 
-                        <div className="bg-slate-900 text-white p-6 md:p-8 rounded-2xl shadow-xl">
-                            <div className="flex items-center gap-4 mb-6">
-                                <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center">
-                                    <PenTool size={24} className="text-blue-400" />
+                        <div className="bg-slate-900 text-white p-8 rounded-3xl shadow-2xl relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-primary/20 transition-colors"></div>
+                            <div className="flex items-center gap-5 mb-6 relative z-10">
+                                <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center">
+                                    <PenTool size={24} className="text-primary-400" />
                                 </div>
                                 <div>
-                                    <h4 className="text-lg font-bold tracking-tight">Détails complémentaires</h4>
-                                    <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">Précisez vos missions spécifiques</p>
+                                    <h4 className="text-lg font-black tracking-tight leading-none">Détails complémentaires</h4>
+                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em] mt-2">Précisez vos missions spécifiques</p>
                                 </div>
                             </div>
                             <textarea
-                                className="w-full px-6 py-4 bg-white/5 border-2 border-white/10 rounded-2xl focus:border-blue-400 outline-none transition-all font-medium text-white placeholder:text-slate-600 resize-none h-32"
+                                className="w-full px-6 py-5 bg-white/5 border-2 border-white/10 rounded-2xl focus:border-primary focus:bg-white/10 outline-none transition-all font-bold text-white placeholder:text-slate-600 resize-none h-32 relative z-10"
                                 placeholder="Décrivez ici les spécificités de votre poste..."
                             />
                         </div>

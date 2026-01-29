@@ -166,7 +166,7 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
             </div>
 
             <div className="space-y-6">
-                <Card step={1} title="Informations personnelles">
+                <Card step={1} title="Informations personnelles" collapsible>
                     <div className="grid grid-cols-12 gap-5">
                         <div className="col-span-12 md:col-span-6">
                             <Input label="Prénom" required placeholder="Votre prénom" error={errors.prenom?.message} {...register('prenom')} />
@@ -178,19 +178,19 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
                             <Input label="Nom d'usage" placeholder="Si différent du nom de naissance" {...register('nom_usage')} />
                         </div>
                         <div className="col-span-12">
-                            <label className="block text-sm font-semibold text-slate-700 mb-3">Sexe *</label>
+                            <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">Sexe *</label>
                             <div className="flex gap-3 flex-wrap">
                                 {['Féminin', 'Masculin'].map((val, idx) => (
                                     <label key={val} className="relative cursor-pointer group flex-1 min-w-[120px]">
                                         <input className="peer sr-only" type="radio" value={val} {...register('sexe')} />
-                                        <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all ${selectedSexe === val ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500' : 'bg-white border-slate-200 hover:border-blue-300 hover:bg-slate-50'}`}>
-                                            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${selectedSexe === val ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-400'}`}>{String.fromCharCode(65 + idx)}</span>
-                                            <span className="font-medium text-slate-600">{val}</span>
+                                        <div className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl border-2 transition-all ${selectedSexe === val ? 'bg-primary-50/50 border-primary shadow-indigo' : 'bg-slate-50/50 border-transparent hover:border-slate-200'}`}>
+                                            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${selectedSexe === val ? 'bg-primary text-white' : 'bg-slate-200 text-slate-400'}`}>{String.fromCharCode(65 + idx)}</span>
+                                            <span className="font-bold text-slate-700">{val}</span>
                                         </div>
                                     </label>
                                 ))}
                             </div>
-                            {errors.sexe && <p className="mt-1.5 text-rose-500 text-xs font-bold">{errors.sexe.message}</p>}
+                            {errors.sexe && <p className="mt-1.5 text-rose-500 text-[11px] font-black uppercase tracking-wider">{errors.sexe.message}</p>}
                         </div>
                         <div className="col-span-12 md:col-span-6">
                             <Input label="Date de naissance" required type="date" error={errors.date_naissance?.message} {...register('date_naissance')} />
@@ -218,7 +218,7 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
                     </div>
                 </Card>
 
-                <Card step={2} title="Coordonnées">
+                <Card step={2} title="Coordonnées" collapsible defaultOpen={false}>
                     <div className="grid grid-cols-12 gap-5">
                         <div className="col-span-12 md:col-span-3">
                             <Input label="Numéro" placeholder="N°" {...register('num_residence')} />
@@ -248,10 +248,10 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
                 </Card>
 
                 {isMinor && (
-                    <Card step={3} title="Représentants Légaux">
+                    <Card step={3} title="Représentants Légaux" collapsible defaultOpen={false}>
                         <div className="space-y-8">
-                            <div>
-                                <h3 className="text-lg font-semibold text-slate-800 mb-4">Représentant légal 1</h3>
+                            <div className="bg-slate-50/50 p-8 rounded-3xl border border-slate-100">
+                                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">Représentant légal 1</h3>
                                 <div className="grid grid-cols-12 gap-5">
                                     <div className="col-span-12 md:col-span-6">
                                         <Input label="Nom" required={isMinor} {...register('representant_legal_1.nom')} />
@@ -286,21 +286,21 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-3 px-4">
                                 <input
                                     type="checkbox"
                                     id="add_second_rep"
-                                    className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                                    className="w-5 h-5 rounded-lg border-slate-300 text-primary focus:ring-primary"
                                     {...register('add_second_representative')}
                                 />
-                                <label htmlFor="add_second_rep" className="text-slate-700 font-medium cursor-pointer">
+                                <label htmlFor="add_second_rep" className="text-slate-700 font-bold text-sm cursor-pointer select-none">
                                     Ajouter un second représentant légal
                                 </label>
                             </div>
 
                             {addSecondRep && (
-                                <div className="animate-fade-in border-t border-slate-100 pt-8">
-                                    <h3 className="text-lg font-semibold text-slate-800 mb-4">Représentant légal 2</h3>
+                                <div className="animate-fade-in bg-slate-50/50 p-8 rounded-3xl border border-slate-100">
+                                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">Représentant légal 2</h3>
                                     <div className="grid grid-cols-12 gap-5">
                                         <div className="col-span-12 md:col-span-6">
                                             <Input label="Nom" {...register('representant_legal_2.nom')} />
@@ -339,7 +339,7 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
                     </Card>
                 )}
 
-                <Card step={isMinor ? 4 : 3} title="Situation & Déclarations">
+                <Card step={isMinor ? 4 : 3} title="Situation & Déclarations" collapsible defaultOpen={false}>
                     <div className="grid grid-cols-12 gap-5">
                         <div className="col-span-12">
                             <Select
@@ -374,24 +374,24 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
                             {"label": "Alternance", "name": "alternance"}
                         ].map((item) => (
                             <div key={item.name} className="col-span-12 space-y-4 pt-2">
-                                <div className="bg-slate-50/50 p-5 rounded-xl border border-slate-100">
-                                    <label className="block text-sm font-semibold text-slate-800 mb-4">{item.label}</label>
+                                <div className="bg-slate-50/50 p-6 rounded-2xl border border-slate-100">
+                                    <label className="block text-sm font-bold text-slate-800 mb-4">{item.label}</label>
                                     <div className="flex gap-3">
                                         <button
                                             type="button"
                                             onClick={() => setValue(item.name as any, true)}
-                                            className={`flex-1 flex items-center gap-3 px-4 py-3 rounded-xl border transition-all ${declarations[item.name as keyof StudentFormValues] === true ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500' : 'bg-white border-slate-200 hover:border-blue-300'}`}
+                                            className={`flex-1 flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all ${declarations[item.name as keyof StudentFormValues] === true ? 'bg-primary-50/50 border-primary shadow-indigo' : 'bg-white border-transparent hover:border-slate-200'}`}
                                         >
-                                            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${declarations[item.name as keyof StudentFormValues] === true ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-400'}`}>A</span>
-                                            <span className="font-medium text-slate-700">Oui</span>
+                                            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${declarations[item.name as keyof StudentFormValues] === true ? 'bg-primary text-white' : 'bg-slate-100 text-slate-400'}`}>A</span>
+                                            <span className="font-bold text-slate-700">Oui</span>
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => setValue(item.name as any, false)}
-                                            className={`flex-1 flex items-center gap-3 px-4 py-3 rounded-xl border transition-all ${declarations[item.name as keyof StudentFormValues] === false ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500' : 'bg-white border-slate-200 hover:border-blue-300'}`}
+                                            className={`flex-1 flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all ${declarations[item.name as keyof StudentFormValues] === false ? 'bg-primary-50/50 border-primary shadow-indigo' : 'bg-white border-transparent hover:border-slate-200'}`}
                                         >
-                                            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${declarations[item.name as keyof StudentFormValues] === false ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-400'}`}>B</span>
-                                            <span className="font-medium text-slate-700">Non</span>
+                                            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${declarations[item.name as keyof StudentFormValues] === false ? 'bg-primary text-white' : 'bg-slate-100 text-slate-400'}`}>B</span>
+                                            <span className="font-bold text-slate-700">Non</span>
                                         </button>
                                     </div>
                                 </div>
@@ -400,7 +400,7 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
                     </div>
                 </Card>
 
-                <Card step={isMinor ? 5 : 4} title="Parcours scolaire">
+                <Card step={isMinor ? 5 : 4} title="Parcours scolaire" collapsible defaultOpen={false}>
                     <div className="grid grid-cols-12 gap-5">
                         <div className="col-span-12">
                             <Select
@@ -452,24 +452,24 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
                             />
                         </div>
                         <div className="col-span-12">
-                            <label className="block text-sm font-semibold text-slate-700 mb-3">Diplôme ou titre le plus élevé obtenu *</label>
+                            <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">Diplôme ou titre le plus élevé obtenu *</label>
                             <div className="flex gap-3 grid grid-cols-2 md:grid-cols-3">
                                 {['BAC', 'BAC+1', 'BAC+2', 'BAC+3', 'BAC+4', 'BAC+5'].map((val, idx) => (
                                     <label key={val} className="relative cursor-pointer group flex-1 min-w-[120px]">
                                         <input className="peer sr-only" type="radio" value={val} {...register('bac')} />
-                                        <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all ${selectedBac === val ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500' : 'bg-white border-slate-200 hover:border-blue-300 hover:bg-slate-50'}`}>
-                                            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${selectedBac === val ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-400'}`}>{String.fromCharCode(65 + idx)}</span>
-                                            <span className="font-medium text-slate-600">{val}</span>
+                                        <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all ${selectedBac === val ? 'bg-primary-50/50 border-primary shadow-indigo' : 'bg-slate-50/50 border-transparent hover:border-slate-200'}`}>
+                                            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${selectedBac === val ? 'bg-primary text-white' : 'bg-slate-200 text-slate-400'}`}>{String.fromCharCode(65 + idx)}</span>
+                                            <span className="font-bold text-slate-700">{val}</span>
                                         </div>
                                     </label>
                                 ))}
                             </div>
-                            {errors.bac && <p className="mt-1.5 text-rose-500 text-xs font-bold">{errors.bac.message}</p>}
+                            {errors.bac && <p className="mt-1.5 text-rose-500 text-[11px] font-black uppercase tracking-wider">{errors.bac.message}</p>}
                         </div>
                     </div>
                 </Card>
 
-                <Card step={isMinor ? 6 : 5} title="Formation souhaitée">
+                <Card step={isMinor ? 6 : 5} title="Formation souhaitée" collapsible defaultOpen={false}>
                     <div className="grid grid-cols-12 gap-5">
                         <div className="col-span-12">
                             <Select
@@ -493,14 +493,14 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
                             <Input label="Date d'envoi du règlement" type="date" {...register('date_de_reglement')} />
                         </div>
                         <div className="col-span-12">
-                            <label className="block text-sm font-semibold text-slate-700 mb-3">Avez-vous déjà une entreprise d'accueil ?</label>
+                            <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">Avez-vous déjà une entreprise d'accueil ?</label>
                             <div className="flex gap-3 flex-wrap">
                                 {['Oui', 'En recherche', 'Non'].map((val, idx) => (
                                     <label key={val} className="relative cursor-pointer group flex-1 min-w-[120px]">
                                         <input className="peer sr-only" type="radio" value={val} {...register('entreprise_d_accueil')} />
-                                        <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all ${selectedEntreprise === val ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500' : 'bg-white border-slate-200 hover:border-blue-300 hover:bg-slate-50'}`}>
-                                            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${selectedEntreprise === val ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-400'}`}>{String.fromCharCode(65 + idx)}</span>
-                                            <span className="font-medium text-slate-600">{val}</span>
+                                        <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all ${selectedEntreprise === val ? 'bg-primary-50/50 border-primary shadow-indigo' : 'bg-slate-50/50 border-transparent hover:border-slate-200'}`}>
+                                            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${selectedEntreprise === val ? 'bg-primary text-white' : 'bg-slate-200 text-slate-400'}`}>{String.fromCharCode(65 + idx)}</span>
+                                            <span className="font-bold text-slate-700">{val}</span>
                                         </div>
                                     </label>
                                 ))}
@@ -509,7 +509,7 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
                     </div>
                 </Card>
 
-                <Card step={isMinor ? 7 : 6} title="Informations complémentaires">
+                <Card step={isMinor ? 7 : 6} title="Informations complémentaires" collapsible defaultOpen={false}>
                     <div className="grid grid-cols-12 gap-5">
                         <div className="col-span-12">
                             <Select
@@ -527,8 +527,8 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
                             />
                         </div>
                         <div className="col-span-12">
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Motivations et projet professionnel </label>
-                            <textarea placeholder="Décrivez brièvement vos motivations et votre projet professionnel..." rows={4} className="w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-base text-slate-800 placeholder:text-slate-400 transition-all focus:ring-4 focus:outline-none resize-none focus:border-blue-500 focus:ring-blue-500/10" {...register('motivation_projet_professionnel')}></textarea>
+                            <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Motivations et projet professionnel </label>
+                            <textarea placeholder="Décrivez brièvement vos motivations et votre projet professionnel..." rows={4} className="w-full px-5 py-4 bg-slate-50/50 border-2 border-transparent rounded-2xl text-[15px] font-bold text-slate-700 placeholder:text-slate-300 transition-all duration-300 outline-none focus:bg-white focus:border-primary focus:shadow-indigo resize-none" {...register('motivation_projet_professionnel')}></textarea>
                         </div>
                     </div>
                 </Card>
