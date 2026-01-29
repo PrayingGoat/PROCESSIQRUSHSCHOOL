@@ -1186,6 +1186,33 @@ const AdmissionView = () => {
                 const btn = document.getElementById(`btn-${doc.id}`);
                 if (btn) btn.innerText = "Compléter";
             }
+        } else if (doc.id === 'cerfa') {
+            if (!studentData && !localStorage.getItem('candidateRecordId')) {
+                alert("Veuillez d'abord compléter la Fiche Étudiant.");
+                return;
+            }
+
+            const recordId = studentData?.record_id || studentData?.id || localStorage.getItem('candidateRecordId');
+            if (!recordId) {
+                alert("Identifiant étudiant introuvable. Veuillez recharger ou compléter le dossier.");
+                return;
+            }
+
+            try {
+                const btn = document.getElementById(`btn-${doc.id}`);
+                const originalText = btn ? btn.innerText : "";
+                if (btn) btn.innerText = "Génération...";
+
+                await api.generateCerfa(recordId);
+                setShowSuccessModal(true);
+
+                if (btn) btn.innerText = originalText;
+            } catch (e) {
+                console.error(e);
+                alert("Erreur lors de la génération du CERFA.");
+                const btn = document.getElementById(`btn-${doc.id}`);
+                if (btn) btn.innerText = "Générer";
+            }
         } else {
             console.log("Action pour le document:", doc.title);
         }

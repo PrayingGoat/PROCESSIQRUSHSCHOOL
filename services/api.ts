@@ -382,7 +382,7 @@ export const api = {
   async generateFicheRenseignement(etudiantId: string): Promise<ApiResponse> {
     try {
       console.log(`🚀 Génération fiche pour étudiant: ${etudiantId}`);
-      const response = await fetch(`${BASE_API_URL}/generate-fiche/${etudiantId}`, {
+      const response = await fetch(`${BASE_URL}/generate-fiche/${etudiantId}`, {
         method: 'POST',
         headers: { 'Accept': 'application/json' }
       });
@@ -399,6 +399,30 @@ export const api = {
       };
     } catch (error: any) {
       console.error('❌ API Error (Generate Fiche):', error);
+      throw error;
+    }
+  },
+
+  async generateCerfa(etudiantId: string): Promise<ApiResponse> {
+    try {
+      console.log(`🚀 Génération CERFA pour étudiant: ${etudiantId}`);
+      const response = await fetch(`${BASE_URL}/generate-cerfa/${etudiantId}`, {
+        method: 'POST',
+        headers: { 'Accept': 'application/json' }
+      });
+
+      if (!response.ok) {
+        const txt = await response.text();
+        throw new Error(txt || response.statusText);
+      }
+
+      const json = await response.json();
+      return {
+        success: true,
+        data: json
+      };
+    } catch (error: any) {
+      console.error('❌ API Error (Generate CERFA):', error);
       throw error;
     }
   },
