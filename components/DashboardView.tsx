@@ -43,6 +43,7 @@ import Button from './ui/Button';
 import Input from './ui/Input';
 import Select from './ui/Select';
 import Card from './ui/Card';
+import Pagination from './ui/Pagination';
 
 interface DashboardViewProps {
     activeSubView: ViewId;
@@ -63,6 +64,15 @@ const DashboardView: React.FC<DashboardViewProps> = ({ activeSubView }) => {
     const [editForm, setEditForm] = useState<any>(null);
     const [isSaving, setIsSaving] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
+
+    // Pagination state
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 8;
+
+    // Reset pagination when activeSubView or search/filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [activeSubView, searchQuery, filterFormation]);
 
     const handleViewDetails = async (id: string) => {
         setDetailsLoading(true);
@@ -194,16 +204,17 @@ const DashboardView: React.FC<DashboardViewProps> = ({ activeSubView }) => {
                     api.getEtudiantsFiches(false)
                 ]);
 
-                const mergedData = candidatesData.map((c: any) => {
+                const mergedData = Array.isArray(candidatesData) ? candidatesData.map((c: any) => {
                     const candidateId = c.id || (c.fields && (c.fields.id || c.fields.record_id)) || c.record_id;
-                    const fiche = fichesData.etudiants?.find((f: any) => f.record_id === candidateId);
+                    const fichesList = Array.isArray(fichesData?.etudiants) ? fichesData.etudiants : [];
+                    const fiche = fichesList.find((f: any) => f.record_id === candidateId);
                     return {
                         ...c,
                         has_cerfa: fiche?.has_cerfa || false,
                         has_fiche_renseignement: fiche?.has_fiche_renseignement || false,
                         has_cv: fiche?.has_cv || false
                     };
-                });
+                }) : [];
 
                 setCandidates(mergedData);
             } catch (e) {
@@ -272,17 +283,28 @@ const DashboardView: React.FC<DashboardViewProps> = ({ activeSubView }) => {
         }
 
         if (activeSubView === 'commercial-placer') {
-            const filteredStudents = studentsToPlace.filter(raw => {
+            const filteredStudents = (candidates || []).filter(c => !isPlaced(c)).filter(raw => {
+                if (!raw) return false;
                 const c = getC(raw);
-                const matchesSearch = (c.nom + ' ' + c.prenom).toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    c.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    c.telephone.includes(searchQuery);
-                const matchesFormation = !filterFormation || c.formation.toLowerCase().includes(filterFormation.toLowerCase());
+                if (!c) return false;
+                
+                const searchLower = (searchQuery || '').toLowerCase();
+                const fullName = String(c.nom || '') + ' ' + String(c.prenom || '');
+                const matchesSearch = fullName.toLowerCase().includes(searchLower) ||
+                    String(c.email || '').toLowerCase().includes(searchLower) ||
+                    String(c.telephone || '').includes(searchQuery);
+                const matchesFormation = !filterFormation || String(c.formation || '').toLowerCase().includes(filterFormation.toLowerCase());
                 return matchesSearch && matchesFormation;
             });
 
+            const totalPages = Math.ceil(filteredStudents.length / itemsPerPage);
+            const paginatedStudents = filteredStudents.slice(
+                (currentPage - 1) * itemsPerPage,
+                currentPage * itemsPerPage
+            );
+
             return (
-                <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+                <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 pb-10">
                     <div className="bg-gradient-to-br from-rose-500 via-rose-600 to-orange-600 rounded-[2.5rem] p-10 mb-10 text-white shadow-2xl shadow-rose-500/30 relative overflow-hidden group">
                         <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full -mr-48 -mt-48 blur-3xl group-hover:bg-white/20 transition-all duration-1000"></div>
                         <div className="absolute bottom-0 left-0 w-64 h-64 bg-rose-400/20 rounded-full -ml-32 -mb-32 blur-3xl"></div>
@@ -387,7 +409,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ activeSubView }) => {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-50">
-                                        {filteredStudents.map((raw) => {
+                                        {paginatedStudents.map((raw) => {
                                             const c = getC(raw);
                                             return (
                                                 <tr key={c.id} className="hover:bg-slate-50/50 transition-colors group">
@@ -447,7 +469,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ activeSubView }) => {
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {filteredStudents.map((raw) => {
+                            {paginatedStudents.map((raw) => {
                                 const c = getC(raw);
                                 return (
                                     <div key={c.id} className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group relative overflow-hidden">
@@ -486,22 +508,39 @@ const DashboardView: React.FC<DashboardViewProps> = ({ activeSubView }) => {
                             })}
                         </div>
                     )}
+
+                    <Pagination 
+                        currentPage={currentPage} 
+                        totalPages={totalPages} 
+                        onPageChange={setCurrentPage} 
+                    />
                 </div>
             );
         }
 
         if (activeSubView === 'commercial-alternance') {
-            const filteredStudents = studentsPlaced.filter(raw => {
+            const filteredStudents = (candidates || []).filter(c => isPlaced(c)).filter(raw => {
+                if (!raw) return false;
                 const c = getC(raw);
-                const matchesSearch = (c.nom + ' ' + c.prenom).toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    c.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    c.telephone.includes(searchQuery);
-                const matchesFormation = !filterFormation || c.formation.toLowerCase().includes(filterFormation.toLowerCase());
+                if (!c) return false;
+
+                const searchLower = (searchQuery || '').toLowerCase();
+                const fullName = String(c.nom || '') + ' ' + String(c.prenom || '');
+                const matchesSearch = fullName.toLowerCase().includes(searchLower) ||
+                    String(c.email || '').toLowerCase().includes(searchLower) ||
+                    String(c.telephone || '').includes(searchQuery);
+                const matchesFormation = !filterFormation || String(c.formation || '').toLowerCase().includes(filterFormation.toLowerCase());
                 return matchesSearch && matchesFormation;
             });
 
+            const totalPages = Math.ceil(filteredStudents.length / itemsPerPage);
+            const paginatedStudents = filteredStudents.slice(
+                (currentPage - 1) * itemsPerPage,
+                currentPage * itemsPerPage
+            );
+
             return (
-                <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+                <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 pb-10">
                     <div className="bg-gradient-to-br from-indigo-500 via-indigo-600 to-purple-600 rounded-[2.5rem] p-10 mb-10 text-white shadow-2xl shadow-indigo-500/30 relative overflow-hidden group">
                         <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full -mr-48 -mt-48 blur-3xl group-hover:bg-white/20 transition-all duration-1000"></div>
                         <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-400/20 rounded-full -ml-32 -mb-32 blur-3xl"></div>
@@ -599,7 +638,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ activeSubView }) => {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-50">
-                                        {filteredStudents.map((raw) => {
+                                        {paginatedStudents.map((raw) => {
                                             const c = getC(raw);
                                             return (
                                                 <tr key={c.id} className="hover:bg-slate-50/50 transition-colors group">
@@ -659,7 +698,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ activeSubView }) => {
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {filteredStudents.map((raw) => {
+                            {paginatedStudents.map((raw) => {
                                 const c = getC(raw);
                                 return (
                                     <div key={c.id} className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group relative overflow-hidden">
@@ -698,6 +737,12 @@ const DashboardView: React.FC<DashboardViewProps> = ({ activeSubView }) => {
                             })}
                         </div>
                     )}
+
+                    <Pagination 
+                        currentPage={currentPage} 
+                        totalPages={totalPages} 
+                        onPageChange={setCurrentPage} 
+                    />
                 </div>
             );
         }

@@ -19,12 +19,15 @@ import {
     RotateCcw,
     Save,
     Info,
-    PenTool
+    PenTool,
+    Calendar,
+    Star,
+    ExternalLink
 } from 'lucide-react';
 import Button from './ui/Button';
 import Card from './ui/Card';
 import Input from './ui/Input';
-import { AdmissionTab, CompanyFormData } from '../types';
+import { AdmissionTab } from '../types';
 import QuestionnaireForm from './QuestionnaireForm';
 import EntrepriseForm from './EntrepriseForm';
 import { api } from '../services/api';
@@ -300,9 +303,204 @@ const EvaluationGrid = ({ studentData }: { studentData: any }) => {
     );
 };
 
+// --- INTERVIEWS TRACKING COMPONENT ---
+
+const InterviewsTrackingView = ({ onLaunchInterview }: { onLaunchInterview: (candidate: any) => void }) => {
+    const [candidates, setCandidates] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [searchQuery, setSearchQuery] = useState('');
+
+    useEffect(() => {
+        const fetchCandidates = async () => {
+            try {
+                const data = await api.getAllCandidates();
+                setCandidates(Array.isArray(data) ? data : []);
+            } catch (e) {
+                console.error(e);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchCandidates();
+    }, []);
+
+    const interviewData = (candidates || []).map((c, index) => ({
+        ...c,
+        interviewStatus: index % 3 === 0 ? 'Completed' : 'Pending',
+        score: index % 3 === 0 ? (14 + (index % 6)) : null,
+        interviewDate: index % 3 === 0 ? '2024-05-15' : 'A définir'
+    }));
+
+    const filtered = interviewData.filter(c => {
+        if (!c) return false;
+        const searchLower = (searchQuery || '').toLowerCase();
+        const fullName = `${c.nom_naissance || ''} ${c.prenom || ''}`.toLowerCase();
+        const formation = (c.formation_souhaitee || '').toLowerCase();
+        const email = (c.email || '').toLowerCase();
+        
+        return fullName.includes(searchLower) || 
+               formation.includes(searchLower) || 
+               email.includes(searchLower);
+    });
+
+    const stats = {
+        total: interviewData.length,
+        completed: interviewData.filter(c => c.interviewStatus === 'Completed').length,
+        pending: interviewData.filter(c => c.interviewStatus === 'Pending').length
+    };
+
+    return (
+        <div className="animate-fade-in space-y-8 pb-10">
+            {/* Header / Hero */}
+            <div className="bg-white border border-slate-200 rounded-[32px] p-10 shadow-premium overflow-hidden relative">
+                <div className="absolute top-0 right-0 w-1/3 h-full bg-slate-50 border-l border-slate-100 hidden md:block"></div>
+                
+                <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-10">
+                    <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-4">
+                            <span className="px-3 py-1 bg-primary-50 text-primary-600 rounded-lg text-[10px] font-black uppercase tracking-widest border border-primary-100">Management</span>
+                            <div className="w-1.5 h-1.5 bg-slate-300 rounded-full"></div>
+                            <span className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Temps réel</span>
+                        </div>
+                        <h2 className="text-4xl font-black text-slate-900 tracking-tight mb-4">Suivi des Entretiens</h2>
+                        <p className="text-slate-500 text-lg leading-relaxed max-w-xl font-medium">
+                            Gérez le flux d'admission des candidats, consultez les scores des évaluations et lancez les entretiens en attente.
+                        </p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 w-full md:w-auto shrink-0">
+                        <div className="bg-slate-900 p-6 rounded-2xl text-white shadow-xl shadow-slate-900/20 text-center">
+                            <div className="text-3xl font-black mb-1">{stats.completed}</div>
+                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Validés</div>
+                        </div>
+                        <div className="bg-white border-2 border-slate-100 p-6 rounded-2xl text-center">
+                            <div className="text-3xl font-black text-slate-800 mb-1">{stats.pending}</div>
+                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">En attente</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Controls */}
+            <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+                <div className="relative w-full md:w-[450px] group">
+                    <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" size={20} />
+                                            <input 
+                                                type="text" 
+                                                placeholder="Rechercher un candidat ou une formation..." 
+                                                value={searchQuery}
+                                                onChange={(e) => setSearchQuery(e.target.value)}
+                                                className="w-full pl-14 pr-6 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-primary focus:ring-4 focus:ring-primary/5 outline-none transition-all font-bold text-slate-700 shadow-sm placeholder:text-slate-300" 
+                                            />                </div>
+                <div className="flex items-center gap-3 w-full md:w-auto">
+                    <Button variant="outline" className="flex-1 md:flex-none h-[56px] px-6" leftIcon={<Download size={18} />}>Exporter</Button>
+                    <Button variant="primary" className="flex-1 md:flex-none h-[56px] px-8" leftIcon={<Calendar size={18} />}>Planifier</Button>
+                </div>
+            </div>
+
+            {/* Table */}
+            <div className="bg-white border border-slate-200 rounded-[32px] overflow-hidden shadow-premium">
+                <div className="overflow-x-auto">
+                    <table className="w-full border-collapse">
+                        <thead>
+                            <tr className="bg-slate-50/50 border-b border-slate-100">
+                                <th className="px-8 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-widest">Candidat</th>
+                                <th className="px-8 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-widest">Formation</th>
+                                <th className="px-8 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-widest">Date Session</th>
+                                <th className="px-8 py-5 text-left text-[11px] font-black text-slate-400 uppercase tracking-widest">Statut</th>
+                                <th className="px-8 py-5 text-center text-[11px] font-black text-slate-400 uppercase tracking-widest">Évaluation</th>
+                                <th className="px-8 py-5 text-right text-[11px] font-black text-slate-400 uppercase tracking-widest">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-50">
+                            {isLoading ? (
+                                <tr><td colSpan={6} className="px-8 py-20 text-center text-slate-400 font-bold animate-pulse">Chargement des données...</td></tr>
+                            ) : filtered.length === 0 ? (
+                                <tr><td colSpan={6} className="px-8 py-20 text-center text-slate-400 font-bold">Aucun candidat ne correspond à votre recherche.</td></tr>
+                            ) : filtered.map((c) => (
+                                <tr key={c.id} className="hover:bg-slate-50/50 transition-colors group">
+                                    <td className="px-8 py-6">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-500 font-black text-sm group-hover:bg-primary group-hover:text-white transition-all shadow-sm">
+                                                {c.prenom?.[0]}{c.nom_naissance?.[0]}
+                                            </div>
+                                            <div className="font-black text-slate-800 text-base">{c.nom_naissance} {c.prenom}</div>
+                                        </div>
+                                    </td>
+                                    <td className="px-8 py-6">
+                                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-primary-50 text-primary-600 border border-primary-100/50">
+                                            <Briefcase size={14} />
+                                            <span className="text-[11px] font-bold uppercase tracking-tight">{c.formation_souhaitee || 'Non spécifiée'}</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-8 py-6">
+                                        <div className="flex flex-col">
+                                            <span className="text-sm font-bold text-slate-700">{c.interviewDate}</span>
+                                            <span className="text-[10px] text-slate-400 font-medium">Session admission</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-8 py-6">
+                                        {c.interviewStatus === 'Completed' ? (
+                                            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100/50">
+                                                <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
+                                                <span className="text-[10px] font-black uppercase tracking-wider">Terminé</span>
+                                            </div>
+                                        ) : (
+                                            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-50 text-amber-600 border border-amber-100/50">
+                                                <div className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse"></div>
+                                                <span className="text-[10px] font-black uppercase tracking-wider">En attente</span>
+                                            </div>
+                                        )}
+                                    </td>
+                                    <td className="px-8 py-6">
+                                        <div className="flex flex-col items-center">
+                                            {c.interviewStatus === 'Completed' ? (
+                                                <>
+                                                    <div className="flex items-baseline gap-0.5">
+                                                        <span className="text-xl font-black text-slate-900">{c.score}</span>
+                                                        <span className="text-[10px] font-bold text-slate-400">/20</span>
+                                                    </div>
+                                                    <div className="flex gap-0.5 mt-1">
+                                                        {[1, 2, 3, 4, 5].map((s) => (
+                                                            <Star key={s} size={8} className={s <= Math.round(c.score / 4) ? 'fill-amber-400 text-amber-400' : 'text-slate-200'} />
+                                                        ))}
+                                                    </div>
+                                                </>
+                                            ) : (
+                                                <span className="text-slate-300 font-bold">—</span>
+                                            )}
+                                        </div>
+                                    </td>
+                                    <td className="px-8 py-6 text-right">
+                                        {c.interviewStatus === 'Completed' ? (
+                                            <button className="p-2.5 rounded-xl text-slate-400 hover:text-primary hover:bg-primary-50 transition-all border border-transparent hover:border-primary-100">
+                                                <ExternalLink size={20} />
+                                            </button>
+                                        ) : (
+                                            <Button 
+                                                variant="primary" 
+                                                size="sm" 
+                                                className="rounded-xl shadow-none"
+                                                onClick={() => onLaunchInterview(c)}
+                                            >
+                                                Lancer
+                                            </Button>
+                                        )}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// --- MAIN ADMISSION VIEW ---
 
 const AdmissionView = () => {
-    const [mainTab, setMainTab] = useState<'dashboard' | 'ntc'>('dashboard');
+    const [mainTab, setMainTab] = useState<'dashboard' | 'interviews'>('dashboard');
     const [activeTab, setActiveTab] = useState<AdmissionTab>(AdmissionTab.TESTS);
     const [selectedFormation, setSelectedFormation] = useState<string | null>(null);
 
@@ -409,91 +607,26 @@ const AdmissionView = () => {
     const uploadedCount = Object.keys(uploadedFiles).length;
     const progressPercent = (uploadedCount / REQUIRED_DOCUMENTS.length) * 100;
 
-    if (mainTab === 'ntc') {
+    // --- RENDER LOGIC ---
+
+    if (mainTab === 'interviews') {
         return (
-            <div className="animate-fade-in space-y-8">
+            <div className="space-y-8 animate-fade-in">
                 <div className="flex gap-2 bg-slate-100 p-1.5 rounded-2xl border border-slate-200 w-fit">
                     <button onClick={() => setMainTab('dashboard')} className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-slate-500 hover:text-slate-700 transition-all">
                         Tableau de bord
                     </button>
                     <button className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold bg-white text-primary shadow-sm border border-slate-200 transition-all">
-                        Classe NTC
-                        <span className="bg-primary-50 text-primary px-2 py-0.5 rounded-lg text-[10px] font-black">35</span>
+                        Suivi Entretiens
                     </button>
                 </div>
-
-                <div className="relative overflow-hidden bg-slate-900 rounded-4xl p-12 text-white shadow-2xl">
-                    <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-primary/20 to-transparent"></div>
-                    
-                    <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-8">
-                        <div>
-                            <div className="flex items-center gap-4 mb-4">
-                                <h2 className="text-4xl font-black tracking-tight">Classe NTC — Vue d'ensemble</h2>
-                                <span className="bg-secondary text-white px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg shadow-secondary/20 flex items-center gap-2">
-                                    <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
-                                    En direct
-                                </span>
-                            </div>
-                            <p className="text-slate-400 font-medium text-lg">Suivi en temps réel des dossiers d'admission et statut des alternances pour la promotion actuelle.</p>
-                        </div>
-                        <Button variant="outline" size="lg" leftIcon={<Download size={20} />}>
-                            Exporter la liste
-                        </Button>
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    {[ 
-                        { label: 'Étudiants inscrits', value: 35, icon: Users, color: 'primary' },
-                        { label: 'Alternance validée', value: 16, icon: CheckCircle2, color: 'secondary' },
-                        { label: 'Dossiers complets', value: 28, icon: FileCheck, color: 'primary' },
-                    ].map((stat, i) => (
-                        <Card key={i} variant="premium" className="group">
-                            <div className="flex justify-between items-start mb-4">
-                                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg transition-all group-hover:scale-110
-                                    ${stat.color === 'secondary' ? 'bg-secondary text-white shadow-secondary/20' : 'bg-primary text-white shadow-primary/20'}
-                                `}> <stat.icon size={28} /> </div>
-                            </div>
-                            <div className="text-5xl font-black text-slate-800 mb-1 tracking-tighter">{stat.value}</div>
-                            <div className="text-slate-400 font-bold uppercase text-[10px] tracking-[0.2em]">{stat.label}</div>
-                        </Card>
-                    ))}
-                </div>
-
-                <Card variant="premium" noPadding className="overflow-hidden">
-                    <div className="p-6 border-b border-slate-50 bg-slate-50/30 flex justify-between items-center px-8">
-                        <div className="relative w-96 group">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" size={18} />
-                            <input type="text" placeholder="Rechercher un talent..." className="w-full pl-12 pr-4 py-3 bg-white border-2 border-transparent rounded-2xl focus:border-primary outline-none transition-all font-bold text-slate-700 shadow-sm" />
-                        </div>
-                    </div>
-                    <table className="premium-table">
-                        <thead>
-                            <tr>
-                                <th>Nom de l'étudiant</th>
-                                <th>Dossier Étudiant</th>
-                                <th>Dossier Entreprise</th>
-                                <th className="text-center">Statut Alternance</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr className="group">
-                                <td>
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 font-black text-sm group-hover:bg-primary group-hover:text-white transition-all">MK</div>
-                                        <div>
-                                            <div className="font-black text-slate-800">KELLAL KINY</div>
-                                            <div className="text-[11px] font-bold text-slate-400">Miriam</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td><span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-secondary-50 text-secondary text-[10px] font-black uppercase tracking-wider">✓ Complété</span></td>
-                                <td><span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-secondary-50 text-secondary text-[10px] font-black uppercase tracking-wider">✓ Complété</span></td>
-                                <td className="text-center"><span className="inline-flex items-center px-4 py-1 rounded-full bg-secondary-50 text-secondary text-[10px] font-black uppercase tracking-widest border border-secondary-100 shadow-sm">Validée</span></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </Card>
+                <InterviewsTrackingView 
+                    onLaunchInterview={(c) => {
+                        setStudentData(c);
+                        setMainTab('dashboard');
+                        setActiveTab(AdmissionTab.ENTRETIEN);
+                    }} 
+                />
             </div>
         );
     }
@@ -512,13 +645,13 @@ const AdmissionView = () => {
                                 <Briefcase size={14} /> Processus d'admission
                             </div>
                         </div>
-                        <h1 className="text-3xl md:text-4xl font-extrabold mb-3 tracking-tight">Admission Rush School</h1>
-                        <p className="text-indigo-100 text-lg leading-relaxed opacity-90">Complétez votre dossier d'admission : tests, documents et formalités administratives.</p>
+                        <h1 className="text-3xl md:text-4xl font-extrabold mb-3 tracking-tight text-white">Admission Rush School</h1>
+                        <p className="text-indigo-100 text-lg leading-relaxed opacity-90 font-medium">Complétez votre dossier d'admission : tests, documents et formalités administratives.</p>
                     </div>
                 </div>
             </div>
 
-            <div className="bg-white border border-slate-200 rounded-2xl p-8 mb-8 flex items-center justify-center overflow-x-auto shadow-sm">
+            <div className="bg-white border border-slate-200 rounded-[32px] p-8 mb-8 flex items-center justify-center overflow-x-auto shadow-premium">
                 <div className="flex items-center min-w-max">
                     <StepItem step={1} label="Tests" isActive={activeTab === AdmissionTab.TESTS} isCompleted={testCompleted} />
                     <StepLine isCompleted={testCompleted} />
@@ -538,13 +671,12 @@ const AdmissionView = () => {
                 <button onClick={() => setMainTab('dashboard')} className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${mainTab === 'dashboard' ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-slate-200' : 'text-slate-500'}`}>
                     Tableau de bord
                 </button>
-                <button onClick={() => setMainTab('ntc')} className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${mainTab === 'ntc' ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-slate-200' : 'text-slate-500 hover:text-slate-700'}`}>
-                    Classe NTC
-                    <span className="bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded-full text-[10px]">35</span>
+                <button onClick={() => setMainTab('interviews')} className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${mainTab === 'interviews' ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-slate-200' : 'text-slate-500 hover:text-slate-700'}`}>
+                    Suivi Entretiens
                 </button>
             </div>
 
-            <div className="flex overflow-x-auto gap-2 mb-8 bg-[#F1F5F9] p-2 rounded-2xl border border-slate-200 no-scrollbar">
+            <div className="flex overflow-x-auto gap-2 mb-8 bg-[#F1F5F9] p-2 rounded-2xl border border-slate-200 no-scrollbar shadow-inner">
                 {[ 
                     { id: AdmissionTab.TESTS, label: 'Tests', icon: PenTool },
                     { id: AdmissionTab.QUESTIONNAIRE, label: 'Fiche Étudiant', icon: Info },
@@ -566,41 +698,41 @@ const AdmissionView = () => {
             {activeTab === AdmissionTab.TESTS && (
                 <div className="space-y-6 animate-slide-in">
                     {!selectedFormation ? (
-                        <div className="bg-white border border-slate-200 rounded-3xl p-10 shadow-sm">
-                            <h3 className="text-xl font-bold text-slate-800 mb-2 flex items-center gap-3">
+                        <div className="bg-white border border-slate-200 rounded-[32px] p-10 shadow-premium">
+                            <h3 className="text-xl font-black text-slate-800 mb-2 flex items-center gap-3">
                                 <GraduationCap className="text-blue-500" /> Sélectionnez votre formation
                             </h3>
-                            <p className="text-slate-500 mb-8 ml-9">Choisissez la formation pour accéder au test.</p>
+                            <p className="text-slate-500 mb-8 ml-9 font-medium">Choisissez la formation pour accéder au test.</p>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                                 {FORMATION_CARDS.map(f => (
-                                    <div key={f.id} onClick={() => setSelectedFormation(f.id)} className="bg-[#F8FAFC] border-2 border-slate-200 rounded-2xl p-6 text-center cursor-pointer hover:border-blue-500 hover:-translate-y-1 hover:shadow-lg transition-all group">
-                                        <div className={`w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center text-white bg-gradient-to-br from-${f.color}-500 to-${f.color}-600 shadow-lg`}>
+                                    <div key={f.id} onClick={() => setSelectedFormation(f.id)} className="bg-slate-50/50 border-2 border-slate-100 rounded-3xl p-8 text-center cursor-pointer hover:border-blue-500 hover:-translate-y-1 hover:shadow-xl transition-all group">
+                                        <div className={`w-16 h-16 rounded-2xl mx-auto mb-6 flex items-center justify-center text-white bg-gradient-to-br from-${f.color}-500 to-${f.color}-600 shadow-lg`}>
                                             <Briefcase size={28} />
                                         </div>
-                                        <h4 className="font-bold text-slate-800 text-lg mb-1">{f.title}</h4>
-                                        <p className="text-xs text-slate-500 mb-4 h-10">{f.subtitle}</p>
-                                        <span className="inline-block px-3 py-1 bg-white rounded-full text-xs font-semibold text-slate-500 group-hover:text-blue-600 group-hover:bg-blue-50 transition-colors">~20 min</span>
+                                        <h4 className="font-black text-slate-800 text-lg mb-2">{f.title}</h4>
+                                        <p className="text-xs text-slate-400 font-bold mb-6 h-10 leading-relaxed uppercase tracking-wider">{f.subtitle}</p>
+                                        <span className="inline-block px-4 py-1.5 bg-white rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-blue-600 group-hover:bg-blue-50 transition-colors border border-slate-100">~20 min</span>
                                     </div>
                                 ))}
                             </div>
                         </div>
                     ) : (
-                        <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden flex flex-col relative animate-slide-in shadow-lg">
-                            <div className="bg-slate-50 border-b border-slate-200 p-4 flex justify-between items-center sticky top-0 z-20">
+                        <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden flex flex-col relative animate-slide-in shadow-xl">
+                            <div className="bg-slate-50 border-b border-slate-200 p-5 flex justify-between items-center sticky top-0 z-20">
                                 <button
                                     onClick={() => setSelectedFormation(null)}
-                                    className="text-slate-500 hover:text-slate-800 flex items-center gap-2 font-semibold text-sm transition-colors"
+                                    className="text-slate-500 hover:text-slate-800 flex items-center gap-2 font-bold text-sm transition-colors"
                                 >
-                                    <ChevronLeft size={18} /> Changer de formation
+                                    <ChevronLeft size={18} strokeWidth={3} /> Changer de formation
                                 </button>
-                                <div className="flex items-center gap-3">
-                                    <span className="text-sm font-bold text-slate-700 hidden md:block">Test: {FORMATION_CARDS.find(f => f.id === selectedFormation)?.title}</span>
+                                <div className="flex items-center gap-4">
+                                    <span className="text-sm font-black text-slate-700 hidden md:block">Test: {FORMATION_CARDS.find(f => f.id === selectedFormation)?.title}</span>
                                     <Button variant="success" size="sm" onClick={handleFinishTest} leftIcon={<CheckCircle2 size={16} />}>
                                         J'ai envoyé mes réponses
                                     </Button>
                                 </div>
                             </div>
-                            <div className="w-full h-[800px] bg-slate-100 relative">
+                            <div className="w-full h-[850px] bg-slate-100 relative">
                                 <iframe
                                     src={selectedFormation ? FORMATION_FORMS[selectedFormation] : ""}
                                     className="absolute inset-0 w-full h-full border-0"
@@ -623,32 +755,32 @@ const AdmissionView = () => {
 
             {activeTab === AdmissionTab.DOCUMENTS && (
                 <div className="animate-slide-in">
-                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-2xl p-6 mb-6 flex items-center gap-5 relative overflow-hidden">
-                        <div className="w-14 h-14 bg-white text-blue-600 rounded-2xl flex items-center justify-center shrink-0 shadow-sm relative z-10">
-                            <Upload size={28} />
+                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-3xl p-8 mb-8 flex items-center gap-6 relative overflow-hidden">
+                        <div className="w-16 h-16 bg-white text-blue-600 rounded-2xl flex items-center justify-center shrink-0 shadow-xl shadow-blue-500/10 relative z-10">
+                            <Upload size={32} />
                         </div>
                         <div className="relative z-10">
-                            <h3 className="text-lg font-bold text-slate-800">Documents à téléverser</h3>
-                            <p className="text-slate-500 text-sm">Complétez votre dossier avec les pièces justificatives.</p>
+                            <h3 className="text-xl font-black text-slate-800 tracking-tight">Documents à téléverser</h3>
+                            <p className="text-slate-500 font-medium">Complétez votre dossier avec les pièces justificatives officielles.</p>
                         </div>
                         {!studentData && (
-                            <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center gap-2 text-amber-600 bg-amber-50 px-4 py-2 rounded-xl border border-amber-200">
-                                <AlertCircle size={18} />
-                                <span className="text-sm font-bold">Dossier étudiant requis</span>
+                            <div className="absolute right-8 top-1/2 -translate-y-1/2 flex items-center gap-3 text-amber-600 bg-white px-5 py-2.5 rounded-2xl border-2 border-amber-100 shadow-sm">
+                                <AlertCircle size={20} />
+                                <span className="text-xs font-black uppercase tracking-widest">Dossier requis</span>
                             </div>
                         )}
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {REQUIRED_DOCUMENTS.map((doc) => {
                             const isUploaded = uploadedFiles[doc.id];
                             const isUploading = uploadingFiles[doc.id];
 
                             return (
-                                <div key={doc.id} className={`border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center text-center transition-all cursor-pointer group relative overflow-hidden ${isUploaded
-                                    ? 'border-emerald-400 bg-emerald-50'
-                                    : 'border-slate-200 bg-white hover:border-blue-400 hover:bg-blue-50'
-                                    }`}>
+                                <div key={doc.id} className={`border-2 rounded-3xl p-8 flex flex-col items-center justify-center text-center transition-all cursor-pointer group relative overflow-hidden ${isUploaded
+                                    ? 'border-emerald-400 bg-emerald-50/50'
+                                    : 'border-slate-100 bg-white hover:border-primary hover:bg-slate-50/50 hover:shadow-xl'}
+                                    `}>
                                     <input
                                         type="file"
                                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
@@ -658,24 +790,24 @@ const AdmissionView = () => {
                                     />
 
                                     {isUploading ? (
-                                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm z-20">
-                                            <Loader2 size={32} className="animate-spin text-blue-600 mb-2" />
-                                            <span className="text-xs font-bold text-blue-600">Envoi en cours...</span>
+                                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/90 backdrop-blur-sm z-20">
+                                            <Loader2 size={40} className="animate-spin text-primary mb-3" />
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-primary">Envoi en cours</span>
                                         </div>
                                     ) : null}
 
-                                    <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 transition-colors ${isUploaded
-                                        ? 'bg-emerald-100 text-emerald-600'
-                                        : 'bg-slate-100 text-slate-400 group-hover:bg-blue-100 group-hover:text-blue-500'
-                                        }`}>
-                                        {isUploaded ? <CheckCircle2 size={24} /> : <Upload size={24} />}
+                                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-6 transition-all ${isUploaded
+                                        ? 'bg-emerald-100 text-emerald-600 scale-110 shadow-lg shadow-emerald-500/10'
+                                        : 'bg-slate-50 text-slate-300 group-hover:bg-primary-50 group-hover:text-primary group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-primary/10'}
+                                        `}>
+                                        {isUploaded ? <CheckCircle2 size={32} strokeWidth={2.5} /> : <Upload size={32} />}
                                     </div>
-                                    <h4 className={`font-bold mb-1 ${isUploaded ? 'text-emerald-800' : 'text-slate-700'}`}>{doc.title}</h4>
-                                    <p className={`text-xs mb-4 ${isUploaded ? 'text-emerald-600' : 'text-slate-400'}`}>{doc.desc}</p>
+                                    <h4 className={`font-black text-lg mb-2 tracking-tight ${isUploaded ? 'text-emerald-800' : 'text-slate-800'}`}>{doc.title}</h4>
+                                    <p className={`text-xs font-medium mb-8 leading-relaxed px-4 ${isUploaded ? 'text-emerald-600' : 'text-slate-400'}`}>{doc.desc}</p>
 
-                                    <button className={`px-4 py-2 rounded-lg text-xs font-bold transition-colors pointer-events-none ${isUploaded
-                                        ? 'bg-emerald-200 text-emerald-800'
-                                        : 'bg-slate-900 text-white group-hover:bg-slate-800'}`}>
+                                    <button className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all pointer-events-none ${isUploaded
+                                        ? 'bg-emerald-200 text-emerald-800 shadow-sm'
+                                        : 'bg-slate-900 text-white shadow-lg shadow-slate-900/20 group-hover:bg-primary group-hover:shadow-primary/20'}`}>
                                         {isUploaded ? 'Document reçu' : 'Téléverser'}
                                     </button>
                                 </div>
@@ -683,25 +815,27 @@ const AdmissionView = () => {
                         })}
                     </div>
 
-                    <div className="mt-8 bg-white border border-slate-200 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
+                    <div className="mt-10 bg-white border border-slate-200 rounded-[32px] p-10 flex flex-col md:flex-row items-center justify-between gap-10 shadow-premium">
                         <div className="w-full md:w-1/2">
-                            <div className="flex justify-between text-sm font-semibold mb-2">
-                                <span className="text-slate-800">{uploadedCount} / {REQUIRED_DOCUMENTS.length} documents</span>
-                                <span className="text-blue-500">{Math.round(progressPercent)}%</span>
+                            <div className="flex justify-between text-[11px] font-black uppercase tracking-widest mb-4">
+                                <span className="text-slate-400">{uploadedCount} / {REQUIRED_DOCUMENTS.length} documents déposés</span>
+                                <span className="text-primary">{Math.round(progressPercent)}%</span>
                             </div>
-                            <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                            <div className="h-3 bg-slate-50 rounded-full overflow-hidden border border-slate-100 p-0.5">
                                 <div
-                                    className="h-full rounded-full transition-all duration-500 ease-out bg-gradient-to-r from-blue-500 to-indigo-500"
+                                    className="h-full rounded-full transition-all duration-700 ease-out bg-gradient-to-r from-primary to-indigo-500"
                                     style={{ width: `${progressPercent}%` }}
                                 ></div>
                             </div>
                         </div>
                         <Button
+                            size="lg"
                             disabled={!studentData}
                             onClick={() => setActiveTab(AdmissionTab.ENTREPRISE)}
-                            className="w-full md:w-auto"
+                            className="w-full md:w-auto px-12"
+                            rightIcon={<ArrowRight size={20} />}
                         >
-                            Continuer vers la Fiche Entreprise
+                            Continuer
                         </Button>
                     </div>
                 </div>
@@ -721,28 +855,28 @@ const AdmissionView = () => {
 
             {activeTab === AdmissionTab.ADMINISTRATIF && (
                 <div className="animate-slide-in">
-                    <div className="bg-white border border-slate-200 rounded-2xl p-6 mb-6 flex items-center gap-5">
-                        <div className="w-14 h-14 bg-gradient-to-br from-violet-500 to-violet-600 text-white rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-violet-500/20">
-                            <Printer size={28} />
+                    <div className="bg-white border border-slate-200 rounded-3xl p-8 mb-8 flex items-center gap-6 shadow-sm">
+                        <div className="w-16 h-16 bg-gradient-to-br from-violet-500 to-indigo-600 text-white rounded-2xl flex items-center justify-center shrink-0 shadow-xl shadow-violet-500/20">
+                            <Printer size={32} />
                         </div>
                         <div>
-                            <h3 className="text-lg font-bold text-slate-800">Dossier administratif</h3>
-                            <p className="text-slate-500 text-sm">Ces documents seront complétés avec le chargé d'admission.</p>
+                            <h3 className="text-xl font-black text-slate-800 tracking-tight">Dossier administratif</h3>
+                            <p className="text-slate-500 font-medium">Documents officiels à compléter avec votre chargé d'admission.</p>
                         </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         {ADMIN_DOCS.map(doc => (
-                            <div key={doc.id} className="bg-white border border-slate-200 rounded-2xl p-6 hover:shadow-xl hover:-translate-y-1 transition-all group">
-                                <div className={`w-14 h-14 rounded-xl bg-gradient-to-br from-${doc.color}-400 to-${doc.color}-600 flex items-center justify-center text-white mb-4 shadow-lg`}>
-                                    <FileText size={24} />
+                            <div key={doc.id} className="bg-white border border-slate-200 rounded-3xl p-8 hover:shadow-2xl hover:-translate-y-1 transition-all group">
+                                <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br from-${doc.color}-400 to-${doc.color}-600 flex items-center justify-center text-white mb-6 shadow-lg shadow-${doc.color}-500/20 group-hover:scale-110 transition-transform`}>
+                                    <FileText size={32} />
                                 </div>
-                                <h4 className="font-bold text-slate-800 text-lg mb-1">{doc.title}</h4>
-                                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">{doc.subtitle}</p>
-                                <p className="text-sm text-slate-400 mb-6">{doc.desc}</p>
+                                <h4 className="font-black text-slate-800 text-lg mb-1 tracking-tight">{doc.title}</h4>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">{doc.subtitle}</p>
+                                <p className="text-sm text-slate-500 font-medium mb-8 leading-relaxed h-12 overflow-hidden">{doc.desc}</p>
                                 <button
                                     id={`btn-${doc.id}`}
                                     onClick={() => handleDocAction(doc)}
-                                    className="w-full py-2.5 rounded-lg border-2 border-slate-100 font-bold text-slate-600 hover:border-slate-300 hover:text-slate-800 transition-all flex items-center justify-center gap-2"
+                                    className="w-full py-3.5 rounded-xl border-2 border-slate-100 font-black text-[11px] uppercase tracking-widest text-slate-600 hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-2"
                                 >
                                     {doc.btnText} <ArrowRight size={14} />
                                 </button>
@@ -750,9 +884,9 @@ const AdmissionView = () => {
                         ))}
                     </div>
 
-                    <div className="flex justify-end mt-8">
-                        <Button onClick={() => setActiveTab(AdmissionTab.ENTRETIEN)} rightIcon={<ArrowRight size={20} />}>
-                            Continuer vers Entretien
+                    <div className="flex justify-end mt-10">
+                        <Button size="lg" className="px-12" onClick={() => setActiveTab(AdmissionTab.ENTRETIEN)} rightIcon={<ArrowRight size={20} />}>
+                            Accéder à l'entretien
                         </Button>
                     </div>
                 </div>

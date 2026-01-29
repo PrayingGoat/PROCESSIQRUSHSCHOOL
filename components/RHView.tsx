@@ -32,7 +32,10 @@ const RHView: React.FC<{ activeSubView: ViewId }> = ({ activeSubView }) => {
     const [companies, setCompanies] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [filterStatus, setFilterStatus] = useState<string>('all');
-    
+    const [searchQuery, setSearchQuery] = useState('');
+    const [filterFormation, setFilterFormation] = useState('Toutes formations');
+    const [filterReferent, setFilterReferent] = useState('Tous référents');
+
     const [selectedCompany, setSelectedCompany] = useState<any>(null);
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
 
@@ -286,6 +289,19 @@ const RHView: React.FC<{ activeSubView: ViewId }> = ({ activeSubView }) => {
 
     // Specific CERFA View
     if (activeSubView === 'rh-cerfa') {
+        const filteredCandidates = candidates.filter(c => {
+            const fullName = `${c.prenom || ''} ${c.nom || ''}`.toLowerCase();
+            const matchesSearch = fullName.includes(searchQuery.toLowerCase()) ||
+                (c.email || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (c.entreprise_raison_sociale || '').toLowerCase().includes(searchQuery.toLowerCase());
+
+            const matchesFormation = filterFormation === 'Toutes formations' || c.formation === filterFormation;
+            // Note: referent filter is mock logic as field might not exist in candidate object
+            const matchesReferent = filterReferent === 'Tous référents' || c.referent === filterReferent;
+
+            return matchesSearch && matchesFormation && matchesReferent;
+        });
+
         return (
             <div className="animate-slide-in pb-20 font-sans">
                 {/* Hero Section */}
@@ -368,10 +384,20 @@ const RHView: React.FC<{ activeSubView: ViewId }> = ({ activeSubView }) => {
                     <div className="flex items-center gap-3 flex-wrap">
                         <div className="flex items-center gap-2 px-3 py-2.5 bg-[#F3F4F6] border border-transparent rounded-xl w-64 focus-within:bg-white focus-within:border-blue-500/50 transition-all">
                             <Search size={16} className="text-slate-400" />
-                            <input type="text" placeholder="Rechercher..." className="bg-transparent border-none outline-none text-sm w-full" />
+                            <input
+                                type="text"
+                                placeholder="Rechercher..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="bg-transparent border-none outline-none text-sm w-full"
+                            />
                         </div>
 
-                        <select className="px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-600 outline-none hover:bg-slate-50 cursor-pointer">
+                        <select
+                            value={filterFormation}
+                            onChange={(e) => setFilterFormation(e.target.value)}
+                            className="px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-600 outline-none hover:bg-slate-50 cursor-pointer"
+                        >
                             <option>Toutes formations</option>
                             <option>BTS NDRC</option>
                             <option>BTS MCO</option>
@@ -379,7 +405,11 @@ const RHView: React.FC<{ activeSubView: ViewId }> = ({ activeSubView }) => {
                             <option>TP NTC</option>
                         </select>
 
-                        <select className="px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-600 outline-none hover:bg-slate-50 cursor-pointer">
+                        <select
+                            value={filterReferent}
+                            onChange={(e) => setFilterReferent(e.target.value)}
+                            className="px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-600 outline-none hover:bg-slate-50 cursor-pointer"
+                        >
                             <option>Tous référents</option>
                             <option>Alex</option>
                             <option>Bilal</option>
@@ -400,7 +430,7 @@ const RHView: React.FC<{ activeSubView: ViewId }> = ({ activeSubView }) => {
                             <thead className="bg-gradient-to-r from-[#6B5B73] to-[#8B7B93] text-white sticky top-0 z-10">
                                 <tr>
                                     {[
-                                        "Formation", "Apprenti", "Entreprise", 
+                                        "Formation", "Apprenti", "Entreprise",
                                         "Fiche Renseign.", "Statut CERFA", "CERFA PDF", "Dossier", "Actions"
                                     ].map((header) => (
                                         <th key={header} className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider whitespace-nowrap">
@@ -412,10 +442,10 @@ const RHView: React.FC<{ activeSubView: ViewId }> = ({ activeSubView }) => {
                             <tbody className="divide-y divide-slate-100">
                                 {loading ? (
                                     <tr><td colSpan={8} className="p-12 text-center text-slate-500"><Loader2 className="animate-spin mx-auto mb-4 text-[#6B5B73]" size={32} />Chargement des données...</td></tr>
-                                ) : candidates.length === 0 ? (
+                                ) : filteredCandidates.length === 0 ? (
                                     <tr><td colSpan={8} className="p-12 text-center text-slate-500">Aucun dossier trouvé</td></tr>
                                 ) : (
-                                    candidates.map((c: any, idx: number) => (
+                                    filteredCandidates.map((c: any, idx: number) => (
                                         <tr key={c.record_id || idx} className="hover:bg-[#FAFBFC] transition-colors group">
                                             <td className="px-6 py-4">
                                                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200">
@@ -458,9 +488,9 @@ const RHView: React.FC<{ activeSubView: ViewId }> = ({ activeSubView }) => {
                                             </td>
                                             <td className="px-6 py-4">
                                                 {c.cerfa ? (
-                                                    <a 
-                                                        href={c.cerfa.url} 
-                                                        target="_blank" 
+                                                    <a
+                                                        href={c.cerfa.url}
+                                                        target="_blank"
                                                         rel="noopener noreferrer"
                                                         className="flex items-center gap-2 px-3 py-1.5 bg-white text-blue-600 rounded-xl border border-blue-200 hover:bg-blue-50 hover:border-blue-300 transition-all shadow-sm group/btn"
                                                     >
@@ -511,6 +541,20 @@ const RHView: React.FC<{ activeSubView: ViewId }> = ({ activeSubView }) => {
 
     // RH Fiches Entreprise View
     if (activeSubView === 'rh-fiche') {
+        const filteredCompanies = (companies || []).filter(c => {
+            if (!c || !c.fields) return false;
+            const f = c.fields;
+            const searchLower = (searchQuery || '').toLowerCase();
+
+            const raisonSociale = String(f['Raison sociale'] || '').toLowerCase();
+            const siret = String(f['Numéro SIRET'] || '').toLowerCase();
+            const ville = String(f['Ville entreprise'] || '').toLowerCase();
+
+            return raisonSociale.includes(searchLower) ||
+                siret.includes(searchLower) ||
+                ville.includes(searchLower);
+        });
+
         return (
             <div className="animate-slide-in pb-20 font-sans">
                 {/* Hero Section */}
@@ -544,7 +588,13 @@ const RHView: React.FC<{ activeSubView: ViewId }> = ({ activeSubView }) => {
                     <div className="flex items-center gap-3 flex-wrap">
                         <div className="flex items-center gap-2 px-4 py-2.5 bg-[#F3F4F6] border border-transparent rounded-xl w-80 focus-within:bg-white focus-within:border-teal-500/50 transition-all">
                             <Search size={18} className="text-slate-400" />
-                            <input type="text" placeholder="Rechercher par nom ou SIRET..." className="bg-transparent border-none outline-none text-sm w-full font-medium" />
+                            <input
+                                type="text"
+                                placeholder="Rechercher par nom ou SIRET..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="bg-transparent border-none outline-none text-sm w-full font-medium"
+                            />
                         </div>
                     </div>
                 </div>
@@ -567,10 +617,10 @@ const RHView: React.FC<{ activeSubView: ViewId }> = ({ activeSubView }) => {
                             <tbody className="divide-y divide-slate-100">
                                 {loading ? (
                                     <tr><td colSpan={7} className="p-12 text-center text-slate-500"><Loader2 className="animate-spin mx-auto mb-4 text-teal-500" size={32} />Chargement des entreprises...</td></tr>
-                                ) : companies.length === 0 ? (
+                                ) : filteredCompanies.length === 0 ? (
                                     <tr><td colSpan={7} className="p-12 text-center text-slate-500">Aucune entreprise trouvée</td></tr>
                                 ) : (
-                                    companies.map((c: any, idx: number) => {
+                                    filteredCompanies.map((c: any, idx: number) => {
                                         const f = c.fields || {};
                                         return (
                                             <tr key={c.id || idx} className="hover:bg-teal-50/30 transition-colors group">
@@ -615,7 +665,7 @@ const RHView: React.FC<{ activeSubView: ViewId }> = ({ activeSubView }) => {
                                                 </td>
                                                 <td className="px-6 py-4">
                                                     <div className="flex gap-2">
-                                                        <button 
+                                                        <button
                                                             onClick={() => handleViewCompany(c.id)}
                                                             className="w-8 h-8 rounded-xl border border-slate-200 bg-white hover:border-teal-500 text-slate-400 flex items-center justify-center transition-all shadow-sm"
                                                         >
@@ -633,10 +683,10 @@ const RHView: React.FC<{ activeSubView: ViewId }> = ({ activeSubView }) => {
                     </div>
                 </div>
 
-                <CompanyDetailModal 
-                    company={selectedCompany} 
-                    isOpen={isViewModalOpen} 
-                    onClose={() => setIsViewModalOpen(false)} 
+                <CompanyDetailModal
+                    company={selectedCompany}
+                    isOpen={isViewModalOpen}
+                    onClose={() => setIsViewModalOpen(false)}
                 />
             </div>
         );
