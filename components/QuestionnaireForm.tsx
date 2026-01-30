@@ -30,7 +30,15 @@ const studentSchema = z.object({
     nom_naissance: z.string().min(2, "Le nom de naissance est requis"),
     nom_usage: z.string().optional().or(z.literal("")),
     sexe: z.string().min(1, "Veuillez sélectionner votre sexe"),
-    date_naissance: z.string().min(1, "La date de naissance est requise"),
+    date_naissance: z.string().min(1, "La date de naissance est requise").refine(val => {
+        if (!val) return true;
+        const birth = new Date(val);
+        const today = new Date();
+        let age = today.getFullYear() - birth.getFullYear();
+        const m = today.getMonth() - birth.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+        return age >= 8;
+    }, { message: "Vous devez avoir au moins 8 ans pour vous inscrire" }),
     nationalite: z.string().min(1, "Veuillez sélectionner votre nationalité"),
     commune_naissance: z.string().min(1, "La commune de naissance est requise"),
     departement: z.string().min(1, "Le département est requis"),
