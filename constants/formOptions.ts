@@ -6,16 +6,16 @@ export interface SelectOption {
 const toOptions = (arr: string[]): SelectOption[] => arr.map(v => ({ value: v, label: v }));
 
 export const NATIONALITY_OPTIONS: SelectOption[] = [
-    { value: 'francaise', label: 'Française' },
-    { value: 'ue', label: 'Union Européenne' },
-    { value: 'hors_ue', label: 'Etranger hors Union Européenne' }
+    { value: 'Française', label: 'Française' },
+    { value: 'Union Européenne', label: 'Union Européenne' },
+    { value: 'Etranger hors Union Européenne', label: 'Etranger hors Union Européenne' }
 ];
 
 export const SITUATION_BEFORE_CONTRACT_OPTIONS: SelectOption[] = [
-    { value: 'Etudiant', label: 'Etudiant : (Etude supérieur)' },
-    { value: 'Scolaire', label: 'Scolaire : (Bac / brevet...)' },
-    { value: 'contrat_pro', label: 'Contrat pro' },
-    { value: 'Salarié', label: 'Salarié : (CDD/CDI)' },
+    { value: 'Etudiant : (Etude supérieur)', label: 'Etudiant : (Etude supérieur)' },
+    { value: 'Scolaire : (Bac / brevet...)', label: 'Scolaire : (Bac / brevet...)' },
+    { value: 'Contrat pro', label: 'Contrat pro' },
+    { value: 'Salarié : (CDD/CDI)', label: 'Salarié : (CDD/CDI)' },
     { value: 'Contrat d\'apprentissage', label: 'Contrat apprentissage' }
 ];
 
