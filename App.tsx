@@ -7,6 +7,8 @@ import DashboardView from './components/DashboardView';
 import AdmissionView from './components/AdmissionView';
 import RHView from './components/RHView';
 import StudentView from './components/StudentView';
+import Toast from './components/ui/Toast';
+
 
 const App = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -27,23 +29,25 @@ const App = () => {
 
   return (
     <div className="flex min-h-screen bg-[#F8FAFC] font-sans text-[#1E293B]">
+      <Toast />
       {/* Sidebar Overlay for Mobile */}
+
       {sidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-slate-900/50 z-40 md:hidden backdrop-blur-sm"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Sidebar */}
-      <Sidebar 
-        isOpen={sidebarOpen} 
+      <Sidebar
+        isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
       />
 
       {/* Main Content Wrapper */}
       <div className="flex-1 flex flex-col md:ml-[260px] min-w-0 transition-all duration-300">
-        <Header 
+        <Header
           toggleSidebar={toggleSidebar}
           activeModule={activeModule}
         />

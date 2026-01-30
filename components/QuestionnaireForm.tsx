@@ -5,7 +5,9 @@ import * as z from 'zod';
 import { User, Save, Loader2, ArrowRight } from 'lucide-react';
 import { api } from '../services/api';
 import { StudentFormData } from '../types';
+import { useAppStore } from '../store/useAppStore';
 import Button from './ui/Button';
+
 import Input from './ui/Input';
 import Select from './ui/Select';
 import Card from './ui/Card';
@@ -88,7 +90,9 @@ interface QuestionnaireFormProps {
 }
 
 const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
+    const { showToast } = useAppStore();
     const [isSubmitting, setIsSubmitting] = useState(false);
+
 
     const {
         register,
@@ -128,14 +132,14 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
             onNext(response);
         } catch (err) {
             console.error(err);
-            alert("Erreur lors de l'enregistrement. Veuillez réessayer.");
+            showToast("Erreur lors de l'enregistrement. Veuillez réessayer.", "error");
         } finally {
+
             setIsSubmitting(false);
         }
     };
 
     const selectedSexe = watch('sexe');
-    const selectedBac = watch('bac');
     const selectedEntreprise = watch('entreprise_d_accueil');
     const declarations = watch();
     const dateNaissance = watch('date_naissance');
@@ -468,19 +472,51 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
                             />
                         </div>
                         <div className="col-span-12">
-                            <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">Diplôme ou titre le plus élevé obtenu *</label>
-                            <div className="flex gap-3 grid grid-cols-2 md:grid-cols-3">
-                                {['BAC', 'BAC+1', 'BAC+2', 'BAC+3', 'BAC+4', 'BAC+5'].map((val, idx) => (
-                                    <label key={val} className="relative cursor-pointer group flex-1 min-w-[120px]">
-                                        <input className="peer sr-only" type="radio" value={val} {...register('bac')} />
-                                        <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all ${selectedBac === val ? 'bg-primary-50/50 border-primary shadow-indigo' : 'bg-slate-50/50 border-transparent hover:border-slate-200'}`}>
-                                            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${selectedBac === val ? 'bg-primary text-white' : 'bg-slate-200 text-slate-400'}`}>{String.fromCharCode(65 + idx)}</span>
-                                            <span className="font-bold text-slate-700">{val}</span>
-                                        </div>
-                                    </label>
-                                ))}
-                            </div>
-                            {errors.bac && <p className="mt-1.5 text-rose-500 text-[11px] font-black uppercase tracking-wider">{errors.bac.message}</p>}
+                            <Select
+                                label="Diplôme ou titre le plus élevé obtenu"
+                                required
+                                error={errors.bac?.message}
+                                {...register('bac')}
+                                options={[
+                                    { value: "Doctorat", label: "Doctorat" },
+                                    { value: "Master", label: "Master" },
+                                    { value: "Diplôme ingénieur", label: "Diplôme ingénieur" },
+                                    { value: "Diplôme école de commerce", label: "Diplôme école de commerce" },
+                                    { value: "Autre diplôme ou titre bac +5 ou plus", label: "Autre diplôme ou titre bac +5 ou plus" },
+                                    { value: "Licence professionnelle", label: "Licence professionnelle" },
+                                    { value: "Licence générale", label: "Licence générale" },
+                                    { value: "Bachelor universitaire de technologie (BUT)", label: "Bachelor universitaire de technologie (BUT)" },
+                                    { value: "Autre diplôme ou titre bac +3 ou 4", label: "Autre diplôme ou titre bac +3 ou 4" },
+                                    { value: "Brevet de Technicien Supérieur (BTS)", label: "Brevet de Technicien Supérieur (BTS)" },
+                                    { value: "BTS", label: "BTS" },
+                                    { value: "BTS MCO", label: "BTS MCO" },
+                                    { value: "BTS NDRC", label: "BTS NDRC" },
+                                    { value: "BTS COM", label: "BTS COM" },
+                                    { value: "TP NTC", label: "TP NTC" },
+                                    { value: "Bachelor RDC", label: "Bachelor RDC" },
+                                    { value: "Diplôme Universitaire de Technologie (DUT)", label: "Diplôme Universitaire de Technologie (DUT)" },
+                                    { value: "DUT", label: "DUT" },
+                                    { value: "Autre diplôme ou titre bac +2", label: "Autre diplôme ou titre bac +2" },
+                                    { value: "Baccalauréat professionnel", label: "Baccalauréat professionnel" },
+                                    { value: "Bac Pro", label: "Bac Pro" },
+                                    { value: "Baccalauréat général", label: "Baccalauréat général" },
+                                    { value: "Bac général", label: "Bac général" },
+                                    { value: "Baccalauréat technologique", label: "Baccalauréat technologique" },
+                                    { value: "Bac techno", label: "Bac techno" },
+                                    { value: "Diplôme de spécialisation professionnelle", label: "Diplôme de spécialisation professionnelle" },
+                                    { value: "Autre diplôme ou titre niveau bac", label: "Autre diplôme ou titre niveau bac" },
+                                    { value: "CAP", label: "CAP" },
+                                    { value: "BEP", label: "BEP" },
+                                    { value: "Certificat de spécialisation", label: "Certificat de spécialisation" },
+                                    { value: "Autre diplôme ou titre CAP/BEP", label: "Autre diplôme ou titre CAP/BEP" },
+                                    { value: "Diplôme National du Brevet", label: "Diplôme National du Brevet" },
+                                    { value: "Brevet", label: "Brevet" },
+                                    { value: "Certificat de Formation Générale", label: "Certificat de Formation Générale" },
+                                    { value: "Aucun diplôme ni titre professionnel", label: "Aucun diplôme ni titre professionnel" },
+                                    { value: "Aucun", label: "Aucun" }
+                                ]}
+                                placeholder="Sélectionnez votre diplôme"
+                            />
                         </div>
                     </div>
                 </Card>

@@ -23,10 +23,14 @@ import { api } from '../services/api';
 import Button from './ui/Button';
 import Input from './ui/Input';
 import Select from './ui/Select';
+import { useAppStore } from '../store/useAppStore';
 import Card from './ui/Card';
 
+
 const RHView: React.FC<{ activeSubView: ViewId }> = ({ activeSubView }) => {
+    const { showToast } = useAppStore();
     const [fichesData, setFichesData] = useState<any>(null);
+
     const [candidates, setCandidates] = useState<any[]>([]);
     const [rhStats, setRhStats] = useState<any>(null);
     const [companies, setCompanies] = useState<any[]>([]);
@@ -57,8 +61,9 @@ const RHView: React.FC<{ activeSubView: ViewId }> = ({ activeSubView }) => {
             setIsViewModalOpen(true);
         } catch (error) {
             console.error("Failed to fetch company details", error);
-            alert("Erreur lors de la récupération des détails de l'entreprise.");
+            showToast("Erreur lors de la récupération des détails de l'entreprise.", "error");
         } finally {
+
             setLoading(false);
         }
     };

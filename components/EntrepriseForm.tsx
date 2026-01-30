@@ -4,7 +4,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Building, Calculator, PenTool, CheckCircle2, Info, ArrowRight } from 'lucide-react';
 import { api } from '../services/api';
+import { useAppStore } from '../store/useAppStore';
 import Button from './ui/Button';
+
 import Input from './ui/Input';
 import Select from './ui/Select';
 import Card from './ui/Card';
@@ -100,7 +102,9 @@ interface EntrepriseFormProps {
 }
 
 const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId }) => {
+    const { showToast } = useAppStore();
     const [isSubmitting, setIsSubmitting] = useState(false);
+
 
     const {
         register,
@@ -201,9 +205,10 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
 
     const onSubmit = async (data: CompanyFormValues) => {
         if (!studentRecordId) {
-            alert("Erreur: ID étudiant manquant. Veuillez revenir à l'étape précédente.");
+            showToast("Erreur: ID étudiant manquant. Veuillez revenir à l'étape précédente.", "error");
             return;
         }
+
 
         setIsSubmitting(true);
         try {
@@ -211,8 +216,9 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
             onNext();
         } catch (error) {
             console.error("Erreur soumission entreprise:", error);
-            alert("Une erreur est survenue lors de l'enregistrement. Vérifiez les données et réessayez.");
+            showToast("Une erreur est survenue lors de l'enregistrement. Vérifiez les données et réessayez.", "error");
         } finally {
+
             setIsSubmitting(false);
         }
     };
@@ -692,9 +698,10 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
                     </div>
 
                     <div className="flex items-center gap-4 w-full md:w-auto">
-                        <Button variant="outline" type="button" className="flex-1 md:flex-none" onClick={() => alert("Brouillon enregistré")}>
+                        <Button variant="outline" type="button" className="flex-1 md:flex-none" onClick={() => showToast("Brouillon enregistré", "info")}>
                             Brouillon
                         </Button>
+
                         <Button
                             size="lg"
                             type="submit"

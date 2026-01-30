@@ -39,7 +39,9 @@ import {
 } from 'lucide-react';
 import { ViewId } from '../types';
 import { api } from '../services/api';
+import { useAppStore } from '../store/useAppStore';
 import Button from './ui/Button';
+
 import Input from './ui/Input';
 import Select from './ui/Select';
 import Card from './ui/Card';
@@ -50,8 +52,10 @@ interface DashboardViewProps {
 }
 
 const DashboardView: React.FC<DashboardViewProps> = ({ activeSubView }) => {
+    const { showToast } = useAppStore();
     const [candidates, setCandidates] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+
     const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
     const [searchQuery, setSearchQuery] = useState('');
     const [filterFormation, setFilterFormation] = useState('');
@@ -157,41 +161,44 @@ const DashboardView: React.FC<DashboardViewProps> = ({ activeSubView }) => {
             setIsModalOpen(false);
         } catch (error) {
             console.error("Failed to save candidate", error);
-            alert("Erreur lors de la sauvegarde");
+            showToast("Erreur lors de la sauvegarde", "error");
         } finally {
+
             setIsSaving(false);
         }
     };
 
     const handleDelete = async () => {
         if (!selectedCandidate) return;
-        
+
         const c = getC(selectedCandidate);
         const candidateId = c.id;
 
         if (!candidateId) {
             console.error("❌ [UI] Cannot delete: Candidate ID not found in object", selectedCandidate);
-            alert("Erreur: ID de l'étudiant introuvable.");
+            showToast("Erreur: ID de l'étudiant introuvable.", "error");
             return;
         }
+
 
         const confirmDelete = window.confirm(`Êtes-vous sûr de vouloir supprimer l'étudiant ${c.prenom} ${c.nom} ? Cette action est irréversible.`);
         if (!confirmDelete) return;
 
         setIsDeleting(true);
         console.log(`🗑️ [UI] Requesting deletion for ID: ${candidateId}`);
-        
+
         try {
             await api.deleteCandidate(candidateId);
             // Refresh list
             const data = await api.getAllCandidates();
             setCandidates(data);
             setIsModalOpen(false);
-            alert("Étudiant supprimé avec succès.");
+            showToast("Étudiant supprimé avec succès.", "success");
         } catch (error) {
             console.error("Failed to delete candidate", error);
-            alert("Erreur lors de la suppression. Vérifiez la console pour plus de détails.");
+            showToast("Erreur lors de la suppression. Vérifiez la console pour plus de détails.", "error");
         } finally {
+
             setIsDeleting(false);
         }
     };
@@ -287,7 +294,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ activeSubView }) => {
                 if (!raw) return false;
                 const c = getC(raw);
                 if (!c) return false;
-                
+
                 const searchLower = (searchQuery || '').toLowerCase();
                 const fullName = String(c.nom || '') + ' ' + String(c.prenom || '');
                 const matchesSearch = fullName.toLowerCase().includes(searchLower) ||
@@ -509,10 +516,10 @@ const DashboardView: React.FC<DashboardViewProps> = ({ activeSubView }) => {
                         </div>
                     )}
 
-                    <Pagination 
-                        currentPage={currentPage} 
-                        totalPages={totalPages} 
-                        onPageChange={setCurrentPage} 
+                    <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={setCurrentPage}
                     />
                 </div>
             );
@@ -738,10 +745,10 @@ const DashboardView: React.FC<DashboardViewProps> = ({ activeSubView }) => {
                         </div>
                     )}
 
-                    <Pagination 
-                        currentPage={currentPage} 
-                        totalPages={totalPages} 
-                        onPageChange={setCurrentPage} 
+                    <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={setCurrentPage}
                     />
                 </div>
             );
@@ -954,7 +961,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ activeSubView }) => {
                                                                 <div className={`text-[10px] font-bold uppercase tracking-widest ${doc.uploaded ? 'text-emerald-500' : 'text-slate-400'}`}> {doc.uploaded ? 'Document validé' : 'Document manquant'} </div>
                                                             </div>
                                                         </div>
-                                                        {doc.uploaded && ( <button className="p-3 rounded-xl bg-slate-50 text-slate-400 hover:bg-rose-500 hover:text-white transition-all duration-300 opacity-0 group-hover:opacity-100"> <Download size={18} strokeWidth={3} /> </button> )}
+                                                        {doc.uploaded && (<button className="p-3 rounded-xl bg-slate-50 text-slate-400 hover:bg-rose-500 hover:text-white transition-all duration-300 opacity-0 group-hover:opacity-100"> <Download size={18} strokeWidth={3} /> </button>)}
                                                     </div>
                                                 ))}
                                             </div>

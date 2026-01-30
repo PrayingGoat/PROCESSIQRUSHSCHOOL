@@ -31,6 +31,8 @@ import { AdmissionTab } from '../types';
 import QuestionnaireForm from './QuestionnaireForm';
 import EntrepriseForm from './EntrepriseForm';
 import { api } from '../services/api';
+import { useAppStore } from '../store/useAppStore';
+
 
 // --- CONSTANTS ---
 
@@ -108,7 +110,9 @@ const StepLine = ({ isCompleted }: { isCompleted: boolean }) => (
 );
 
 const EvaluationGrid = ({ studentData }: { studentData: any }) => {
+    const { showToast } = useAppStore();
     const [evalData, setEvalData] = useState({
+
         candidatNom: '',
         heureEntretien: '',
         chargeAdmission: '',
@@ -164,8 +168,9 @@ const EvaluationGrid = ({ studentData }: { studentData: any }) => {
     };
 
     const saveEvaluation = () => {
-        alert("Évaluation enregistrée avec succès !");
+        showToast("Évaluation enregistrée avec succès !", "success");
     };
+
 
     const exportEvaluationPDF = () => {
         window.print();
@@ -232,7 +237,7 @@ const EvaluationGrid = ({ studentData }: { studentData: any }) => {
                         </div>
                     </div>
 
-                    {[ 
+                    {[
                         { id: 'critere1', title: 'Savoir-être et présentation', desc: 'Capacité à bien se connaître : ses points forts, ses points de progression, culture générale, curiosité, ouverture aux autres.' },
                         { id: 'critere2', title: 'Cohérence du projet académique et professionnel', desc: 'Logique de construction du projet d\'orientation, projet professionnel, motivation pour le programme.' },
                         { id: 'critere3', title: 'Engagements et expérience péri ou extra-scolaires', desc: 'Activités extra-scolaires, richesse des expériences, valorisation des compétences développées.' },
@@ -337,10 +342,10 @@ const InterviewsTrackingView = ({ onLaunchInterview }: { onLaunchInterview: (can
         const fullName = `${c.nom_naissance || ''} ${c.prenom || ''}`.toLowerCase();
         const formation = (c.formation_souhaitee || '').toLowerCase();
         const email = (c.email || '').toLowerCase();
-        
-        return fullName.includes(searchLower) || 
-               formation.includes(searchLower) || 
-               email.includes(searchLower);
+
+        return fullName.includes(searchLower) ||
+            formation.includes(searchLower) ||
+            email.includes(searchLower);
     });
 
     const stats = {
@@ -354,7 +359,7 @@ const InterviewsTrackingView = ({ onLaunchInterview }: { onLaunchInterview: (can
             {/* Header / Hero */}
             <div className="bg-white border border-slate-200 rounded-[32px] p-10 shadow-premium overflow-hidden relative">
                 <div className="absolute top-0 right-0 w-1/3 h-full bg-slate-50 border-l border-slate-100 hidden md:block"></div>
-                
+
                 <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-10">
                     <div className="flex-1">
                         <div className="flex items-center gap-3 mb-4">
@@ -385,13 +390,13 @@ const InterviewsTrackingView = ({ onLaunchInterview }: { onLaunchInterview: (can
             <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
                 <div className="relative w-full md:w-[450px] group">
                     <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-primary transition-colors" size={20} />
-                                            <input 
-                                                type="text" 
-                                                placeholder="Rechercher un candidat ou une formation..." 
-                                                value={searchQuery}
-                                                onChange={(e) => setSearchQuery(e.target.value)}
-                                                className="w-full pl-14 pr-6 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-primary focus:ring-4 focus:ring-primary/5 outline-none transition-all font-bold text-slate-700 shadow-sm placeholder:text-slate-300" 
-                                            />                </div>
+                    <input
+                        type="text"
+                        placeholder="Rechercher un candidat ou une formation..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full pl-14 pr-6 py-4 bg-white border-2 border-slate-100 rounded-2xl focus:border-primary focus:ring-4 focus:ring-primary/5 outline-none transition-all font-bold text-slate-700 shadow-sm placeholder:text-slate-300"
+                    />                </div>
                 <div className="flex items-center gap-3 w-full md:w-auto">
                     <Button variant="outline" className="flex-1 md:flex-none h-[56px] px-6" leftIcon={<Download size={18} />}>Exporter</Button>
                     <Button variant="primary" className="flex-1 md:flex-none h-[56px] px-8" leftIcon={<Calendar size={18} />}>Planifier</Button>
@@ -477,9 +482,9 @@ const InterviewsTrackingView = ({ onLaunchInterview }: { onLaunchInterview: (can
                                                 <ExternalLink size={20} />
                                             </button>
                                         ) : (
-                                            <Button 
-                                                variant="primary" 
-                                                size="sm" 
+                                            <Button
+                                                variant="primary"
+                                                size="sm"
                                                 className="rounded-xl shadow-none"
                                                 onClick={() => onLaunchInterview(c)}
                                             >
@@ -500,7 +505,9 @@ const InterviewsTrackingView = ({ onLaunchInterview }: { onLaunchInterview: (can
 // --- MAIN ADMISSION VIEW ---
 
 const AdmissionView = () => {
+    const { showToast } = useAppStore();
     const [mainTab, setMainTab] = useState<'dashboard' | 'interviews'>('dashboard');
+
     const [activeTab, setActiveTab] = useState<AdmissionTab>(AdmissionTab.TESTS);
     const [selectedFormation, setSelectedFormation] = useState<string | null>(null);
 
@@ -527,9 +534,10 @@ const AdmissionView = () => {
         const recordId = studentData?.record_id || localStorage.getItem('candidateRecordId');
 
         if (!recordId) {
-            alert("Erreur : Aucun dossier étudiant trouvé. Veuillez remplir la fiche étudiant avant de déposer des documents.");
+            showToast("Erreur : Aucun dossier étudiant trouvé. Veuillez remplir la fiche étudiant avant de déposer des documents.", "error");
             return;
         }
+
 
         setUploadingFiles(prev => ({ ...prev, [docId]: true }));
 
@@ -538,8 +546,9 @@ const AdmissionView = () => {
             setUploadedFiles(prev => ({ ...prev, [docId]: true }));
         } catch (error) {
             console.error("Upload failed", error);
-            alert("Erreur lors du téléversement du document. Veuillez réessayer.");
+            showToast("Erreur lors du téléversement du document. Veuillez réessayer.", "error");
         } finally {
+
             setUploadingFiles(prev => ({ ...prev, [docId]: false }));
         }
     };
@@ -547,15 +556,17 @@ const AdmissionView = () => {
     const handleDocAction = async (doc: any) => {
         if (doc.id === 'renseignements') {
             if (!studentData && !localStorage.getItem('candidateRecordId')) {
-                alert("Veuillez d'abord compléter la Fiche Étudiant.");
+                showToast("Veuillez d'abord compléter la Fiche Étudiant.", "info");
                 return;
             }
 
+
             const recordId = studentData?.record_id || studentData?.id || localStorage.getItem('candidateRecordId');
             if (!recordId) {
-                alert("Identifiant étudiant introuvable. Veuillez recharger ou compléter le dossier.");
+                showToast("Identifiant étudiant introuvable. Veuillez recharger ou compléter le dossier.", "error");
                 return;
             }
+
 
             try {
                 const btn = document.getElementById(`btn-${doc.id}`);
@@ -568,21 +579,24 @@ const AdmissionView = () => {
                 if (btn) btn.innerText = originalText;
             } catch (e) {
                 console.error(e);
-                alert("Erreur lors de la génération de la fiche.");
+                showToast("Erreur lors de la génération de la fiche.", "error");
                 const btn = document.getElementById(`btn-${doc.id}`);
+
                 if (btn) btn.innerText = "Compléter";
             }
         } else if (doc.id === 'cerfa') {
             if (!studentData && !localStorage.getItem('candidateRecordId')) {
-                alert("Veuillez d'abord compléter la Fiche Étudiant.");
+                showToast("Veuillez d'abord compléter la Fiche Étudiant.", "info");
                 return;
             }
 
+
             const recordId = studentData?.record_id || studentData?.id || localStorage.getItem('candidateRecordId');
             if (!recordId) {
-                alert("Identifiant étudiant introuvable. Veuillez recharger ou compléter le dossier.");
+                showToast("Identifiant étudiant introuvable. Veuillez recharger ou compléter le dossier.", "error");
                 return;
             }
+
 
             try {
                 const btn = document.getElementById(`btn-${doc.id}`);
@@ -595,8 +609,9 @@ const AdmissionView = () => {
                 if (btn) btn.innerText = originalText;
             } catch (e) {
                 console.error(e);
-                alert("Erreur lors de la génération du CERFA.");
+                showToast("Erreur lors de la génération du CERFA.", "error");
                 const btn = document.getElementById(`btn-${doc.id}`);
+
                 if (btn) btn.innerText = "Générer";
             }
         } else {
@@ -620,12 +635,12 @@ const AdmissionView = () => {
                         Suivi Entretiens
                     </button>
                 </div>
-                <InterviewsTrackingView 
+                <InterviewsTrackingView
                     onLaunchInterview={(c) => {
                         setStudentData(c);
                         setMainTab('dashboard');
                         setActiveTab(AdmissionTab.ENTRETIEN);
-                    }} 
+                    }}
                 />
             </div>
         );
@@ -677,7 +692,7 @@ const AdmissionView = () => {
             </div>
 
             <div className="flex overflow-x-auto gap-2 mb-8 bg-[#F1F5F9] p-2 rounded-2xl border border-slate-200 no-scrollbar shadow-inner">
-                {[ 
+                {[
                     { id: AdmissionTab.TESTS, label: 'Tests', icon: PenTool },
                     { id: AdmissionTab.QUESTIONNAIRE, label: 'Fiche Étudiant', icon: Info },
                     { id: AdmissionTab.DOCUMENTS, label: 'Documents', icon: Upload },
