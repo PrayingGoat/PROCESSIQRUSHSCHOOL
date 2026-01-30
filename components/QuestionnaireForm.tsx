@@ -6,6 +6,7 @@ import { User, Save, Loader2, ArrowRight } from 'lucide-react';
 import { api } from '../services/api';
 import { StudentFormData } from '../types';
 import { useAppStore } from '../store/useAppStore';
+import { useApi } from '../hooks/useApi';
 import Button from './ui/Button';
 
 import Input from './ui/Input';
@@ -101,9 +102,12 @@ interface QuestionnaireFormProps {
 }
 
 const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
-    const { showToast } = useAppStore();
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    const { showToast, draftStudent, setDraftStudent, clearDraftStudent } = useAppStore();
+    const [activeSection, setActiveSection] = useState<string | null>('personal');
 
+    const toggleSection = (section: string) => {
+        setActiveSection(prev => prev === section ? null : section);
+    };
 
     const {
         register,
@@ -114,40 +118,66 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
     } = useForm<StudentFormValues>({
         resolver: zodResolver(studentSchema),
         defaultValues: {
-            prenom: '', nom_naissance: '', nom_usage: '', sexe: '', date_naissance: '',
-            nationalite: '', commune_naissance: '', departement: '',
-            num_residence: '', rue_residence: '', complement_residence: '', adresse_residence: '',
-            code_postal: '', ville: '', email: '', telephone: '', nir: '',
-            situation: '', regime_social: '',
-            declare_inscription_sportif_haut_niveau: false,
-            declare_avoir_projet_creation_reprise_entreprise: false,
-            declare_travailleur_handicape: false,
-            alternance: false,
-            dernier_diplome_prepare: '', derniere_classe: '', intitulePrecisDernierDiplome: '',
-            bac: '', formation_souhaitee: '', date_de_visite: '', date_de_reglement: '',
-            entreprise_d_accueil: '', connaissance_rush_how: '', motivation_projet_professionnel: '',
-            agreement: false as any,
-            add_second_representative: false,
-            representant_legal_1: { nom: '', prenom: '', lien_parente: '', numero: '', voie: '', complement: '', code_postal: '', ville: '', email: '', telephone: '' },
-            representant_legal_2: { nom: '', prenom: '', lien_parente: '', numero: '', voie: '', complement: '', code_postal: '', ville: '', email: '', telephone: '' }
+            prenom: draftStudent?.prenom || '',
+            nom_naissance: draftStudent?.nom_naissance || '',
+            nom_usage: draftStudent?.nom_usage || '',
+            sexe: draftStudent?.sexe || '',
+            date_naissance: draftStudent?.date_naissance || '',
+            nationalite: draftStudent?.nationalite || '',
+            commune_naissance: draftStudent?.commune_naissance || '',
+            departement: draftStudent?.departement || '',
+            num_residence: draftStudent?.num_residence || '',
+            rue_residence: draftStudent?.rue_residence || '',
+            complement_residence: draftStudent?.complement_residence || '',
+            adresse_residence: draftStudent?.adresse_residence || '',
+            code_postal: draftStudent?.code_postal || '',
+            ville: draftStudent?.ville || '',
+            email: draftStudent?.email || '',
+            telephone: draftStudent?.telephone || '',
+            nir: draftStudent?.nir || '',
+            situation: draftStudent?.situation || '',
+            regime_social: draftStudent?.regime_social || '',
+            declare_inscription_sportif_haut_niveau: draftStudent?.declare_inscription_sportif_haut_niveau || false,
+            declare_avoir_projet_creation_reprise_entreprise: draftStudent?.declare_avoir_projet_creation_reprise_entreprise || false,
+            declare_travailleur_handicape: draftStudent?.declare_travailleur_handicape || false,
+            alternance: draftStudent?.alternance || false,
+            dernier_diplome_prepare: draftStudent?.dernier_diplome_prepare || '',
+            derniere_classe: draftStudent?.derniere_classe || '',
+            intitulePrecisDernierDiplome: draftStudent?.intitulePrecisDernierDiplome || '',
+            bac: draftStudent?.bac || '',
+            formation_souhaitee: draftStudent?.formation_souhaitee || '',
+            date_de_visite: draftStudent?.date_de_visite || '',
+            date_de_reglement: draftStudent?.date_de_reglement || '',
+            entreprise_d_accueil: draftStudent?.entreprise_d_accueil || '',
+            connaissance_rush_how: draftStudent?.connaissance_rush_how || '',
+            motivation_projet_professionnel: draftStudent?.motivation_projet_professionnel || '',
+            agreement: draftStudent?.agreement || false,
+            add_second_representative: draftStudent?.add_second_representative || false,
+            representant_legal_1: draftStudent?.representant_legal_1 || { nom: '', prenom: '', lien_parente: '', numero: '', voie: '', complement: '', code_postal: '', ville: '', email: '', telephone: '' },
+            representant_legal_2: draftStudent?.representant_legal_2 || { nom: '', prenom: '', lien_parente: '', numero: '', voie: '', complement: '', code_postal: '', ville: '', email: '', telephone: '' }
         }
     });
 
-    const onSubmit = async (data: StudentFormValues) => {
-        setIsSubmitting(true);
-        try {
-            const response = await api.submitStudent(data as any);
+    // Auto-save draft
+    React.useEffect(() => {
+        const subscription = watch((value) => setDraftStudent(value));
+        return () => subscription.unsubscribe();
+    }, [watch, setDraftStudent]);
+
+    const { execute: submitStudent, loading: isSubmitting } = useApi(api.submitStudent, {
+        successMessage: "Inscription enregistrée avec succès !",
+        onSuccess: (response) => {
             if (response && response.record_id) {
                 localStorage.setItem('candidateRecordId', response.record_id);
             }
+            clearDraftStudent();
             onNext(response);
-        } catch (err) {
-            console.error(err);
-            showToast("Erreur lors de l'enregistrement. Veuillez réessayer.", "error");
-        } finally {
+        },
+        errorMessage: "Erreur lors de l'enregistrement. Veuillez réessayer."
+    });
 
-            setIsSubmitting(false);
-        }
+    const onSubmit = async (data: StudentFormValues) => {
+        await submitStudent(data as any);
     };
 
     const selectedSexe = watch('sexe');
@@ -185,7 +215,13 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
             </div>
 
             <div className="space-y-6">
-                <Card step={1} title="Informations personnelles" collapsible>
+                <Card
+                    step={1}
+                    title="Informations personnelles"
+                    collapsible
+                    isOpen={activeSection === 'personal'}
+                    onToggle={() => toggleSection('personal')}
+                >
                     <div className="grid grid-cols-12 gap-5">
                         <div className="col-span-12 md:col-span-6">
                             <Input label="Prénom" required placeholder="Votre prénom" error={errors.prenom?.message} {...register('prenom')} />
@@ -234,7 +270,13 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
                     </div>
                 </Card>
 
-                <Card step={2} title="Coordonnées" collapsible defaultOpen={false}>
+                <Card
+                    step={2}
+                    title="Coordonnées"
+                    collapsible
+                    isOpen={activeSection === 'contact'}
+                    onToggle={() => toggleSection('contact')}
+                >
                     <div className="grid grid-cols-12 gap-5">
                         <div className="col-span-12 md:col-span-3">
                             <Input label="Numéro" placeholder="N°" {...register('num_residence')} />
@@ -264,7 +306,13 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
                 </Card>
 
                 {isMinor && (
-                    <Card step={3} title="Représentants Légaux" collapsible defaultOpen={false}>
+                    <Card
+                        step={3}
+                        title="Représentants Légaux"
+                        collapsible
+                        isOpen={activeSection === 'legal'}
+                        onToggle={() => toggleSection('legal')}
+                    >
                         <div className="space-y-8">
                             <div className="bg-slate-50/50 p-8 rounded-3xl border border-slate-100">
                                 <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">Représentant légal 1</h3>
@@ -355,7 +403,13 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
                     </Card>
                 )}
 
-                <Card step={isMinor ? 4 : 3} title="Situation & Déclarations" collapsible defaultOpen={false}>
+                <Card
+                    step={isMinor ? 4 : 3}
+                    title="Situation & Déclarations"
+                    collapsible
+                    isOpen={activeSection === 'situation'}
+                    onToggle={() => toggleSection('situation')}
+                >
                     <div className="grid grid-cols-12 gap-5">
                         <div className="col-span-12">
                             <Select
@@ -409,7 +463,13 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
                     </div>
                 </Card>
 
-                <Card step={isMinor ? 5 : 4} title="Parcours scolaire" collapsible defaultOpen={false}>
+                <Card
+                    step={isMinor ? 5 : 4}
+                    title="Parcours scolaire"
+                    collapsible
+                    isOpen={activeSection === 'school'}
+                    onToggle={() => toggleSection('school')}
+                >
                     <div className="grid grid-cols-12 gap-5">
                         <div className="col-span-12">
                             <Select
@@ -456,7 +516,13 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
                     </div>
                 </Card>
 
-                <Card step={isMinor ? 6 : 5} title="Formation souhaitée" collapsible defaultOpen={false}>
+                <Card
+                    step={isMinor ? 6 : 5}
+                    title="Formation souhaitée"
+                    collapsible
+                    isOpen={activeSection === 'desire'}
+                    onToggle={() => toggleSection('desire')}
+                >
                     <div className="grid grid-cols-12 gap-5">
                         <div className="col-span-12">
                             <Select
@@ -492,7 +558,13 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
                     </div>
                 </Card>
 
-                <Card step={isMinor ? 7 : 6} title="Informations complémentaires" collapsible defaultOpen={false}>
+                <Card
+                    step={isMinor ? 7 : 6}
+                    title="Informations complémentaires"
+                    collapsible
+                    isOpen={activeSection === 'extra'}
+                    onToggle={() => toggleSection('extra')}
+                >
                     <div className="grid grid-cols-12 gap-5">
                         <div className="col-span-12">
                             <Select

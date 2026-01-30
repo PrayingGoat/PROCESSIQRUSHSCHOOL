@@ -1,83 +1,85 @@
-import React from 'react';
-import { NavLink } from 'react-router-dom';
-import { Menu, Search, Bell } from 'lucide-react';
+import React, { useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
+import { Menu, Search, Bell, Globe } from 'lucide-react';
 
 interface HeaderProps {
   toggleSidebar: () => void;
 }
 
 const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
+  const location = useLocation();
+
+  const moduleTitle = useMemo(() => {
+    const path = location.pathname;
+    if (path.startsWith('/admission')) return 'Admissions';
+    if (path.startsWith('/commercial')) return 'Commercial';
+    if (path.startsWith('/rh')) return 'Ressources Humaines';
+    if (path.startsWith('/etudiant')) return 'Espace Étudiant';
+    if (path.startsWith('/parametres')) return 'Paramètres';
+    return 'Tableau de bord';
+  }, [location.pathname]);
+
   return (
-    <header className="h-[64px] bg-white border-b border-[#E2E8F0] sticky top-0 z-30 px-6 flex items-center justify-between">
-      <div className="flex items-center gap-4 md:hidden mr-4">
-        <button onClick={toggleSidebar} className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg">
+    <header className="h-[72px] bg-white/80 backdrop-blur-md border-b border-slate-200/60 sticky top-0 z-30 px-8 flex items-center justify-between transition-all duration-300">
+      <div className="flex items-center gap-6">
+        <button
+          onClick={toggleSidebar}
+          className="p-2.5 text-slate-500 hover:bg-slate-100/80 rounded-xl transition-all active:scale-95 md:hidden"
+        >
           <Menu size={20} />
         </button>
-      </div>
 
-      <div className="hidden md:flex items-center gap-2">
-        <NavLink 
-          to="/admission" 
-          className={({ isActive }) => `header-tab ${isActive ? 'active' : ''}`}
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
-            <path d="M6 12v5c3 3 9 3 12 0v-5"/>
-          </svg>
-          Admissions
-        </NavLink>
-        <NavLink 
-          to="/commercial" 
-          className={({ isActive }) => `header-tab ${isActive ? 'active' : ''}`}
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
-            <line x1="8" y1="21" x2="16" y2="21"/>
-            <line x1="12" y1="17" x2="12" y2="21"/>
-          </svg>
-          Commercial
-        </NavLink>
-        <NavLink 
-          to="/rh" 
-          className={({ isActive }) => `header-tab ${isActive ? 'active' : ''}`}
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-            <circle cx="9" cy="7" r="4"/>
-            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-          </svg>
-          RH
-        </NavLink>
-        <NavLink 
-          to="/etudiant" 
-          className={({ isActive }) => `header-tab ${isActive ? 'active' : ''}`}
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-            <circle cx="12" cy="7" r="4"/>
-          </svg>
-          Étudiant
-        </NavLink>
-      </div>
-
-      <div className="flex items-center gap-4">
-        <button className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-500 hover:bg-slate-50 transition-colors">
-          <Search size={20} />
-        </button>
-        <button className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-500 hover:bg-slate-50 transition-colors">
-          <Bell size={20} />
-        </button>
-        <div className="flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer hover:bg-slate-50 text-slate-600 text-sm font-medium">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="2" y1="12" x2="22" y2="12"/>
-            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-          </svg>
-          FR
+        <div className="flex flex-col">
+          <h1 className="text-xl font-black text-slate-900 tracking-tight leading-none bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-500">
+            {moduleTitle}
+          </h1>
+          <div className="flex items-center gap-2 mt-1">
+            <span className="w-1 h-1 rounded-full bg-indigo-500"></span>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Rush School Portal</p>
+          </div>
         </div>
-        <div className="w-10 h-10 rounded-full bg-[#818CF8] flex items-center justify-center text-white font-bold text-sm cursor-pointer">
-          AP
+      </div>
+
+      <div className="flex items-center gap-5">
+        <div className="hidden lg:flex items-center bg-slate-100/40 rounded-full px-5 py-2.5 border border-slate-200/40 group transition-all duration-300 focus-within:bg-white focus-within:border-indigo-200 focus-within:shadow-lg focus-within:shadow-indigo-500/5 focus-within:w-72 w-56">
+          <Search size={16} className="text-slate-400 group-focus-within:text-indigo-500 transition-colors shrink-0" />
+          <input
+            type="text"
+            placeholder="Recherche rapide..."
+            className="bg-transparent border-none focus:ring-0 outline-none text-xs font-bold text-slate-600 w-full placeholder:text-slate-400 px-3 tracking-wide"
+          />
+          <div className="flex items-center gap-1 px-1.5 py-1 rounded-lg bg-slate-200/50 border border-slate-300/30 shrink-0 group-focus-within:opacity-0 transition-opacity">
+            <span className="text-[9px] font-black text-slate-500 tracking-tighter">⌘</span>
+            <span className="text-[9px] font-black text-slate-500 tracking-tighter uppercase">K</span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button className="relative w-11 h-11 rounded-xl flex items-center justify-center text-slate-500 hover:bg-slate-100/80 hover:text-indigo-600 transition-all active:scale-95">
+            <Bell size={20} />
+            <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-rose-500 border-2 border-white rounded-full"></span>
+          </button>
+
+          <div className="h-6 w-px bg-slate-200 mx-1"></div>
+
+          <button className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-600 hover:bg-slate-100/80 transition-all active:scale-95 group">
+            <div className="w-6 h-6 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors">
+              <Globe size={14} />
+            </div>
+            <span className="text-xs font-bold tracking-wider">FR</span>
+          </button>
+
+          <div className="flex items-center gap-3 pl-2 cursor-pointer group">
+            <div className="flex flex-col items-end hidden sm:flex">
+              <span className="text-sm font-black text-slate-800 leading-none group-hover:text-indigo-600 transition-colors">Admin Portal</span>
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Super Admin</span>
+            </div>
+            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 p-0.5 shadow-lg shadow-indigo-200 group-hover:shadow-indigo-300 transition-all active:scale-95">
+              <div className="w-full h-full rounded-[14px] bg-white/20 backdrop-blur-sm flex items-center justify-center text-white font-black text-sm">
+                AP
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </header>

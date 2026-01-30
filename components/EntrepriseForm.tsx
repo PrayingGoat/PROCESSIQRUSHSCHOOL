@@ -5,6 +5,7 @@ import * as z from 'zod';
 import { Building, Calculator, PenTool, CheckCircle2, Info, ArrowRight } from 'lucide-react';
 import { api } from '../services/api';
 import { useAppStore } from '../store/useAppStore';
+import { useApi } from '../hooks/useApi';
 import Button from './ui/Button';
 
 import Input from './ui/Input';
@@ -115,8 +116,12 @@ interface EntrepriseFormProps {
 }
 
 const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId }) => {
-    const { showToast } = useAppStore();
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    const { showToast, draftCompany, setDraftCompany, clearDraftCompany } = useAppStore();
+    const [activeSection, setActiveSection] = useState<string | null>('id');
+
+    const toggleSection = (section: string) => {
+        setActiveSection(prev => prev === section ? null : section);
+    };
 
 
     const {
@@ -128,27 +133,33 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
     } = useForm<CompanyFormValues>({
         resolver: zodResolver(companySchema),
         defaultValues: {
-            identification: { raison_sociale: "", siret: "", code_ape_naf: "", type_employeur: "", effectif: "", convention: "" },
-            adresse: { num: "", voie: "", complement: "", code_postal: "", ville: "", telephone: "", email: "" },
-            maitre_apprentissage: { nom: "", prenom: "", date_naissance: "", fonction: "", diplome: "", experience: "", telephone: "", email: "" },
-            opco: { nom: "" },
-            formation: { choisie: "", date_debut: "", date_fin: "", code_rncp: "", code_diplome: "", nb_heures: "", jours_cours: "" },
-            cfa: {
+            identification: draftCompany?.identification || { raison_sociale: "", siret: "", code_ape_naf: "", type_employeur: "", effectif: "", convention: "" },
+            adresse: draftCompany?.adresse || { num: "", voie: "", complement: "", code_postal: "", ville: "", telephone: "", email: "" },
+            maitre_apprentissage: draftCompany?.maitre_apprentissage || { nom: "", prenom: "", date_naissance: "", fonction: "", diplome: "", experience: "", telephone: "", email: "" },
+            opco: draftCompany?.opco || { nom: "" },
+            formation: draftCompany?.formation || { choisie: "", date_debut: "", date_fin: "", code_rncp: "", code_diplome: "", nb_heures: "", jours_cours: "" },
+            cfa: draftCompany?.cfa || {
                 rush_school: "oui", entreprise: "non", denomination: "RUSH SCHOOL", uai: "0932731W",
                 siret: "91901416300018", adresse: "11-13 AVENUE DE LA DIVISION LECLERC", complement: "", code_postal: "93000", commune: "BOBIGNY"
             },
-            contrat: {
+            contrat: draftCompany?.contrat || {
                 type_contrat: "", type_derogation: "", date_debut: "", date_fin: "", duree_hebdomadaire: "35h", poste_occupe: "",
                 lieu_execution: "", pourcentage_smic: 0, smic: "1823.03", montant_salaire_brut: 0, date_conclusion: "", date_debut_execution: "",
                 numero_deca_ancien_contrat: "", machines_dangereuses: "Non", caisse_retraite: "", date_avenant: "", nombre_mois: 12
             },
-            salaire: { age: "", annee: "", pourcentage: 0, montant: 0 },
-            missions: { formation_alternant: "", selectionnees: [] as string[] },
+            salaire: draftCompany?.salaire || { age: "", annee: "", pourcentage: 0, montant: 0 },
+            missions: draftCompany?.missions || { formation_alternant: "", selectionnees: [] as string[] },
             record_id_etudiant: studentRecordId || ""
         }
     });
 
     const formData = watch();
+
+    // Auto-save draft
+    useEffect(() => {
+        const subscription = watch((value) => setDraftCompany(value));
+        return () => subscription.unsubscribe();
+    }, [watch, setDraftCompany]);
 
 
 
@@ -211,24 +222,21 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
         setValue('missions.selectionnees', next, { shouldValidate: true });
     };
 
+    const { execute: submitCompany, loading: isSubmitting } = useApi(api.submitCompany, {
+        successMessage: "Informations entreprise enregistrées avec succès !",
+        onSuccess: () => {
+            clearDraftCompany();
+            onNext();
+        },
+        errorMessage: "Une erreur est survenue lors de l'enregistrement. Vérifiez les données et réessayez."
+    });
+
     const onSubmit = async (data: CompanyFormValues) => {
         if (!studentRecordId) {
             showToast("Erreur: ID étudiant manquant. Veuillez revenir à l'étape précédente.", "error");
             return;
         }
-
-
-        setIsSubmitting(true);
-        try {
-            await api.submitCompany(data as any);
-            onNext();
-        } catch (error) {
-            console.error("Erreur soumission entreprise:", error);
-            showToast("Une erreur est survenue lors de l'enregistrement. Vérifiez les données et réessayez.", "error");
-        } finally {
-
-            setIsSubmitting(false);
-        }
+        await submitCompany(data as any);
     };
 
     return (
@@ -247,7 +255,13 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
                 </div>
 
                 <div className="space-y-6">
-                    <Card step={1} title="Identification de l'entreprise" collapsible>
+                    <Card
+                        step={1}
+                        title="Identification de l'entreprise"
+                        collapsible
+                        isOpen={activeSection === 'id'}
+                        onToggle={() => toggleSection('id')}
+                    >
                         <div className="grid grid-cols-12 gap-5">
                             <div className="col-span-12">
                                 <Input label="Raison sociale" required placeholder="Nom de l'entreprise" error={errors.identification?.raison_sociale?.message} {...register('identification.raison_sociale')} />
@@ -277,7 +291,13 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
                         </div>
                     </Card>
 
-                    <Card step={2} title="Adresse de l'entreprise" collapsible defaultOpen={false}>
+                    <Card
+                        step={2}
+                        title="Adresse de l'entreprise"
+                        collapsible
+                        isOpen={activeSection === 'address'}
+                        onToggle={() => toggleSection('address')}
+                    >
                         <div className="grid grid-cols-12 gap-5">
                             <div className="col-span-12 md:col-span-3">
                                 <Input label="Numéro" placeholder="N°" {...register('adresse.num')} />
@@ -303,7 +323,13 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
                         </div>
                     </Card>
 
-                    <Card step={3} title="Maître d'apprentissage" collapsible defaultOpen={false}>
+                    <Card
+                        step={3}
+                        title="Maître d'apprentissage"
+                        collapsible
+                        isOpen={activeSection === 'maitre'}
+                        onToggle={() => toggleSection('maitre')}
+                    >
                         <div className="grid grid-cols-12 gap-5">
                             <div className="col-span-12 md:col-span-6">
                                 <Input label="Nom" required placeholder="Nom" error={errors.maitre_apprentissage?.nom?.message} {...register('maitre_apprentissage.nom')} />
@@ -339,7 +365,13 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
                         </div>
                     </Card>
 
-                    <Card step={4} title="OPCO (Opérateur de Compétences)" collapsible defaultOpen={false}>
+                    <Card
+                        step={4}
+                        title="OPCO (Opérateur de Compétences)"
+                        collapsible
+                        isOpen={activeSection === 'opco'}
+                        onToggle={() => toggleSection('opco')}
+                    >
                         <div className="grid grid-cols-12 gap-5">
                             <div className="col-span-12">
                                 <Select
@@ -355,7 +387,13 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
                         </div>
                     </Card>
 
-                    <Card step={5} title="Formation & CFA" collapsible defaultOpen={false}>
+                    <Card
+                        step={5}
+                        title="Formation & CFA"
+                        collapsible
+                        isOpen={activeSection === 'training'}
+                        onToggle={() => toggleSection('training')}
+                    >
                         <div className="grid grid-cols-12 gap-5">
                             <div className="col-span-12">
                                 <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">Formation suivie *</label>
@@ -465,7 +503,13 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
                         </div>
                     </Card>
 
-                    <Card step={6} title="Contrat & Salaire" collapsible defaultOpen={false}>
+                    <Card
+                        step={6}
+                        title="Contrat & Salaire"
+                        collapsible
+                        isOpen={activeSection === 'contract'}
+                        onToggle={() => toggleSection('contract')}
+                    >
                         <div className="grid grid-cols-12 gap-5">
                             <div className="col-span-12 md:col-span-6">
                                 <Select
@@ -571,7 +615,13 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
                         </div>
                     </Card>
 
-                    <Card step={7} title="Missions en entreprise" collapsible defaultOpen={false}>
+                    <Card
+                        step={7}
+                        title="Missions en entreprise"
+                        collapsible
+                        isOpen={activeSection === 'missions'}
+                        onToggle={() => toggleSection('missions')}
+                    >
                         <div className="space-y-8">
                             <div className="bg-slate-50/50 p-8 rounded-3xl border border-slate-100">
                                 <div className="flex items-center justify-between mb-8">

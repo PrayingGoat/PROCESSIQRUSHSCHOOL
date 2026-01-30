@@ -310,38 +310,24 @@ const EvaluationGrid = ({ studentData }: { studentData: any }) => {
 
 // --- INTERVIEWS TRACKING COMPONENT ---
 
+import { useApi } from '../hooks/useApi';
+import { useCandidates, getC } from '../hooks/useCandidates';
+
 const InterviewsTrackingView = ({ onLaunchInterview }: { onLaunchInterview: (candidate: any) => void }) => {
-    const [candidates, setCandidates] = useState<any[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const { candidates, loading: isLoading } = useCandidates();
     const [searchQuery, setSearchQuery] = useState('');
 
-    useEffect(() => {
-        const fetchCandidates = async () => {
-            try {
-                const data = await api.getAllCandidates();
-                setCandidates(Array.isArray(data) ? data : []);
-            } catch (e) {
-                console.error(e);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        fetchCandidates();
-    }, []);
-
-    const interviewData = (candidates || []).map((c, index) => ({
-        ...c,
+    const filtered = (candidates || []).map((raw, index) => ({
+        raw,
+        c: getC(raw),
         interviewStatus: index % 3 === 0 ? 'Completed' : 'Pending',
         score: index % 3 === 0 ? (14 + (index % 6)) : null,
         interviewDate: index % 3 === 0 ? '2024-05-15' : 'A définir'
-    }));
-
-    const filtered = interviewData.filter(c => {
-        if (!c) return false;
+    })).filter(item => {
         const searchLower = (searchQuery || '').toLowerCase();
-        const fullName = `${c.nom_naissance || ''} ${c.prenom || ''}`.toLowerCase();
-        const formation = (c.formation_souhaitee || '').toLowerCase();
-        const email = (c.email || '').toLowerCase();
+        const fullName = `${item.c.nom} ${item.c.prenom}`.toLowerCase();
+        const formation = (item.c.formation).toLowerCase();
+        const email = (item.c.email).toLowerCase();
 
         return fullName.includes(searchLower) ||
             formation.includes(searchLower) ||
@@ -349,9 +335,9 @@ const InterviewsTrackingView = ({ onLaunchInterview }: { onLaunchInterview: (can
     });
 
     const stats = {
-        total: interviewData.length,
-        completed: interviewData.filter(c => c.interviewStatus === 'Completed').length,
-        pending: interviewData.filter(c => c.interviewStatus === 'Pending').length
+        total: candidates.length,
+        completed: filtered.filter(item => item.interviewStatus === 'Completed').length,
+        pending: filtered.filter(item => item.interviewStatus === 'Pending').length
     };
 
     return (
@@ -422,30 +408,30 @@ const InterviewsTrackingView = ({ onLaunchInterview }: { onLaunchInterview: (can
                                 <tr><td colSpan={6} className="px-8 py-20 text-center text-slate-400 font-bold animate-pulse">Chargement des données...</td></tr>
                             ) : filtered.length === 0 ? (
                                 <tr><td colSpan={6} className="px-8 py-20 text-center text-slate-400 font-bold">Aucun candidat ne correspond à votre recherche.</td></tr>
-                            ) : filtered.map((c) => (
-                                <tr key={c.id} className="hover:bg-slate-50/50 transition-colors group">
+                            ) : filtered.map((item) => (
+                                <tr key={item.c.id} className="hover:bg-slate-50/50 transition-colors group">
                                     <td className="px-8 py-6">
                                         <div className="flex items-center gap-4">
                                             <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-500 font-black text-sm group-hover:bg-primary group-hover:text-white transition-all shadow-sm">
-                                                {c.prenom?.[0]}{c.nom_naissance?.[0]}
+                                                {item.c.prenom?.[0]}{item.c.nom?.[0]}
                                             </div>
-                                            <div className="font-black text-slate-800 text-base">{c.nom_naissance} {c.prenom}</div>
+                                            <div className="font-black text-slate-800 text-base">{item.c.nom} {item.c.prenom}</div>
                                         </div>
                                     </td>
                                     <td className="px-8 py-6">
                                         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-primary-50 text-primary-600 border border-primary-100/50">
                                             <Briefcase size={14} />
-                                            <span className="text-[11px] font-bold uppercase tracking-tight">{c.formation_souhaitee || 'Non spécifiée'}</span>
+                                            <span className="text-[11px] font-bold uppercase tracking-tight">{item.c.formation || 'Non spécifiée'}</span>
                                         </div>
                                     </td>
                                     <td className="px-8 py-6">
                                         <div className="flex flex-col">
-                                            <span className="text-sm font-bold text-slate-700">{c.interviewDate}</span>
+                                            <span className="text-sm font-bold text-slate-700">{item.interviewDate}</span>
                                             <span className="text-[10px] text-slate-400 font-medium">Session admission</span>
                                         </div>
                                     </td>
                                     <td className="px-8 py-6">
-                                        {c.interviewStatus === 'Completed' ? (
+                                        {item.interviewStatus === 'Completed' ? (
                                             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100/50">
                                                 <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
                                                 <span className="text-[10px] font-black uppercase tracking-wider">Terminé</span>
@@ -459,15 +445,15 @@ const InterviewsTrackingView = ({ onLaunchInterview }: { onLaunchInterview: (can
                                     </td>
                                     <td className="px-8 py-6">
                                         <div className="flex flex-col items-center">
-                                            {c.interviewStatus === 'Completed' ? (
+                                            {item.interviewStatus === 'Completed' ? (
                                                 <>
                                                     <div className="flex items-baseline gap-0.5">
-                                                        <span className="text-xl font-black text-slate-900">{c.score}</span>
+                                                        <span className="text-xl font-black text-slate-900">{item.score}</span>
                                                         <span className="text-[10px] font-bold text-slate-400">/20</span>
                                                     </div>
                                                     <div className="flex gap-0.5 mt-1">
                                                         {[1, 2, 3, 4, 5].map((s) => (
-                                                            <Star key={s} size={8} className={s <= Math.round(c.score / 4) ? 'fill-amber-400 text-amber-400' : 'text-slate-200'} />
+                                                            <Star key={s} size={8} className={s <= Math.round(item.score / 4) ? 'fill-amber-400 text-amber-400' : 'text-slate-200'} />
                                                         ))}
                                                     </div>
                                                 </>
@@ -477,7 +463,7 @@ const InterviewsTrackingView = ({ onLaunchInterview }: { onLaunchInterview: (can
                                         </div>
                                     </td>
                                     <td className="px-8 py-6 text-right">
-                                        {c.interviewStatus === 'Completed' ? (
+                                        {item.interviewStatus === 'Completed' ? (
                                             <button className="p-2.5 rounded-xl text-slate-400 hover:text-primary hover:bg-primary-50 transition-all border border-transparent hover:border-primary-100">
                                                 <ExternalLink size={20} />
                                             </button>
@@ -486,7 +472,7 @@ const InterviewsTrackingView = ({ onLaunchInterview }: { onLaunchInterview: (can
                                                 variant="primary"
                                                 size="sm"
                                                 className="rounded-xl shadow-none"
-                                                onClick={() => onLaunchInterview(c)}
+                                                onClick={() => onLaunchInterview(item.raw)}
                                             >
                                                 Lancer
                                             </Button>
@@ -522,6 +508,21 @@ const AdmissionView = () => {
 
     const [showSuccessModal, setShowSuccessModal] = useState(false);
 
+    // API Hooks
+    const { execute: uploadApi, loading: isUploading } = useApi(api.uploadDocument, {
+        errorMessage: "Erreur lors du téléversement du document. Veuillez réessayer."
+    });
+
+    const { execute: generateFicheApi, loading: isGeneratingFiche } = useApi(api.generateFicheRenseignement, {
+        onSuccess: () => setShowSuccessModal(true),
+        errorMessage: "Erreur lors de la génération de la fiche."
+    });
+
+    const { execute: generateCerfaApi, loading: isGeneratingCerfa } = useApi(api.generateCerfa, {
+        onSuccess: () => setShowSuccessModal(true),
+        errorMessage: "Erreur lors de la génération du CERFA."
+    });
+
     const handleFinishTest = () => {
         setTestCompleted(true);
         setActiveTab(AdmissionTab.QUESTIONNAIRE);
@@ -538,82 +539,29 @@ const AdmissionView = () => {
             return;
         }
 
-
         setUploadingFiles(prev => ({ ...prev, [docId]: true }));
-
         try {
-            await api.uploadDocument(recordId, docId, file);
+            await uploadApi(recordId, docId, file);
             setUploadedFiles(prev => ({ ...prev, [docId]: true }));
         } catch (error) {
-            console.error("Upload failed", error);
-            showToast("Erreur lors du téléversement du document. Veuillez réessayer.", "error");
+            // Error is handled by useApi toast
         } finally {
-
             setUploadingFiles(prev => ({ ...prev, [docId]: false }));
         }
     };
 
     const handleDocAction = async (doc: any) => {
+        const recordId = studentData?.record_id || studentData?.id || localStorage.getItem('candidateRecordId');
+
+        if (!recordId && (doc.id === 'renseignements' || doc.id === 'cerfa')) {
+            showToast("Veuillez d'abord compléter la Fiche Étudiant.", "info");
+            return;
+        }
+
         if (doc.id === 'renseignements') {
-            if (!studentData && !localStorage.getItem('candidateRecordId')) {
-                showToast("Veuillez d'abord compléter la Fiche Étudiant.", "info");
-                return;
-            }
-
-
-            const recordId = studentData?.record_id || studentData?.id || localStorage.getItem('candidateRecordId');
-            if (!recordId) {
-                showToast("Identifiant étudiant introuvable. Veuillez recharger ou compléter le dossier.", "error");
-                return;
-            }
-
-
-            try {
-                const btn = document.getElementById(`btn-${doc.id}`);
-                const originalText = btn ? btn.innerText : "";
-                if (btn) btn.innerText = "Génération...";
-
-                await api.generateFicheRenseignement(recordId);
-                setShowSuccessModal(true);
-
-                if (btn) btn.innerText = originalText;
-            } catch (e) {
-                console.error(e);
-                showToast("Erreur lors de la génération de la fiche.", "error");
-                const btn = document.getElementById(`btn-${doc.id}`);
-
-                if (btn) btn.innerText = "Compléter";
-            }
+            await generateFicheApi(recordId);
         } else if (doc.id === 'cerfa') {
-            if (!studentData && !localStorage.getItem('candidateRecordId')) {
-                showToast("Veuillez d'abord compléter la Fiche Étudiant.", "info");
-                return;
-            }
-
-
-            const recordId = studentData?.record_id || studentData?.id || localStorage.getItem('candidateRecordId');
-            if (!recordId) {
-                showToast("Identifiant étudiant introuvable. Veuillez recharger ou compléter le dossier.", "error");
-                return;
-            }
-
-
-            try {
-                const btn = document.getElementById(`btn-${doc.id}`);
-                const originalText = btn ? btn.innerText : "";
-                if (btn) btn.innerText = "Génération...";
-
-                await api.generateCerfa(recordId);
-                setShowSuccessModal(true);
-
-                if (btn) btn.innerText = originalText;
-            } catch (e) {
-                console.error(e);
-                showToast("Erreur lors de la génération du CERFA.", "error");
-                const btn = document.getElementById(`btn-${doc.id}`);
-
-                if (btn) btn.innerText = "Générer";
-            }
+            await generateCerfaApi(recordId);
         } else {
             console.log("Action pour le document:", doc.title);
         }
@@ -888,13 +836,18 @@ const AdmissionView = () => {
                                 <h4 className="font-black text-slate-800 text-lg mb-1 tracking-tight">{doc.title}</h4>
                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">{doc.subtitle}</p>
                                 <p className="text-sm text-slate-500 font-medium mb-8 leading-relaxed h-12 overflow-hidden">{doc.desc}</p>
-                                <button
-                                    id={`btn-${doc.id}`}
-                                    onClick={() => handleDocAction(doc)}
-                                    className="w-full py-3.5 rounded-xl border-2 border-slate-100 font-black text-[11px] uppercase tracking-widest text-slate-600 hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-2"
-                                >
-                                    {doc.btnText} <ArrowRight size={14} />
-                                </button>
+                                {(() => {
+                                    const isGenerating = (doc.id === 'renseignements' && isGeneratingFiche) || (doc.id === 'cerfa' && isGeneratingCerfa);
+                                    return (
+                                        <button
+                                            disabled={isGenerating}
+                                            onClick={() => handleDocAction(doc)}
+                                            className={`w-full py-3.5 rounded-xl border-2 border-slate-100 font-black text-[11px] uppercase tracking-widest text-slate-600 hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-2 ${isGenerating ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                        >
+                                            {isGenerating ? 'Génération...' : doc.btnText} <ArrowRight size={14} className={isGenerating ? 'animate-spin' : ''} />
+                                        </button>
+                                    );
+                                })()}
                             </div>
                         ))}
                     </div>

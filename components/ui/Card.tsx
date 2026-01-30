@@ -12,6 +12,8 @@ interface CardProps {
   noPadding?: boolean;
   collapsible?: boolean;
   defaultOpen?: boolean;
+  isOpen?: boolean;
+  onToggle?: () => void;
 }
 
 const Card: React.FC<CardProps> = ({
@@ -24,9 +26,22 @@ const Card: React.FC<CardProps> = ({
   variant = 'default',
   noPadding = false,
   collapsible = false,
-  defaultOpen = true
+  defaultOpen = true,
+  isOpen: controlledIsOpen,
+  onToggle
 }) => {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
+  const [internalIsOpen, setInternalIsOpen] = useState(defaultOpen);
+
+  const isControlled = controlledIsOpen !== undefined;
+  const isOpen = isControlled ? controlledIsOpen : internalIsOpen;
+
+  const handleToggle = () => {
+    if (onToggle) {
+      onToggle();
+    } else {
+      setInternalIsOpen(!internalIsOpen);
+    }
+  };
 
   const variantStyles = {
     default: 'bg-white border border-slate-100 shadow-premium',
@@ -39,7 +54,7 @@ const Card: React.FC<CardProps> = ({
       {(title || icon || step) && (
         <div
           className={`flex items-center gap-4 px-6 md:px-8 py-5 border-b border-slate-50 ${collapsible ? 'cursor-pointer select-none' : ''}`}
-          onClick={() => collapsible && setIsOpen(!isOpen)}
+          onClick={() => collapsible && handleToggle()}
         >
           {step && (
             <div className="w-9 h-9 bg-primary-50 text-primary-600 rounded-xl flex items-center justify-center font-black text-sm shadow-sm border border-primary-100/50">
