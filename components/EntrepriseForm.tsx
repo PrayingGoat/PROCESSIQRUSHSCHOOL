@@ -397,13 +397,13 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
                         <div className="grid grid-cols-12 gap-5">
                             <div className="col-span-12">
                                 <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">Formation suivie *</label>
-                                <div className="flex gap-3 flex-wrap">
-                                    {['BTS MCO A', 'BTS NDRC 1', 'Titre Pro NTC', 'Bachelor RDC'].map((f, idx) => (
-                                        <label key={f} className="relative cursor-pointer group flex-1 min-w-[120px]">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                    {['BTS MCO A', 'BTS MCO 2', 'BTS NDRC 1', 'BTS COM', 'Titre Pro NTC', 'Titre Pro NTC B (rentrée decalée)', 'Bachelor RDC'].map((f, idx) => (
+                                        <label key={f} className="relative cursor-pointer group">
                                             <input className="peer sr-only" type="radio" value={f} checked={formData.formation.choisie === f} onChange={() => handleFormationChange(f)} />
-                                            <div className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl border-2 transition-all ${formData.formation.choisie === f ? 'bg-primary-50/50 border-primary shadow-indigo' : 'bg-slate-50/50 border-transparent hover:border-slate-200'}`}>
-                                                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${formData.formation.choisie === f ? 'bg-primary text-white' : 'bg-slate-200 text-slate-400'}`}>{String.fromCharCode(65 + idx)}</span>
-                                                <span className="font-bold text-slate-700">{f}</span>
+                                            <div className={`flex items-center gap-3 px-4 py-3 rounded-2xl border-2 h-full transition-all ${formData.formation.choisie === f ? 'bg-primary-50/50 border-primary shadow-indigo' : 'bg-slate-50/50 border-transparent hover:border-slate-200'}`}>
+                                                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black tracking-tighter shrink-0 transition-colors ${formData.formation.choisie === f ? 'bg-primary text-white' : 'bg-slate-200 text-slate-400'}`}>{idx + 1}</span>
+                                                <span className="font-bold text-slate-700 text-xs leading-tight">{f}</span>
                                             </div>
                                         </label>
                                     ))}

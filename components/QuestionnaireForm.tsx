@@ -551,11 +551,11 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
                         </div>
                         <div className="col-span-12">
                             <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-1">Avez-vous déjà une entreprise d'accueil ?</label>
-                            <div className="flex gap-3 flex-wrap">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                                 {['Oui', 'En recherche', 'Non'].map((val, idx) => (
-                                    <label key={val} className="relative cursor-pointer group flex-1 min-w-[120px]">
+                                    <label key={val} className="relative cursor-pointer group">
                                         <input className="peer sr-only" type="radio" value={val} {...register('entreprise_d_accueil')} />
-                                        <div className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all ${selectedEntreprise === val ? 'bg-primary-50/50 border-primary shadow-indigo' : 'bg-slate-50/50 border-transparent hover:border-slate-200'}`}>
+                                        <div className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl border-2 transition-all ${selectedEntreprise === val ? 'bg-primary-50/50 border-primary shadow-indigo' : 'bg-slate-50/50 border-transparent hover:border-slate-200'}`}>
                                             <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${selectedEntreprise === val ? 'bg-primary text-white' : 'bg-slate-200 text-slate-400'}`}>{String.fromCharCode(65 + idx)}</span>
                                             <span className="font-bold text-slate-700">{val}</span>
                                         </div>

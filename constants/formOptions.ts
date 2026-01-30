@@ -93,10 +93,13 @@ export const HIGHEST_DIPLOMA_OPTIONS: SelectOption[] = [
 ];
 
 export const FORMATION_SOUHAITEE_OPTIONS: SelectOption[] = [
-    { value: 'BTS MCO', label: 'BTS MCO - Management Commercial Opérationnel' },
-    { value: 'BTS NDRC', label: 'BTS NDRC - Négociation et Digitalisation de la Relation Client' },
-    { value: 'BACHELOR RDC', label: 'BACHELOR RDC - Responsable Développement Commercial' },
-    { value: 'TP NTC', label: 'TP NTC - Négociateur Technico-Commercial' }
+    { value: 'BTS MCO A', label: 'BTS MCO A' },
+    { value: 'BTS MCO 2', label: 'BTS MCO 2' },
+    { value: 'BTS NDRC 1', label: 'BTS NDRC 1' },
+    { value: 'BTS COM', label: 'BTS COM' },
+    { value: 'Titre Pro NTC', label: 'Titre Pro NTC' },
+    { value: 'Titre Pro NTC B (rentrée decalée)', label: 'Titre Pro NTC B (rentrée decalée)' },
+    { value: 'Bachelor RDC', label: 'Bachelor RDC' }
 ];
 
 export const KNOW_RUSH_SCHOOL_OPTIONS: SelectOption[] = [
@@ -197,8 +200,11 @@ export const YES_NO_OPTIONS: SelectOption[] = [
 
 export const FORMATION_DETAILS: Record<string, { debut: string; fin: string; rncp: string; diplome: string; heures: string; jours: string }> = {
     "BTS MCO A": { debut: "2024-09-02", fin: "2026-08-31", rncp: "RNCP38368", diplome: "32031310", heures: "1350", jours: "Lundi/Mardi" },
+    "BTS MCO 2": { debut: "2024-09-02", fin: "2025-08-31", rncp: "RNCP38368", diplome: "32031310", heures: "675", jours: "Lundi/Mardi" },
     "BTS NDRC 1": { debut: "2024-09-02", fin: "2026-08-31", rncp: "RNCP38368", diplome: "32031310", heures: "1350", jours: "Mercredi/Jeudi" },
+    "BTS COM": { debut: "2024-09-02", fin: "2026-08-31", rncp: "RNCP38368", diplome: "32031302", heures: "1350", jours: "Lundi/Mardi" },
     "Titre Pro NTC": { debut: "2024-09-02", fin: "2025-08-31", rncp: "RNCP34059", diplome: "46T31201", heures: "600", jours: "Lundi/Mardi" },
+    "Titre Pro NTC B (rentrée decalée)": { debut: "2025-01-06", fin: "2025-12-31", rncp: "RNCP34059", diplome: "46T31201", heures: "600", jours: "Mercredi/Jeudi" },
     "Bachelor RDC": { debut: "2024-09-16", fin: "2025-09-12", rncp: "RNCP36504", diplome: "26X31204", heures: "525", jours: "Vendredi" }
 };
 
