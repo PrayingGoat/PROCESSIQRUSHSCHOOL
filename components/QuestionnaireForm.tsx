@@ -10,7 +10,18 @@ import Button from './ui/Button';
 
 import Input from './ui/Input';
 import Select from './ui/Select';
+import {
+    NATIONALITY_OPTIONS,
+    SITUATION_BEFORE_CONTRACT_OPTIONS,
+    REGIME_SOCIAL_OPTIONS,
+    DIPLOMA_PREPARED_OPTIONS,
+    LAST_CLASS_OPTIONS,
+    HIGHEST_DIPLOMA_OPTIONS,
+    FORMATION_SOUHAITEE_OPTIONS,
+    KNOW_RUSH_SCHOOL_OPTIONS
+} from '../constants/formOptions';
 import Card from './ui/Card';
+
 
 // Validation Schema with Zod
 const studentSchema = z.object({
@@ -209,12 +220,9 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
                                 required
                                 error={errors.nationalite?.message}
                                 {...register('nationalite')}
-                                options={[
-                                    { value: 'francaise', label: 'Française' },
-                                    { value: 'ue', label: 'Union Européenne' },
-                                    { value: 'hors_ue', label: 'Etranger hors Union Européenne' }
-                                ]}
+                                options={NATIONALITY_OPTIONS}
                                 placeholder="Sélectionnez"
+
                             />
                         </div>
                         <div className="col-span-12 md:col-span-6">
@@ -355,25 +363,18 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
                                 required
                                 error={errors.situation?.message}
                                 {...register('situation')}
-                                options={[
-                                    { value: 'Etudiant', label: 'Etudiant : (Etude supérieur)' },
-                                    { value: 'Scolaire', label: 'Scolaire : (Bac / brevet...)' },
-                                    { value: 'contrat_pro', label: 'Contrat pro' },
-                                    { value: 'Salarié', label: 'Salarié : (CDD/CDI)' },
-                                    { value: 'Contrat d\'apprentissage', label: 'Contrat apprentissage' }
-                                ]}
+                                options={SITUATION_BEFORE_CONTRACT_OPTIONS}
                                 placeholder="Sélectionnez votre situation"
+
                             />
                         </div>
                         <div className="col-span-12">
                             <Select
                                 label="Régime social"
                                 {...register('regime_social')}
-                                options={[
-                                    { value: 'Sécurité Sociale', label: 'URSSAF / Sécurité Sociale' },
-                                    { value: 'MSA', label: 'MSA (Mutualité Sociale Agricole)' }
-                                ]}
+                                options={REGIME_SOCIAL_OPTIONS}
                                 placeholder="Sélectionnez"
+
                             />
                         </div>
                         {[{ "label": "Déclare être inscrit(e) sur la liste des sportifs de haut niveau", "name": "declare_inscription_sportif_haut_niveau" },
@@ -416,16 +417,9 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
                                 required
                                 error={errors.dernier_diplome_prepare?.message}
                                 {...register('dernier_diplome_prepare')}
-                                options={[
-                                    { value: 'Baccalauréat Technologique', label: 'Baccalauréat Technologique' },
-                                    { value: 'Baccalauréat général', label: 'Baccalauréat général' },
-                                    { value: 'Baccalauréat pro', label: 'Baccalauréat pro' },
-                                    { value: 'Brevet', label: 'Brevet' },
-                                    { value: 'CAP', label: 'CAP' },
-                                    { value: 'BTS', label: 'BTS' },
-                                    { value: 'Aucun diplôme', label: 'Aucun diplôme' }
-                                ]}
+                                options={DIPLOMA_PREPARED_OPTIONS}
                                 placeholder="Sélectionnez"
+
                             />
                         </div>
                         <div className="col-span-12">
@@ -434,41 +428,18 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
                                 required
                                 error={errors.derniere_classe?.message}
                                 {...register('derniere_classe')}
-                                options={[
-                                    { value: 'Diplôme obtenu', label: 'Diplôme obtenu' },
-                                    { value: '1ère année suivie et validée', label: '1ère année suivie et validée' },
-                                    { value: '1ère année validée', label: '1ère année validée' },
-                                    { value: '1ère année suivie non validée', label: '1ère année suivie non validée' },
-                                    { value: '1ère année non validée', label: '1ère année non validée' },
-                                    { value: '2ème année suivie et validée', label: '2ème année suivie et validée' },
-                                    { value: '2ème année validée', label: '2ème année validée' },
-                                    { value: '2ème année suivie non validée', label: '2ème année suivie non validée' },
-                                    { value: '2ème année non validée', label: '2ème année non validée' },
-                                    { value: '3ème année suivie et validée', label: '3ème année suivie et validée' },
-                                    { value: '3ème année validée', label: '3ème année validée' },
-                                    { value: '3ème année suivie non validée', label: '3ème année suivie non validée' },
-                                    { value: '3ème année non validée', label: '3ème année non validée' },
-                                    { value: 'Fin du collège', label: 'Fin du collège' },
-                                    { value: 'Études interrompues en 3ème', label: 'Études interrompues en 3ème' },
-                                    { value: 'Études interrompues en 4ème', label: 'Études interrompues en 4ème' }
-                                ]}
+                                options={LAST_CLASS_OPTIONS}
                                 placeholder="Sélectionnez"
+
                             />
                         </div>
                         <div className="col-span-12">
                             <Select
                                 label="Intitulé précis du dernier diplôme ou titre préparé"
                                 {...register('intitulePrecisDernierDiplome')}
-                                options={[
-                                    { value: 'Baccalauréat Technologique', label: 'Baccalauréat Technologique' },
-                                    { value: 'Baccalauréat général', label: 'Baccalauréat général' },
-                                    { value: 'Baccalauréat pro', label: 'Baccalauréat pro' },
-                                    { value: 'Brevet', label: 'Brevet' },
-                                    { value: 'CAP', label: 'CAP' },
-                                    { value: 'BTS', label: 'BTS' },
-                                    { value: 'Aucun diplôme', label: 'Aucun diplôme' }
-                                ]}
+                                options={DIPLOMA_PREPARED_OPTIONS}
                                 placeholder="Sélectionnez"
+
                             />
                         </div>
                         <div className="col-span-12">
@@ -477,45 +448,9 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
                                 required
                                 error={errors.bac?.message}
                                 {...register('bac')}
-                                options={[
-                                    { value: "Doctorat", label: "Doctorat" },
-                                    { value: "Master", label: "Master" },
-                                    { value: "Diplôme ingénieur", label: "Diplôme ingénieur" },
-                                    { value: "Diplôme école de commerce", label: "Diplôme école de commerce" },
-                                    { value: "Autre diplôme ou titre bac +5 ou plus", label: "Autre diplôme ou titre bac +5 ou plus" },
-                                    { value: "Licence professionnelle", label: "Licence professionnelle" },
-                                    { value: "Licence générale", label: "Licence générale" },
-                                    { value: "Bachelor universitaire de technologie (BUT)", label: "Bachelor universitaire de technologie (BUT)" },
-                                    { value: "Autre diplôme ou titre bac +3 ou 4", label: "Autre diplôme ou titre bac +3 ou 4" },
-                                    { value: "Brevet de Technicien Supérieur (BTS)", label: "Brevet de Technicien Supérieur (BTS)" },
-                                    { value: "BTS", label: "BTS" },
-                                    { value: "BTS MCO", label: "BTS MCO" },
-                                    { value: "BTS NDRC", label: "BTS NDRC" },
-                                    { value: "BTS COM", label: "BTS COM" },
-                                    { value: "TP NTC", label: "TP NTC" },
-                                    { value: "Bachelor RDC", label: "Bachelor RDC" },
-                                    { value: "Diplôme Universitaire de Technologie (DUT)", label: "Diplôme Universitaire de Technologie (DUT)" },
-                                    { value: "DUT", label: "DUT" },
-                                    { value: "Autre diplôme ou titre bac +2", label: "Autre diplôme ou titre bac +2" },
-                                    { value: "Baccalauréat professionnel", label: "Baccalauréat professionnel" },
-                                    { value: "Bac Pro", label: "Bac Pro" },
-                                    { value: "Baccalauréat général", label: "Baccalauréat général" },
-                                    { value: "Bac général", label: "Bac général" },
-                                    { value: "Baccalauréat technologique", label: "Baccalauréat technologique" },
-                                    { value: "Bac techno", label: "Bac techno" },
-                                    { value: "Diplôme de spécialisation professionnelle", label: "Diplôme de spécialisation professionnelle" },
-                                    { value: "Autre diplôme ou titre niveau bac", label: "Autre diplôme ou titre niveau bac" },
-                                    { value: "CAP", label: "CAP" },
-                                    { value: "BEP", label: "BEP" },
-                                    { value: "Certificat de spécialisation", label: "Certificat de spécialisation" },
-                                    { value: "Autre diplôme ou titre CAP/BEP", label: "Autre diplôme ou titre CAP/BEP" },
-                                    { value: "Diplôme National du Brevet", label: "Diplôme National du Brevet" },
-                                    { value: "Brevet", label: "Brevet" },
-                                    { value: "Certificat de Formation Générale", label: "Certificat de Formation Générale" },
-                                    { value: "Aucun diplôme ni titre professionnel", label: "Aucun diplôme ni titre professionnel" },
-                                    { value: "Aucun", label: "Aucun" }
-                                ]}
+                                options={HIGHEST_DIPLOMA_OPTIONS}
                                 placeholder="Sélectionnez votre diplôme"
+
                             />
                         </div>
                     </div>
@@ -529,13 +464,9 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
                                 required
                                 error={errors.formation_souhaitee?.message}
                                 {...register('formation_souhaitee')}
-                                options={[
-                                    { value: 'BTS MCO', label: 'BTS MCO - Management Commercial Opérationnel' },
-                                    { value: 'BTS NDRC', label: 'BTS NDRC - Négociation et Digitalisation de la Relation Client' },
-                                    { value: 'BACHELOR RDC', label: 'BACHELOR RDC - Responsable Développement Commercial' },
-                                    { value: 'TP NTC', label: 'TP NTC - Négociateur Technico-Commercial' }
-                                ]}
+                                options={FORMATION_SOUHAITEE_OPTIONS}
                                 placeholder="Sélectionnez une formation"
+
                             />
                         </div>
                         <div className="col-span-12 md:col-span-6">
@@ -567,15 +498,9 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
                             <Select
                                 label="Comment avez-vous connu Rush School ?"
                                 {...register('connaissance_rush_how')}
-                                options={[
-                                    { value: 'reseaux_sociaux', label: 'Réseaux sociaux' },
-                                    { value: 'google', label: 'Recherche Google' },
-                                    { value: 'parcoursup', label: 'Parcoursup' },
-                                    { value: 'salon', label: 'Salon / Forum' },
-                                    { value: 'bouche_oreille', label: 'Bouche à oreille' },
-                                    { value: 'autre', label: 'Autre' }
-                                ]}
+                                options={KNOW_RUSH_SCHOOL_OPTIONS}
                                 placeholder="Sélectionnez"
+
                             />
                         </div>
                         <div className="col-span-12">

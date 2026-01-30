@@ -9,7 +9,20 @@ import Button from './ui/Button';
 
 import Input from './ui/Input';
 import Select from './ui/Select';
+import {
+    EMPLOYER_TYPE_OPTIONS,
+    MAITRE_DIPLOMA_OPTIONS,
+    OPCO_OPTIONS,
+    CONTRAT_TYPE_OPTIONS,
+    DEROGATION_TYPE_OPTIONS,
+    AGE_TRANCHE_OPTIONS,
+    APPRENTISSAGE_YEAR_OPTIONS,
+    YES_NO_OPTIONS,
+    FORMATION_DETAILS
+} from '../constants/formOptions';
+
 import Card from './ui/Card';
+
 
 const companySchema = z.object({
     identification: z.object({
@@ -137,12 +150,7 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
 
     const formData = watch();
 
-    const FORMATION_DETAILS: Record<string, any> = {
-        "BTS MCO A": { debut: "2024-09-02", fin: "2026-08-31", rncp: "RNCP38368", diplome: "32031310", heures: "1350", jours: "Lundi/Mardi" },
-        "BTS NDRC 1": { debut: "2024-09-02", fin: "2026-08-31", rncp: "RNCP38368", diplome: "32031310", heures: "1350", jours: "Mercredi/Jeudi" },
-        "Titre Pro NTC": { debut: "2024-09-02", fin: "2025-08-31", rncp: "RNCP34059", diplome: "46T31201", heures: "600", jours: "Lundi/Mardi" },
-        "Bachelor RDC": { debut: "2024-09-16", fin: "2025-09-12", rncp: "RNCP36504", diplome: "26X31204", heures: "525", jours: "Vendredi" }
-    };
+
 
     const handleFormationChange = (val: string) => {
         const details = FORMATION_DETAILS[val] || { debut: "", fin: "", rncp: "", diplome: "", heures: "", jours: "" };
@@ -257,24 +265,7 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
                                     error={errors.identification?.type_employeur?.message}
                                     {...register('identification.type_employeur')}
                                     placeholder="Sélectionnez"
-                                    options={[
-                                        { value: "11 Entreprise inscrite au répertoire des métiers ou au registre des entreprises pour l Alsace-Moselle", label: "11 - Entreprise inscrite au répertoire des métiers ou au registre des entreprises pour l'Alsace-Moselle" },
-                                        { value: "12 Entreprise inscrite uniquement au registre du commerce et des sociétés", label: "12 - Entreprise inscrite uniquement au registre du commerce et des sociétés" },
-                                        { value: "13 Entreprises dont les salariés relèvent de la mutualité sociale agricole", label: "13 - Entreprises dont les salariés relèvent de la mutualité sociale agricole" },
-                                        { value: "14 Profession libérale", label: "14 - Profession libérale" },
-                                        { value: "15 Association", label: "15 - Association" },
-                                        { value: "16 Autre employeur privé", label: "16 - Autre employeur privé" },
-                                        { value: "21 Service de l État (administrations centrales et leurs services déconcentrés)", label: "21 - Service de l'État (administrations centrales et leurs services déconcentrés)" },
-                                        { value: "22 Commune", label: "22 - Commune" },
-                                        { value: "23 Département", label: "23 - Département" },
-                                        { value: "24 Région", label: "24 - Région" },
-                                        { value: "25 Etablissement public hospitalier", label: "25 - Etablissement public hospitalier" },
-                                        { value: "26 Etablissement public local d enseignement", label: "26 - Etablissement public local d'enseignement" },
-                                        { value: "27 Etablissement public administratif de l Etat", label: "27 - Etablissement public administratif de l'État" },
-                                        { value: "28 Etablissement public administratif local (y compris établissement public de coopération intercommunale EPCI)", label: "28 - Etablissement public administratif local (y compris EPCI)" },
-                                        { value: "29 Autre employeur public", label: "29 - Autre employeur public" },
-                                        { value: "30 Etablissement public industriel et commercial", label: "30 - Etablissement public industriel et commercial" }
-                                    ]}
+                                    options={EMPLOYER_TYPE_OPTIONS}
                                 />
                             </div>
                             <div className="col-span-12 md:col-span-6">
@@ -331,16 +322,9 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
                                     label="Diplôme le plus élevé"
                                     error={errors.maitre_apprentissage?.diplome?.message}
                                     {...register('maitre_apprentissage.diplome')}
-                                    options={[
-                                        { value: "Aucun diplôme", label: "Aucun diplôme" },
-                                        { value: "CAP, BEP", label: "CAP, BEP" },
-                                        { value: "Baccalauréat", label: "Baccalauréat" },
-                                        { value: "DEUG, BTS, DUT, DEUST", label: "DEUG, BTS, DUT, DEUST" },
-                                        { value: "Licence, Licence professionnelle, BUT, Maîtrise", label: "Licence, Licence professionnelle, BUT, Maîtrise" },
-                                        { value: "Master, Diplôme d études approfondies, Diplôme d études spécialisées, Diplôme d ingénieur", label: "Master, DEA, DESS, Diplôme d'ingénieur" },
-                                        { value: "Doctorat, Habilitation à diriger des recherches", label: "Doctorat, HDR" }
-                                    ]}
+                                    options={MAITRE_DIPLOMA_OPTIONS}
                                     placeholder="Sélectionnez"
+
                                 />
                             </div>
                             <div className="col-span-12 md:col-span-4">
@@ -364,19 +348,8 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
                                     error={errors.opco?.nom?.message}
                                     {...register('opco.nom')}
                                     placeholder="Choisir un OPCO"
-                                    options={[
-                                        { value: "AFDAS - Culture, médias, loisirs", label: "AFDAS (Culture, médias, loisirs, sport)" },
-                                        { value: "AKTO - Services à forte intensité de main-d œuvre", label: "AKTO (Services à forte intensité de main-d'œuvre)" },
-                                        { value: "ATLAS - Services financiers et conseil", label: "ATLAS (Services financiers et conseil)" },
-                                        { value: "CONSTRUCTYS - Construction", label: "CONSTRUCTYS (Construction)" },
-                                        { value: "OCAPIAT - Agriculture, pêche, agroalimentaire", label: "OCAPIAT (Agricole, pêche, agroalimentaire)" },
-                                        { value: "OPCO 2i - Interindustriel", label: "OPCO 2i (Interindustriel)" },
-                                        { value: "OPCO EP - Entreprises de proximité", label: "OPCO EP (Entreprises de proximité)" },
-                                        { value: "OPCO Mobilités - Transports", label: "OPCO Mobilités (Transports)" },
-                                        { value: "OPCO Santé - Santé", label: "OPCO Santé (Santé)" },
-                                        { value: "OPCOMMERCE - Commerce", label: "OPCOMMERCE (Commerce)" },
-                                        { value: "UNIFORMATION - Cohésion sociale", label: "UNIFORMATION (Cohésion sociale)" }
-                                    ]}
+                                    options={OPCO_OPTIONS}
+
                                 />
                             </div>
                         </div>
@@ -500,20 +473,8 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
                                     required
                                     error={errors.contrat?.type_contrat?.message}
                                     {...register('contrat.type_contrat')}
-                                    options={[
-                                        { value: "11 Premier contrat d apprentissage de l apprenti", label: "11 Premier contrat'apprentissage de l'apprenti" },
-                                        { value: "21 Nouveau contrat avec un apprenti qui a terminé son précédent contrat auprès d un même employeur", label: "21 Nouveau contrat avec un apprenti qui a terminé son précédent contrat auprès d'un même employeur" },
-                                        { value: "22 Nouveau contrat avec un apprenti qui a terminé son précédent contrat auprès d un autre employeur", label: "22 Nouveau contrat avec un apprenti qui a terminé son précédent contrat auprès d'un autre employeur" },
-                                        { value: "23 Nouveau contrat avec un apprenti dont le précédent contrat a été rompu", label: "23 Nouveau contrat avec un apprenti dont le précédent contrat a été rompu" },
-                                        { value: "31 Modification de la situation juridique de l employeur", label: "31	Modification de la situation juridique de l'employeur" },
-                                        { value: "32 Changement d employeur dans le cadre d un contrat saisonnier", label: "32 Changement d'employeur dans le cadre d'un contrat saisonnier" },
-                                        { value: "33 Prolongation du contrat suite à un échec à l examen de l apprenti", label: "33	Prolongation du contrat suite à un échec à l'examen de l'apprenti" },
-                                        { value: "34 Prolongation du contrat suite à la reconnaissance de l apprenti comme travailleur handicapé", label: "34 Prolongation du contrat suite à la reconnaissance de l'apprenti comme travailleur handicapé" },
-                                        { value: "35 Diplôme supplémentaire préparé par l apprenti dans le cadre de l article L. 6222-22-1 du code du travail", label: "35 Diplôme supplémentaire préparé par l'apprenti dans le cadre de l'article L. 6222-22-1 du code du travail" },
-                                        { value: "36 Autres changements : changement de maître d apprentissage, de durée de travail hebdomadaire, réduction de durée, etc.", label: "36	Autres changements : changement de maître d'apprentissage, de durée de travail hebdomadaire, réduction de durée, etc." },
-                                        { value: "37 Modifications de lieu d exécution du contrat", label: "37 Modifications de lieu d'exécution du contrat" },
-                                        { value: "38 Modification du lieu principale de réalisation de la formation théorique", label: "38 Modification du lieu principal de réalisation de la formation théorique" }
-                                    ]}
+                                    options={CONTRAT_TYPE_OPTIONS}
+
                                 />
                             </div>
                             <div className="col-span-12 md:col-span-6">
@@ -521,15 +482,8 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
                                     label="Type de dérogation"
                                     {...register('contrat.type_derogation')}
                                     placeholder="Sélectionnez si applicable"
-                                    options={[
-                                        { value: "0 - Aucune dérogation", label: "0 - Aucune dérogation" },
-                                        { value: "11 - Âge de l apprenti inférieur à 16 ans", label: "11 - Âge de l'apprenti inférieur à 16 ans" },
-                                        { value: "12 - Âge supérieur à 29 ans : cas spécifiques prévus dans le code du travail", label: "12 - Âge supérieur à 29 ans : cas spécifiques prévus dans le code du travail" },
-                                        { value: "21 - Réduction de la durée du contrat ou de la période d apprentissage", label: "21 - Réduction de la durée du contrat ou de la période d'apprentissage" },
-                                        { value: "22 - Allongement de la durée du contrat ou de la période d apprentissage", label: "22 - Allongement de la durée du contrat ou de la période d'apprentissage" },
-                                        { value: "50 - Cumul de dérogations", label: "50 - Cumul de dérogations" },
-                                        { value: "60 - Autre dérogation", label: "60 - Autre dérogation" }
-                                    ]}
+                                    options={DEROGATION_TYPE_OPTIONS}
+
                                 />
                             </div>
                             <div className="col-span-12 md:col-span-6">
@@ -561,10 +515,8 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
                                     label="Travail sur machines dangereuses"
                                     required
                                     {...register('contrat.machines_dangereuses')}
-                                    options={[
-                                        { value: "Oui", label: "Oui" },
-                                        { value: "Non", label: "Non" }
-                                    ]}
+                                    options={YES_NO_OPTIONS}
+
                                 />
                             </div>
 
@@ -584,13 +536,9 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
                                         value={formData.salaire.age}
                                         error={errors.salaire?.age?.message}
                                         onChange={(e) => handleSalaryCalc(e.target.value, formData.salaire.annee)}
-                                        options={[
-                                            { value: "16-17", label: "De 16 à 17 ans" },
-                                            { value: "18-20", label: "De 18 à 20 ans" },
-                                            { value: "21-25", label: "De 21 à 25 ans" },
-                                            { value: "26+", label: "26 ans et plus" }
-                                        ]}
+                                        options={AGE_TRANCHE_OPTIONS}
                                         className="!bg-white"
+
                                     />
                                     <Select
                                         label="Année d'apprentissage"
@@ -598,12 +546,9 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
                                         value={formData.salaire.annee}
                                         error={errors.salaire?.annee?.message}
                                         onChange={(e) => handleSalaryCalc(formData.salaire.age, e.target.value)}
-                                        options={[
-                                            { value: "1", label: "1ère année" },
-                                            { value: "2", label: "2ème année" },
-                                            { value: "3", label: "3ème année" }
-                                        ]}
+                                        options={APPRENTISSAGE_YEAR_OPTIONS}
                                         className="!bg-white"
+
                                     />
                                 </div>
 
