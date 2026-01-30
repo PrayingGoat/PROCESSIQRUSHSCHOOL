@@ -52,7 +52,7 @@ const studentSchema = z.object({
     agreement: z.boolean().refine(val => val === true, {
         message: "Vous devez attester sur l'honneur l'exactitude des informations"
     }),
-    
+
     add_second_representative: z.boolean().optional(),
     representant_legal_1: z.object({
         nom: z.string().optional(),
@@ -100,7 +100,7 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
         resolver: zodResolver(studentSchema),
         defaultValues: {
             prenom: '', nom_naissance: '', nom_usage: '', sexe: '', date_naissance: '',
-            nationalite: '', commune_naissance: '', departement: '', 
+            nationalite: '', commune_naissance: '', departement: '',
             num_residence: '', rue_residence: '', complement_residence: '', adresse_residence: '',
             code_postal: '', ville: '', email: '', telephone: '', nir: '',
             situation: '', regime_social: '',
@@ -372,10 +372,10 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
                                 placeholder="Sélectionnez"
                             />
                         </div>
-                        {[{"label": "Déclare être inscrit(e) sur la liste des sportifs de haut niveau", "name": "declare_inscription_sportif_haut_niveau"},
-                            {"label": "Déclare avoir un projet de création ou de reprise d'entreprise", "name": "declare_avoir_projet_creation_reprise_entreprise"},
-                            {"label": "Déclare bénéficier de la reconnaissance travailleur handicapé (RQTH)", "name": "declare_travailleur_handicape"},
-                            {"label": "Alternance", "name": "alternance"}
+                        {[{ "label": "Déclare être inscrit(e) sur la liste des sportifs de haut niveau", "name": "declare_inscription_sportif_haut_niveau" },
+                        { "label": "Déclare avoir un projet de création ou de reprise d'entreprise", "name": "declare_avoir_projet_creation_reprise_entreprise" },
+                        { "label": "Déclare bénéficier de la reconnaissance travailleur handicapé (RQTH)", "name": "declare_travailleur_handicape" },
+                        { "label": "Alternance", "name": "alternance" }
                         ].map((item) => (
                             <div key={item.name} className="col-span-12 space-y-4 pt-2">
                                 <div className="bg-slate-50/50 p-6 rounded-2xl border border-slate-100">
@@ -431,10 +431,22 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
                                 error={errors.derniere_classe?.message}
                                 {...register('derniere_classe')}
                                 options={[
-                                    { value: 'derniere_annee_obtenu', label: 'Dernière année du cycle de formation - diplôme obtenu' },
-                                    { value: 'terminale', label: 'Terminale' },
-                                    { value: '1ere_annee_validee', label: '1ère année du cycle validée' },
-                                    { value: '3e', label: 'Études interrompues en classe de 3ème' }
+                                    { value: 'Diplôme obtenu', label: 'Diplôme obtenu' },
+                                    { value: '1ère année suivie et validée', label: '1ère année suivie et validée' },
+                                    { value: '1ère année validée', label: '1ère année validée' },
+                                    { value: '1ère année suivie non validée', label: '1ère année suivie non validée' },
+                                    { value: '1ère année non validée', label: '1ère année non validée' },
+                                    { value: '2ème année suivie et validée', label: '2ème année suivie et validée' },
+                                    { value: '2ème année validée', label: '2ème année validée' },
+                                    { value: '2ème année suivie non validée', label: '2ème année suivie non validée' },
+                                    { value: '2ème année non validée', label: '2ème année non validée' },
+                                    { value: '3ème année suivie et validée', label: '3ème année suivie et validée' },
+                                    { value: '3ème année validée', label: '3ème année validée' },
+                                    { value: '3ème année suivie non validée', label: '3ème année suivie non validée' },
+                                    { value: '3ème année non validée', label: '3ème année non validée' },
+                                    { value: 'Fin du collège', label: 'Fin du collège' },
+                                    { value: 'Études interrompues en 3ème', label: 'Études interrompues en 3ème' },
+                                    { value: 'Études interrompues en 4ème', label: 'Études interrompues en 4ème' }
                                 ]}
                                 placeholder="Sélectionnez"
                             />
