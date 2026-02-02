@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import * as Airtable from 'airtable';
+import Airtable from 'airtable';
 
 @Injectable()
 export class UsersService {
@@ -9,10 +9,9 @@ export class UsersService {
         // NOTE: Configure these env vars in Vercel or .env
         // For now we assume they will be present
         if (process.env.AIRTABLE_API_KEY && process.env.AIRTABLE_BASE_ID) {
-            Airtable.configure({
+            this.base = new Airtable({
                 apiKey: process.env.AIRTABLE_API_KEY,
-            });
-            this.base = Airtable.base(process.env.AIRTABLE_BASE_ID);
+            }).base(process.env.AIRTABLE_BASE_ID);
         }
     }
 
