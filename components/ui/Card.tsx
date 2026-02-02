@@ -77,7 +77,7 @@ const Card: React.FC<CardProps> = ({
           )}
         </div>
       )}
-      <div className={`transition-all duration-300 overflow-hidden ${isOpen ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+      <div className={`transition-all duration-300 ${isOpen ? 'opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
         <div className={noPadding ? '' : 'p-6 md:p-8'}>
           {children}
         </div>

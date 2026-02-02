@@ -84,9 +84,23 @@ const companySchema = z.object({
         duree_hebdomadaire: z.string().min(1, "Durée requise"),
         poste_occupe: z.string().min(2, "Poste occupé requis"),
         lieu_execution: z.string().optional().or(z.literal("")),
-        pourcentage_smic: z.number().optional(),
-        smic: z.string().optional(),
-        montant_salaire_brut: z.number().optional(),
+
+        pourcentage_smic1: z.number().optional(),
+        smic1: z.string().optional(),
+        montant_salaire_brut1: z.number().optional(),
+
+        pourcentage_smic2: z.number().optional(),
+        smic2: z.string().optional(),
+        montant_salaire_brut2: z.number().optional(),
+
+        pourcentage_smic3: z.number().optional(),
+        smic3: z.string().optional(),
+        montant_salaire_brut3: z.number().optional(),
+
+        pourcentage_smic4: z.number().optional(),
+        smic4: z.string().optional(),
+        montant_salaire_brut4: z.number().optional(),
+
         date_conclusion: z.string().optional().or(z.literal("")),
         date_debut_execution: z.string().optional().or(z.literal("")),
         numero_deca_ancien_contrat: z.string().optional().or(z.literal("")),
@@ -96,10 +110,10 @@ const companySchema = z.object({
         nombre_mois: z.number().optional()
     }),
     salaire: z.object({
-        age: z.string().min(1, "Tranche d'âge requise"),
-        annee: z.string().min(1, "Année requise"),
-        pourcentage: z.number().optional(),
-        montant: z.number().optional()
+        age1: z.string().optional(),
+        age2: z.string().optional(),
+        age3: z.string().optional(),
+        age4: z.string().optional()
     }),
     missions: z.object({
         formation_alternant: z.string().optional().or(z.literal("")),
@@ -144,10 +158,17 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
             },
             contrat: draftCompany?.contrat || {
                 type_contrat: "", type_derogation: "", date_debut: "", date_fin: "", duree_hebdomadaire: "35h", poste_occupe: "",
-                lieu_execution: "", pourcentage_smic: 0, smic: "1823.03", montant_salaire_brut: 0, date_conclusion: "", date_debut_execution: "",
+                lieu_execution: "",
+                pourcentage_smic1: 0, smic1: "1823.03", montant_salaire_brut1: 0,
+                pourcentage_smic2: 0, smic2: "1823.03", montant_salaire_brut2: 0,
+                pourcentage_smic3: 0, smic3: "1823.03", montant_salaire_brut3: 0,
+                pourcentage_smic4: 0, smic4: "1823.03", montant_salaire_brut4: 0,
+                date_conclusion: "", date_debut_execution: "",
                 numero_deca_ancien_contrat: "", machines_dangereuses: "Non", caisse_retraite: "", date_avenant: "", nombre_mois: 12
             },
-            salaire: draftCompany?.salaire || { age: "", annee: "", pourcentage: 0, montant: 0 },
+            salaire: draftCompany?.salaire || {
+                age1: "", age2: "", age3: "", age4: ""
+            },
             missions: draftCompany?.missions || { formation_alternant: "", selectionnees: [] as string[] },
             record_id_etudiant: studentRecordId || ""
         }
@@ -184,34 +205,41 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
         setValue('contrat.nombre_mois', nbMois);
     };
 
-    const handleSalaryCalc = (age: string, annee: string) => {
-        let montantCalc = 0;
-        let pctCalc = 0;
+    const calculateSalary = (age: string, annee: string) => {
+        const smicBrut = 1823.03;
+        let pct = 0;
 
-        if (age && annee) {
-            const smicBrut = 1823.03;
-            let pct = 0;
-
-            if (age === "16-17") {
-                pct = annee === "1" ? 27 : annee === "2" ? 39 : 55;
-            } else if (age === "18-20") {
-                pct = annee === "1" ? 43 : annee === "2" ? 51 : 67;
-            } else if (age === "21-25") {
-                pct = annee === "1" ? 53 : annee === "2" ? 61 : 78;
-            } else if (age === "26+") {
-                pct = 100;
-            }
-
-            pctCalc = pct;
-            montantCalc = parseFloat(((smicBrut * pct) / 100).toFixed(2));
+        if (age === "16-17") {
+            pct = annee === "1" ? 27 : annee === "2" ? 39 : 55;
+        } else if (age === "18-20") {
+            pct = annee === "1" ? 43 : annee === "2" ? 51 : 67;
+        } else if (age === "21-25") {
+            pct = annee === "1" ? 53 : annee === "2" ? 61 : 78;
+        } else if (age === "26+") {
+            pct = 100;
         }
 
-        setValue('salaire.age', age);
-        setValue('salaire.annee', annee);
-        setValue('salaire.pourcentage', pctCalc);
-        setValue('salaire.montant', montantCalc);
-        setValue('contrat.pourcentage_smic', pctCalc);
-        setValue('contrat.montant_salaire_brut', montantCalc);
+        // Use 3rd year rates for 4th year by default if not specified
+        if (annee === "4" && age !== "26+") {
+            if (age === "16-17") pct = 55;
+            else if (age === "18-20") pct = 67;
+            else if (age === "21-25") pct = 78;
+        }
+
+        const montant = parseFloat(((smicBrut * pct) / 100).toFixed(2));
+        return { pct, montant };
+    };
+
+    const updateSalary = (yearIndex: string, age: string) => {
+        const { pct, montant } = calculateSalary(age, yearIndex);
+
+        // Update the specific year in contrat object for API
+        setValue(`contrat.pourcentage_smic${yearIndex}` as any, pct);
+        setValue(`contrat.montant_salaire_brut${yearIndex}` as any, montant);
+        setValue(`contrat.smic${yearIndex}` as any, "1823.03");
+
+        // Update the age for this specific year
+        setValue(`salaire.age${yearIndex}` as any, age);
     };
 
     const toggleMission = (mission: string) => {
@@ -241,7 +269,7 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
 
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="animate-fade-in">
-            <div className="bg-gradient-to-br from-blue-50 to-white rounded-3xl p-6 md:p-10 shadow-xl border border-blue-100 relative overflow-hidden">
+            <div className="bg-gradient-to-br from-blue-50 to-white rounded-3xl p-6 md:p-10 shadow-xl border border-blue-100 relative">
                 <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-500 via-indigo-500 to-violet-500"></div>
 
                 <div className="flex items-center gap-6 mb-10 pb-8 border-b border-blue-100">
@@ -564,53 +592,159 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
                                 />
                             </div>
 
-                            {/* Simulateur de salaire */}
-                            <div className="col-span-12 mt-6 p-8 rounded-3xl border-2 border-secondary/20 bg-secondary-50/30">
-                                <label className="text-base font-black text-slate-800 mb-6 flex items-center gap-3">
-                                    <span className="w-10 h-10 rounded-xl bg-secondary text-white flex items-center justify-center shadow-lg shadow-secondary/20">
-                                        <Calculator size={20} />
-                                    </span>
-                                    Simulateur de salaire apprenti
-                                </label>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                                    <Select
-                                        label="Tranche d'âge"
-                                        required
-                                        value={formData.salaire.age}
-                                        error={errors.salaire?.age?.message}
-                                        onChange={(e) => handleSalaryCalc(e.target.value, formData.salaire.annee)}
-                                        options={AGE_TRANCHE_OPTIONS}
-                                        className="!bg-white"
-
-                                    />
-                                    <Select
-                                        label="Année d'apprentissage"
-                                        required
-                                        value={formData.salaire.annee}
-                                        error={errors.salaire?.annee?.message}
-                                        onChange={(e) => handleSalaryCalc(formData.salaire.age, e.target.value)}
-                                        options={APPRENTISSAGE_YEAR_OPTIONS}
-                                        className="!bg-white"
-
-                                    />
+                            {/* Simulateur de salaire multi-années indépendant */}
+                            <div className="col-span-12 mt-8 pt-8 border-t border-slate-100">
+                                <div className="flex items-center gap-4 mb-8">
+                                    <div className="w-12 h-12 rounded-2xl bg-secondary text-white flex items-center justify-center shadow-xl shadow-secondary/20">
+                                        <Calculator size={24} />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-xl font-black text-slate-800 tracking-tight">Simulateur de salaire apprenti</h3>
+                                        <p className="text-slate-500 text-sm font-bold">Configurez les tranches d'âge pour chaque année d'apprentissage</p>
+                                    </div>
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="flex flex-col gap-1.5">
-                                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Pourcentage du SMIC</label>
-                                        <div className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl font-black text-secondary text-lg">
-                                            {formData.salaire.pourcentage ? `${formData.salaire.pourcentage}%` : "-- %"}
-                                        </div>
-                                    </div>
-                                    <div className="flex flex-col gap-1.5">
-                                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Salaire brut mensuel</label>
-                                        <div className="w-full px-5 py-4 bg-white border-2 border-slate-100 rounded-2xl font-black text-secondary text-lg">
-                                            {formData.salaire.montant ? `${formData.salaire.montant.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}` : "-- €"}
-                                        </div>
-                                    </div>
+                                    {["1", "2", "3", "4"].map((year) => {
+                                        const yearAge = (formData.salaire as any)[`age${year}`];
+                                        const { pct, montant } = calculateSalary(yearAge, year);
+
+                                        return (
+                                            <div
+                                                key={year}
+                                                className="relative p-8 rounded-[2rem] border-2 border-slate-100 bg-white shadow-sm transition-all duration-300 text-left flex flex-col hover:border-blue-200 hover:shadow-xl hover:shadow-blue-500/5 group"
+                                            >
+                                                {/* En-tête de l'année */}
+                                                <div className="flex items-center justify-between mb-8">
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[10px] font-black uppercase tracking-widest text-blue-500 mb-1">Étape du contrat</span>
+                                                        <h4 className="text-lg font-black text-slate-800">
+                                                            {year}{year === "1" ? "ère" : "ème"} année
+                                                        </h4>
+                                                    </div>
+                                                    <div className={`p-3 rounded-2xl transition-colors ${yearAge ? 'bg-green-50 text-green-600' : 'bg-slate-50 text-slate-300'}`}>
+                                                        <CheckCircle2 size={20} />
+                                                    </div>
+                                                </div>
+
+                                                <div className="space-y-8 flex-grow">
+                                                    {/* Sélecteur d'âge */}
+                                                    <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100/50">
+                                                        <Select
+                                                            label={`Configuration de l'âge`}
+                                                            value={yearAge}
+                                                            onChange={(e) => updateSalary(year, e.target.value)}
+                                                            options={AGE_TRANCHE_OPTIONS}
+                                                            className="!bg-white !py-3 !text-sm border-slate-200 focus:border-blue-500 transition-colors"
+                                                            placeholder="Choisir l'âge..."
+                                                        />
+                                                    </div>
+
+                                                    {/* Périodes de dates */}
+                                                    <div className="space-y-4">
+                                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Périodes de rémunération</label>
+
+                                                        {year === "1" ? (
+                                                            <div className="bg-blue-50/30 p-4 rounded-2xl border border-blue-100/50 space-y-4">
+                                                                <div className="flex items-center gap-2 mb-1">
+                                                                    <div className="w-1.5 h-1.5 rounded-full bg-blue-400"></div>
+                                                                    <span className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">2ème Période</span>
+                                                                </div>
+                                                                <div className="grid grid-cols-2 gap-3">
+                                                                    <Input
+                                                                        type="date"
+                                                                        label="Début"
+                                                                        className="!bg-white !shadow-none border-blue-100 focus:border-blue-400"
+                                                                        {...register(`contrat.date_debut_2periode_1er_annee` as any)}
+                                                                    />
+                                                                    <Input
+                                                                        type="date"
+                                                                        label="Fin"
+                                                                        className="!bg-white !shadow-none border-blue-100 focus:border-blue-400"
+                                                                        {...register(`contrat.date_fin_2periode_1er_annee` as any)}
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="grid grid-cols-1 gap-4">
+                                                                {/* Période 1 */}
+                                                                <div className="bg-slate-50/80 p-4 rounded-2xl border border-slate-100 space-y-4">
+                                                                    <div className="flex items-center gap-2 mb-1">
+                                                                        <div className="w-1.5 h-1.5 rounded-full bg-slate-400"></div>
+                                                                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">1ère Période</span>
+                                                                    </div>
+                                                                    <div className="grid grid-cols-2 gap-3">
+                                                                        <Input
+                                                                            type="date"
+                                                                            label="Début"
+                                                                            className="!bg-white !shadow-none"
+                                                                            {...register(`contrat.date_debut_1periode_${year === "2" ? "2eme" : year === "3" ? "3eme" : "4eme"}_annee` as any)}
+                                                                        />
+                                                                        <Input
+                                                                            type="date"
+                                                                            label="Fin"
+                                                                            className="!bg-white !shadow-none"
+                                                                            {...register(`contrat.date_fin_1periode_${year === "2" ? "2eme" : year === "3" ? "3eme" : "4eme"}_annee` as any)}
+                                                                        />
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* Période 2 */}
+                                                                <div className="bg-blue-50/30 p-4 rounded-2xl border border-blue-100/50 space-y-4">
+                                                                    <div className="flex items-center gap-2 mb-1">
+                                                                        <div className="w-1.5 h-1.5 rounded-full bg-blue-400"></div>
+                                                                        <span className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">2ème Période</span>
+                                                                    </div>
+                                                                    <div className="grid grid-cols-2 gap-3">
+                                                                        <Input
+                                                                            type="date"
+                                                                            label="Début"
+                                                                            className="!bg-white !shadow-none border-blue-100 focus:border-blue-400"
+                                                                            {...register(`contrat.date_debut_2periode_${year === "2" ? "2eme" : year === "3" ? "3eme" : "4eme"}_annee` as any)}
+                                                                        />
+                                                                        <Input
+                                                                            type="date"
+                                                                            label="Fin"
+                                                                            className="!bg-white !shadow-none border-blue-100 focus:border-blue-400"
+                                                                            {...register(`contrat.date_fin_2periode_${year === "2" ? "2eme" : year === "3" ? "3eme" : "4eme"}_annee` as any)}
+                                                                        />
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                {/* Résumé de rémunération */}
+                                                <div className="mt-8 pt-6 border-t border-slate-100 flex items-center justify-between">
+                                                    <div>
+                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Taux SMIC</span>
+                                                        <div className="text-2xl font-black text-slate-900">
+                                                            {yearAge ? `${pct}%` : "--%"}
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Salaire Brut</span>
+                                                        <div className="text-2xl font-black text-blue-600">
+                                                            {yearAge ? `${montant.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 2 })}` : "-- €"}
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="absolute top-0 right-0 p-6 opacity-0 group-hover:opacity-10 scale-150 rotate-12 transition-all pointer-events-none">
+                                                    <Calculator size={80} className="text-blue-500" />
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
-                                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-4 block text-center italic">Basé sur le SMIC 2024 : 1 823,03 € brut mensuel</span>
+
+                                <div className="mt-6 p-4 rounded-2xl bg-indigo-50/50 border border-indigo-100/50 flex items-start gap-4">
+                                    <Info size={18} className="text-indigo-500 shrink-0 mt-0.5" />
+                                    <p className="text-[10px] text-indigo-600/80 font-medium leading-relaxed italic">
+                                        Note : La tranche d'âge peut évoluer au cours du contrat. Configurez l'âge attendu pour chaque période. Calcul basé sur le SMIC 2024 de 1 823,03 € brut mensuel.
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     </Card>

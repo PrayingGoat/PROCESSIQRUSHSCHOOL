@@ -173,9 +173,22 @@ export interface CompanyFormData {
     duree_hebdomadaire?: string;
     poste_occupe: string;
     lieu_execution?: string;
-    pourcentage_smic?: number;
-    smic?: string;
-    montant_salaire_brut?: number;
+
+    pourcentage_smic1?: number;
+    smic1?: string;
+    montant_salaire_brut1?: number;
+
+    pourcentage_smic2?: number;
+    smic2?: string;
+    montant_salaire_brut2?: number;
+
+    pourcentage_smic3?: number;
+    smic3?: string;
+    montant_salaire_brut3?: number;
+
+    pourcentage_smic4?: number;
+    smic4?: string;
+    montant_salaire_brut4?: number;
 
     date_conclusion?: string;
     date_debut_execution?: string;
@@ -184,6 +197,22 @@ export interface CompanyFormData {
     machines_dangereuses: string;
     caisse_retraite?: string;
     date_avenant?: string;
+
+    // Dates pour les périodes de rémunération (Frontend model)
+    date_debut_2periode_1er_annee?: string;
+    date_fin_2periode_1er_annee?: string;
+    date_debut_1periode_2eme_annee?: string;
+    date_fin_1periode_2eme_annee?: string;
+    date_debut_2periode_2eme_annee?: string;
+    date_fin_2periode_2eme_annee?: string;
+    date_debut_1periode_3eme_annee?: string;
+    date_fin_1periode_3eme_annee?: string;
+    date_debut_2periode_3eme_annee?: string;
+    date_fin_2periode_3eme_annee?: string;
+    date_debut_1periode_4eme_annee?: string;
+    date_fin_1periode_4eme_annee?: string;
+    date_debut_2periode_4eme_annee?: string;
+    date_fin_2periode_4eme_annee?: string;
   };
   formation: {
     choisie: string;
@@ -284,7 +313,23 @@ export interface CompanyBackendPayload {
     poste_occupe: string;
     lieu_execution: string;
     base_calcul_salaire: string;
-    montant_salaire_brut: number | null;
+
+    pourcentage_smic1: number | null;
+    smic1: string;
+    montant_salaire_brut1: number | null;
+
+    pourcentage_smic2: number | null;
+    smic2: string;
+    montant_salaire_brut2: number | null;
+
+    pourcentage_smic3: number | null;
+    smic3: string;
+    montant_salaire_brut3: number | null;
+
+    pourcentage_smic4: number | null;
+    smic4: string;
+    montant_salaire_brut4: number | null;
+
     date_conclusion: string; // date as string
 
     date_debut_execution: string; // date as string
@@ -292,6 +337,22 @@ export interface CompanyBackendPayload {
     travail_machine_dangereuse: string;
     caisse_retraite: string;
     date_avenant: string; // date as string
+
+    // Dates pour les périodes de rémunération (Backend model)
+    date_debut_2periode_1er_annee: string;
+    date_fin_2periode_1er_annee: string;
+    date_debut_1periode_2eme_annee: string;
+    date_fin_1periode_2eme_annee: string;
+    date_debut_2periode_2eme_annee: string;
+    date_fin_2periode_2eme_annee: string;
+    date_debut_1periode_3eme_annee: string;
+    date_fin_1periode_3eme_annee: string;
+    date_debut_2periode_3eme_annee: string;
+    date_fin_2periode_3eme_annee: string;
+    date_debut_1periode_4eme_annee: string;
+    date_fin_1periode_4eme_annee: string;
+    date_debut_2periode_4eme_annee: string;
+    date_fin_2periode_4eme_annee: string;
   };
   formation_missions: {
     formation_alternant: string;

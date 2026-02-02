@@ -190,7 +190,8 @@ export const AGE_TRANCHE_OPTIONS: SelectOption[] = [
 export const APPRENTISSAGE_YEAR_OPTIONS: SelectOption[] = [
     { value: "1", label: "1ère année" },
     { value: "2", label: "2ème année" },
-    { value: "3", label: "3ème année" }
+    { value: "3", label: "3ème année" },
+    { value: "4", label: "4ème année" }
 ];
 
 export const YES_NO_OPTIONS: SelectOption[] = [

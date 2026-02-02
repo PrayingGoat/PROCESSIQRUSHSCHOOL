@@ -1,6 +1,7 @@
 import { StudentFormData, CompanyFormData, ApiResponse } from '../types';
 
 const BASE_API_URL = 'https://liantsoaxx08-apirushscholl.hf.space/api/v1';
+const AUTH_API_URL = '/api'; // Local backend for Auth
 const BASE_URL = `${BASE_API_URL}/admission`;
 
 // Helper to format string (remove underscores, capitalize)
@@ -22,6 +23,22 @@ const mapToBackendFormat = (data: any): any => {
 };
 
 export const api = {
+  // --- AUTH ---
+  async login(email: string, pass: string): Promise<{ access_token: string }> {
+    const response = await fetch(`${AUTH_API_URL}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password: pass }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Login failed');
+    }
+
+    return await response.json();
+  },
+
   // --- HEALTH ---
   async checkHealth(): Promise<boolean> {
     try {
@@ -487,16 +504,49 @@ export const api = {
           duree_hebdomadaire: ensureString(data.contrat.duree_hebdomadaire),
           poste_occupe: ensureString(data.contrat.poste_occupe),
           lieu_execution: ensureString(data.contrat.lieu_execution),
-          pourcentage_smic: data.contrat.pourcentage_smic || 0,
-          smic: ensureString(data.contrat.smic),
-          montant_salaire_brut: data.contrat.montant_salaire_brut ? parseFloat(data.contrat.montant_salaire_brut.toString()) : null,
+
+          pourcentage_smic1: data.contrat.pourcentage_smic1 || 0,
+          smic1: ensureString(data.contrat.smic1),
+
+          pourcentage_smic2: data.contrat.pourcentage_smic2 || 0,
+          smic2: ensureString(data.contrat.smic2),
+
+          pourcentage_smic3: data.contrat.pourcentage_smic3 || 0,
+          smic3: ensureString(data.contrat.smic3),
+
+          pourcentage_smic4: data.contrat.pourcentage_smic4 || 0,
+          smic4: ensureString(data.contrat.smic4),
+
+          montant_salaire_brut1: data.contrat.montant_salaire_brut1 ? parseFloat(data.contrat.montant_salaire_brut1.toString()) : null,
+          montant_salaire_brut2: data.contrat.montant_salaire_brut2 ? parseFloat(data.contrat.montant_salaire_brut2.toString()) : null,
+          montant_salaire_brut3: data.contrat.montant_salaire_brut3 ? parseFloat(data.contrat.montant_salaire_brut3.toString()) : null,
+          montant_salaire_brut4: data.contrat.montant_salaire_brut4 ? parseFloat(data.contrat.montant_salaire_brut4.toString()) : null,
 
           date_conclusion: ensureString(data.contrat.date_conclusion),
           date_debut_execution: ensureString(data.contrat.date_debut_execution),
           numero_deca_ancien_contrat: ensureString(data.contrat.numero_deca_ancien_contrat),
           travail_machine_dangereuse: ensureString(data.contrat.machines_dangereuses),
           caisse_retraite: ensureString(data.contrat.caisse_retraite),
-          date_avenant: ensureString(data.contrat.date_avenant)
+          date_avenant: ensureString(data.contrat.date_avenant),
+
+          // MAPPINGS DES PÉRIODES DE SALAIRE
+          date_debut_2periode_1er_annee: ensureString(data.contrat.date_debut_2periode_1er_annee),
+          date_fin_2periode_1er_annee: ensureString(data.contrat.date_fin_2periode_1er_annee),
+
+          date_debut_1periode_2eme_annee: ensureString(data.contrat.date_debut_1periode_2eme_annee),
+          date_fin_1periode_2eme_annee: ensureString(data.contrat.date_fin_1periode_2eme_annee),
+          date_debut_2periode_2eme_annee: ensureString(data.contrat.date_debut_2periode_2eme_annee),
+          date_fin_2periode_2eme_annee: ensureString(data.contrat.date_fin_2periode_2eme_annee),
+
+          date_debut_1periode_3eme_annee: ensureString(data.contrat.date_debut_1periode_3eme_annee),
+          date_fin_1periode_3eme_annee: ensureString(data.contrat.date_fin_1periode_3eme_annee),
+          date_debut_2periode_3eme_annee: ensureString(data.contrat.date_debut_2periode_3eme_annee),
+          date_fin_2periode_3eme_annee: ensureString(data.contrat.date_fin_2periode_3eme_annee),
+
+          date_debut_1periode_4eme_annee: ensureString(data.contrat.date_debut_1periode_4eme_annee),
+          date_fin_1periode_4eme_annee: ensureString(data.contrat.date_fin_1periode_4eme_annee),
+          date_debut_2periode_4eme_annee: ensureString(data.contrat.date_debut_2periode_4eme_annee),
+          date_fin_2periode_4eme_annee: ensureString(data.contrat.date_fin_2periode_4eme_annee)
         },
 
         // SECTION 6: FORMATION & MISSIONS

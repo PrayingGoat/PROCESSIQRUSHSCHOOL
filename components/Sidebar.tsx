@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   Users,
   Briefcase,
@@ -17,7 +17,8 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const location = useLocation();
-  
+  const navigate = useNavigate();
+
   const [admissionOpen, setAdmissionOpen] = useState(false);
   const [commercialOpen, setCommercialOpen] = useState(false);
   const [rhOpen, setRhOpen] = useState(false);
@@ -36,6 +37,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     if (window.innerWidth < 768 && onClose) {
       onClose();
     }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('authToken');
+    navigate('/login');
+    if (onClose) onClose();
   };
 
   return (
@@ -61,8 +68,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           </div>
 
           <div className={`overflow-hidden transition-all duration-300 bg-black/15 rounded-b-xl mt-[-4px] ${admissionOpen ? 'max-h-[400px]' : 'max-h-0'}`}>
-            <NavLink 
-              to="/admission" 
+            <NavLink
+              to="/admission"
               onClick={handleLinkClick}
               className={({ isActive }) => `nav-subitem ${isActive ? 'active' : ''}`}
             >
@@ -87,24 +94,24 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           </div>
 
           <div className={`overflow-hidden transition-all duration-300 bg-black/15 rounded-b-xl mt-[-4px] ${commercialOpen ? 'max-h-[300px]' : 'max-h-0'}`}>
-            <NavLink 
-              to="/commercial/dashboard" 
+            <NavLink
+              to="/commercial/dashboard"
               onClick={handleLinkClick}
               className={({ isActive }) => `nav-subitem ${isActive ? 'active' : ''}`}
             >
               <div className="w-[18px] h-[18px] flex items-center justify-center"><div className="w-1.5 h-1.5 rounded-full bg-current opacity-70"></div></div>
               <span>Tableau de bord</span>
             </NavLink>
-            <NavLink 
-              to="/commercial/placer" 
+            <NavLink
+              to="/commercial/placer"
               onClick={handleLinkClick}
               className={({ isActive }) => `nav-subitem ${isActive ? 'active' : ''}`}
             >
               <div className="w-[18px] h-[18px] flex items-center justify-center"><div className="w-1.5 h-1.5 rounded-full bg-current opacity-70"></div></div>
               <span>Élèves à placer</span>
             </NavLink>
-            <NavLink 
-              to="/commercial/alternance" 
+            <NavLink
+              to="/commercial/alternance"
               onClick={handleLinkClick}
               className={({ isActive }) => `nav-subitem ${isActive ? 'active' : ''}`}
             >
@@ -127,40 +134,40 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           </div>
 
           <div className={`overflow-hidden transition-all duration-300 bg-black/15 rounded-b-xl mt-[-4px] ${rhOpen ? 'max-h-[300px]' : 'max-h-0'}`}>
-            <NavLink 
-              to="/rh/dashboard" 
+            <NavLink
+              to="/rh/dashboard"
               onClick={handleLinkClick}
               className={({ isActive }) => `nav-subitem ${isActive ? 'active' : ''}`}
             >
               <div className="w-[18px] h-[18px] flex items-center justify-center"><div className="w-1.5 h-1.5 rounded-full bg-current opacity-70"></div></div>
               <span>Vue d'ensemble</span>
             </NavLink>
-            <NavLink 
-              to="/rh/fiche" 
+            <NavLink
+              to="/rh/fiche"
               onClick={handleLinkClick}
               className={({ isActive }) => `nav-subitem ${isActive ? 'active' : ''}`}
             >
               <div className="w-[18px] h-[18px] flex items-center justify-center"><div className="w-1.5 h-1.5 rounded-full bg-current opacity-70"></div></div>
               <span>Fiche Entreprise</span>
             </NavLink>
-            <NavLink 
-              to="/rh/cerfa" 
+            <NavLink
+              to="/rh/cerfa"
               onClick={handleLinkClick}
               className={({ isActive }) => `nav-subitem ${isActive ? 'active' : ''}`}
             >
               <div className="w-[18px] h-[18px] flex items-center justify-center"><div className="w-1.5 h-1.5 rounded-full bg-current opacity-70"></div></div>
               <span>CERFA</span>
             </NavLink>
-            <NavLink 
-              to="/rh/pec" 
+            <NavLink
+              to="/rh/pec"
               onClick={handleLinkClick}
               className={({ isActive }) => `nav-subitem ${isActive ? 'active' : ''}`}
             >
               <div className="w-[18px] h-[18px] flex items-center justify-center"><div className="w-1.5 h-1.5 rounded-full bg-current opacity-70"></div></div>
               <span>Prises en charge</span>
             </NavLink>
-            <NavLink 
-              to="/rh/ruptures" 
+            <NavLink
+              to="/rh/ruptures"
               onClick={handleLinkClick}
               className={({ isActive }) => `nav-subitem ${isActive ? 'active' : ''}`}
             >
@@ -175,8 +182,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           to="/etudiant"
           onClick={handleLinkClick}
           className={({ isActive }) => `flex items-center gap-[14px] px-[18px] py-[14px] rounded-xl cursor-pointer transition-all duration-200 font-medium text-[0.95rem] mb-1 ${isActive
-              ? 'bg-[#6366F1] text-white'
-              : 'text-[#94a3b8] hover:bg-white/10 hover:text-white'
+            ? 'bg-[#6366F1] text-white'
+            : 'text-[#94a3b8] hover:bg-white/10 hover:text-white'
             }`}
         >
           {({ isActive }) => (
@@ -192,8 +199,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           to="/parametres"
           onClick={handleLinkClick}
           className={({ isActive }) => `flex items-center gap-[14px] px-[18px] py-[14px] rounded-xl cursor-pointer transition-all duration-200 font-medium text-[0.95rem] mb-1 ${isActive
-              ? 'bg-[#6366F1] text-white'
-              : 'text-[#94a3b8] hover:bg-white/10 hover:text-white'
+            ? 'bg-[#6366F1] text-white'
+            : 'text-[#94a3b8] hover:bg-white/10 hover:text-white'
             }`}
         >
           {({ isActive }) => (
@@ -207,7 +214,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
       {/* Footer */}
       <div className="p-4 border-t border-slate-700/50">
-        <button className="flex items-center gap-[14px] px-[18px] py-[14px] rounded-xl cursor-pointer transition-all duration-200 font-medium text-[0.95rem] w-full hover:bg-red-500/10 hover:text-red-400 text-[#94a3b8]">
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-[14px] px-[18px] py-[14px] rounded-xl cursor-pointer transition-all duration-200 font-medium text-[0.95rem] w-full hover:bg-red-500/10 hover:text-red-400 text-[#94a3b8]"
+        >
           <LogOut size={22} className="nav-icon" />
           <span>Déconnexion</span>
         </button>
