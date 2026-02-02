@@ -1,6 +1,9 @@
 import 'reflect-metadata';
+import { NestFactory } from '@nestjs/core';
+import { ValidationPipe } from '@nestjs/common';
+import { AppModule } from './src/app.module';
 
-// CRITICAL: Disable Vercel's default body parser so NestJS can handle the stream.
+// Disable Vercel's default body parser
 export const config = {
     api: {
         bodyParser: false,
@@ -14,13 +17,7 @@ export default async function handler(req: any, res: any) {
 
     try {
         if (!cachedApp) {
-            console.log('[Vercel API] Booting NestJS...');
-
-            // Dynamic imports inside the try-catch to catch bundling/export errors
-            const { NestFactory } = await import('@nestjs/core');
-            const { ValidationPipe } = await import('@nestjs/common');
-            const { AppModule } = await import('../backend/src/app.module');
-
+            console.log('[Vercel API] Booting NestJS from local src...');
             const app = await NestFactory.create(AppModule);
 
             app.setGlobalPrefix('api');
@@ -39,18 +36,12 @@ export default async function handler(req: any, res: any) {
 
         return cachedApp(req, res);
     } catch (error: any) {
-        console.error('[Vercel API] FATAL ERROR IN HANDLER:', error);
-
-        // Ensure we return JSON so the frontend doesn't get a SyntaxError: JSON.parse
+        console.error('[Vercel API] FATAL ERROR:', error);
         return res.status(500).json({
-            error: 'NestJS Initialization Failed',
+            error: 'NestJS Boot Failure',
             message: error.message,
             stack: error.stack,
-            hint: 'Check if all dependencies are in the root package.json and AppModule is correctly paths.',
-            env: {
-                has_airtable: !!process.env.AIRTABLE_API_KEY,
-                node_env: process.env.NODE_ENV
-            }
+            src_path: './src/app.module'
         });
     }
 }
