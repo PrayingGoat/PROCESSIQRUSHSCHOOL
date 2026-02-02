@@ -1,0 +1,255 @@
+@import "tailwindcss";
+@config "./tailwind.config.js";
+
+:root {
+    --bg-main: #F8FAFC;
+    --bg-white: #FFFFFF;
+    --sidebar-bg: #0f172a;
+    --sidebar-text: #e2e8f0;
+    --sidebar-muted: #94a3b8;
+    --border-color: #E2E8F0;
+    --text-primary: #1E293B;
+    --text-secondary: #64748B;
+    --text-muted: #94A3B8;
+    --primary: #3B82F6;
+    --primary-light: #EFF6FF;
+    --primary-dark: #2563EB;
+    --success: #86EFAC;
+    --success-light: #E6FFFA;
+    --success-bg: #F0FFF4;
+    --warning: #F59E0B;
+    --warning-light: #FEF3C7;
+    --warning-bg: #FFFBEB;
+    --danger: #A78BFA;
+    --danger-light: #EDE9FE;
+    --purple: #A78BFA;
+    --purple-light: #EDE9FE;
+    --purple-bg: #F5F3FF;
+    --orange: #F97316;
+    --orange-light: #FED7AA;
+    --orange-bg: #FFF7ED;
+    --cyan: #06B6D4;
+    --cyan-light: #A5F3FC;
+    --cyan-bg: #ECFEFF;
+    --indigo: #6366F1;
+    --sidebar-width: 260px;
+    --header-height: 64px;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --gradient-success: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    --gradient-warning: linear-gradient(135deg, #F2994A 0%, #F2C94C 100%);
+    --gradient-danger: linear-gradient(135deg, #EB5757 0%, #F2994A 100%);
+    --gradient-dark: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+}
+
+body {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg-main);
+    color: var(--text-primary);
+    min-height: 100vh;
+}
+
+/* Custom styles from index.html */
+.sidebar {
+    width: var(--sidebar-width);
+    background: var(--sidebar-bg);
+    color: var(--sidebar-text);
+}
+
+.logo-dots {
+    position: relative;
+    width: 40px;
+    height: 40px;
+}
+
+.logo-dots span {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.logo-dots span:nth-child(1) {
+    background: #EC4899;
+    top: 0;
+    left: 8px;
+}
+
+.logo-dots span:nth-child(2) {
+    background: #F97316;
+    top: 8px;
+    left: 20px;
+}
+
+.logo-dots span:nth-child(3) {
+    background: #06B6D4;
+    top: 20px;
+    left: 24px;
+}
+
+.logo-dots span:nth-child(4) {
+    background: #86EFAC;
+    top: 28px;
+    left: 12px;
+}
+
+.logo-dots span:nth-child(5) {
+    background: #A78BFA;
+    top: 16px;
+    left: 4px;
+}
+
+.nav-item {
+    @apply flex items-center gap-3.5 px-4.5 py-3.5 rounded-xl cursor-pointer transition-all mb-1 text-slate-200 text-[0.95rem] font-medium;
+}
+
+.nav-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.nav-item.active {
+    background: var(--indigo);
+    color: white;
+}
+
+.nav-submenu {
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 0 0 12px 12px;
+    margin-top: -4px;
+}
+
+.nav-subitem {
+    @apply flex items-center gap-3 px-4.5 py-3 pl-[52px] cursor-pointer transition-all text-slate-400 text-[0.9rem];
+}
+
+.nav-subitem:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--sidebar-text);
+}
+
+.nav-subitem.active {
+    color: var(--primary);
+    background: rgba(59, 130, 246, 0.1);
+}
+
+/* Header Tabs */
+.header-tab {
+    @apply flex items-center gap-2 px-5 py-2.5 rounded-lg text-[0.9rem] font-medium cursor-pointer transition-all border-none bg-[var(--bg-main)] text-[var(--text-secondary)];
+}
+
+.header-tab.active {
+    @apply bg-[var(--primary)] text-white;
+}
+
+.header-tab:hover:not(.active) {
+    @apply bg-[var(--border-color)];
+}
+
+/* Cards & Stats */
+.stat-card {
+    @apply rounded-2xl p-6 relative border border-transparent;
+}
+
+.stat-icon {
+    @apply w-12 h-12 rounded-xl flex items-center justify-center bg-white shadow-sm;
+}
+
+.stat-value {
+    @apply text-4xl font-bold leading-none;
+}
+
+/* Admission Hero */
+.admission-hero {
+    @apply bg-[var(--gradient-primary)] rounded-[20px] p-10 mb-6 flex justify-between items-center text-white relative overflow-hidden;
+}
+
+.admission-hero::before {
+    content: '';
+    @apply absolute -top-1/2 -right-1/5 w-[60%] h-[200%] bg-white/10 rounded-full;
+}
+
+/* Forms */
+.questionnaire-single-page {
+    @apply bg-gradient-to-br from-white to-slate-50 rounded-[24px] p-12 max-w-[950px] mx-auto shadow-xl border border-slate-200/80;
+}
+
+.form-section {
+    @apply mb-9 p-7 bg-white/60 rounded-2xl border border-slate-200/60 transition-all duration-300;
+}
+
+.form-section:hover {
+    @apply bg-white/85 shadow-sm -translate-y-0.5;
+}
+
+.section-number {
+    @apply w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-xl flex items-center justify-center font-bold shadow-lg shadow-blue-500/25;
+}
+
+/* Tables */
+.eleves-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.eleves-table th {
+    @apply px-4 py-4.5 text-left text-[0.75rem] font-bold uppercase tracking-wider text-slate-600 border-b-2 border-slate-200;
+}
+
+.eleves-table td {
+    @apply p-4 text-[0.9rem] text-slate-700 border-b border-slate-100;
+}
+
+.eleves-table tbody tr:hover {
+    @apply bg-slate-50;
+}
+
+/* Badges & Tags */
+.tag {
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[0.8rem] font-semibold;
+}
+
+.tag.formation {
+    @apply bg-gradient-to-br from-blue-50 to-blue-100 text-blue-700;
+}
+
+.tag.status.oui {
+    @apply bg-emerald-50 text-emerald-600;
+}
+
+.tag.status.non {
+    @apply bg-violet-50 text-violet-600;
+}
+
+/* NTC Specifics */
+.ntc-header {
+    @apply bg-gradient-to-br from-blue-500/[0.12] to-purple-500/[0.08] rounded-[28px] p-8 px-10 border border-blue-500/20 relative overflow-hidden;
+}
+
+.ntc-badge-live {
+    @apply bg-gradient-to-br from-teal-500 to-emerald-500 text-white px-4.5 py-2 rounded-full font-bold text-[0.85rem] inline-flex items-center gap-2.5;
+}
+
+.live-dot {
+    @apply w-2.5 h-2.5 bg-white rounded-full animate-pulse;
+}
+
+/* Scrollbar Utility */
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+
+.scrollbar-custom::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.scrollbar-custom::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.scrollbar-custom::-webkit-scrollbar-thumb {
+    @apply bg-slate-300 rounded-full;
+}
