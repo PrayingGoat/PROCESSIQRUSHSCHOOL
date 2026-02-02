@@ -12,13 +12,18 @@ export const config = {
 let cachedApp: any;
 
 export default async function handler(req: any, res: any) {
+    console.log(`[Vercel API] Incoming request: ${req.method} ${req.url}`);
+
     if (!cachedApp) {
+        console.log('[Vercel API] Initializing NestJS app...');
         const app = await NestFactory.create(AppModule);
         app.setGlobalPrefix('api');
         app.enableCors();
         app.useGlobalPipes(new ValidationPipe());
         await app.init();
         cachedApp = app.getHttpAdapter().getInstance();
+        console.log('[Vercel API] NestJS app initialized.');
     }
+
     return cachedApp(req, res);
 }
