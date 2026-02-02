@@ -1,4 +1,5 @@
 import 'reflect-metadata';
+import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './src/app.module';
@@ -14,10 +15,11 @@ let cachedApp: any;
 
 export default async function handler(req: any, res: any) {
     console.log(`[Vercel API] Incoming: ${req.method} ${req.url}`);
+    console.log(`[Vercel API] __dirname: ${__dirname}`);
 
     try {
         if (!cachedApp) {
-            console.log('[Vercel API] Booting NestJS from local src...');
+            console.log('[Vercel API] Booting NestJS from ./src/app.module...');
             const app = await NestFactory.create(AppModule);
 
             app.setGlobalPrefix('api');
