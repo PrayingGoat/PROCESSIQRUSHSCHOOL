@@ -4,7 +4,6 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './src/app.module';
 
-// Disable Vercel's default body parser
 export const config = {
     api: {
         bodyParser: false,
@@ -14,13 +13,29 @@ export const config = {
 let cachedApp: any;
 
 export default async function handler(req: any, res: any) {
-    console.log(`[Vercel API] Incoming: ${req.method} ${req.url}`);
-    console.log(`[Vercel API] __dirname: ${__dirname}`);
+    // Ensure we always return JSON even on early errors
+    const sendError = (status: number, message: string, detail?: any) => {
+        return res.status(status).json({
+            error: true,
+            message,
+            detail,
+            path: req.url,
+            timestamp: new Date().toISOString()
+        });
+    };
 
     try {
         if (!cachedApp) {
-            console.log('[Vercel API] Booting NestJS from ./src/app.module...');
-            const app = await NestFactory.create(AppModule);
+            console.log('[Vercel API] Starting NestJS bootstrap...');
+            
+            // Basic sanity checks
+            if (!AppModule) {
+                return sendError(500, 'AppModule is undefined. Check your imports.');
+            }
+
+            const app = await NestFactory.create(AppModule, {
+                logger: ['error', 'warn', 'log', 'debug'],
+            });
 
             app.setGlobalPrefix('api');
             app.enableCors();
@@ -31,19 +46,17 @@ export default async function handler(req: any, res: any) {
             }));
 
             await app.init();
-
             cachedApp = app.getHttpAdapter().getInstance();
-            console.log('[Vercel API] NestJS Booted successfully.');
+            console.log('[Vercel API] NestJS bootstrap complete.');
         }
 
         return cachedApp(req, res);
     } catch (error: any) {
-        console.error('[Vercel API] FATAL ERROR:', error);
-        return res.status(500).json({
-            error: 'NestJS Boot Failure',
+        console.error('[Vercel API] Critical Bootstrap Error:', error);
+        return sendError(500, 'NestJS Boot Failure', {
+            name: error.name,
             message: error.message,
-            stack: error.stack,
-            src_path: './src/app.module'
+            stack: error.stack
         });
     }
 }

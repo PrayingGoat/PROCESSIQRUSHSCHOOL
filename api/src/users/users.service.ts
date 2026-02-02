@@ -1,54 +1,35 @@
 import { Injectable } from '@nestjs/common';
-import Airtable from 'airtable';
 
 @Injectable()
 export class UsersService {
-    private base: Airtable.Base;
-
-    constructor() {
-        // NOTE: Configure these env vars in Vercel or .env
-        // For now we assume they will be present
-        if (process.env.AIRTABLE_API_KEY && process.env.AIRTABLE_BASE_ID) {
-            this.base = new Airtable({
-                apiKey: process.env.AIRTABLE_API_KEY,
-            }).base(process.env.AIRTABLE_BASE_ID);
+    // Liste d'utilisateurs en dur pour le moment
+    private readonly users = [
+        {
+            userId: 1,
+            email: 'admin@rush-school.fr',
+            password: 'admin', // À changer plus tard par un hash
+            name: 'Admin Rush School'
+        },
+        {
+            userId: 2,
+            email: 'demo@rush-school.fr',
+            password: 'demo',
+            name: 'Utilisateur Démo'
         }
-    }
+    ];
 
     async findOne(email: string): Promise<any | undefined> {
-        if (!this.base) {
-            console.warn("Airtable not configured, returning mock user");
-            // Mock user for development if no Airtable config
-            if (email === 'admin@rush-school.fr') {
-                return {
-                    userId: 1,
-                    email: 'admin@rush-school.fr',
-                    password: 'admin', // In real app, verify hash
-                    name: 'Admin User'
-                };
-            }
-            return undefined;
+        console.log(`[UsersService] Looking for user: ${email}`);
+        
+        // Recherche dans la liste locale
+        const user = this.users.find(u => u.email === email);
+        
+        if (user) {
+            console.log(`[UsersService] User found: ${user.name}`);
+            return user;
         }
 
-        try {
-            const records = await this.base('Users').select({
-                filterByFormula: `{Email} = '${email}'`,
-                maxRecords: 1
-            }).firstPage();
-
-            if (records.length > 0) {
-                const fields = records[0].fields;
-                return {
-                    userId: records[0].id,
-                    email: fields['Email'],
-                    password: fields['Password'], // In real app, store hash
-                    name: fields['Name']
-                };
-            }
-        } catch (error) {
-            console.error("Airtable lookup failed:", error);
-        }
-
+        console.warn(`[UsersService] User NOT found: ${email}`);
         return undefined;
     }
 }
