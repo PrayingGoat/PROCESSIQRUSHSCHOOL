@@ -3,6 +3,12 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from '../backend/src/app.module';
 import { ValidationPipe } from '@nestjs/common';
 
+export const config = {
+    api: {
+        bodyParser: false,
+    },
+};
+
 let cachedApp: any;
 
 export default async function handler(req: any, res: any) {
