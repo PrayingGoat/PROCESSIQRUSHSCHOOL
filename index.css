@@ -1,19 +1,65 @@
 @import "tailwindcss";
-@config "./tailwind.config.js";
+
+@theme {
+    --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+    --spacing-4_5: 1.125rem;
+
+    /* Brand Colors Override */
+    --color-blue-50: #EFF6FF;
+    --color-blue-100: #DBEAFE;
+    --color-blue-200: #BFDBFE;
+    --color-blue-300: #93C5FD;
+    --color-blue-400: #60A5FA;
+    --color-blue-500: #3B82F6;
+    --color-blue-600: #2563EB;
+    --color-blue-700: #1D4ED8;
+    --color-blue-800: #1E40AF;
+    --color-blue-900: #1E3A8A;
+    --color-blue-950: #172554;
+
+    --color-indigo-50: #EEF2FF;
+    --color-indigo-100: #E0E7FF;
+    --color-indigo-200: #C7D2FE;
+    --color-indigo-300: #A5B4FC;
+    --color-indigo-400: #818CF8;
+    --color-indigo-500: #6366F1;
+    --color-indigo-600: #4F46E5;
+    --color-indigo-700: #4338CA;
+    --color-indigo-800: #3730A3;
+    --color-indigo-900: #312E81;
+    --color-indigo-950: #1E1B4B;
+
+    --color-slate-50: #F8FAFC;
+    --color-slate-100: #F1F5F9;
+    --color-slate-200: #E2E8F0;
+    --color-slate-300: #CBD5E1;
+    --color-slate-400: #94A3B8;
+    --color-slate-500: #64748B;
+    --color-slate-600: #475569;
+    --color-slate-700: #334155;
+    --color-slate-800: #1E293B;
+    --color-slate-900: #0F172A;
+    --color-slate-950: #020617;
+
+    /* Intentional Aliases */
+    --color-primary: var(--color-blue-500);
+    --color-brand: var(--color-indigo-500);
+    --color-sidebar: var(--color-slate-900);
+}
 
 :root {
-    --bg-main: #F8FAFC;
+    --bg-main: var(--color-slate-50);
     --bg-white: #FFFFFF;
-    --sidebar-bg: #0f172a;
-    --sidebar-text: #e2e8f0;
-    --sidebar-muted: #94a3b8;
-    --border-color: #E2E8F0;
-    --text-primary: #1E293B;
-    --text-secondary: #64748B;
-    --text-muted: #94A3B8;
-    --primary: #3B82F6;
-    --primary-light: #EFF6FF;
-    --primary-dark: #2563EB;
+    --sidebar-bg: var(--color-slate-900);
+    --sidebar-text: var(--color-slate-200);
+    --sidebar-muted: var(--color-slate-400);
+    --border-color: var(--color-slate-200);
+    --text-primary: var(--color-slate-800);
+    --text-secondary: var(--color-slate-500);
+    --text-muted: var(--color-slate-400);
+    --primary: var(--color-blue-500);
+    --primary-light: var(--color-blue-50);
+    --primary-dark: var(--color-blue-600);
     --success: #86EFAC;
     --success-light: #E6FFFA;
     --success-bg: #F0FFF4;
@@ -31,7 +77,7 @@
     --cyan: #06B6D4;
     --cyan-light: #A5F3FC;
     --cyan-bg: #ECFEFF;
-    --indigo: #6366F1;
+    --indigo: var(--color-indigo-500);
     --sidebar-width: 260px;
     --header-height: 64px;
 
@@ -163,7 +209,8 @@ body {
 
 /* Admission Hero */
 .admission-hero {
-    @apply bg-[var(--gradient-primary)] rounded-[20px] p-10 mb-6 flex justify-between items-center text-white relative overflow-hidden;
+    background: var(--gradient-primary);
+    @apply rounded-[20px] p-10 mb-6 flex justify-between items-center text-white relative overflow-hidden;
 }
 
 .admission-hero::before {

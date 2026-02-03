@@ -296,11 +296,11 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
 
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="animate-fade-in">
-            <div className="bg-gradient-to-br from-blue-50 to-white rounded-3xl p-6 md:p-10 shadow-xl border border-blue-100 relative">
-                <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-500 via-indigo-500 to-violet-500"></div>
+            <div className="bg-gradient-to-br from-slate-50 to-white rounded-3xl p-6 md:p-10 shadow-xl border border-slate-100 relative">
+                <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-brand via-primary to-violet-500"></div>
 
-                <div className="flex items-center gap-6 mb-10 pb-8 border-b border-blue-100">
-                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-blue-500/20 shrink-0">
+                <div className="flex items-center gap-6 mb-10 pb-8 border-b border-slate-100">
+                    <div className="w-16 h-16 bg-gradient-to-br from-brand to-primary rounded-2xl flex items-center justify-center text-white shadow-xl shadow-brand/20 shrink-0">
                         <Building size={32} />
                     </div>
                     <div>
@@ -456,8 +456,8 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
                                     {['BTS MCO A', 'BTS MCO 2', 'BTS NDRC 1', 'BTS COM', 'Titre Pro NTC', 'Titre Pro NTC B (rentrée decalée)', 'Bachelor RDC'].map((f, idx) => (
                                         <label key={f} className="relative cursor-pointer group">
                                             <input className="peer sr-only" type="radio" value={f} checked={formData.formation.choisie === f} onChange={() => handleFormationChange(f)} />
-                                            <div className={`flex items-center gap-3 px-4 py-3 rounded-2xl border-2 h-full transition-all ${formData.formation.choisie === f ? 'bg-primary-50/50 border-primary shadow-indigo' : 'bg-slate-50/50 border-transparent hover:border-slate-200'}`}>
-                                                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black tracking-tighter shrink-0 transition-colors ${formData.formation.choisie === f ? 'bg-primary text-white' : 'bg-slate-200 text-slate-400'}`}>{idx + 1}</span>
+                                            <div className={`flex items-center gap-3 px-4 py-3 rounded-2xl border-2 h-full transition-all ${formData.formation.choisie === f ? 'bg-brand/10 border-brand shadow-brand/10' : 'bg-slate-50/50 border-transparent hover:border-slate-200'}`}>
+                                                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black tracking-tighter shrink-0 transition-colors ${formData.formation.choisie === f ? 'bg-brand text-white' : 'bg-slate-200 text-slate-400'}`}>{idx + 1}</span>
                                                 <span className="font-bold text-slate-700 text-xs leading-tight">{f}</span>
                                             </div>
                                         </label>
@@ -483,9 +483,9 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
                                                 setValue('cfa.rush_school', 'oui');
                                                 setValue('cfa.entreprise', 'non');
                                             }}
-                                            className="w-5 h-5 accent-primary"
+                                            className="w-5 h-5 accent-brand"
                                         />
-                                        <span className="font-bold text-slate-700 text-sm group-hover:text-primary transition-colors">CFA Rush School</span>
+                                        <span className="font-bold text-slate-700 text-sm group-hover:text-brand transition-colors">CFA Rush School</span>
                                     </label>
                                     <label className="flex items-center gap-3 cursor-pointer group">
                                         <input
@@ -496,37 +496,37 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
                                                 setValue('cfa.rush_school', 'non');
                                                 setValue('cfa.entreprise', 'oui');
                                             }}
-                                            className="w-5 h-5 accent-primary"
+                                            className="w-5 h-5 accent-brand"
                                         />
-                                        <span className="font-bold text-slate-700 text-sm group-hover:text-primary transition-colors">Autre CFA</span>
+                                        <span className="font-bold text-slate-700 text-sm group-hover:text-brand transition-colors">Autre CFA</span>
                                     </label>
                                 </div>
 
                                 {formData.cfa.rush_school === 'oui' ? (
-                                    <div className="bg-primary-50/30 p-8 rounded-3xl border border-primary-100 animate-fade-in">
+                                    <div className="bg-brand/5 p-8 rounded-3xl border border-brand/10 animate-fade-in">
                                         <div className="flex items-center gap-5 mb-6">
-                                            <div className="w-12 h-12 bg-primary text-white rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20">
+                                            <div className="w-12 h-12 bg-brand text-white rounded-2xl flex items-center justify-center shadow-lg shadow-brand/20">
                                                 <Building size={24} />
                                             </div>
                                             <div>
                                                 <h4 className="font-black text-slate-800 tracking-tight">CFA d'accueil : Rush School</h4>
-                                                <p className="text-xs text-primary-600 font-bold uppercase tracking-wider mt-0.5">Informations certifiées</p>
+                                                <p className="text-xs text-brand/60 font-bold uppercase tracking-wider mt-0.5">Informations certifiées</p>
                                             </div>
                                         </div>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div className="bg-white/60 p-4 rounded-2xl border border-primary-50">
+                                            <div className="bg-white/60 p-4 rounded-2xl border border-brand/5">
                                                 <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Dénomination</span>
                                                 <span className="font-bold text-slate-700">RUSH SCHOOL</span>
                                             </div>
-                                            <div className="bg-white/60 p-4 rounded-2xl border border-primary-50">
+                                            <div className="bg-white/60 p-4 rounded-2xl border border-brand/5">
                                                 <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">N° SIRET</span>
                                                 <span className="font-bold text-slate-700">919 233 135 00014</span>
                                             </div>
-                                            <div className="bg-white/60 p-4 rounded-2xl border border-primary-50">
+                                            <div className="bg-white/60 p-4 rounded-2xl border border-brand/5">
                                                 <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Code UAI</span>
                                                 <span className="font-bold text-slate-700">0756342X</span>
                                             </div>
-                                            <div className="bg-white/60 p-4 rounded-2xl border border-primary-50">
+                                            <div className="bg-white/60 p-4 rounded-2xl border border-brand/5">
                                                 <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Adresse</span>
                                                 <span className="font-bold text-slate-700 text-sm">15 passage de la Main d'Or, 75011 Paris</span>
                                             </div>
@@ -639,12 +639,12 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
                                         return (
                                             <div
                                                 key={year}
-                                                className="relative p-8 rounded-[2rem] border-2 border-slate-100 bg-white shadow-sm transition-all duration-300 text-left flex flex-col hover:border-blue-200 hover:shadow-xl hover:shadow-blue-500/5 group"
+                                                className="relative p-8 rounded-[2rem] border-2 border-slate-100 bg-white shadow-sm transition-all duration-300 text-left flex flex-col hover:border-brand/20 hover:shadow-xl hover:shadow-brand/5 group"
                                             >
                                                 {/* En-tête de l'année */}
                                                 <div className="flex items-center justify-between mb-8">
                                                     <div className="flex flex-col">
-                                                        <span className="text-[10px] font-black uppercase tracking-widest text-blue-500 mb-1">Étape du contrat</span>
+                                                        <span className="text-[10px] font-black uppercase tracking-widest text-brand mb-1">Étape du contrat</span>
                                                         <h4 className="text-lg font-black text-slate-800">
                                                             {year}{year === "1" ? "ère" : "ème"} année
                                                         </h4>
@@ -662,7 +662,7 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
                                                             value={yearAge}
                                                             onChange={(e) => updateSalary(year, e.target.value)}
                                                             options={AGE_TRANCHE_OPTIONS}
-                                                            className="!bg-white !py-3 !text-sm border-slate-200 focus:border-blue-500 transition-colors"
+                                                            className="!bg-white !py-3 !text-sm border-slate-200 focus:border-brand transition-colors"
                                                             placeholder="Choisir l'âge..."
                                                         />
                                                     </div>
@@ -672,22 +672,22 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
                                                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Périodes de rémunération</label>
 
                                                         {year === "1" ? (
-                                                            <div className="bg-blue-50/30 p-4 rounded-2xl border border-blue-100/50 space-y-4">
+                                                            <div className="bg-brand/5 p-4 rounded-2xl border border-brand/10 space-y-4">
                                                                 <div className="flex items-center gap-2 mb-1">
-                                                                    <div className="w-1.5 h-1.5 rounded-full bg-blue-400"></div>
-                                                                    <span className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">2ème Période</span>
+                                                                    <div className="w-1.5 h-1.5 rounded-full bg-brand/40"></div>
+                                                                    <span className="text-[10px] font-bold text-brand uppercase tracking-wider">2ème Période</span>
                                                                 </div>
                                                                 <div className="grid grid-cols-2 gap-3">
                                                                     <Input
                                                                         type="date"
                                                                         label="Début"
-                                                                        className="!bg-white !shadow-none border-blue-100 focus:border-blue-400"
+                                                                        className="!bg-white !shadow-none border-brand/20 focus:border-brand"
                                                                         {...register(`contrat.date_debut_2periode_1er_annee` as any)}
                                                                     />
                                                                     <Input
                                                                         type="date"
                                                                         label="Fin"
-                                                                        className="!bg-white !shadow-none border-blue-100 focus:border-blue-400"
+                                                                        className="!bg-white !shadow-none border-brand/20 focus:border-brand"
                                                                         {...register(`contrat.date_fin_2periode_1er_annee` as any)}
                                                                     />
                                                                 </div>
@@ -717,22 +717,22 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
                                                                 </div>
 
                                                                 {/* Période 2 */}
-                                                                <div className="bg-blue-50/30 p-4 rounded-2xl border border-blue-100/50 space-y-4">
+                                                                <div className="bg-brand/5 p-4 rounded-2xl border border-brand/10 space-y-4">
                                                                     <div className="flex items-center gap-2 mb-1">
-                                                                        <div className="w-1.5 h-1.5 rounded-full bg-blue-400"></div>
-                                                                        <span className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">2ème Période</span>
+                                                                        <div className="w-1.5 h-1.5 rounded-full bg-brand/40"></div>
+                                                                        <span className="text-[10px] font-bold text-brand uppercase tracking-wider">2ème Période</span>
                                                                     </div>
                                                                     <div className="grid grid-cols-2 gap-3">
                                                                         <Input
                                                                             type="date"
                                                                             label="Début"
-                                                                            className="!bg-white !shadow-none border-blue-100 focus:border-blue-400"
+                                                                            className="!bg-white !shadow-none border-brand/20 focus:border-brand"
                                                                             {...register(`contrat.date_debut_2periode_${year === "2" ? "2eme" : year === "3" ? "3eme" : "4eme"}_annee` as any)}
                                                                         />
                                                                         <Input
                                                                             type="date"
                                                                             label="Fin"
-                                                                            className="!bg-white !shadow-none border-blue-100 focus:border-blue-400"
+                                                                            className="!bg-white !shadow-none border-brand/20 focus:border-brand"
                                                                             {...register(`contrat.date_fin_2periode_${year === "2" ? "2eme" : year === "3" ? "3eme" : "4eme"}_annee` as any)}
                                                                         />
                                                                     </div>
@@ -752,23 +752,23 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
                                                     </div>
                                                     <div className="text-right">
                                                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Salaire Brut</span>
-                                                        <div className="text-2xl font-black text-blue-600">
+                                                        <div className="text-2xl font-black text-brand">
                                                             {yearAge ? `${montant.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 2 })}` : "-- €"}
                                                         </div>
                                                     </div>
                                                 </div>
 
                                                 <div className="absolute top-0 right-0 p-6 opacity-0 group-hover:opacity-10 scale-150 rotate-12 transition-all pointer-events-none">
-                                                    <Calculator size={80} className="text-blue-500" />
+                                                    <Calculator size={80} className="text-brand/10" />
                                                 </div>
                                             </div>
                                         );
                                     })}
                                 </div>
 
-                                <div className="mt-6 p-4 rounded-2xl bg-indigo-50/50 border border-indigo-100/50 flex items-start gap-4">
-                                    <Info size={18} className="text-indigo-500 shrink-0 mt-0.5" />
-                                    <p className="text-[10px] text-indigo-600/80 font-medium leading-relaxed italic">
+                                <div className="mt-6 p-4 rounded-2xl bg-brand/5 border border-brand/10 flex items-start gap-4">
+                                    <Info size={18} className="text-brand shrink-0 mt-0.5" />
+                                    <p className="text-[10px] text-brand/80 font-medium leading-relaxed italic">
                                         Note : La tranche d'âge peut évoluer au cours du contrat. Configurez l'âge attendu pour chaque période. Calcul basé sur le SMIC 2024 de 1 823,03 € brut mensuel.
                                     </p>
                                 </div>

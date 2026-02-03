@@ -52,19 +52,19 @@ const REQUIRED_DOCUMENTS = [
 ];
 
 const ADMIN_DOCS = [
-    { id: 'atre', title: "Fiche ATRE", subtitle: "Autorisation de Travail et Renseignements", desc: "Information entreprise et tuteur", color: 'orange', btnText: 'Compléter' },
-    { id: 'renseignements', title: "Fiche de renseignements", subtitle: "Informations personnelles", desc: "Coordonnées et état civil", color: 'blue', btnText: 'Compléter' },
-    { id: 'cerfa', title: "Fiche CERFA", subtitle: "Contrat d'apprentissage", desc: "Génération du contrat officiel FA13", color: 'emerald', btnText: 'Générer' },
-    { id: 'reglement', title: "Règlement intérieur", subtitle: "Engagement étudiant", desc: "Document à lire et signer", color: 'green', btnText: 'Signer' },
-    { id: 'connaissance', title: "Prise de connaissance", subtitle: "Attestation documents", desc: "Charte informatique, Livret d'accueil...", color: 'purple', btnText: 'Signer' },
-    { id: 'livret', title: "Livret d'apprentissage", subtitle: "Suivi pédagogique", desc: "Document de liaison CFA/Entreprise", color: 'cyan', btnText: 'Générer' },
+    { id: 'atre', title: "Fiche ATRE", subtitle: "Autorisation de Travail et Renseignements", desc: "Information entreprise et tuteur", color: 'orange', btnText: 'Compléter', gradient: 'from-orange-400 to-orange-600', shadow: 'shadow-orange-500/20' },
+    { id: 'renseignements', title: "Fiche de renseignements", subtitle: "Informations personnelles", desc: "Coordonnées et état civil", color: 'blue', btnText: 'Compléter', gradient: 'from-blue-400 to-blue-600', shadow: 'shadow-blue-500/20' },
+    { id: 'cerfa', title: "Fiche CERFA", subtitle: "Contrat d'apprentissage", desc: "Génération du contrat officiel FA13", color: 'emerald', btnText: 'Générer', gradient: 'from-emerald-400 to-emerald-600', shadow: 'shadow-emerald-500/20' },
+    { id: 'reglement', title: "Règlement intérieur", subtitle: "Engagement étudiant", desc: "Document à lire et signer", color: 'green', btnText: 'Signer', gradient: 'from-green-400 to-green-600', shadow: 'shadow-green-500/20' },
+    { id: 'connaissance', title: "Prise de connaissance", subtitle: "Attestation documents", desc: "Charte informatique, Livret d'accueil...", color: 'purple', btnText: 'Signer', gradient: 'from-purple-400 to-purple-600', shadow: 'shadow-purple-500/20' },
+    { id: 'livret', title: "Livret d'apprentissage", subtitle: "Suivi pédagogique", desc: "Document de liaison CFA/Entreprise", color: 'cyan', btnText: 'Générer', gradient: 'from-cyan-400 to-cyan-600', shadow: 'shadow-cyan-500/20' },
 ];
 
 const FORMATION_CARDS = [
-    { id: 'mco', title: 'BTS MCO', subtitle: 'Management Commercial Opérationnel', color: 'blue' },
-    { id: 'ndrc', title: 'BTS NDRC', subtitle: 'Négociation et Digitalisation de la Relation Client', color: 'green' },
-    { id: 'bachelor', title: 'BACHELOR RDC', subtitle: 'Responsable Développement Commercial', color: 'purple' },
-    { id: 'tpntc', title: 'TP NTC', subtitle: 'Titre Pro Négociateur Technico-Commercial', color: 'orange' }
+    { id: 'mco', title: 'BTS MCO', subtitle: 'Management Commercial Opérationnel', color: 'blue', gradient: 'from-blue-500 to-blue-600' },
+    { id: 'ndrc', title: 'BTS NDRC', subtitle: 'Négociation et Digitalisation de la Relation Client', color: 'green', gradient: 'from-emerald-500 to-emerald-600' },
+    { id: 'bachelor', title: 'BACHELOR RDC', subtitle: 'Responsable Développement Commercial', color: 'purple', gradient: 'from-purple-500 to-purple-600' },
+    { id: 'tpntc', title: 'TP NTC', subtitle: 'Titre Pro Négociateur Technico-Commercial', color: 'orange', gradient: 'from-orange-500 to-orange-600' }
 ];
 
 // --- COMPONENTS ---
@@ -94,12 +94,12 @@ const StepItem = ({ step, label, isActive, isCompleted }: { step: number, label:
         <div className={`w-11 h-11 rounded-full border-2 flex items-center justify-center font-bold text-base transition-all duration-300 ${isCompleted
             ? 'bg-emerald-500 border-emerald-500 text-white'
             : isActive
-                ? 'bg-blue-600 border-blue-600 text-white scale-110 shadow-lg shadow-blue-500/30'
-                : 'bg-[#F8FAFC] border-slate-200 text-slate-400'
+                ? 'bg-brand border-brand text-white scale-110 shadow-lg shadow-brand/30'
+                : 'bg-slate-100 border-slate-200 text-slate-400'
             }`}>
             {isCompleted ? <CheckCircle2 size={20} /> : step}
         </div>
-        <div className={`text-xs font-semibold uppercase tracking-wide transition-colors duration-300 ${isActive ? 'text-blue-600' : isCompleted ? 'text-emerald-600' : 'text-slate-400'}`}>
+        <div className={`text-xs font-semibold uppercase tracking-wide transition-colors duration-300 ${isActive ? 'text-brand' : isCompleted ? 'text-emerald-600' : 'text-slate-400'}`}>
             {label}
         </div>
     </div>
@@ -349,7 +349,7 @@ const InterviewsTrackingView = ({ onLaunchInterview }: { onLaunchInterview: (can
                 <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-10">
                     <div className="flex-1">
                         <div className="flex items-center gap-3 mb-4">
-                            <span className="px-3 py-1 bg-primary-50 text-primary-600 rounded-lg text-[10px] font-black uppercase tracking-widest border border-primary-100">Management</span>
+                            <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-lg text-[10px] font-black uppercase tracking-widest border border-blue-100">Management</span>
                             <div className="w-1.5 h-1.5 bg-slate-300 rounded-full"></div>
                             <span className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Temps réel</span>
                         </div>
@@ -419,7 +419,7 @@ const InterviewsTrackingView = ({ onLaunchInterview }: { onLaunchInterview: (can
                                         </div>
                                     </td>
                                     <td className="px-8 py-6">
-                                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-primary-50 text-primary-600 border border-primary-100/50">
+                                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-brand/10 text-brand border border-brand/20">
                                             <Briefcase size={14} />
                                             <span className="text-[11px] font-bold uppercase tracking-tight">{item.c.formation || 'Non spécifiée'}</span>
                                         </div>
@@ -464,7 +464,7 @@ const InterviewsTrackingView = ({ onLaunchInterview }: { onLaunchInterview: (can
                                     </td>
                                     <td className="px-8 py-6 text-right">
                                         {item.interviewStatus === 'Completed' ? (
-                                            <button className="p-2.5 rounded-xl text-slate-400 hover:text-primary hover:bg-primary-50 transition-all border border-transparent hover:border-primary-100">
+                                            <button className="p-2.5 rounded-xl text-slate-400 hover:text-brand hover:bg-brand/10 transition-all border border-transparent hover:border-brand/20">
                                                 <ExternalLink size={20} />
                                             </button>
                                         ) : (
@@ -579,7 +579,7 @@ const AdmissionView = () => {
                     <button onClick={() => setMainTab('dashboard')} className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-slate-500 hover:text-slate-700 transition-all">
                         Tableau de bord
                     </button>
-                    <button className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold bg-white text-primary shadow-sm border border-slate-200 transition-all">
+                    <button className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold bg-white text-brand shadow-sm border border-slate-200 transition-all">
                         Suivi Entretiens
                     </button>
                 </div>
@@ -639,7 +639,7 @@ const AdmissionView = () => {
                 </button>
             </div>
 
-            <div className="flex overflow-x-auto gap-2 mb-8 bg-[#F1F5F9] p-2 rounded-2xl border border-slate-200 no-scrollbar shadow-inner">
+            <div className="flex overflow-x-auto gap-2 mb-8 bg-slate-100 p-2 rounded-2xl border border-slate-200 no-scrollbar shadow-inner">
                 {[
                     { id: AdmissionTab.TESTS, label: 'Tests', icon: PenTool },
                     { id: AdmissionTab.QUESTIONNAIRE, label: 'Fiche Étudiant', icon: Info },
@@ -668,13 +668,13 @@ const AdmissionView = () => {
                             <p className="text-slate-500 mb-8 ml-9 font-medium">Choisissez la formation pour accéder au test.</p>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                                 {FORMATION_CARDS.map(f => (
-                                    <div key={f.id} onClick={() => setSelectedFormation(f.id)} className="bg-slate-50/50 border-2 border-slate-100 rounded-3xl p-8 text-center cursor-pointer hover:border-blue-500 hover:-translate-y-1 hover:shadow-xl transition-all group">
-                                        <div className={`w-16 h-16 rounded-2xl mx-auto mb-6 flex items-center justify-center text-white bg-gradient-to-br from-${f.color}-500 to-${f.color}-600 shadow-lg`}>
+                                    <div key={f.id} onClick={() => setSelectedFormation(f.id)} className="bg-slate-50/50 border-2 border-slate-100 rounded-3xl p-8 text-center cursor-pointer hover:border-brand hover:-translate-y-1 hover:shadow-xl transition-all group">
+                                        <div className={`w-16 h-16 rounded-2xl mx-auto mb-6 flex items-center justify-center text-white bg-gradient-to-br ${f.gradient} shadow-lg`}>
                                             <Briefcase size={28} />
                                         </div>
                                         <h4 className="font-black text-slate-800 text-lg mb-2">{f.title}</h4>
                                         <p className="text-xs text-slate-400 font-bold mb-6 h-10 leading-relaxed uppercase tracking-wider">{f.subtitle}</p>
-                                        <span className="inline-block px-4 py-1.5 bg-white rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-blue-600 group-hover:bg-blue-50 transition-colors border border-slate-100">~20 min</span>
+                                        <span className="inline-block px-4 py-1.5 bg-white rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-brand group-hover:bg-brand/5 transition-colors border border-slate-100">~20 min</span>
                                     </div>
                                 ))}
                             </div>
@@ -741,8 +741,8 @@ const AdmissionView = () => {
 
                             return (
                                 <div key={doc.id} className={`border-2 rounded-3xl p-8 flex flex-col items-center justify-center text-center transition-all cursor-pointer group relative overflow-hidden ${isUploaded
-                                    ? 'border-emerald-400 bg-emerald-50/50'
-                                    : 'border-slate-100 bg-white hover:border-primary hover:bg-slate-50/50 hover:shadow-xl'}
+                                    ? 'border-emerald-400 bg-emerald-50'
+                                    : 'border-slate-100 bg-white hover:border-brand hover:bg-slate-50 hover:shadow-xl'}
                                     `}>
                                     <input
                                         type="file"
@@ -754,14 +754,14 @@ const AdmissionView = () => {
 
                                     {isUploading ? (
                                         <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/90 backdrop-blur-sm z-20">
-                                            <Loader2 size={40} className="animate-spin text-primary mb-3" />
-                                            <span className="text-[10px] font-black uppercase tracking-widest text-primary">Envoi en cours</span>
+                                            <Loader2 size={40} className="animate-spin text-brand mb-3" />
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-brand">Envoi en cours</span>
                                         </div>
                                     ) : null}
 
                                     <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-6 transition-all ${isUploaded
                                         ? 'bg-emerald-100 text-emerald-600 scale-110 shadow-lg shadow-emerald-500/10'
-                                        : 'bg-slate-50 text-slate-300 group-hover:bg-primary-50 group-hover:text-primary group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-primary/10'}
+                                        : 'bg-slate-50 text-slate-300 group-hover:bg-brand/10 group-hover:text-brand group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-brand/10'}
                                         `}>
                                         {isUploaded ? <CheckCircle2 size={32} strokeWidth={2.5} /> : <Upload size={32} />}
                                     </div>
@@ -770,7 +770,7 @@ const AdmissionView = () => {
 
                                     <button className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all pointer-events-none ${isUploaded
                                         ? 'bg-emerald-200 text-emerald-800 shadow-sm'
-                                        : 'bg-slate-900 text-white shadow-lg shadow-slate-900/20 group-hover:bg-primary group-hover:shadow-primary/20'}`}>
+                                        : 'bg-slate-900 text-white shadow-lg shadow-slate-900/20 group-hover:bg-brand group-hover:shadow-brand/20'}`}>
                                         {isUploaded ? 'Document reçu' : 'Téléverser'}
                                     </button>
                                 </div>
@@ -782,11 +782,11 @@ const AdmissionView = () => {
                         <div className="w-full md:w-1/2">
                             <div className="flex justify-between text-[11px] font-black uppercase tracking-widest mb-4">
                                 <span className="text-slate-400">{uploadedCount} / {REQUIRED_DOCUMENTS.length} documents déposés</span>
-                                <span className="text-primary">{Math.round(progressPercent)}%</span>
+                                <span className="text-brand">{Math.round(progressPercent)}%</span>
                             </div>
                             <div className="h-3 bg-slate-50 rounded-full overflow-hidden border border-slate-100 p-0.5">
                                 <div
-                                    className="h-full rounded-full transition-all duration-700 ease-out bg-gradient-to-r from-primary to-indigo-500"
+                                    className="h-full rounded-full transition-all duration-700 ease-out bg-gradient-to-r from-brand to-primary"
                                     style={{ width: `${progressPercent}%` }}
                                 ></div>
                             </div>
@@ -830,7 +830,7 @@ const AdmissionView = () => {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         {ADMIN_DOCS.map(doc => (
                             <div key={doc.id} className="bg-white border border-slate-200 rounded-3xl p-8 hover:shadow-2xl hover:-translate-y-1 transition-all group">
-                                <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br from-${doc.color}-400 to-${doc.color}-600 flex items-center justify-center text-white mb-6 shadow-lg shadow-${doc.color}-500/20 group-hover:scale-110 transition-transform`}>
+                                <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${doc.gradient} flex items-center justify-center text-white mb-6 shadow-lg ${doc.shadow} group-hover:scale-110 transition-transform`}>
                                     <FileText size={32} />
                                 </div>
                                 <h4 className="font-black text-slate-800 text-lg mb-1 tracking-tight">{doc.title}</h4>
@@ -842,7 +842,7 @@ const AdmissionView = () => {
                                         <button
                                             disabled={isGenerating}
                                             onClick={() => handleDocAction(doc)}
-                                            className={`w-full py-3.5 rounded-xl border-2 border-slate-100 font-black text-[11px] uppercase tracking-widest text-slate-600 hover:border-primary hover:text-primary transition-all flex items-center justify-center gap-2 ${isGenerating ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                            className={`w-full py-3.5 rounded-xl border-2 border-slate-100 font-black text-[11px] uppercase tracking-widest text-slate-600 hover:border-brand hover:text-brand transition-all flex items-center justify-center gap-2 ${isGenerating ? 'opacity-50 cursor-not-allowed' : ''}`}
                                         >
                                             {isGenerating ? 'Génération...' : doc.btnText} <ArrowRight size={14} className={isGenerating ? 'animate-spin' : ''} />
                                         </button>

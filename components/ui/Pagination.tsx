@@ -57,11 +57,10 @@ const Pagination: React.FC<PaginationProps> = ({
     <button
       key={page}
       onClick={() => onPageChange(page)}
-      className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm transition-all duration-300 ${
-        currentPage === page
-          ? 'bg-primary text-white shadow-lg shadow-primary/25 scale-110 z-10'
+      className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm transition-all duration-300 ${currentPage === page
+          ? 'bg-brand text-white shadow-lg shadow-brand/25 scale-110 z-10'
           : 'bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-800 border border-slate-100'
-      }`}
+        }`}
     >
       {page}
     </button>
@@ -76,7 +75,7 @@ const Pagination: React.FC<PaginationProps> = ({
       >
         <ChevronLeft size={20} strokeWidth={2.5} />
       </button>
-      
+
       <div className="flex items-center gap-1.5">
         {renderPageNumbers()}
       </div>
@@ -84,7 +83,7 @@ const Pagination: React.FC<PaginationProps> = ({
       <button
         onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
         disabled={currentPage === totalPages}
-        className="w-10 h-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center text-slate-400 hover:text-primary hover:bg-primary-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
+        className="w-10 h-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center text-slate-400 hover:text-brand hover:bg-brand/10 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
       >
         <ChevronRight size={20} strokeWidth={2.5} />
       </button>

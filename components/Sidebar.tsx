@@ -46,7 +46,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   };
 
   return (
-    <aside className={`fixed top-0 left-0 h-full w-[260px] bg-[#0f172a] text-[#e2e8f0] flex flex-col z-50 transition-transform duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
+    <aside className={`fixed top-0 left-0 h-full w-[260px] bg-sidebar text-slate-200 flex flex-col z-50 transition-transform duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
 
       {/* Logo */}
       <div className="p-6 flex items-center gap-3">
@@ -59,10 +59,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         <div className="mb-1">
           <div
             onClick={() => setAdmissionOpen(!admissionOpen)}
-            className={`flex items-center gap-[14px] px-[18px] py-[14px] rounded-xl cursor-pointer transition-all duration-200 font-medium text-[0.95rem] relative ${isModuleActive('/admission') ? 'bg-[#6366F1] text-white' : 'text-[#94a3b8] hover:bg-white/10 hover:text-white'
+            className={`flex items-center gap-[14px] px-[18px] py-[14px] rounded-xl cursor-pointer transition-all duration-200 font-medium text-[0.95rem] relative ${isModuleActive('/admission') ? 'bg-brand text-white' : 'text-slate-400 hover:bg-white/10 hover:text-white'
               }`}
           >
-            <Briefcase size={22} className={isModuleActive('/admission') ? 'text-white' : 'text-[#94a3b8]'} />
+            <Briefcase size={22} className={isModuleActive('/admission') ? 'text-white' : 'text-slate-400'} />
             <span>Admissions</span>
             <ChevronDown size={18} className={`ml-auto transition-transform duration-300 ${admissionOpen ? 'rotate-180' : ''}`} />
           </div>
@@ -85,10 +85,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         <div className="mb-1">
           <div
             onClick={() => setCommercialOpen(!commercialOpen)}
-            className={`flex items-center gap-[14px] px-[18px] py-[14px] rounded-xl cursor-pointer transition-all duration-200 font-medium text-[0.95rem] relative ${isModuleActive('/commercial') ? 'bg-[#6366F1] text-white' : 'text-[#94a3b8] hover:bg-white/10 hover:text-white'
+            className={`flex items-center gap-[14px] px-[18px] py-[14px] rounded-xl cursor-pointer transition-all duration-200 font-medium text-[0.95rem] relative ${isModuleActive('/commercial') ? 'bg-brand text-white' : 'text-slate-400 hover:bg-white/10 hover:text-white'
               }`}
           >
-            <LayoutDashboard size={22} className={isModuleActive('/commercial') ? 'text-white' : 'text-[#94a3b8]'} />
+            <LayoutDashboard size={22} className={isModuleActive('/commercial') ? 'text-white' : 'text-slate-400'} />
             <span>Commercial</span>
             <ChevronDown size={18} className={`ml-auto transition-transform duration-300 ${commercialOpen ? 'rotate-180' : ''}`} />
           </div>
@@ -125,10 +125,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         <div className="mb-1">
           <div
             onClick={() => setRhOpen(!rhOpen)}
-            className={`flex items-center gap-[14px] px-[18px] py-[14px] rounded-xl cursor-pointer transition-all duration-200 font-medium text-[0.95rem] relative ${isModuleActive('/rh') ? 'bg-[#6366F1] text-white' : 'text-[#94a3b8] hover:bg-white/10 hover:text-white'
+            className={`flex items-center gap-[14px] px-[18px] py-[14px] rounded-xl cursor-pointer transition-all duration-200 font-medium text-[0.95rem] relative ${isModuleActive('/rh') ? 'bg-brand text-white' : 'text-slate-400 hover:bg-white/10 hover:text-white'
               }`}
           >
-            <Users size={22} className={isModuleActive('/rh') ? 'text-white' : 'text-[#94a3b8]'} />
+            <Users size={22} className={isModuleActive('/rh') ? 'text-white' : 'text-slate-400'} />
             <span>RH</span>
             <ChevronDown size={18} className={`ml-auto transition-transform duration-300 ${rhOpen ? 'rotate-180' : ''}`} />
           </div>
@@ -182,13 +182,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           to="/etudiant"
           onClick={handleLinkClick}
           className={({ isActive }) => `flex items-center gap-[14px] px-[18px] py-[14px] rounded-xl cursor-pointer transition-all duration-200 font-medium text-[0.95rem] mb-1 ${isActive
-            ? 'bg-[#6366F1] text-white'
-            : 'text-[#94a3b8] hover:bg-white/10 hover:text-white'
+            ? 'bg-brand text-white'
+            : 'text-slate-400 hover:bg-white/10 hover:text-white'
             }`}
         >
           {({ isActive }) => (
             <>
-              <BookOpen size={22} className={isActive ? 'text-white' : 'text-[#94a3b8]'} />
+              <BookOpen size={22} className={isActive ? 'text-white' : 'text-slate-400'} />
               <span>Étudiant</span>
             </>
           )}
@@ -199,13 +199,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           to="/parametres"
           onClick={handleLinkClick}
           className={({ isActive }) => `flex items-center gap-[14px] px-[18px] py-[14px] rounded-xl cursor-pointer transition-all duration-200 font-medium text-[0.95rem] mb-1 ${isActive
-            ? 'bg-[#6366F1] text-white'
-            : 'text-[#94a3b8] hover:bg-white/10 hover:text-white'
+            ? 'bg-brand text-white'
+            : 'text-slate-400 hover:bg-white/10 hover:text-white'
             }`}
         >
           {({ isActive }) => (
             <>
-              <Settings size={22} className={isActive ? 'text-white' : 'text-[#94a3b8]'} />
+              <Settings size={22} className={isActive ? 'text-white' : 'text-slate-400'} />
               <span>Paramètres</span>
             </>
           )}
@@ -216,7 +216,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       <div className="p-4 border-t border-slate-700/50">
         <button
           onClick={handleLogout}
-          className="flex items-center gap-[14px] px-[18px] py-[14px] rounded-xl cursor-pointer transition-all duration-200 font-medium text-[0.95rem] w-full hover:bg-red-500/10 hover:text-red-400 text-[#94a3b8]"
+          className="flex items-center gap-[14px] px-[18px] py-[14px] rounded-xl cursor-pointer transition-all duration-200 font-medium text-[0.95rem] w-full hover:bg-rose-500/10 hover:text-rose-400 text-slate-400"
         >
           <LogOut size={22} className="nav-icon" />
           <span>Déconnexion</span>

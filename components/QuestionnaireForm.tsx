@@ -205,12 +205,12 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
     }, [dateNaissance]);
 
     return (
-        <form onSubmit={handleSubmit(onSubmit)} className="bg-gradient-to-br from-blue-50 to-white rounded-3xl p-6 md:p-10 shadow-xl border border-blue-100 relative overflow-hidden animate-slide-in">
-            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-500 via-indigo-500 to-violet-500"></div>
+        <form onSubmit={handleSubmit(onSubmit)} className="bg-gradient-to-br from-slate-50 to-white rounded-3xl p-6 md:p-10 shadow-xl border border-slate-100 relative overflow-hidden animate-slide-in">
+            <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-brand via-primary to-violet-500"></div>
 
-            <div className="flex flex-col md:flex-row md:items-center gap-6 mb-10 pb-8 border-b border-blue-100">
+            <div className="flex flex-col md:flex-row md:items-center gap-6 mb-10 pb-8 border-b border-slate-100">
                 <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-blue-500/20 shrink-0">
+                    <div className="w-16 h-16 bg-gradient-to-br from-brand to-primary rounded-2xl flex items-center justify-center text-white shadow-xl shadow-brand/20 shrink-0">
                         <User size={32} />
                     </div>
                     <div className="w-px h-12 bg-slate-200 hidden md:block"></div>
@@ -246,8 +246,8 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
                                 {['Féminin', 'Masculin'].map((val, idx) => (
                                     <label key={val} className="relative cursor-pointer group flex-1 min-w-[120px]">
                                         <input className="peer sr-only" type="radio" value={val} {...register('sexe')} />
-                                        <div className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl border-2 transition-all ${selectedSexe === val ? 'bg-primary-50/50 border-primary shadow-indigo' : 'bg-slate-50/50 border-transparent hover:border-slate-200'}`}>
-                                            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${selectedSexe === val ? 'bg-primary text-white' : 'bg-slate-200 text-slate-400'}`}>{String.fromCharCode(65 + idx)}</span>
+                                        <div className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl border-2 transition-all ${selectedSexe === val ? 'bg-brand/10 border-brand shadow-brand/10' : 'bg-slate-50/50 border-transparent hover:border-slate-200'}`}>
+                                            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${selectedSexe === val ? 'bg-brand text-white' : 'bg-slate-200 text-slate-400'}`}>{String.fromCharCode(65 + idx)}</span>
                                             <span className="font-bold text-slate-700">{val}</span>
                                         </div>
                                     </label>
@@ -322,7 +322,7 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
                         onToggle={() => toggleSection('legal')}
                     >
                         <div className="space-y-8">
-                            <div className="bg-slate-50/50 p-8 rounded-3xl border border-slate-100">
+                            <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100">
                                 <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">Représentant légal 1</h3>
                                 <div className="grid grid-cols-12 gap-5">
                                     <div className="col-span-12 md:col-span-6">
@@ -451,17 +451,17 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
                                         <button
                                             type="button"
                                             onClick={() => setValue(item.name as any, true)}
-                                            className={`flex-1 flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all ${declarations[item.name as keyof StudentFormValues] === true ? 'bg-primary-50/50 border-primary shadow-indigo' : 'bg-white border-transparent hover:border-slate-200'}`}
+                                            className={`flex-1 flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all ${declarations[item.name as keyof StudentFormValues] === true ? 'bg-brand/10 border-brand shadow-brand/10' : 'bg-white border-transparent hover:border-slate-200'}`}
                                         >
-                                            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${declarations[item.name as keyof StudentFormValues] === true ? 'bg-primary text-white' : 'bg-slate-100 text-slate-400'}`}>A</span>
+                                            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${declarations[item.name as keyof StudentFormValues] === true ? 'bg-brand text-white' : 'bg-slate-100 text-slate-400'}`}>A</span>
                                             <span className="font-bold text-slate-700">Oui</span>
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => setValue(item.name as any, false)}
-                                            className={`flex-1 flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all ${declarations[item.name as keyof StudentFormValues] === false ? 'bg-primary-50/50 border-primary shadow-indigo' : 'bg-white border-transparent hover:border-slate-200'}`}
+                                            className={`flex-1 flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all ${declarations[item.name as keyof StudentFormValues] === false ? 'bg-brand/10 border-brand shadow-brand/10' : 'bg-white border-transparent hover:border-slate-200'}`}
                                         >
-                                            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${declarations[item.name as keyof StudentFormValues] === false ? 'bg-primary text-white' : 'bg-slate-100 text-slate-400'}`}>B</span>
+                                            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${declarations[item.name as keyof StudentFormValues] === false ? 'bg-brand text-white' : 'bg-slate-100 text-slate-400'}`}>B</span>
                                             <span className="font-bold text-slate-700">Non</span>
                                         </button>
                                     </div>
@@ -555,8 +555,8 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
                                 {['Oui', 'En recherche', 'Non'].map((val, idx) => (
                                     <label key={val} className="relative cursor-pointer group">
                                         <input className="peer sr-only" type="radio" value={val} {...register('entreprise_d_accueil')} />
-                                        <div className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl border-2 transition-all ${selectedEntreprise === val ? 'bg-primary-50/50 border-primary shadow-indigo' : 'bg-slate-50/50 border-transparent hover:border-slate-200'}`}>
-                                            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${selectedEntreprise === val ? 'bg-primary text-white' : 'bg-slate-200 text-slate-400'}`}>{String.fromCharCode(65 + idx)}</span>
+                                        <div className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl border-2 transition-all ${selectedEntreprise === val ? 'bg-brand/10 border-brand shadow-brand/10' : 'bg-slate-50/50 border-transparent hover:border-slate-200'}`}>
+                                            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${selectedEntreprise === val ? 'bg-brand text-white' : 'bg-slate-200 text-slate-400'}`}>{String.fromCharCode(65 + idx)}</span>
                                             <span className="font-bold text-slate-700">{val}</span>
                                         </div>
                                     </label>
@@ -585,16 +585,16 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
                         </div>
                         <div className="col-span-12">
                             <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Motivations et projet professionnel </label>
-                            <textarea placeholder="Décrivez brièvement vos motivations et votre projet professionnel..." rows={4} className="w-full px-5 py-4 bg-slate-50/50 border-2 border-transparent rounded-2xl text-[15px] font-bold text-slate-700 placeholder:text-slate-300 transition-all duration-300 outline-none focus:bg-white focus:border-primary focus:shadow-indigo resize-none" {...register('motivation_projet_professionnel')}></textarea>
+                            <textarea placeholder="Décrivez brièvement vos motivations et votre projet professionnel..." rows={4} className="w-full px-5 py-4 bg-slate-50 border-2 border-transparent rounded-2xl text-[15px] font-bold text-slate-700 placeholder:text-slate-300 transition-all duration-300 outline-none focus:bg-white focus:border-brand focus:shadow-brand/10 resize-none" {...register('motivation_projet_professionnel')}></textarea>
                         </div>
                     </div>
                 </Card>
             </div>
 
-            <div className="mt-8 pt-8 border-t border-blue-100 flex flex-col items-center gap-6">
+            <div className="mt-8 pt-8 border-t border-slate-100 flex flex-col items-center gap-6">
                 <div className="flex flex-col items-center gap-2">
                     <label className="flex items-center gap-3 cursor-pointer select-none">
-                        <input className="w-5 h-5 accent-blue-600 rounded cursor-pointer" type="checkbox" {...register('agreement')} />
+                        <input className="w-5 h-5 accent-brand rounded cursor-pointer" type="checkbox" {...register('agreement')} />
                         <span className="font-medium text-slate-700">J'atteste sur l'honneur l'exactitude des informations fournies <span className="text-red-500">*</span></span>
                     </label>
                     {errors.agreement && <p className="mt-1.5 text-rose-500 text-xs font-bold animate-slide-in">{errors.agreement.message}</p>}

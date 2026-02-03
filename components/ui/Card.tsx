@@ -57,7 +57,7 @@ const Card: React.FC<CardProps> = ({
           onClick={() => collapsible && handleToggle()}
         >
           {step && (
-            <div className="w-9 h-9 bg-primary-50 text-primary-600 rounded-xl flex items-center justify-center font-black text-sm shadow-sm border border-primary-100/50">
+            <div className="w-9 h-9 bg-brand/10 text-brand rounded-xl flex items-center justify-center font-black text-sm shadow-sm border border-brand/20">
               {step}
             </div>
           )}
