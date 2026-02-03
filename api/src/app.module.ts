@@ -11,9 +11,16 @@ import { UsersModule } from './users/users.module';
         }),
         MongooseModule.forRootAsync({
             imports: [ConfigModule],
-            useFactory: async (configService: ConfigService) => ({
-                uri: configService.get<string>('MONGODB_URI'),
-            }),
+            useFactory: async (configService: ConfigService) => {
+                const uri = configService.get<string>('MONGODB_URI');
+                if (!uri) {
+                    console.error('[AppModule] MONGODB_URI is not defined in environment variables!');
+                }
+                return {
+                    uri: uri || 'mongodb://localhost:27017/unused',
+                    serverSelectionTimeoutMS: 5000, // 5 seconds timeout
+                };
+            },
             inject: [ConfigService],
         }),
         AuthModule,
