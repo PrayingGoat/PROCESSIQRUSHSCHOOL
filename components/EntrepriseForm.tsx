@@ -107,7 +107,26 @@ const companySchema = z.object({
         machines_dangereuses: z.string(),
         caisse_retraite: z.string().optional().or(z.literal("")),
         date_avenant: z.string().optional().or(z.literal("")),
-        nombre_mois: z.number().optional()
+        nombre_mois: z.number().optional(),
+
+        // MAPPINGS DES PÉRIODES DE SALAIRE
+        date_debut_2periode_1er_annee: z.string().optional().or(z.literal("")),
+        date_fin_2periode_1er_annee: z.string().optional().or(z.literal("")),
+
+        date_debut_1periode_2eme_annee: z.string().optional().or(z.literal("")),
+        date_fin_1periode_2eme_annee: z.string().optional().or(z.literal("")),
+        date_debut_2periode_2eme_annee: z.string().optional().or(z.literal("")),
+        date_fin_2periode_2eme_annee: z.string().optional().or(z.literal("")),
+
+        date_debut_1periode_3eme_annee: z.string().optional().or(z.literal("")),
+        date_fin_1periode_3eme_annee: z.string().optional().or(z.literal("")),
+        date_debut_2periode_3eme_annee: z.string().optional().or(z.literal("")),
+        date_fin_2periode_3eme_annee: z.string().optional().or(z.literal("")),
+
+        date_debut_1periode_4eme_annee: z.string().optional().or(z.literal("")),
+        date_fin_1periode_4eme_annee: z.string().optional().or(z.literal("")),
+        date_debut_2periode_4eme_annee: z.string().optional().or(z.literal("")),
+        date_fin_2periode_4eme_annee: z.string().optional().or(z.literal(""))
     }),
     salaire: z.object({
         age1: z.string().optional(),
@@ -164,7 +183,15 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
                 pourcentage_smic3: 0, smic3: "1823.03", montant_salaire_brut3: 0,
                 pourcentage_smic4: 0, smic4: "1823.03", montant_salaire_brut4: 0,
                 date_conclusion: "", date_debut_execution: "",
-                numero_deca_ancien_contrat: "", machines_dangereuses: "Non", caisse_retraite: "", date_avenant: "", nombre_mois: 12
+                numero_deca_ancien_contrat: "", machines_dangereuses: "Non", caisse_retraite: "", date_avenant: "", nombre_mois: 12,
+                // Initialisation des dates de périodes de salaire
+                date_debut_2periode_1er_annee: "", date_fin_2periode_1er_annee: "",
+                date_debut_1periode_2eme_annee: "", date_fin_1periode_2eme_annee: "",
+                date_debut_2periode_2eme_annee: "", date_fin_2periode_2eme_annee: "",
+                date_debut_1periode_3eme_annee: "", date_fin_1periode_3eme_annee: "",
+                date_debut_2periode_3eme_annee: "", date_fin_2periode_3eme_annee: "",
+                date_debut_1periode_4eme_annee: "", date_fin_1periode_4eme_annee: "",
+                date_debut_2periode_4eme_annee: "", date_fin_2periode_4eme_annee: ""
             },
             salaire: draftCompany?.salaire || {
                 age1: "", age2: "", age3: "", age4: ""
