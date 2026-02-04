@@ -15,6 +15,7 @@ export type ViewId =
   | 'commercial-alternance'
   // Admission
   | 'admission-main'
+  | 'classe-ntc'
   // RH
   | 'rh-dashboard' // Main RH view
   | 'rh-fiche'

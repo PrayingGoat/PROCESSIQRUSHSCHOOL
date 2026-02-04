@@ -18,6 +18,7 @@ interface CandidateDetailsModalProps {
     handleDelete: () => Promise<void>;
     isSaving: boolean;
     isDeleting: boolean;
+    onRelaunch?: (candidate: any) => void;
 }
 
 const CandidateDetailsModal: React.FC<CandidateDetailsModalProps> = ({
@@ -32,7 +33,8 @@ const CandidateDetailsModal: React.FC<CandidateDetailsModalProps> = ({
     handleSaveEdit,
     handleDelete,
     isSaving,
-    isDeleting
+    isDeleting,
+    onRelaunch
 }) => {
     if (!isOpen) return null;
 
@@ -189,7 +191,13 @@ const CandidateDetailsModal: React.FC<CandidateDetailsModalProps> = ({
                         {isEditing ? (
                             <Button variant="danger" onClick={handleSaveEdit} isLoading={isSaving} leftIcon={<Save size={18} />}> Enregistrer </Button>
                         ) : (
-                            <Button variant="danger" leftIcon={<Mail size={18} />}> Relancer l'étudiant </Button>
+                            <Button 
+                                variant="danger" 
+                                leftIcon={<Mail size={18} />}
+                                onClick={() => onRelaunch && onRelaunch(candidate)}
+                            > 
+                                Relancer l'étudiant 
+                            </Button>
                         )}
                     </div>
                 </div>

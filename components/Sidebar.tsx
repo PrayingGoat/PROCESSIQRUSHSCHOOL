@@ -78,6 +78,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
               </div>
               <span>Tableau de bord</span>
             </NavLink>
+            <NavLink
+              to="/classe-ntc"
+              onClick={handleLinkClick}
+              className={({ isActive }) => `nav-subitem ${isActive ? 'active' : ''}`}
+            >
+              <div className="w-[18px] h-[18px] flex items-center justify-center">
+                <div className="w-1.5 h-1.5 rounded-full bg-current opacity-70"></div>
+              </div>
+              <span>Classe NTC</span>
+            </NavLink>
           </div>
         </div>
 

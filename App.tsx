@@ -9,6 +9,8 @@ import RHView from './components/RHView';
 import StudentView from './components/StudentView';
 import LoginPage from './components/LoginPage';
 import Toast from './components/ui/Toast';
+import ClassNTCView from './components/ClassNTCView';
+import { AdmissionTab } from './types';
 
 
 const RequireAuth = ({ children }: { children: React.ReactNode }) => {
@@ -24,6 +26,8 @@ const RequireAuth = ({ children }: { children: React.ReactNode }) => {
 
 const App = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState<any>(null);
+  const [selectedTab, setSelectedTab] = useState<AdmissionTab | null>(null);
   const location = useLocation();
   const isLoginPage = location.pathname === '/login';
 
@@ -88,7 +92,24 @@ const App = () => {
               </Route>
 
               {/* Admission Routes */}
-              <Route path="/admission" element={<AdmissionView />} />
+              <Route path="/admission" element={
+                <AdmissionView
+                  selectedStudent={selectedStudent}
+                  selectedTab={selectedTab}
+                  onClearSelection={() => {
+                    setSelectedStudent(null);
+                    setSelectedTab(null);
+                  }}
+                />
+              } />
+              <Route path="/classe-ntc" element={
+                <ClassNTCView
+                  onSelectStudent={(student, tab) => {
+                    setSelectedStudent(student);
+                    setSelectedTab(tab);
+                  }}
+                />
+              } />
 
               {/* RH Routes */}
               <Route path="/rh" element={<Outlet />}>

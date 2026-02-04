@@ -1,0 +1,689 @@
+import React, { useState, useEffect } from 'react';
+import { 
+    Download, 
+    CheckCircle2, 
+    AlertCircle, 
+    Building, 
+    Search, 
+    Users, 
+    FileCheck, 
+    FileText,
+    ArrowRight,
+    Loader2,
+    Briefcase,
+    ShieldCheck,
+    Star,
+    ChevronRight,
+    MoreHorizontal,
+    LayoutGrid,
+    List
+} from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { api } from '../services/api';
+import Button from './ui/Button';
+import { useAppStore } from '../store/useAppStore';
+import { AdmissionTab } from '../types';
+import CandidateDetailsModal from './dashboard/CandidateDetailsModal';
+import { useApi } from '../hooks/useApi';
+
+interface ClassNTCViewProps {
+    onSelectStudent: (student: any, tab: AdmissionTab) => void;
+}
+
+const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
+    const [students, setStudents] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
+    const [currentTab, setCurrentTab] = useState<'students' | 'stats'>('students');
+    const [filter, setFilter] = useState<'all' | 'withFiche' | 'withCerfa' | 'complete'>('all');
+    
+    // Modal State
+    const [selectedCandidate, setSelectedCandidate] = useState<any>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editForm, setEditForm] = useState<any>(null);
+
+    const { showToast } = useAppStore();
+    const navigate = useNavigate();
+
+    const { execute: fetchDetails, loading: detailsLoading } = useApi(api.getCandidateById, {
+        onSuccess: (data) => setSelectedCandidate(data),
+        errorMessage: "Erreur lors de la récupération des détails de l'étudiant"
+    });
+
+    const { execute: updateCandidate, loading: isSaving } = useApi(api.updateCandidate, {
+        successMessage: "Candidat mis à jour avec succès",
+        onSuccess: () => {
+            fetchStudents();
+            setIsModalOpen(false);
+        }
+    });
+
+    const { execute: deleteCandidate, loading: isDeleting } = useApi(api.deleteCandidate, {
+        successMessage: "Étudiant supprimé avec succès.",
+        onSuccess: () => {
+            fetchStudents();
+            setIsModalOpen(false);
+        }
+    });
+
+    useEffect(() => {
+        fetchStudents();
+    }, [filter, currentTab]);
+
+    const fetchStudents = async () => {
+        try {
+            setLoading(true);
+            if (currentTab === 'stats') {
+                // Step 1: Get the list of IDs
+                const list = await api.getAllCandidates();
+                
+                if (list && list.length > 0) {
+                    // Step 2: Fetch FULL details for each student in parallel
+                    // We use Promise.all to fetch everything as fast as possible
+                    const fullDetails = await Promise.all(
+                        list.map(async (s: any) => {
+                            try {
+                                const id = s.id || s.record_id || (s.fields && s.fields.id);
+                                return await api.getCandidateById(id);
+                            } catch (e) {
+                                console.error(`Failed to fetch details for student`, e);
+                                return null;
+                            }
+                        })
+                    );
+                    
+                    // Filter out any failed requests
+                    setStudents(fullDetails.filter(s => s !== null));
+                } else {
+                    setStudents([]);
+                }
+            } else {
+                const params = {
+                    avecFicheUniquement: filter === 'withFiche',
+                    avecCerfaUniquement: filter === 'withCerfa',
+                    dossierCompletUniquement: filter === 'complete'
+                };
+                const data = await api.getStudentsList(params);
+                setStudents(data.etudiants || []);
+            }
+        } catch (error) {
+            showToast('Erreur lors du chargement des données', 'error');
+            setStudents([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // --- STATS CALCULATION ---
+    const calculateAge = (birthDate: string) => {
+        if (!birthDate) return 0;
+        const today = new Date();
+        const birth = new Date(birthDate);
+        let age = today.getFullYear() - birth.getFullYear();
+        const m = today.getMonth() - birth.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+        return age;
+    };
+
+    const statsData = React.useMemo(() => {
+        if (currentTab !== 'stats' || students.length === 0) return null;
+
+        const sexDist = { male: 0, female: 0, other: 0 };
+        const ageDist = { under18: 0, age18_20: 0, age21_25: 0, over25: 0 };
+        let totalAge = 0;
+        let studentsWithAge = 0;
+
+        students.forEach(s => {
+            const info = s.informations_personnelles || s.fields || s;
+            
+            // Sexe
+            const sexe = (info.sexe || "").toLowerCase();
+            if (sexe.includes('masculin') || sexe === 'homme') sexDist.male++;
+            else if (sexe.includes('féminin') || sexe.includes('feminin') || sexe === 'femme') sexDist.female++;
+            else sexDist.other++;
+
+            // Age
+            const age = calculateAge(info.date_naissance);
+            if (age > 0) {
+                totalAge += age;
+                studentsWithAge++;
+                if (age < 18) ageDist.under18++;
+                else if (age <= 20) ageDist.age18_20++;
+                else if (age <= 25) ageDist.age21_25++;
+                else ageDist.over25++;
+            }
+        });
+
+        // Calculate majority age group
+        const ageGroups = [
+            { label: '-18 ans', count: ageDist.under18 },
+            { label: '18-20 ans', count: ageDist.age18_20 },
+            { label: '21-25 ans', count: ageDist.age21_25 },
+            { label: '26+ ans', count: ageDist.over25 }
+        ];
+        const majorityGroup = ageGroups.reduce((prev, current) => (prev.count > current.count) ? prev : current).label;
+
+        return { 
+            sexDist, 
+            ageDist, 
+            total: students.length,
+            averageAge: studentsWithAge > 0 ? (totalAge / studentsWithAge).toFixed(1) : "N/A",
+            majorityGroup: studentsWithAge > 0 ? majorityGroup : "N/A"
+        };
+    }, [students, currentTab]);
+
+    const handleViewDetails = async (id: string) => {
+        setIsModalOpen(true);
+        setIsEditing(false);
+        await fetchDetails(id);
+    };
+
+    const handleSaveEdit = async () => {
+        if (!selectedCandidate || !editForm) return;
+        await updateCandidate(selectedCandidate.record_id || selectedCandidate.id, editForm);
+    };
+
+    const handleDelete = async () => {
+        const id = selectedCandidate?.record_id || selectedCandidate?.id;
+        if (!id) return;
+        if (window.confirm("Êtes-vous sûr de vouloir supprimer cet étudiant ?")) {
+            await deleteCandidate(id);
+        }
+    };
+
+    const handleDownload = async (url: string, filename: string) => {
+        if (!url) return;
+        try {
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            link.target = '_blank';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast('Téléchargement démarré', 'success');
+        } catch (error) {
+            showToast('Erreur lors du téléchargement', 'error');
+        }
+    };
+
+    const handleFillForm = (student: any) => {
+        if (!student.entreprise_raison_sociale && student.alternance === 'Oui') {
+            onSelectStudent(student, AdmissionTab.ENTREPRISE);
+            navigate('/admission');
+        } else if (student.alternance === 'Non') {
+            showToast('Étudiant non en alternance', 'info');
+        } else {
+            showToast('Fiche entreprise déjà complétée', 'info');
+        }
+    };
+
+    const filteredStudents = students.filter(student => {
+        const searchLower = searchQuery.toLowerCase();
+        const fullName = `${student.nom} ${student.prenom}`.toLowerCase();
+        const email = (student.email || '').toLowerCase();
+        const formation = (student.formation || '').toLowerCase();
+
+        return fullName.includes(searchLower) ||
+            email.includes(searchLower) ||
+            formation.includes(searchLower);
+    });
+
+    const stats = {
+        total: students.length,
+        complete: students.filter(s => s.dossier_complet).length,
+        withCerfa: students.filter(s => s.has_cerfa).length,
+        withFiche: students.filter(s => s.has_fiche_renseignement).length
+    };
+
+    return (
+        <div className="animate-fade-in space-y-10 pb-20">
+            {/* Modal for Details */}
+            <CandidateDetailsModal 
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                candidate={selectedCandidate}
+                loading={detailsLoading}
+                isEditing={isEditing}
+                setIsEditing={setIsEditing}
+                editForm={editForm}
+                setEditForm={setEditForm}
+                handleSaveEdit={handleSaveEdit}
+                handleDelete={handleDelete}
+                isSaving={isSaving}
+                isDeleting={isDeleting}
+                onRelaunch={(candidate) => {
+                    onSelectStudent(candidate, AdmissionTab.DOCUMENTS);
+                    navigate('/admission');
+                }}
+            />
+
+            {/* Premium Header */}
+            <div className="ntc-header shadow-xl shadow-blue-500/5">
+                <div className="absolute top-0 right-0 w-1/4 h-full bg-gradient-to-l from-white/10 to-transparent pointer-events-none"></div>
+                
+                <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-10">
+                    <div className="flex-1 text-center md:text-left">
+                        <div className="flex flex-col md:flex-row items-center gap-4 mb-6">
+                            <div className="ntc-badge-live shadow-lg shadow-emerald-500/20">
+                                <span className="live-dot"></span>
+                                GESTION EN DIRECT
+                            </div>
+                            <div className="hidden md:block w-px h-6 bg-blue-500/20"></div>
+                            <span className="text-blue-600 font-black text-xs uppercase tracking-widest">Promotion 2024-2025</span>
+                        </div>
+                        
+                        <h2 className="text-5xl font-black text-slate-900 tracking-tight mb-4 leading-tight">
+                            Classe <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">TP NTC</span>
+                        </h2>
+                        
+                        <p className="text-slate-500 text-lg max-w-2xl font-medium leading-relaxed">
+                            Supervision complète du groupe Négociateur Technico-Commercial. Suivez l'avancement des dossiers et facilitez les démarches entreprises.
+                        </p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 w-full md:w-auto shrink-0">
+                        <div className="bg-white p-7 rounded-[28px] border border-blue-100 shadow-premium flex flex-col items-center justify-center min-w-[140px] group hover:scale-105 transition-transform duration-300">
+                            <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-blue-600 group-hover:text-white transition-colors shadow-inner">
+                                <Users size={24} />
+                            </div>
+                            <div className="text-3xl font-black text-slate-900 mb-1">{stats.total}</div>
+                            <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Étudiants</div>
+                        </div>
+                        <div className="bg-white p-7 rounded-[28px] border border-emerald-100 shadow-premium flex flex-col items-center justify-center min-w-[140px] group hover:scale-105 transition-transform duration-300">
+                            <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-emerald-600 group-hover:text-white transition-colors shadow-inner">
+                                <FileCheck size={24} />
+                            </div>
+                            <div className="text-3xl font-black text-slate-900 mb-1">{stats.complete}</div>
+                            <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Complets</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Navigation Tabs */}
+            <div className="flex gap-4 border-b border-slate-200 mb-8">
+                <button 
+                    onClick={() => setCurrentTab('students')}
+                    className={`pb-4 px-2 text-sm font-black uppercase tracking-widest transition-all relative ${currentTab === 'students' ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}
+                >
+                    Liste des étudiants
+                    {currentTab === 'students' && <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full"></div>}
+                </button>
+                <button 
+                    onClick={() => setCurrentTab('stats')}
+                    className={`pb-4 px-2 text-sm font-black uppercase tracking-widest transition-all relative ${currentTab === 'stats' ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}
+                >
+                    Statistiques
+                    {currentTab === 'stats' && <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full"></div>}
+                </button>
+            </div>
+
+            {currentTab === 'students' ? (
+                <>
+                    {/* Toolbar */}
+                    <div className="flex flex-col lg:flex-row gap-6 items-center justify-between">
+                        <div className="relative w-full lg:w-[500px] group">
+                            <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors" size={22} />
+                            <input
+                                type="text"
+                                placeholder="Rechercher par nom, email ou formation..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full pl-16 pr-6 py-5 bg-white border-2 border-slate-100 rounded-[24px] focus:border-blue-500 focus:ring-8 focus:ring-blue-500/5 outline-none transition-all font-bold text-slate-700 shadow-sm placeholder:text-slate-300"
+                            />
+                        </div>
+
+                        <div className="flex items-center gap-2 bg-white p-2 rounded-2xl border border-slate-200 shadow-sm overflow-x-auto no-scrollbar max-w-full">
+                            {[
+                                { id: 'all', label: 'Tous' },
+                                { id: 'withFiche', label: 'Avec Fiche' },
+                                { id: 'complete', label: 'Complets' }
+                            ].map((f) => (
+                                <button
+                                    key={f.id}
+                                    onClick={() => setFilter(f.id as any)}
+                                    className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap ${
+                                        filter === f.id 
+                                        ? 'bg-slate-900 text-white shadow-lg' 
+                                        : 'text-slate-500 hover:bg-slate-50'
+                                    }`}
+                                >
+                                    {f.label}
+                                </button>
+                            ))}
+                            <div className="w-px h-6 bg-slate-200 mx-2"></div>
+                            <div className="flex items-center gap-1">
+                                <button 
+                                    onClick={() => setViewMode('table')}
+                                    className={`p-3 rounded-xl transition-all ${viewMode === 'table' ? 'bg-blue-50 text-blue-600' : 'text-slate-400 hover:bg-slate-50'}`}
+                                >
+                                    <List size={20} />
+                                </button>
+                                <button 
+                                    onClick={() => setViewMode('grid')}
+                                    className={`p-3 rounded-xl transition-all ${viewMode === 'grid' ? 'bg-blue-50 text-blue-600' : 'text-slate-400 hover:bg-slate-50'}`}
+                                >
+                                    <LayoutGrid size={20} />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Content View */}
+                    {viewMode === 'table' ? (
+                        <div className="bg-white border border-slate-200 rounded-[32px] overflow-hidden shadow-premium">
+                            <div className="overflow-x-auto">
+                                <table className="w-full border-collapse">
+                                    <thead>
+                                        <tr className="bg-slate-50/50 border-b border-slate-100">
+                                            <th className="px-8 py-6 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Étudiant</th>
+                                            <th className="px-8 py-6 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Formation</th>
+                                            <th className="px-8 py-6 text-center text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Documents</th>
+                                            <th className="px-8 py-6 text-center text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Alternance</th>
+                                            <th className="px-8 py-6 text-right text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-50">
+                                        {loading ? (
+                                            <tr>
+                                                <td colSpan={5} className="px-8 py-32 text-center">
+                                                    <div className="flex flex-col items-center gap-4">
+                                                        <div className="relative w-16 h-16">
+                                                            <div className="absolute inset-0 rounded-full border-4 border-slate-100"></div>
+                                                            <div className="absolute inset-0 rounded-full border-4 border-blue-500 border-t-transparent animate-spin"></div>
+                                                        </div>
+                                                        <span className="text-slate-400 font-black text-xs uppercase tracking-widest">Synchronisation...</span>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ) : filteredStudents.length === 0 ? (
+                                            <tr>
+                                                <td colSpan={5} className="px-8 py-32 text-center">
+                                                    <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                                                        <Search size={32} className="text-slate-200" />
+                                                    </div>
+                                                    <div className="text-slate-800 font-black text-xl mb-2">Aucun résultat</div>
+                                                    <p className="text-slate-400 font-medium">Réessayez avec d'autres termes de recherche.</p>
+                                                </td>
+                                            </tr>
+                                        ) : filteredStudents.map((student) => (
+                                            <tr key={student.record_id} className="hover:bg-slate-50/50 transition-colors group">
+                                                <td className="px-8 py-6">
+                                                    <div className="flex items-center gap-5">
+                                                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center text-slate-500 font-black text-sm group-hover:from-blue-600 group-hover:to-indigo-600 group-hover:text-white transition-all duration-300 shadow-sm relative overflow-hidden">
+                                                            <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                                            <span className="relative z-10">{student.prenom?.[0]}{student.nom?.[0]}</span>
+                                                        </div>
+                                                        <div>
+                                                            <div className="font-black text-slate-900 text-lg group-hover:text-blue-600 transition-colors tracking-tight">{student.nom} {student.prenom}</div>
+                                                            <div className="text-xs text-slate-400 font-bold uppercase tracking-wider mt-1">{student.email}</div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="px-8 py-6">
+                                                    <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 font-black text-[10px] uppercase tracking-widest shadow-sm shadow-blue-500/5">
+                                                        <Briefcase size={12} />
+                                                        {student.formation}
+                                                    </div>
+                                                </td>
+                                                <td className="px-8 py-6">
+                                                    <div className="flex items-center justify-center gap-3">
+                                                        <div className="flex flex-col items-center gap-1.5">
+                                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Fiche</span>
+                                                            {student.has_fiche_renseignement ? (
+                                                                <button 
+                                                                    onClick={() => handleDownload(student.fiche_entreprise?.url, student.fiche_entreprise?.filename)}
+                                                                    className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center hover:bg-emerald-600 hover:text-white transition-all shadow-sm border border-emerald-100/50"
+                                                                >
+                                                                    <CheckCircle2 size={18} />
+                                                                </button>
+                                                            ) : (
+                                                                <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center border border-amber-100/50">
+                                                                    <AlertCircle size={18} />
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <div className="w-px h-8 bg-slate-100"></div>
+                                                        <div className="flex flex-col items-center gap-1.5">
+                                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">CERFA</span>
+                                                            {student.has_cerfa ? (
+                                                                <button 
+                                                                    onClick={() => handleDownload(student.cerfa?.url, student.cerfa?.filename)}
+                                                                    className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center hover:bg-indigo-600 hover:text-white transition-all shadow-sm border border-indigo-100/50"
+                                                                >
+                                                                    <ShieldCheck size={18} />
+                                                                </button>
+                                                            ) : (
+                                                                <div className="w-10 h-10 rounded-xl bg-slate-50 text-slate-300 flex items-center justify-center border border-slate-100">
+                                                                    <ShieldCheck size={18} />
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="px-8 py-6">
+                                                    <div className="flex flex-col items-center justify-center">
+                                                        {student.alternance === 'Oui' ? (
+                                                            student.entreprise_raison_sociale ? (
+                                                                <div className="flex flex-col items-center">
+                                                                    <div className="px-4 py-2 rounded-xl bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-lg shadow-slate-900/10">
+                                                                        <Building size={12} />
+                                                                        {student.entreprise_raison_sociale}
+                                                                    </div>
+                                                                    <span className="text-[9px] font-bold text-emerald-500 mt-2 flex items-center gap-1">
+                                                                        <CheckCircle2 size={10} /> Partenariat validé
+                                                                    </span>
+                                                                </div>
+                                                            ) : (
+                                                                <button 
+                                                                    onClick={() => handleFillForm(student)}
+                                                                    className="px-4 py-2 rounded-xl bg-amber-50 text-amber-600 text-[10px] font-black uppercase tracking-widest border border-amber-100 hover:bg-amber-600 hover:text-white transition-all group/btn"
+                                                                >
+                                                                    À remplir <ArrowRight size={10} className="inline ml-1 group-hover/btn:translate-x-1 transition-transform" />
+                                                                </button>
+                                                            )
+                                                        ) : (
+                                                            <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest italic">Non alternant</span>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td className="px-8 py-6 text-right">
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        <button 
+                                                            onClick={() => handleViewDetails(student.record_id)}
+                                                            className="px-5 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-600 font-black text-[10px] uppercase tracking-widest hover:border-blue-500 hover:text-blue-500 transition-all shadow-sm flex items-center gap-2"
+                                                        >
+                                                            Fiche complète <ChevronRight size={14} />
+                                                        </button>
+                                                        <button className="p-2.5 rounded-xl border border-slate-200 text-slate-400 hover:bg-slate-50 transition-all">
+                                                            <MoreHorizontal size={18} />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+                            {loading ? (
+                                Array(6).fill(0).map((_, i) => (
+                                    <div key={i} className="bg-white rounded-[32px] p-8 border border-slate-100 animate-pulse h-64"></div>
+                                ))
+                            ) : filteredStudents.map((student) => (
+                                <div key={student.record_id} className="bg-white border border-slate-200 rounded-[32px] p-8 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 group relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full -mr-16 -mt-16 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                    
+                                    <div className="flex justify-between items-start mb-8 relative z-10">
+                                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center text-slate-500 font-black text-lg group-hover:from-blue-600 group-hover:to-indigo-600 group-hover:text-white transition-all duration-300 shadow-inner">
+                                            {student.prenom?.[0]}{student.nom?.[0]}
+                                        </div>
+                                        <div className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border ${
+                                            student.dossier_complet ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'
+                                        }`}>
+                                            {student.dossier_complet ? 'Dossier Complet' : 'Dossier Incomplet'}
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="mb-8 relative z-10">
+                                        <h3 className="text-2xl font-black text-slate-900 tracking-tight group-hover:text-blue-600 transition-colors">{student.nom} {student.prenom}</h3>
+                                        <p className="text-sm font-bold text-slate-400 truncate mt-1">{student.email}</p>
+                                    </div>
+                                    
+                                    <div className="flex items-center gap-3 mb-8 relative z-10">
+                                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 font-black text-[9px] uppercase tracking-widest">
+                                            <Briefcase size={12} />
+                                            {student.formation}
+                                        </div>
+                                        {student.alternance === 'Oui' && student.entreprise_raison_sociale && (
+                                            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900 text-white font-black text-[9px] uppercase tracking-widest">
+                                                <Building size={12} />
+                                                {student.entreprise_raison_sociale}
+                                            </div>
+                                        )}
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-2 gap-3 pt-6 border-t border-slate-100 relative z-10">
+                                        <Button 
+                                            variant="secondary" 
+                                            size="sm" 
+                                            className="w-full text-[10px] font-black"
+                                            onClick={() => handleViewDetails(student.record_id)}
+                                        >
+                                            Consulter
+                                        </Button>
+                                        {student.alternance === 'Oui' && !student.entreprise_raison_sociale && (
+                                            <Button 
+                                                variant="primary" 
+                                                size="sm" 
+                                                className="w-full text-[10px] font-black"
+                                                onClick={() => handleFillForm(student)}
+                                            >
+                                                Entreprise
+                                            </Button>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </>
+            ) : (
+                /* Stats View */
+                <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
+                    {loading ? (
+                        <div className="flex flex-col items-center justify-center py-32 gap-4">
+                            <Loader2 className="animate-spin text-blue-600" size={48} />
+                            <p className="text-slate-400 font-black text-xs uppercase tracking-widest animate-pulse">Analyse des données en cours...</p>
+                        </div>
+                    ) : statsData ? (
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                            {/* Sex Distribution */}
+                            <div className="bg-white border border-slate-200 rounded-[32px] p-10 shadow-premium">
+                                <h3 className="text-xl font-black text-slate-800 mb-8 flex items-center gap-3">
+                                    <Users className="text-blue-600" /> Répartition par Sexe
+                                </h3>
+                                
+                                <div className="space-y-8">
+                                    {[
+                                        { label: 'Masculin', count: statsData.sexDist.male, color: 'bg-blue-500', icon: 'M' },
+                                        { label: 'Féminin', count: statsData.sexDist.female, color: 'bg-rose-500', icon: 'F' },
+                                        { label: 'Autre / Non renseigné', count: statsData.sexDist.other, color: 'bg-slate-300', icon: '?' }
+                                    ].map((item) => {
+                                        const percent = statsData.total > 0 ? (item.count / statsData.total) * 100 : 0;
+                                        return (
+                                            <div key={item.label} className="group">
+                                                <div className="flex justify-between items-end mb-3">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className={`w-8 h-8 rounded-lg ${item.color} text-white flex items-center justify-center font-black text-xs shadow-lg shadow-${item.color.split('-')[1]}-500/20`}>{item.icon}</div>
+                                                        <span className="font-bold text-slate-700">{item.label}</span>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <span className="text-lg font-black text-slate-900">{item.count}</span>
+                                                        <span className="text-xs font-bold text-slate-400 ml-2">({Math.round(percent)}%)</span>
+                                                    </div>
+                                                </div>
+                                                <div className="h-3 bg-slate-50 rounded-full overflow-hidden border border-slate-100 p-0.5">
+                                                    <div 
+                                                        className={`h-full rounded-full transition-all duration-1000 ease-out ${item.color}`}
+                                                        style={{ width: `${percent}%` }}
+                                                    ></div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+
+                                <div className="mt-12 p-6 bg-slate-50 rounded-3xl border border-slate-100 flex items-center justify-around text-center">
+                                    <div>
+                                        <div className="text-2xl font-black text-slate-900">{Math.round((statsData.sexDist.female / statsData.total) * 100)}%</div>
+                                        <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">Taux de féminisation</div>
+                                    </div>
+                                    <div className="w-px h-8 bg-slate-200"></div>
+                                    <div>
+                                        <div className="text-2xl font-black text-slate-900">{statsData.total}</div>
+                                        <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">Total échantillon</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Age Distribution */}
+                            <div className="bg-white border border-slate-200 rounded-[32px] p-10 shadow-premium">
+                                <h3 className="text-xl font-black text-slate-800 mb-8 flex items-center gap-3">
+                                    <Star className="text-indigo-600" /> Pyramide des âges
+                                </h3>
+
+                                <div className="flex items-end justify-between h-64 gap-4 px-4">
+                                    {[
+                                        { label: '-18 ans', count: statsData.ageDist.under18, color: 'from-blue-400 to-blue-500' },
+                                        { label: '18-20 ans', count: statsData.ageDist.age18_20, color: 'from-indigo-400 to-indigo-500' },
+                                        { label: '21-25 ans', count: statsData.ageDist.age21_25, color: 'from-purple-400 to-purple-500' },
+                                        { label: '26+ ans', count: statsData.ageDist.over25, color: 'from-slate-700 to-slate-800' }
+                                    ].map((item) => {
+                                        const maxAge = Math.max(...Object.values(statsData.ageDist));
+                                        const height = maxAge > 0 ? (item.count / maxAge) * 100 : 0;
+                                        return (
+                                            <div key={item.label} className="flex-1 flex flex-col items-center gap-4 group h-full justify-end">
+                                                <div className="relative w-full flex justify-center group-hover:-translate-y-1 transition-transform duration-300" style={{ height: `${height}%` }}>
+                                                    <div className={`w-full max-w-[60px] rounded-t-2xl bg-gradient-to-b ${item.color} shadow-lg relative min-h-[4px]`}>
+                                                        <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-3 py-1.5 rounded-xl text-xs font-black opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-xl">
+                                                            {item.count} élève{item.count > 1 ? 's' : ''}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">{item.label}</span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+
+                                <div className="mt-12 grid grid-cols-2 gap-4">
+                                    <div className="p-6 bg-indigo-50 rounded-3xl border border-indigo-100">
+                                        <div className="text-[9px] font-black text-indigo-400 uppercase tracking-widest mb-1">Moyenne d'âge</div>
+                                        <div className="text-2xl font-black text-indigo-600">{statsData.averageAge} ans</div>
+                                    </div>
+                                    <div className="p-6 bg-blue-50 rounded-3xl border border-blue-100">
+                                        <div className="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-1">Majorité</div>
+                                        <div className="text-2xl font-black text-blue-600">{statsData.majorityGroup}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="text-center py-32 bg-slate-50 rounded-[32px] border-2 border-dashed border-slate-200">
+                            <AlertCircle size={48} className="text-slate-300 mx-auto mb-4" />
+                            <p className="text-slate-500 font-bold">Impossible de générer les statistiques. Données insuffisantes.</p>
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default ClassNTCView;

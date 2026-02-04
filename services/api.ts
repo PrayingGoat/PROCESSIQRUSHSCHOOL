@@ -49,6 +49,32 @@ export const api = {
     }
   },
 
+  // Get students list with documents
+  async getStudentsList(params?: {
+    avecFicheUniquement?: boolean;
+    avecCerfaUniquement?: boolean;
+    dossierCompletUniquement?: boolean;
+  }): Promise<any> {
+    try {
+      const queryParams = new URLSearchParams({
+        avec_fiche_uniquement: params?.avecFicheUniquement ? 'true' : 'false',
+        avec_cerfa_uniquement: params?.avecCerfaUniquement ? 'true' : 'false',
+        dossier_complet_uniquement: params?.dossierCompletUniquement ? 'true' : 'false'
+      });
+
+      const response = await fetch(`${BASE_URL}/etudiants-fiches?${queryParams}`, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch students list');
+      return await response.json();
+    } catch (error) {
+      console.error('❌ API Error (Get Students List):', error);
+      throw error;
+    }
+  },
+
   // --- CANDIDATES (CRUD) ---
 
   // CREATE (POST)
@@ -655,47 +681,6 @@ export const api = {
       return await response.json();
     } catch (error) {
       console.error('❌ API Error (Update Company):', error);
-      throw error;
-    }
-  },
-
-  // --- EVALUATIONS ---
-  async saveEvaluation(data: any): Promise<any> {
-    try {
-      const response = await fetch(`${AUTH_API_URL}/evaluations`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) throw new Error('Save evaluation failed');
-      return await response.json();
-    } catch (error) {
-      console.error('❌ API Error (Save Evaluation):', error);
-      throw error;
-    }
-  },
-
-  async getEvaluation(studentId: string): Promise<any> {
-    try {
-      const response = await fetch(`${AUTH_API_URL}/evaluations/${studentId}`);
-      if (!response.ok) {
-        if (response.status === 404) return null;
-        throw new Error('Get evaluation failed');
-      }
-      return await response.json();
-    } catch (error) {
-      console.error('❌ API Error (Get Evaluation):', error);
-      throw error;
-    }
-  },
-
-  async getAllEvaluations(): Promise<any[]> {
-    try {
-      const response = await fetch(`${AUTH_API_URL}/evaluations`);
-      if (!response.ok) throw new Error('Get all evaluations failed');
-      return await response.json();
-    } catch (error) {
-      console.error('❌ API Error (Get All Evaluations):', error);
       throw error;
     }
   }
