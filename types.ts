@@ -385,3 +385,39 @@ export interface ApiResponse<T = any> {
   id?: string;
   detail?: any;
 }
+
+// Evaluation types
+export interface EvaluationData {
+  studentId: string;
+  studentName: string;
+  formation: string;
+  dateEntretien: string;
+  heureEntretien: string;
+  chargeAdmission: string;
+  critere1: number;
+  critere2: number;
+  critere3: number;
+  critere4: number;
+  commentaires?: string;
+}
+
+export interface EvaluationResponse {
+  _id: string;
+  studentId: string;
+  studentName: string;
+  formation: string;
+  dateEntretien: string;
+  heureEntretien: string;
+  chargeAdmission: string;
+  scores: {
+    critere1: number;
+    critere2: number;
+    critere3: number;
+    critere4: number;
+  };
+  totalScore: number;
+  appreciation: string;
+  commentaires: string;
+  createdAt: string;
+  updatedAt: string;
+}

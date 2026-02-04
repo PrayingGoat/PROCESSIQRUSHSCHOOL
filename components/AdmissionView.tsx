@@ -1,28 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import {
-    GraduationCap,
+    Briefcase,
     CheckCircle2,
-    Upload,
-    Building,
+    FileText,
     Printer,
+    Upload,
+    Calendar,
+    Search,
+    Download,
+    ExternalLink,
+    Loader2,
+    ArrowRight,
+    Users,
+    FileCheck,
+    Star,
+    Save,
+    X,
+    GraduationCap,
+    Building,
     UserCheck,
     ChevronLeft,
     AlertCircle,
-    Loader2,
-    FileText,
-    ArrowRight,
-    Briefcase,
-    Download,
-    Users,
-    FileCheck,
-    Search,
     RotateCcw,
-    Save,
-    Info,
     PenTool,
-    Calendar,
-    Star,
-    ExternalLink
+    Info
 } from 'lucide-react';
 import Button from './ui/Button';
 import Card from './ui/Card';
@@ -167,8 +168,33 @@ const EvaluationGrid = ({ studentData }: { studentData: any }) => {
         }
     };
 
-    const saveEvaluation = () => {
-        showToast("Évaluation enregistrée avec succès !", "success");
+    const { execute: saveEvalApi, loading: isSaving } = useApi(api.saveEvaluation, {
+        successMessage: "Évaluation enregistrée avec succès !",
+        errorMessage: "Erreur lors de l'enregistrement de l'évaluation."
+    });
+
+    const saveEvaluation = async () => {
+        if (!studentData) {
+            showToast("Aucun étudiant sélectionné", "error");
+            return;
+        }
+
+        const data = studentData.data || studentData;
+        const payload = {
+            studentId: studentData.id,
+            studentName: evalData.candidatNom,
+            formation: evalData.formation,
+            dateEntretien: evalData.dateEntretien,
+            heureEntretien: evalData.heureEntretien,
+            chargeAdmission: evalData.chargeAdmission,
+            critere1: Number(evalData.critere1),
+            critere2: Number(evalData.critere2),
+            critere3: Number(evalData.critere3),
+            critere4: Number(evalData.critere4),
+            commentaires: evalData.commentaires
+        };
+
+        await saveEvalApi(payload);
     };
 
 
@@ -296,8 +322,8 @@ const EvaluationGrid = ({ studentData }: { studentData: any }) => {
                     <Button variant="secondary" className="flex-1" onClick={resetEvaluation} leftIcon={<RotateCcw size={18} />}>
                         Réinitialiser
                     </Button>
-                    <Button variant="success" className="flex-1" onClick={saveEvaluation} leftIcon={<Save size={18} />}>
-                        Enregistrer
+                    <Button variant="success" className="flex-1" onClick={saveEvaluation} leftIcon={<Save size={18} />} disabled={isSaving}>
+                        {isSaving ? 'Enregistrement...' : 'Enregistrer'}
                     </Button>
                     <Button variant="primary" className="flex-1 !bg-slate-900" onClick={exportEvaluationPDF} leftIcon={<Printer size={18} />}>
                         Exporter PDF
@@ -316,14 +342,40 @@ import { useCandidates, getC } from '../hooks/useCandidates';
 const InterviewsTrackingView = ({ onLaunchInterview }: { onLaunchInterview: (candidate: any) => void }) => {
     const { candidates, loading: isLoading } = useCandidates();
     const [searchQuery, setSearchQuery] = useState('');
+    const [evaluations, setEvaluations] = useState<any[]>([]);
+    const [evaluationsLoading, setEvaluationsLoading] = useState(true);
 
-    const filtered = (candidates || []).map((raw, index) => ({
-        raw,
-        c: getC(raw),
-        interviewStatus: index % 3 === 0 ? 'Completed' : 'Pending',
-        score: index % 3 === 0 ? (14 + (index % 6)) : null,
-        interviewDate: index % 3 === 0 ? '2024-05-15' : 'A définir'
-    })).filter(item => {
+    // Fetch all evaluations from MongoDB on mount
+    useEffect(() => {
+        const fetchEvaluations = async () => {
+            try {
+                const evals = await api.getAllEvaluations();
+                setEvaluations(evals || []);
+            } catch (error) {
+                console.error('Error fetching evaluations:', error);
+                setEvaluations([]);
+            } finally {
+                setEvaluationsLoading(false);
+            }
+        };
+        fetchEvaluations();
+    }, []);
+
+    const filtered = (candidates || []).map((raw) => {
+        const c = getC(raw);
+        const studentId = raw.id;
+
+        // Find matching evaluation from MongoDB
+        const evaluation = evaluations.find(e => e.studentId === studentId);
+
+        return {
+            raw,
+            c,
+            interviewStatus: evaluation ? 'Completed' : 'Pending',
+            score: evaluation ? evaluation.totalScore : null,
+            interviewDate: evaluation ? new Date(evaluation.dateEntretien).toLocaleDateString('fr-FR') : 'A définir'
+        };
+    }).filter(item => {
         const searchLower = (searchQuery || '').toLowerCase();
         const fullName = `${item.c.nom} ${item.c.prenom}`.toLowerCase();
         const formation = (item.c.formation).toLowerCase();
@@ -404,7 +456,7 @@ const InterviewsTrackingView = ({ onLaunchInterview }: { onLaunchInterview: (can
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50">
-                            {isLoading ? (
+                            {isLoading || evaluationsLoading ? (
                                 <tr><td colSpan={6} className="px-8 py-20 text-center text-slate-400 font-bold animate-pulse">Chargement des données...</td></tr>
                             ) : filtered.length === 0 ? (
                                 <tr><td colSpan={6} className="px-8 py-20 text-center text-slate-400 font-bold">Aucun candidat ne correspond à votre recherche.</td></tr>
