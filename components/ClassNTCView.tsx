@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { 
-    Download, 
-    CheckCircle2, 
-    AlertCircle, 
-    Building, 
-    Search, 
-    Users, 
-    FileCheck, 
+import {
+    Download,
+    CheckCircle2,
+    AlertCircle,
+    Building,
+    Search,
+    Users,
+    FileCheck,
     FileText,
     ArrowRight,
     Loader2,
@@ -24,6 +24,7 @@ import Button from './ui/Button';
 import { useAppStore } from '../store/useAppStore';
 import { AdmissionTab } from '../types';
 import CandidateDetailsModal from './dashboard/CandidateDetailsModal';
+import CompanyDetailsModal from './dashboard/CompanyDetailsModal';
 import { useApi } from '../hooks/useApi';
 
 interface ClassNTCViewProps {
@@ -37,20 +38,118 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
     const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
     const [currentTab, setCurrentTab] = useState<'students' | 'stats'>('students');
     const [filter, setFilter] = useState<'all' | 'withFiche' | 'withCerfa' | 'complete'>('all');
-    
+
     // Modal State
     const [selectedCandidate, setSelectedCandidate] = useState<any>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [editForm, setEditForm] = useState<any>(null);
 
+    // Company Modal State
+    const [selectedCompany, setSelectedCompany] = useState<any>(null);
+    const [isCompanyModalOpen, setIsCompanyModalOpen] = useState(false);
+    const [isCompanyEditing, setIsCompanyEditing] = useState(false);
+    const [companyEditForm, setCompanyEditForm] = useState<any>(null);
+
     const { showToast } = useAppStore();
     const navigate = useNavigate();
 
     const { execute: fetchDetails, loading: detailsLoading } = useApi(api.getCandidateById, {
-        onSuccess: (data) => setSelectedCandidate(data),
+        onSuccess: (data) => {
+            setSelectedCandidate(data);
+            setEditForm(data.informations_personnelles || data.fields || data);
+        },
         errorMessage: "Erreur lors de la récupération des détails de l'étudiant"
     });
+
+    const initializeCompanyForm = (data: any) => {
+        if (!data || !data.fields) return;
+        const f = data.fields;
+        setCompanyEditForm({
+            identification: {
+                raison_sociale: f["Raison sociale"] || "",
+                siret: f["Numéro SIRET"] || "",
+                code_ape_naf: f["Code APE/NAF"] || "",
+                type_employeur: f["Type demployeur"] || "",
+                effectif: f["Effectif salarié de l'entreprise"] || "",
+                convention: f["Convention collective"] || ""
+            },
+            adresse: {
+                num: f["Numéro entreprise"] || "",
+                voie: f["Voie entreprise"] || "",
+                complement: f["Complément dadresse entreprise"] || "",
+                code_postal: f["Code postal entreprise"] || "",
+                ville: f["Ville entreprise"] || "",
+                telephone: f["Téléphone entreprise"] || "",
+                email: f["Email entreprise"] || ""
+            },
+            maitre_apprentissage: {
+                nom: f["Nom Maître apprentissage"] || "",
+                prenom: f["Prénom Maître apprentissage"] || "",
+                date_naissance: f["Date de naissance Maître apprentissage"] || "",
+                fonction: f["Fonction Maître apprentissage"] || "",
+                diplome: f["Diplôme Maître apprentissage"] || "",
+                experience: f["Année experience pro Maître apprentissage"] || "",
+                telephone: f["Téléphone Maître apprentissage"] || "",
+                email: f["Email Maître apprentissage"] || ""
+            },
+            opco: { nom: f["Nom OPCO"] || "" },
+            contrat: {
+                type_contrat: f["Type de contrat"] || "",
+                type_derogation: f["Type de dérogation"] || "",
+                date_conclusion: f["Date de conclusion"] || "",
+                date_debut_execution: f["Date de début exécution"] || "",
+                duree_hebdomadaire: f["Durée hebdomadaire"] || "",
+                poste_occupe: f["Poste occupé"] || "",
+                lieu_execution: f["Lieu dexécution du contrat (si différent du siège)"] || "",
+                machines_dangereuses: f["Travail sur machines dangereuses ou exposition à des risques particuliers"] || "",
+                caisse_retraite: f["Caisse de retraite"] || "",
+                numero_deca_ancien_contrat: f["Numéro DECA de ancien contrat"] || "",
+                date_avenant: f["date Si avenant"] || "",
+                montant_salaire_brut1: f["Salaire brut mensuel 1"] || 0,
+                montant_salaire_brut2: f["Salaire brut mensuel 2"] || 0,
+                montant_salaire_brut3: f["Salaire brut mensuel 3"] || 0,
+                montant_salaire_brut4: f["Salaire brut mensuel 4"] || 0
+            },
+            formation: {
+                choisie: f["Formation"] || "",
+                code_rncp: f["Code Rncp"] || "",
+                code_diplome: f["Code  diplome"] || "",
+                nb_heures: f["nombre heure formation"] || "",
+                jours_cours: f["jour de cours"] || "",
+                date_debut: f["Date de début exécution"] || "",
+                date_fin: f["Fin du contrat apprentissage"] || ""
+            },
+            cfa: {
+                rush_school: "oui",
+                entreprise: "non",
+                denomination: "RUSH SCHOOL",
+                uai: "0932731W",
+                siret: "91901416300018",
+                adresse: "11-13 AVENUE DE LA DIVISION LECLERC",
+                complement: "",
+                code_postal: "93000",
+                commune: "BOBIGNY"
+            },
+            missions: { 
+                formation_alternant: f["Formation de lalternant(e) (pour les missions)"] || "",
+                selectionnees: []
+            },
+            record_id_etudiant: f["recordIdetudiant"] || ""
+        });
+    };
+
+    const { execute: fetchCompanyDetails, loading: companyLoading } = useApi(api.getCompanyById, {
+        onSuccess: (data) => {
+            setSelectedCompany(data);
+            initializeCompanyForm(data);
+        },
+        errorMessage: "Erreur lors de la récupération des détails de l'entreprise"
+    });
+
+    const handleEnterCompanyEditMode = () => {
+        setIsCompanyEditing(true);
+    };
 
     const { execute: updateCandidate, loading: isSaving } = useApi(api.updateCandidate, {
         successMessage: "Candidat mis à jour avec succès",
@@ -60,13 +159,26 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
         }
     });
 
+
+    const { execute: updateCompany, loading: isSavingCompany } = useApi(api.updateCompany, {
+        successMessage: "Entreprise mise à jour avec succès",
+        onSuccess: () => {
+            fetchStudents();
+            setIsCompanyModalOpen(false);
+        }
+    });
+
     const { execute: deleteCandidate, loading: isDeleting } = useApi(api.deleteCandidate, {
-        successMessage: "Étudiant supprimé avec succès.",
+        successMessage: "Candidat supprimé avec succès",
         onSuccess: () => {
             fetchStudents();
             setIsModalOpen(false);
         }
     });
+
+    const handleSaveCompanyEdit = async (id: string, data: any) => {
+        await updateCompany(id, data);
+    };
 
     useEffect(() => {
         fetchStudents();
@@ -78,7 +190,7 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
             if (currentTab === 'stats') {
                 // Step 1: Get the list of IDs
                 const list = await api.getAllCandidates();
-                
+
                 if (list && list.length > 0) {
                     // Step 2: Fetch FULL details for each student in parallel
                     // We use Promise.all to fetch everything as fast as possible
@@ -93,7 +205,7 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                             }
                         })
                     );
-                    
+
                     // Filter out any failed requests
                     setStudents(fullDetails.filter(s => s !== null));
                 } else {
@@ -137,7 +249,7 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
 
         students.forEach(s => {
             const info = s.informations_personnelles || s.fields || s;
-            
+
             // Sexe
             const sexe = (info.sexe || "").toLowerCase();
             if (sexe.includes('masculin') || sexe === 'homme') sexDist.male++;
@@ -165,9 +277,9 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
         ];
         const majorityGroup = ageGroups.reduce((prev, current) => (prev.count > current.count) ? prev : current).label;
 
-        return { 
-            sexDist, 
-            ageDist, 
+        return {
+            sexDist,
+            ageDist,
             total: students.length,
             averageAge: studentsWithAge > 0 ? (totalAge / studentsWithAge).toFixed(1) : "N/A",
             majorityGroup: studentsWithAge > 0 ? majorityGroup : "N/A"
@@ -177,7 +289,54 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
     const handleViewDetails = async (id: string) => {
         setIsModalOpen(true);
         setIsEditing(false);
-        await fetchDetails(id);
+        const data = await fetchDetails(id);
+        if (data) {
+            setEditForm(data.informations_personnelles || data.fields || data);
+        }
+    };
+
+    const handleEnterEditMode = () => {
+        if (selectedCandidate) {
+            setEditForm(selectedCandidate.informations_personnelles || selectedCandidate.fields || selectedCandidate);
+            setIsEditing(true);
+        }
+    };
+
+    const handleViewCompanyDetails = async (student: any) => {
+        setIsCompanyEditing(false); // Default to view mode
+        if (!student.id_entreprise && !student.record_id_entreprise && !student.entreprise_raison_sociale) {
+            // Redirect to enterprise form if no company linked
+            onSelectStudent(student, AdmissionTab.ENTREPRISE);
+            navigate('/admission');
+            return;
+        }
+
+        const companyId = student.id_entreprise || student.record_id_entreprise;
+        if (companyId) {
+            setIsCompanyModalOpen(true);
+            await fetchCompanyDetails(companyId);
+        } else if (student.entreprise_raison_sociale) {
+            // Try to find company by name if ID is missing (fallback)
+            showToast("Récupération de l'entreprise...", "info");
+            try {
+                const companies = await api.getAllCompanies();
+                const company = companies.find((c: any) => c.fields?.["Raison sociale"] === student.entreprise_raison_sociale);
+                if (company) {
+                    setIsCompanyModalOpen(true);
+                    setSelectedCompany(company);
+                    initializeCompanyForm(company);
+                } else {
+                    onSelectStudent(student, AdmissionTab.ENTREPRISE);
+                    navigate('/admission');
+                }
+            } catch (error) {
+                onSelectStudent(student, AdmissionTab.ENTREPRISE);
+                navigate('/admission');
+            }
+        } else {
+            onSelectStudent(student, AdmissionTab.ENTREPRISE);
+            navigate('/admission');
+        }
     };
 
     const handleSaveEdit = async () => {
@@ -240,14 +399,29 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
 
     return (
         <div className="animate-fade-in space-y-10 pb-20">
-            {/* Modal for Details */}
-            <CandidateDetailsModal 
+                        {/* Company Modal */}
+                        <CompanyDetailsModal 
+                            isOpen={isCompanyModalOpen}
+                            onClose={() => setIsCompanyModalOpen(false)}
+                            company={selectedCompany}
+                            loading={companyLoading}
+                            isEditing={isCompanyEditing}
+                            setIsEditing={setIsCompanyEditing}
+                            onEdit={handleEnterCompanyEditMode}
+                            editForm={companyEditForm}
+                            setEditForm={setCompanyEditForm}
+                            onSave={handleSaveCompanyEdit}
+                            isSaving={isSavingCompany}
+                        />
+                        {/* Modal for Details */}
+            <CandidateDetailsModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 candidate={selectedCandidate}
                 loading={detailsLoading}
                 isEditing={isEditing}
                 setIsEditing={setIsEditing}
+                onEdit={handleEnterEditMode}
                 editForm={editForm}
                 setEditForm={setEditForm}
                 handleSaveEdit={handleSaveEdit}
@@ -263,7 +437,7 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
             {/* Premium Header */}
             <div className="ntc-header shadow-xl shadow-blue-500/5">
                 <div className="absolute top-0 right-0 w-1/4 h-full bg-gradient-to-l from-white/10 to-transparent pointer-events-none"></div>
-                
+
                 <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-10">
                     <div className="flex-1 text-center md:text-left">
                         <div className="flex flex-col md:flex-row items-center gap-4 mb-6">
@@ -274,11 +448,11 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                             <div className="hidden md:block w-px h-6 bg-blue-500/20"></div>
                             <span className="text-blue-600 font-black text-xs uppercase tracking-widest">Promotion 2024-2025</span>
                         </div>
-                        
+
                         <h2 className="text-5xl font-black text-slate-900 tracking-tight mb-4 leading-tight">
                             Classe <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">TP NTC</span>
                         </h2>
-                        
+
                         <p className="text-slate-500 text-lg max-w-2xl font-medium leading-relaxed">
                             Supervision complète du groupe Négociateur Technico-Commercial. Suivez l'avancement des dossiers et facilitez les démarches entreprises.
                         </p>
@@ -305,14 +479,14 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
 
             {/* Navigation Tabs */}
             <div className="flex gap-4 border-b border-slate-200 mb-8">
-                <button 
+                <button
                     onClick={() => setCurrentTab('students')}
                     className={`pb-4 px-2 text-sm font-black uppercase tracking-widest transition-all relative ${currentTab === 'students' ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}
                 >
                     Liste des étudiants
                     {currentTab === 'students' && <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full"></div>}
                 </button>
-                <button 
+                <button
                     onClick={() => setCurrentTab('stats')}
                     className={`pb-4 px-2 text-sm font-black uppercase tracking-widest transition-all relative ${currentTab === 'stats' ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}
                 >
@@ -345,24 +519,23 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                                 <button
                                     key={f.id}
                                     onClick={() => setFilter(f.id as any)}
-                                    className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap ${
-                                        filter === f.id 
-                                        ? 'bg-slate-900 text-white shadow-lg' 
-                                        : 'text-slate-500 hover:bg-slate-50'
-                                    }`}
+                                    className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap ${filter === f.id
+                                            ? 'bg-slate-900 text-white shadow-lg'
+                                            : 'text-slate-500 hover:bg-slate-50'
+                                        }`}
                                 >
                                     {f.label}
                                 </button>
                             ))}
                             <div className="w-px h-6 bg-slate-200 mx-2"></div>
                             <div className="flex items-center gap-1">
-                                <button 
+                                <button
                                     onClick={() => setViewMode('table')}
                                     className={`p-3 rounded-xl transition-all ${viewMode === 'table' ? 'bg-blue-50 text-blue-600' : 'text-slate-400 hover:bg-slate-50'}`}
                                 >
                                     <List size={20} />
                                 </button>
-                                <button 
+                                <button
                                     onClick={() => setViewMode('grid')}
                                     className={`p-3 rounded-xl transition-all ${viewMode === 'grid' ? 'bg-blue-50 text-blue-600' : 'text-slate-400 hover:bg-slate-50'}`}
                                 >
@@ -380,10 +553,10 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                                     <thead>
                                         <tr className="bg-slate-50/50 border-b border-slate-100">
                                             <th className="px-8 py-6 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Étudiant</th>
+                                            <th className="px-8 py-6 text-center text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Formulaire Étudiant</th>
+                                            <th className="px-8 py-6 text-center text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Formulaire Entreprise</th>
                                             <th className="px-8 py-6 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Formation</th>
                                             <th className="px-8 py-6 text-center text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Documents</th>
-                                            <th className="px-8 py-6 text-center text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Alternance</th>
-                                            <th className="px-8 py-6 text-right text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-50">
@@ -423,8 +596,29 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                                                         </div>
                                                     </div>
                                                 </td>
+                                                <td className="px-8 py-6 text-center">
+                                                    <button
+                                                        onClick={() => handleViewDetails(student.record_id || student.id)}
+                                                        className="px-4 py-2 rounded-xl bg-rose-50 text-rose-600 text-[10px] font-black uppercase tracking-widest border border-rose-100 hover:bg-rose-600 hover:text-white transition-all shadow-sm"
+                                                    >
+                                                        Fiche Étudiant
+                                                    </button>
+                                                </td>
+                                                <td className="px-8 py-6 text-center">
+                                                    <button
+                                                        onClick={() => handleViewCompanyDetails(student)}
+                                                        className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all shadow-sm ${(student.id_entreprise || student.record_id_entreprise || student.entreprise_raison_sociale)
+                                                                ? 'bg-blue-50 text-blue-600 border-blue-100 hover:bg-blue-600 hover:text-white'
+                                                                : 'bg-amber-50 text-amber-600 border-amber-100 hover:bg-amber-600 hover:text-white'
+                                                            }`}
+                                                    >
+                                                        {(student.id_entreprise || student.record_id_entreprise || student.entreprise_raison_sociale)
+                                                            ? 'Voir Entreprise'
+                                                            : 'Lier Entreprise'}
+                                                    </button>
+                                                </td>
                                                 <td className="px-8 py-6">
-                                                    <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 font-black text-[10px] uppercase tracking-widest shadow-sm shadow-blue-500/5">
+                                                    <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-xl bg-slate-50 text-slate-600 border border-slate-100 font-black text-[10px] uppercase tracking-widest shadow-sm">
                                                         <Briefcase size={12} />
                                                         {student.formation}
                                                     </div>
@@ -434,7 +628,7 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                                                         <div className="flex flex-col items-center gap-1.5">
                                                             <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Fiche</span>
                                                             {student.has_fiche_renseignement ? (
-                                                                <button 
+                                                                <button
                                                                     onClick={() => handleDownload(student.fiche_entreprise?.url, student.fiche_entreprise?.filename)}
                                                                     className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center hover:bg-emerald-600 hover:text-white transition-all shadow-sm border border-emerald-100/50"
                                                                 >
@@ -450,7 +644,7 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                                                         <div className="flex flex-col items-center gap-1.5">
                                                             <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">CERFA</span>
                                                             {student.has_cerfa ? (
-                                                                <button 
+                                                                <button
                                                                     onClick={() => handleDownload(student.cerfa?.url, student.cerfa?.filename)}
                                                                     className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center hover:bg-indigo-600 hover:text-white transition-all shadow-sm border border-indigo-100/50"
                                                                 >
@@ -462,45 +656,6 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                                                                 </div>
                                                             )}
                                                         </div>
-                                                    </div>
-                                                </td>
-                                                <td className="px-8 py-6">
-                                                    <div className="flex flex-col items-center justify-center">
-                                                        {student.alternance === 'Oui' ? (
-                                                            student.entreprise_raison_sociale ? (
-                                                                <div className="flex flex-col items-center">
-                                                                    <div className="px-4 py-2 rounded-xl bg-slate-900 text-white text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-lg shadow-slate-900/10">
-                                                                        <Building size={12} />
-                                                                        {student.entreprise_raison_sociale}
-                                                                    </div>
-                                                                    <span className="text-[9px] font-bold text-emerald-500 mt-2 flex items-center gap-1">
-                                                                        <CheckCircle2 size={10} /> Partenariat validé
-                                                                    </span>
-                                                                </div>
-                                                            ) : (
-                                                                <button 
-                                                                    onClick={() => handleFillForm(student)}
-                                                                    className="px-4 py-2 rounded-xl bg-amber-50 text-amber-600 text-[10px] font-black uppercase tracking-widest border border-amber-100 hover:bg-amber-600 hover:text-white transition-all group/btn"
-                                                                >
-                                                                    À remplir <ArrowRight size={10} className="inline ml-1 group-hover/btn:translate-x-1 transition-transform" />
-                                                                </button>
-                                                            )
-                                                        ) : (
-                                                            <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest italic">Non alternant</span>
-                                                        )}
-                                                    </div>
-                                                </td>
-                                                <td className="px-8 py-6 text-right">
-                                                    <div className="flex items-center justify-end gap-2">
-                                                        <button 
-                                                            onClick={() => handleViewDetails(student.record_id)}
-                                                            className="px-5 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-600 font-black text-[10px] uppercase tracking-widest hover:border-blue-500 hover:text-blue-500 transition-all shadow-sm flex items-center gap-2"
-                                                        >
-                                                            Fiche complète <ChevronRight size={14} />
-                                                        </button>
-                                                        <button className="p-2.5 rounded-xl border border-slate-200 text-slate-400 hover:bg-slate-50 transition-all">
-                                                            <MoreHorizontal size={18} />
-                                                        </button>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -518,23 +673,22 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                             ) : filteredStudents.map((student) => (
                                 <div key={student.record_id} className="bg-white border border-slate-200 rounded-[32px] p-8 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 group relative overflow-hidden">
                                     <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full -mr-16 -mt-16 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                                    
+
                                     <div className="flex justify-between items-start mb-8 relative z-10">
                                         <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center text-slate-500 font-black text-lg group-hover:from-blue-600 group-hover:to-indigo-600 group-hover:text-white transition-all duration-300 shadow-inner">
                                             {student.prenom?.[0]}{student.nom?.[0]}
                                         </div>
-                                        <div className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border ${
-                                            student.dossier_complet ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'
-                                        }`}>
+                                        <div className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border ${student.dossier_complet ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'
+                                            }`}>
                                             {student.dossier_complet ? 'Dossier Complet' : 'Dossier Incomplet'}
                                         </div>
                                     </div>
-                                    
+
                                     <div className="mb-8 relative z-10">
                                         <h3 className="text-2xl font-black text-slate-900 tracking-tight group-hover:text-blue-600 transition-colors">{student.nom} {student.prenom}</h3>
                                         <p className="text-sm font-bold text-slate-400 truncate mt-1">{student.email}</p>
                                     </div>
-                                    
+
                                     <div className="flex items-center gap-3 mb-8 relative z-10">
                                         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 font-black text-[9px] uppercase tracking-widest">
                                             <Briefcase size={12} />
@@ -547,26 +701,24 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                                             </div>
                                         )}
                                     </div>
-                                    
+
                                     <div className="grid grid-cols-2 gap-3 pt-6 border-t border-slate-100 relative z-10">
-                                        <Button 
-                                            variant="secondary" 
-                                            size="sm" 
+                                        <Button
+                                            variant="secondary"
+                                            size="sm"
                                             className="w-full text-[10px] font-black"
-                                            onClick={() => handleViewDetails(student.record_id)}
+                                            onClick={() => handleViewDetails(student.record_id || student.id)}
                                         >
-                                            Consulter
+                                            Fiche Étudiant
                                         </Button>
-                                        {student.alternance === 'Oui' && !student.entreprise_raison_sociale && (
-                                            <Button 
-                                                variant="primary" 
-                                                size="sm" 
-                                                className="w-full text-[10px] font-black"
-                                                onClick={() => handleFillForm(student)}
-                                            >
-                                                Entreprise
-                                            </Button>
-                                        )}
+                                        <Button
+                                            variant="primary"
+                                            size="sm"
+                                            className="w-full text-[10px] font-black"
+                                            onClick={() => handleViewCompanyDetails(student)}
+                                        >
+                                            Fiche Entreprise
+                                        </Button>
                                     </div>
                                 </div>
                             ))}
@@ -588,7 +740,7 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                                 <h3 className="text-xl font-black text-slate-800 mb-8 flex items-center gap-3">
                                     <Users className="text-blue-600" /> Répartition par Sexe
                                 </h3>
-                                
+
                                 <div className="space-y-8">
                                     {[
                                         { label: 'Masculin', count: statsData.sexDist.male, color: 'bg-blue-500', icon: 'M' },
@@ -609,7 +761,7 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                                                     </div>
                                                 </div>
                                                 <div className="h-3 bg-slate-50 rounded-full overflow-hidden border border-slate-100 p-0.5">
-                                                    <div 
+                                                    <div
                                                         className={`h-full rounded-full transition-all duration-1000 ease-out ${item.color}`}
                                                         style={{ width: `${percent}%` }}
                                                     ></div>

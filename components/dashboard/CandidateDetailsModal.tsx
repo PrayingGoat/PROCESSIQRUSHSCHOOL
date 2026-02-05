@@ -1,9 +1,42 @@
-import React from 'react';
-import { X, UserCircle, Loader2, User, Mail, Phone, MapPin, GraduationCap, Clock, Calendar, RefreshCw, FileText, CheckCircle, AlertCircle, Download, Trash2, Save, Plus } from 'lucide-react';
+import React, { useState } from 'react';
+import { 
+    X, 
+    UserCircle, 
+    Loader2, 
+    User, 
+    Mail, 
+    Phone, 
+    MapPin, 
+    GraduationCap, 
+    Clock, 
+    FileText, 
+    CheckCircle, 
+    AlertCircle, 
+    Download, 
+    Trash2, 
+    Save, 
+    ShieldCheck, 
+    Briefcase,
+    FileCheck,
+    RefreshCw,
+    Building2
+} from 'lucide-react';
 
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
+
+import { 
+    NATIONALITY_OPTIONS,
+    SITUATION_BEFORE_CONTRACT_OPTIONS,
+    REGIME_SOCIAL_OPTIONS,
+    DIPLOMA_PREPARED_OPTIONS,
+    LAST_CLASS_OPTIONS,
+    HIGHEST_DIPLOMA_OPTIONS,
+    FORMATION_SOUHAITEE_OPTIONS,
+    KNOW_RUSH_SCHOOL_OPTIONS,
+    YES_NO_OPTIONS
+} from '../../constants/formOptions';
 
 interface CandidateDetailsModalProps {
     isOpen: boolean;
@@ -12,6 +45,7 @@ interface CandidateDetailsModalProps {
     loading: boolean;
     isEditing: boolean;
     setIsEditing: (val: boolean) => void;
+    onEdit?: () => void;
     editForm: any;
     setEditForm: (val: any) => void;
     handleSaveEdit: () => Promise<void>;
@@ -28,6 +62,7 @@ const CandidateDetailsModal: React.FC<CandidateDetailsModalProps> = ({
     loading,
     isEditing,
     setIsEditing,
+    onEdit,
     editForm,
     setEditForm,
     handleSaveEdit,
@@ -36,167 +71,330 @@ const CandidateDetailsModal: React.FC<CandidateDetailsModalProps> = ({
     isDeleting,
     onRelaunch
 }) => {
+    const [activeTab, setActiveTab] = useState<'personal' | 'school' | 'documents'>('personal');
+
     if (!isOpen) return null;
+
+    const info = candidate?.informations_personnelles || {};
+
+    const tabs = [
+        { id: 'personal', label: 'Infos Perso', icon: User },
+        { id: 'school', label: 'Scolarité', icon: GraduationCap },
+        { id: 'documents', label: 'Documents', icon: FileCheck },
+    ];
+
+    const renderInfoRow = (label: string, value: any, icon?: any) => (
+        <div className="flex flex-col gap-1.5 p-4 bg-slate-50/50 rounded-2xl border border-slate-100 hover:border-rose-200 transition-colors group">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{label}</span>
+            <div className="flex items-center gap-2.5 text-slate-700 font-bold text-sm">
+                {icon && <div className="text-slate-300 group-hover:text-rose-500 transition-colors">{React.createElement(icon, { size: 14 })}</div>}
+                {value || 'N/A'}
+            </div>
+        </div>
+    );
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
             <div className="bg-white rounded-[2.5rem] w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl border border-white/20 flex flex-col animate-in zoom-in-95 duration-300">
-                <div className="p-10 border-b border-slate-100 flex justify-between items-center bg-gradient-to-r from-slate-50 via-white to-slate-50 relative overflow-hidden">
+                {/* Header */}
+                <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-gradient-to-r from-slate-50 via-white to-slate-50 relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-rose-500/5 rounded-full -mr-32 -mt-32 blur-3xl"></div>
                     <div className="relative z-10 flex items-center gap-6">
-                        <div className="w-20 h-20 rounded-[2rem] bg-gradient-to-br from-rose-500 to-rose-600 text-white flex items-center justify-center shadow-2xl shadow-rose-500/30 group-hover:scale-110 transition-transform duration-500">
-                            <UserCircle size={40} />
+                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-rose-500 to-rose-600 text-white flex items-center justify-center shadow-xl shadow-rose-500/20">
+                            <UserCircle size={32} />
                         </div>
                         <div>
-                            <h2 className="text-3xl font-black text-slate-800 tracking-tighter mb-1">
-                                {isEditing ? "Modifier le profil" : "Détails de l'étudiant"}
-                            </h2>
-                            <div className="flex items-center gap-3">
-                                <span className="px-3 py-1 bg-rose-50 text-rose-600 rounded-full text-[10px] font-black uppercase tracking-wider border border-rose-100/50">
-                                    {isEditing ? "Édition en cours" : "Consultation"}
-                                </span>
-                                <p className="text-slate-400 font-bold text-sm">
-                                    {isEditing ? "Mise à jour des informations de profil" : "Informations complètes et suivi des documents"}
-                                </p>
-                            </div>
+                            <h2 className="text-2xl font-black text-slate-800 tracking-tight">Formulaire Étudiant</h2>
+                            <p className="text-slate-400 font-bold text-sm">
+                                {info.prenom} {info.nom_naissance}
+                            </p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="relative z-10 w-14 h-14 rounded-2xl bg-slate-100 text-slate-400 hover:bg-rose-50 hover:text-rose-500 hover:rotate-90 transition-all duration-300 flex items-center justify-center group">
-                        <X size={28} strokeWidth={3} />
+                    <button onClick={onClose} className="relative z-10 w-12 h-12 rounded-xl bg-slate-100 text-slate-400 hover:bg-rose-50 hover:text-rose-500 hover:rotate-90 transition-all duration-300 flex items-center justify-center">
+                        <X size={24} />
                     </button>
+                </div>
+
+                <div className="flex gap-1 p-2 bg-slate-50 border-b border-slate-100 overflow-x-auto no-scrollbar">
+                    {tabs.map((tab) => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id as any)}
+                            className={`flex items-center gap-2 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
+                                activeTab === tab.id 
+                                ? 'bg-white text-rose-600 shadow-sm' 
+                                : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
+                            }`}
+                        >
+                            <tab.icon size={14} />
+                            {tab.label}
+                        </button>
+                    ))}
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-8">
                     {loading ? (
                         <div className="flex flex-col items-center justify-center py-20 gap-4">
                             <Loader2 className="animate-spin text-rose-500" size={48} />
-                            <p className="text-slate-400 font-bold animate-pulse">Chargement des données...</p>
+                            <p className="text-slate-400 font-bold">Chargement des données...</p>
                         </div>
-                    ) : isEditing && editForm ? (
-                        <div className="space-y-8">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50/50 p-8 rounded-[2rem] border border-slate-100">
-                                <Input label="Prénom" value={editForm.prenom} onChange={(e) => setEditForm({ ...editForm, prenom: e.target.value })} />
-                                <Input label="Nom" value={editForm.nom_naissance} onChange={(e) => setEditForm({ ...editForm, nom_naissance: e.target.value })} />
-                                <Input label="Email" type="email" value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} />
-                                <Input label="Téléphone" value={editForm.telephone} onChange={(e) => setEditForm({ ...editForm, telephone: e.target.value })} />
-                                <Input label="Ville" value={editForm.ville} onChange={(e) => setEditForm({ ...editForm, ville: e.target.value })} />
-                                <Select
-                                    label="Formation"
-                                    value={editForm.formation_souhaitee}
-                                    onChange={(e) => setEditForm({ ...editForm, formation_souhaitee: e.target.value })}
-                                    options={[
-                                        { value: "BTS MCO", label: "BTS MCO" },
-                                        { value: "BTS NDRC", label: "BTS NDRC" },
-                                        { value: "BACHELOR RDC", label: "BACHELOR RDC" },
-                                        { value: "TP NTC", label: "TP NTC" }
-                                    ]}
-                                />
-                                <div className="md:col-span-2">
-                                    <Input label="Entreprise d'accueil" value={editForm.entreprise_d_accueil} onChange={(e) => setEditForm({ ...editForm, entreprise_d_accueil: e.target.value })} placeholder="Non ou Nom de l'entreprise" />
-                                </div>
-                            </div>
-                        </div>
-                    ) : candidate ? (
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                            <div className="lg:col-span-2 space-y-10">
-                                <section className="animate-in fade-in slide-in-from-left-4 duration-500">
-                                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-8 flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center shadow-sm"> <User size={16} strokeWidth={3} /> </div> Informations Personnelles
-                                    </h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 bg-slate-50/50 p-10 rounded-[2.5rem] border border-slate-100 shadow-inner">
-                                        {[
-                                            { label: 'Prénom', value: candidate.informations_personnelles?.prenom || 'N/A', icon: User },
-                                            { label: 'Nom', value: candidate.informations_personnelles?.nom_naissance || 'N/A', icon: User },
-                                            { label: 'Email', value: candidate.informations_personnelles?.email || 'N/A', icon: Mail },
-                                            { label: 'Téléphone', value: candidate.informations_personnelles?.telephone || 'N/A', icon: Phone },
-                                            { label: 'Ville', value: candidate.informations_personnelles?.ville || 'N/A', icon: MapPin },
-                                            { label: 'Formation', value: candidate.informations_personnelles?.formation_souhaitee || 'N/A', icon: GraduationCap },
-                                        ].map((item, i) => (
-                                            <div key={i} className="flex flex-col gap-2 group/item">
-                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{item.label}</span>
-                                                <div className="flex items-center gap-3 text-slate-700 font-black text-base group-hover/item:translate-x-1 transition-transform duration-300">
-                                                    <div className="w-8 h-8 rounded-lg bg-white shadow-sm flex items-center justify-center text-slate-300 group-hover/item:text-rose-500 transition-colors"> {item.icon && <item.icon size={16} />} </div> {item.value}
-                                                </div>
-                                            </div>
-                                        ))}
+                    ) : isEditing ? (
+                        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            {activeTab === 'personal' && (
+                                <div className="space-y-8">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <Input label="Prénom" value={editForm?.prenom || ""} onChange={(e) => setEditForm({ ...editForm, prenom: e.target.value })} />
+                                        <Input label="Nom de naissance" value={editForm?.nom_naissance || ""} onChange={(e) => setEditForm({ ...editForm, nom_naissance: e.target.value })} />
+                                        <Input label="Nom d'usage" value={editForm?.nom_usage || ""} onChange={(e) => setEditForm({ ...editForm, nom_usage: e.target.value })} />
+                                        <Select
+                                            label="Sexe"
+                                            value={editForm?.sexe || ""}
+                                            onChange={(e) => setEditForm({ ...editForm, sexe: e.target.value })}
+                                            options={[
+                                                { value: "Féminin", label: "Féminin" },
+                                                { value: "Masculin", label: "Masculin" }
+                                            ]}
+                                        />
+                                        <Input label="Date de naissance" type="date" value={editForm?.date_naissance || ""} onChange={(e) => setEditForm({ ...editForm, date_naissance: e.target.value })} />
+                                        <Select
+                                            label="Nationalité"
+                                            value={editForm?.nationalite || ""}
+                                            onChange={(e) => setEditForm({ ...editForm, nationalite: e.target.value })}
+                                            options={NATIONALITY_OPTIONS}
+                                        />
+                                        <Input label="Commune de naissance" value={editForm?.commune_naissance || ""} onChange={(e) => setEditForm({ ...editForm, commune_naissance: e.target.value })} />
+                                        <Input label="Département de naissance" value={editForm?.departement || ""} onChange={(e) => setEditForm({ ...editForm, departement: e.target.value })} />
                                     </div>
-                                </section>
-                                <section className="animate-in fade-in slide-in-from-left-4 duration-500 delay-100">
-                                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-8 flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center shadow-sm"> <Clock size={16} strokeWidth={3} /> </div> Historique du dossier
-                                    </h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 flex items-center gap-5">
-                                            <div className="w-12 h-12 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center"> <Calendar size={24} /> </div>
-                                            <div>
-                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Créé le</span>
-                                                <span className="text-base font-black text-slate-800">{new Date(candidate.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
-                                            </div>
-                                        </div>
-                                        <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 flex items-center gap-5">
-                                            <div className="w-12 h-12 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center"> <RefreshCw size={24} /> </div>
-                                            <div>
-                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Dernière mise à jour</span>
-                                                <span className="text-base font-black text-slate-800">{candidate.updated_at ? new Date(candidate.updated_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Jamais'}</span>
-                                            </div>
-                                        </div>
+                                    <div className="h-px bg-slate-100" />
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <Input label="Adresse (Rue)" value={editForm?.rue_residence || editForm?.adresse_residence || ""} onChange={(e) => setEditForm({ ...editForm, rue_residence: e.target.value, adresse_residence: e.target.value })} />
+                                        <Input label="Code postal" value={editForm?.code_postal || ""} onChange={(e) => setEditForm({ ...editForm, code_postal: e.target.value })} />
+                                        <Input label="Ville" value={editForm?.ville || ""} onChange={(e) => setEditForm({ ...editForm, ville: e.target.value })} />
+                                        <Input label="Email" type="email" value={editForm?.email || ""} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} />
+                                        <Input label="Téléphone" value={editForm?.telephone || ""} onChange={(e) => setEditForm({ ...editForm, telephone: e.target.value })} />
+                                        <Input label="NIR" value={editForm?.nir || ""} onChange={(e) => setEditForm({ ...editForm, nir: e.target.value })} />
                                     </div>
-                                </section>
-                            </div>
-                            <div className="space-y-10">
-                                <section className="animate-in fade-in slide-in-from-right-4 duration-500 delay-200">
-                                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-8 flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center shadow-sm"> <FileText size={16} strokeWidth={3} /> </div> Documents du dossier
-                                    </h3>
+                                    <div className="h-px bg-slate-100" />
                                     <div className="space-y-4">
-                                        {candidate.documents && Object.entries(candidate.documents).filter(([key]) => key !== 'record_id').map(([key, doc]: [string, any]) => (
-                                            <div key={key} className="flex items-center justify-between p-5 bg-white border border-slate-100 rounded-[1.5rem] hover:border-rose-200 hover:shadow-lg transition-all duration-300 group">
-                                                <div className="flex items-center gap-4">
-                                                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-inner ${doc.uploaded ? 'bg-emerald-50 text-emerald-500' : 'bg-slate-50 text-slate-300'}`}> {doc.uploaded ? <CheckCircle size={24} strokeWidth={3} /> : <AlertCircle size={24} strokeWidth={3} />} </div>
-                                                    <div>
-                                                        <div className="text-sm font-black text-slate-700 uppercase tracking-tight"> {doc.document_type || key.replace(/_/g, ' ')} </div>
-                                                        <div className={`text-[10px] font-bold uppercase tracking-widest ${doc.uploaded ? 'text-emerald-500' : 'text-slate-400'}`}> {doc.uploaded ? 'Document validé' : 'Document manquant'} </div>
-                                                    </div>
-                                                </div>
-                                                {doc.uploaded && (<button className="p-3 rounded-xl bg-slate-50 text-slate-400 hover:bg-rose-500 hover:text-white transition-all duration-300 opacity-0 group-hover:opacity-100"> <Download size={18} strokeWidth={3} /> </button>)}
-                                            </div>
-                                        ))}
-                                    </div>
-                                    <div className="p-8 bg-rose-50/50 rounded-[2.5rem] border border-rose-100/50 mt-10 relative overflow-hidden group/alert">
-                                        <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/5 rounded-full -mr-16 -mt-16 blur-2xl group-hover/alert:bg-rose-500/10 transition-colors"></div>
-                                        <div className="flex items-center gap-4 mb-4 relative z-10">
-                                            <div className="w-10 h-10 rounded-xl bg-rose-500 text-white flex items-center justify-center shadow-lg shadow-rose-500/20"> <Plus size={20} strokeWidth={3} /> </div>
-                                            <span className="text-sm font-black text-rose-600 uppercase tracking-wider">Action requise</span>
+                                        <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Représentant légal 1</h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <Input label="Nom (Rep 1)" value={editForm?.nom_representant_legal || ""} onChange={(e) => setEditForm({ ...editForm, nom_representant_legal: e.target.value })} />
+                                            <Input label="Prénom (Rep 1)" value={editForm?.prenom_representant_legal || ""} onChange={(e) => setEditForm({ ...editForm, prenom_representant_legal: e.target.value })} />
+                                            <Input label="Lien (Rep 1)" value={editForm?.lien_parente_legal || ""} onChange={(e) => setEditForm({ ...editForm, lien_parente_legal: e.target.value })} />
+                                            <Input label="Téléphone (Rep 1)" value={editForm?.numero_legal || ""} onChange={(e) => setEditForm({ ...editForm, numero_legal: e.target.value })} />
+                                            <Input label="Email (Rep 1)" value={editForm?.courriel_legal || ""} onChange={(e) => setEditForm({ ...editForm, courriel_legal: e.target.value })} />
                                         </div>
-                                        <p className="text-sm text-rose-500/80 font-bold leading-relaxed relative z-10"> Relancez l'étudiant pour les documents manquants afin de finaliser son dossier de placement. </p>
                                     </div>
-                                </section>
-                            </div>
+                                    <div className="h-px bg-slate-100" />
+                                    <div className="space-y-4">
+                                        <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Représentant légal 2</h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <Input label="Nom (Rep 2)" value={editForm?.nom_representant_legal2 || ""} onChange={(e) => setEditForm({ ...editForm, nom_representant_legal2: e.target.value })} />
+                                            <Input label="Prénom (Rep 2)" value={editForm?.prenom_representant_legal2 || ""} onChange={(e) => setEditForm({ ...editForm, prenom_representant_legal2: e.target.value })} />
+                                            <Input label="Lien (Rep 2)" value={editForm?.lien_parente_legal2 || ""} onChange={(e) => setEditForm({ ...editForm, lien_parente_legal2: e.target.value })} />
+                                            <Input label="Téléphone (Rep 2)" value={editForm?.numero_legal2 || ""} onChange={(e) => setEditForm({ ...editForm, numero_legal2: e.target.value })} />
+                                            <Input label="Email (Rep 2)" value={editForm?.courriel_legal2 || ""} onChange={(e) => setEditForm({ ...editForm, courriel_legal2: e.target.value })} />
+                                        </div>
+                                    </div>
+                                    <div className="h-px bg-slate-100" />
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <Select
+                                            label="Situation avant le contrat"
+                                            value={editForm?.situation || ""}
+                                            onChange={(e) => setEditForm({ ...editForm, situation: e.target.value })}
+                                            options={SITUATION_BEFORE_CONTRACT_OPTIONS}
+                                        />
+                                        <Select
+                                            label="Régime social"
+                                            value={editForm?.regime_social || ""}
+                                            onChange={(e) => setEditForm({ ...editForm, regime_social: e.target.value })}
+                                            options={REGIME_SOCIAL_OPTIONS}
+                                        />
+                                        <Select
+                                            label="Sportif de haut niveau"
+                                            value={editForm?.declare_inscription_sportif_haut_niveau ? "Oui" : "Non"}
+                                            onChange={(e) => setEditForm({ ...editForm, declare_inscription_sportif_haut_niveau: e.target.value === "Oui" })}
+                                            options={YES_NO_OPTIONS}
+                                        />
+                                        <Select
+                                            label="Projet création entreprise"
+                                            value={editForm?.declare_avoir_projet_creation_reprise_entreprise ? "Oui" : "Non"}
+                                            onChange={(e) => setEditForm({ ...editForm, declare_avoir_projet_creation_reprise_entreprise: e.target.value === "Oui" })}
+                                            options={YES_NO_OPTIONS}
+                                        />
+                                        <Select
+                                            label="Travailleur handicapé (RQTH)"
+                                            value={editForm?.declare_travailleur_handicape ? "Oui" : "Non"}
+                                            onChange={(e) => setEditForm({ ...editForm, declare_travailleur_handicape: e.target.value === "Oui" })}
+                                            options={YES_NO_OPTIONS}
+                                        />
+                                        <Select
+                                            label="Alternance"
+                                            value={editForm?.alternance ? "Oui" : "Non"}
+                                            onChange={(e) => setEditForm({ ...editForm, alternance: e.target.value === "Oui" })}
+                                            options={YES_NO_OPTIONS}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeTab === 'school' && (
+                                <div className="space-y-8">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <Select
+                                            label="Formation souhaitée"
+                                            value={editForm?.formation_souhaitee || ""}
+                                            onChange={(e) => setEditForm({ ...editForm, formation_souhaitee: e.target.value })}
+                                            options={FORMATION_SOUHAITEE_OPTIONS}
+                                        />
+                                        <Select
+                                            label="Dernier diplôme préparé"
+                                            value={editForm?.dernier_diplome_prepare || ""}
+                                            onChange={(e) => setEditForm({ ...editForm, dernier_diplome_prepare: e.target.value })}
+                                            options={DIPLOMA_PREPARED_OPTIONS}
+                                        />
+                                        <Select
+                                            label="Dernière classe suivie"
+                                            value={editForm?.derniere_classe || ""}
+                                            onChange={(e) => setEditForm({ ...editForm, derniere_classe: e.target.value })}
+                                            options={LAST_CLASS_OPTIONS}
+                                        />
+                                        <Select
+                                            label="Diplôme le plus élevé obtenu"
+                                            value={editForm?.bac || ""}
+                                            onChange={(e) => setEditForm({ ...editForm, bac: e.target.value })}
+                                            options={HIGHEST_DIPLOMA_OPTIONS}
+                                        />
+                                        <Input label="Intitulé précis diplôme" value={editForm?.intitulePrecisDernierDiplome || ""} onChange={(e) => setEditForm({ ...editForm, intitulePrecisDernierDiplome: e.target.value })} />
+                                        <Select
+                                            label="Entreprise d'accueil ?"
+                                            value={editForm?.entreprise_d_accueil || "Non"}
+                                            onChange={(e) => setEditForm({ ...editForm, entreprise_d_accueil: e.target.value })}
+                                            options={[{value: "Oui", label: "Oui"}, {value: "En recherche", label: "En recherche"}, {value: "Non", label: "Non"}]}
+                                        />
+                                        <Select
+                                            label="Connu Rush School via"
+                                            value={editForm?.connaissance_rush_how || ""}
+                                            onChange={(e) => setEditForm({ ...editForm, connaissance_rush_how: e.target.value })}
+                                            options={KNOW_RUSH_SCHOOL_OPTIONS}
+                                        />
+                                    </div>
+                                    <div className="h-px bg-slate-100" />
+                                    <div className="grid grid-cols-1 gap-4">
+                                        <div className="flex flex-col gap-2">
+                                            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Motivations et projet professionnel</label>
+                                            <textarea 
+                                                value={editForm?.motivation_projet_professionnel || ""} 
+                                                onChange={(e) => setEditForm({ ...editForm, motivation_projet_professionnel: e.target.value })}
+                                                rows={4}
+                                                className="w-full px-5 py-4 bg-slate-50 border-2 border-transparent rounded-2xl text-[15px] font-bold text-slate-700 placeholder:text-slate-300 transition-all duration-300 outline-none focus:bg-white focus:border-rose-500 focus:shadow-rose-500/10 resize-none"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                            {activeTab === 'documents' && (
+                                <div className="text-center py-10 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                                    <p className="text-slate-400 font-bold">Les documents se gèrent via le téléchargement direct dans la vue consultation.</p>
+                                </div>
+                            )}
                         </div>
                     ) : (
-                        <div className="text-center py-20"> <p className="text-slate-400 font-bold">Aucune donnée disponible</p> </div>
+                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            {activeTab === 'personal' && (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {renderInfoRow("Prénom", info.prenom, User)}
+                                    {renderInfoRow("Nom", info.nom_naissance, User)}
+                                    {renderInfoRow("Email", info.email, Mail)}
+                                    {renderInfoRow("Téléphone", info.telephone, Phone)}
+                                    {renderInfoRow("Sexe", info.sexe, User)}
+                                    {renderInfoRow("Date de naissance", info.date_naissance, Clock)}
+                                    {renderInfoRow("Nationalité", info.nationalite, ShieldCheck)}
+                                    {renderInfoRow("Commune de naissance", info.commune_naissance, MapPin)}
+                                    <div className="md:col-span-2">
+                                        {renderInfoRow("Adresse de résidence", info.adresse_residence, MapPin)}
+                                    </div>
+                                    {renderInfoRow("Situation", info.situation, Briefcase)}
+                                    {renderInfoRow("Régime social", info.regime_social, ShieldCheck)}
+                                </div>
+                            )}
+
+                            {activeTab === 'school' && (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {renderInfoRow("Formation souhaitée", info.formation_souhaitee, GraduationCap)}
+                                    {renderInfoRow("Dernier diplôme préparé", info.dernier_diplome_prepare, GraduationCap)}
+                                    {renderInfoRow("Dernière classe", info.derniere_classe, GraduationCap)}
+                                    {renderInfoRow("BAC", info.bac, GraduationCap)}
+                                    {renderInfoRow("Intitulé précis diplôme", info.intitulePrecisDernierDiplome, FileText)}
+                                    {renderInfoRow("Entreprise d'accueil", info.entreprise_d_accueil, Building2)}
+                                    {renderInfoRow("Connaissance Rush How", info.connaissance_rush_how, FileText)}
+                                    <div className="md:col-span-2">
+                                        {renderInfoRow("Motivation", info.motivation_projet_professionnel, FileText)}
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeTab === 'documents' && (
+                                <div className="space-y-4">
+                                    {candidate.documents && Object.entries(candidate.documents).filter(([key]) => key !== 'record_id').map(([key, doc]: [string, any]) => (
+                                        <div key={key} className="flex items-center justify-between p-5 bg-white border border-slate-100 rounded-[1.5rem] hover:border-rose-200 transition-all group">
+                                            <div className="flex items-center gap-4">
+                                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${doc.uploaded ? 'bg-emerald-50 text-emerald-500' : 'bg-slate-50 text-slate-300'}`}>
+                                                    {doc.uploaded ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
+                                                </div>
+                                                <div>
+                                                    <div className="text-xs font-black text-slate-700 uppercase tracking-tight">{doc.document_type || key.replace(/_/g, ' ')}</div>
+                                                    <div className={`text-[9px] font-bold uppercase tracking-widest ${doc.uploaded ? 'text-emerald-500' : 'text-slate-400'}`}>
+                                                        {doc.uploaded ? 'Validé' : 'Manquant'}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            {doc.uploaded && (
+                                                <button className="p-2 rounded-lg bg-slate-50 text-slate-400 hover:bg-rose-500 hover:text-white transition-all opacity-0 group-hover:opacity-100">
+                                                    <Download size={16} />
+                                                </button>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     )}
                 </div>
 
                 <div className="p-8 border-t border-slate-100 bg-slate-50/50 flex justify-between items-center">
                     <div className="flex gap-3">
+                        {!isEditing && (
+                            <button 
+                                onClick={() => onEdit ? onEdit() : setIsEditing(true)}
+                                className="px-5 py-2.5 bg-white border border-slate-200 text-slate-500 rounded-xl font-black text-[10px] uppercase tracking-widest hover:border-rose-500 hover:text-rose-500 transition-all flex items-center gap-2"
+                            >
+                                <RefreshCw size={14} /> Modifier
+                            </button>
+                        )}
                         {isEditing && (
-                            <Button variant="outline" onClick={handleDelete} isLoading={isDeleting} className="!border-rose-200 !text-rose-500 hover:!bg-rose-50" leftIcon={<Trash2 size={18} />}>
-                                Supprimer l'étudiant
+                            <Button 
+                                variant="outline" 
+                                onClick={handleDelete} 
+                                isLoading={isDeleting} 
+                                className="!border-rose-200 !text-rose-500 hover:!bg-rose-50" 
+                                leftIcon={<Trash2 size={18} />}
+                            >
+                                Supprimer
                             </Button>
                         )}
                     </div>
                     <div className="flex gap-3">
-                        <Button variant="secondary" onClick={onClose}> Annuler </Button>
+                        <Button variant="secondary" onClick={onClose}>Fermer</Button>
                         {isEditing ? (
-                            <Button variant="danger" onClick={handleSaveEdit} isLoading={isSaving} leftIcon={<Save size={18} />}> Enregistrer </Button>
+                            <Button variant="danger" onClick={handleSaveEdit} isLoading={isSaving} leftIcon={<Save size={18} />}>Enregistrer</Button>
                         ) : (
                             <Button 
                                 variant="danger" 
                                 leftIcon={<Mail size={18} />}
                                 onClick={() => onRelaunch && onRelaunch(candidate)}
                             > 
-                                Relancer l'étudiant 
+                                Relancer 
                             </Button>
                         )}
                     </div>
