@@ -1,6 +1,6 @@
 import { StudentFormData, CompanyFormData, ApiResponse } from '../types';
 
-const BASE_API_URL = 'https://liantsoaxx08-apirushscholl.hf.space/api/v1';
+const BASE_API_URL = import.meta.env.VITE_BASE_API_URL;
 const AUTH_API_URL = '/api'; // Local backend for Auth
 const BASE_URL = `${BASE_API_URL}/admission`;
 
