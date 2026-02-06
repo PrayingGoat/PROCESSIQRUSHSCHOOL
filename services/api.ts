@@ -134,180 +134,180 @@ const mapStudentToBackend = (data: any) => {
 
 const mapCompanyToBackend = (data: any) => {
   const ensureString = (val: any) => (val === undefined || val === null) ? "" : String(val);
-  
+
   // Si les données sont déjà au format backend (cas de l'update avec fields)
   if (data.identification || data.adresse || data.maitre_apprentissage) {
-      return {
-        identification: {
-          raison_sociale: ensureString(data.identification?.raison_sociale),
-          siret: ensureString(data.identification?.siret),
-          code_ape_naf: ensureString(data.identification?.code_ape_naf),
-          type_employeur: ensureString(data.identification?.type_employeur),
-          nombre_salaries: data.identification?.effectif ? parseInt(data.identification.effectif.toString()) : (data.identification?.nombre_salaries || null),
-          convention_collective: ensureString(data.identification?.convention || data.identification?.convention_collective)
-        },
-        adresse: {
-          numero: ensureString(data.adresse?.num || data.adresse?.numero),
-          voie: ensureString(data.adresse?.voie),
-          complement: ensureString(data.adresse?.complement),
-          code_postal: ensureString(data.adresse?.code_postal),
-          ville: ensureString(data.adresse?.ville),
-          telephone: ensureString(data.adresse?.telephone),
-          email: ensureString(data.adresse?.email)
-        },
-        maitre_apprentissage: {
-          nom: ensureString(data.maitre_apprentissage?.nom),
-          prenom: ensureString(data.maitre_apprentissage?.prenom),
-          date_naissance: ensureString(data.maitre_apprentissage?.date_naissance),
-          fonction: ensureString(data.maitre_apprentissage?.fonction),
-          diplome_plus_eleve: ensureString(data.maitre_apprentissage?.diplome || data.maitre_apprentissage?.diplome_plus_eleve),
-          annees_experience: ensureString(data.maitre_apprentissage?.experience || data.maitre_apprentissage?.annees_experience),
-          telephone: ensureString(data.maitre_apprentissage?.telephone),
-          email: ensureString(data.maitre_apprentissage?.email)
-        },
-        opco: { nom_opco: ensureString(data.opco?.nom || data.opco?.nom_opco) },
-        contrat: {
-          type_contrat: ensureString(data.contrat?.type_contrat),
-          type_derogation: ensureString(data.contrat?.type_derogation),
-          date_debut: ensureString(data.formation?.date_debut || data.contrat?.date_debut),
-          date_fin: ensureString(data.formation?.date_fin || data.contrat?.date_fin),
-          duree_hebdomadaire: ensureString(data.contrat?.duree_hebdomadaire),
-          poste_occupe: ensureString(data.contrat?.poste_occupe),
-          lieu_execution: ensureString(data.contrat?.lieu_execution),
-          pourcentage_smic1: data.contrat?.pourcentage_smic1 || 0,
-          smic1: ensureString(data.contrat?.smic1),
-          pourcentage_smic2: data.contrat?.pourcentage_smic2 || 0,
-          smic2: ensureString(data.contrat?.smic2),
-          pourcentage_smic3: data.contrat?.pourcentage_smic3 || 0,
-          smic3: ensureString(data.contrat?.smic3),
-          pourcentage_smic4: data.contrat?.pourcentage_smic4 || 0,
-          smic4: ensureString(data.contrat?.smic4),
-          montant_salaire_brut1: data.contrat?.montant_salaire_brut1 ? parseFloat(data.contrat.montant_salaire_brut1.toString()) : null,
-          montant_salaire_brut2: data.contrat?.montant_salaire_brut2 ? parseFloat(data.contrat.montant_salaire_brut2.toString()) : null,
-          montant_salaire_brut3: data.contrat?.montant_salaire_brut3 ? parseFloat(data.contrat.montant_salaire_brut3.toString()) : null,
-          montant_salaire_brut4: data.contrat?.montant_salaire_brut4 ? parseFloat(data.contrat.montant_salaire_brut4.toString()) : null,
-          date_conclusion: ensureString(data.contrat?.date_conclusion),
-          date_debut_execution: ensureString(data.contrat?.date_debut_execution),
-          numero_deca_ancien_contrat: ensureString(data.contrat?.numero_deca_ancien_contrat),
-          travail_machine_dangereuse: ensureString(data.contrat?.machines_dangereuses || data.contrat?.travail_machine_dangereuse),
-          caisse_retraite: ensureString(data.contrat?.caisse_retraite),
-          date_avenant: ensureString(data.contrat?.date_avenant),
-          date_debut_2periode_1er_annee: ensureString(data.contrat?.date_debut_2periode_1er_annee),
-          date_fin_2periode_1er_annee: ensureString(data.contrat?.date_fin_2periode_1er_annee),
-          date_debut_1periode_2eme_annee: ensureString(data.contrat?.date_debut_1periode_2eme_annee),
-          date_fin_1periode_2eme_annee: ensureString(data.contrat?.date_fin_1periode_2eme_annee),
-          date_debut_2periode_2eme_annee: ensureString(data.contrat?.date_debut_2periode_2eme_annee),
-          date_fin_2periode_2eme_annee: ensureString(data.contrat?.date_fin_2periode_2eme_annee),
-          date_debut_1periode_3eme_annee: ensureString(data.contrat?.date_debut_1periode_3eme_annee),
-          date_fin_1periode_3eme_annee: ensureString(data.contrat?.date_fin_1periode_3eme_annee),
-          date_debut_2periode_3eme_annee: ensureString(data.contrat?.date_debut_2periode_3eme_annee),
-          date_fin_2periode_3eme_annee: ensureString(data.contrat?.date_fin_2periode_3eme_annee),
-          date_debut_1periode_4eme_annee: ensureString(data.contrat?.date_debut_1periode_4eme_annee),
-          date_fin_1periode_4eme_annee: ensureString(data.contrat?.date_fin_1periode_4eme_annee),
-          date_debut_2periode_4eme_annee: ensureString(data.contrat?.date_debut_2periode_4eme_annee),
-          date_fin_2periode_4eme_annee: ensureString(data.contrat?.date_fin_2periode_4eme_annee)
-        },
-        formation_missions: {
-          formation_alternant: data.missions?.selectionnees?.length > 0 ? data.missions.selectionnees.join(', ') : (data.formation_missions?.formation_alternant || ""),
-          formation_choisie: ensureString(data.formation?.choisie || data.formation_missions?.formation_choisie),
-          code_rncp: ensureString(data.formation?.code_rncp || data.formation_missions?.code_rncp),
-          code_diplome: ensureString(data.formation?.code_diplome || data.formation_missions?.code_diplome),
-          nombre_heures_formation: data.formation?.nb_heures ? parseFloat(data.formation.nb_heures.toString()) : (data.formation_missions?.nombre_heures_formation || 0),
-          jours_de_cours: data.formation_missions?.jours_de_cours || 0,
-          cfaEnterprise: data.cfa?.entreprise === 'oui' || data.formation_missions?.cfaEnterprise,
-          DenominationCFA: ensureString(data.cfa?.denomination || data.formation_missions?.DenominationCFA),
-          NumeroUAI: ensureString(data.cfa?.uai || data.formation_missions?.NumeroUAI),
-          NumeroSiretCFA: ensureString(data.cfa?.siret || data.formation_missions?.NumeroSiretCFA),
-          AdresseCFA: ensureString(data.cfa?.adresse || data.formation_missions?.AdresseCFA),
-          complementAdresseCFA: ensureString(data.cfa?.complement || data.formation_missions?.complementAdresseCFA),
-          codePostalCFA: ensureString(data.cfa?.code_postal || data.formation_missions?.codePostalCFA),
-          communeCFA: ensureString(data.cfa?.commune || data.formation_missions?.communeCFA)
-        },
-        record_id_etudiant: ensureString(data.record_id_etudiant)
-      };
+    return {
+      identification: {
+        raison_sociale: ensureString(data.identification?.raison_sociale),
+        siret: ensureString(data.identification?.siret),
+        code_ape_naf: ensureString(data.identification?.code_ape_naf),
+        type_employeur: ensureString(data.identification?.type_employeur),
+        nombre_salaries: data.identification?.effectif ? parseInt(data.identification.effectif.toString()) : (data.identification?.nombre_salaries || null),
+        convention_collective: ensureString(data.identification?.convention || data.identification?.convention_collective)
+      },
+      adresse: {
+        numero: ensureString(data.adresse?.num || data.adresse?.numero),
+        voie: ensureString(data.adresse?.voie),
+        complement: ensureString(data.adresse?.complement),
+        code_postal: ensureString(data.adresse?.code_postal),
+        ville: ensureString(data.adresse?.ville),
+        telephone: ensureString(data.adresse?.telephone),
+        email: ensureString(data.adresse?.email)
+      },
+      maitre_apprentissage: {
+        nom: ensureString(data.maitre_apprentissage?.nom),
+        prenom: ensureString(data.maitre_apprentissage?.prenom),
+        date_naissance: ensureString(data.maitre_apprentissage?.date_naissance),
+        fonction: ensureString(data.maitre_apprentissage?.fonction),
+        diplome_plus_eleve: ensureString(data.maitre_apprentissage?.diplome || data.maitre_apprentissage?.diplome_plus_eleve),
+        annees_experience: ensureString(data.maitre_apprentissage?.experience || data.maitre_apprentissage?.annees_experience),
+        telephone: ensureString(data.maitre_apprentissage?.telephone),
+        email: ensureString(data.maitre_apprentissage?.email)
+      },
+      opco: { nom_opco: ensureString(data.opco?.nom || data.opco?.nom_opco) },
+      contrat: {
+        type_contrat: ensureString(data.contrat?.type_contrat),
+        type_derogation: ensureString(data.contrat?.type_derogation),
+        date_debut: ensureString(data.formation?.date_debut || data.contrat?.date_debut),
+        date_fin: ensureString(data.formation?.date_fin || data.contrat?.date_fin),
+        duree_hebdomadaire: ensureString(data.contrat?.duree_hebdomadaire),
+        poste_occupe: ensureString(data.contrat?.poste_occupe),
+        lieu_execution: ensureString(data.contrat?.lieu_execution),
+        pourcentage_smic1: data.contrat?.pourcentage_smic1 || 0,
+        smic1: ensureString(data.contrat?.smic1),
+        pourcentage_smic2: data.contrat?.pourcentage_smic2 || 0,
+        smic2: ensureString(data.contrat?.smic2),
+        pourcentage_smic3: data.contrat?.pourcentage_smic3 || 0,
+        smic3: ensureString(data.contrat?.smic3),
+        pourcentage_smic4: data.contrat?.pourcentage_smic4 || 0,
+        smic4: ensureString(data.contrat?.smic4),
+        montant_salaire_brut1: data.contrat?.montant_salaire_brut1 ? parseFloat(data.contrat.montant_salaire_brut1.toString()) : null,
+        montant_salaire_brut2: data.contrat?.montant_salaire_brut2 ? parseFloat(data.contrat.montant_salaire_brut2.toString()) : null,
+        montant_salaire_brut3: data.contrat?.montant_salaire_brut3 ? parseFloat(data.contrat.montant_salaire_brut3.toString()) : null,
+        montant_salaire_brut4: data.contrat?.montant_salaire_brut4 ? parseFloat(data.contrat.montant_salaire_brut4.toString()) : null,
+        date_conclusion: ensureString(data.contrat?.date_conclusion),
+        date_debut_execution: ensureString(data.contrat?.date_debut_execution),
+        numero_deca_ancien_contrat: ensureString(data.contrat?.numero_deca_ancien_contrat),
+        travail_machine_dangereuse: ensureString(data.contrat?.machines_dangereuses || data.contrat?.travail_machine_dangereuse),
+        caisse_retraite: ensureString(data.contrat?.caisse_retraite),
+        date_avenant: ensureString(data.contrat?.date_avenant),
+        date_debut_2periode_1er_annee: ensureString(data.contrat?.date_debut_2periode_1er_annee),
+        date_fin_2periode_1er_annee: ensureString(data.contrat?.date_fin_2periode_1er_annee),
+        date_debut_1periode_2eme_annee: ensureString(data.contrat?.date_debut_1periode_2eme_annee),
+        date_fin_1periode_2eme_annee: ensureString(data.contrat?.date_fin_1periode_2eme_annee),
+        date_debut_2periode_2eme_annee: ensureString(data.contrat?.date_debut_2periode_2eme_annee),
+        date_fin_2periode_2eme_annee: ensureString(data.contrat?.date_fin_2periode_2eme_annee),
+        date_debut_1periode_3eme_annee: ensureString(data.contrat?.date_debut_1periode_3eme_annee),
+        date_fin_1periode_3eme_annee: ensureString(data.contrat?.date_fin_1periode_3eme_annee),
+        date_debut_2periode_3eme_annee: ensureString(data.contrat?.date_debut_2periode_3eme_annee),
+        date_fin_2periode_3eme_annee: ensureString(data.contrat?.date_fin_2periode_3eme_annee),
+        date_debut_1periode_4eme_annee: ensureString(data.contrat?.date_debut_1periode_4eme_annee),
+        date_fin_1periode_4eme_annee: ensureString(data.contrat?.date_fin_1periode_4eme_annee),
+        date_debut_2periode_4eme_annee: ensureString(data.contrat?.date_debut_2periode_4eme_annee),
+        date_fin_2periode_4eme_annee: ensureString(data.contrat?.date_fin_2periode_4eme_annee)
+      },
+      formation_missions: {
+        formation_alternant: data.missions?.selectionnees?.length > 0 ? data.missions.selectionnees.join(', ') : (data.formation_missions?.formation_alternant || ""),
+        formation_choisie: ensureString(data.formation?.choisie || data.formation_missions?.formation_choisie),
+        code_rncp: ensureString(data.formation?.code_rncp || data.formation_missions?.code_rncp),
+        code_diplome: ensureString(data.formation?.code_diplome || data.formation_missions?.code_diplome),
+        nombre_heures_formation: data.formation?.nb_heures ? parseFloat(data.formation.nb_heures.toString()) : (data.formation_missions?.nombre_heures_formation || 0),
+        jours_de_cours: data.formation_missions?.jours_de_cours || 0,
+        cfaEnterprise: data.cfa?.entreprise === 'oui' || data.formation_missions?.cfaEnterprise,
+        DenominationCFA: ensureString(data.cfa?.denomination || data.formation_missions?.DenominationCFA),
+        NumeroUAI: ensureString(data.cfa?.uai || data.formation_missions?.NumeroUAI),
+        NumeroSiretCFA: ensureString(data.cfa?.siret || data.formation_missions?.NumeroSiretCFA),
+        AdresseCFA: ensureString(data.cfa?.adresse || data.formation_missions?.AdresseCFA),
+        complementAdresseCFA: ensureString(data.cfa?.complement || data.formation_missions?.complementAdresseCFA),
+        codePostalCFA: ensureString(data.cfa?.code_postal || data.formation_missions?.codePostalCFA),
+        communeCFA: ensureString(data.cfa?.commune || data.formation_missions?.communeCFA)
+      },
+      record_id_etudiant: ensureString(data.record_id_etudiant)
+    };
   }
 
   // Cas des données plates provenant directement des "fields" d'Airtable
   return {
-      identification: {
-          raison_sociale: ensureString(data["Raison sociale"]),
-          siret: ensureString(data["Numéro SIRET"]),
-          code_ape_naf: ensureString(data["Code APE/NAF"]),
-          type_employeur: ensureString(data["Type demployeur"]),
-          nombre_salaries: parseInt(ensureString(data["Effectif salarié de l'entreprise"])) || null,
-          convention_collective: ensureString(data["Convention collective"])
-      },
-      adresse: {
-          numero: ensureString(data["Numéro entreprise"]),
-          voie: ensureString(data["Voie entreprise"]),
-          complement: ensureString(data["Complément dadresse entreprise"]),
-          code_postal: ensureString(data["Code postal entreprise"]),
-          ville: ensureString(data["Ville entreprise"]),
-          telephone: ensureString(data["Téléphone entreprise"]),
-          email: ensureString(data["Email entreprise"])
-      },
-      maitre_apprentissage: {
-          nom: ensureString(data["Nom Maître apprentissage"]),
-          prenom: ensureString(data["Prénom Maître apprentissage"]),
-          date_naissance: ensureString(data["Date de naissance Maître apprentissage"]),
-          fonction: ensureString(data["Fonction Maître apprentissage"]),
-          diplome_plus_eleve: ensureString(data["Diplôme Maître apprentissage"]),
-          annees_experience: ensureString(data["Année experience pro Maître apprentissage"]),
-          telephone: ensureString(data["Téléphone Maître apprentissage"]),
-          email: ensureString(data["Email Maître apprentissage"])
-      },
-      opco: { nom_opco: ensureString(data["Nom OPCO"]) },
-      contrat: {
-          type_contrat: ensureString(data["Type de contrat"]),
-          type_derogation: ensureString(data["Type de dérogation"]),
-          date_debut: ensureString(data["Date de début exécution"]),
-          date_fin: ensureString(data["Fin du contrat apprentissage"]),
-          duree_hebdomadaire: ensureString(data["Durée hebdomadaire"]),
-          poste_occupe: ensureString(data["Poste occupé"]),
-          lieu_execution: ensureString(data["Lieu dexécution du contrat (si différent du siège)"]),
-          pourcentage_smic1: data["Pourcentage du SMIC 1"] || data["Pourcentage smic 1"] || 0,
-          smic1: ensureString(data["SMIC 1"] || data["smic 1"]),
-          pourcentage_smic2: data["Pourcentage smic 2"] || 0,
-          smic2: ensureString(data["smic 2"]),
-          pourcentage_smic3: data["Pourcentage smic 3"] || 0,
-          smic3: ensureString(data["smic 3"]),
-          pourcentage_smic4: data["Pourcentage smic 4"] || 0,
-          smic4: ensureString(data["smic 4"]),
-          montant_salaire_brut1: parseFloat(ensureString(data["Salaire brut mensuel 1"])) || null,
-          montant_salaire_brut2: parseFloat(ensureString(data["Salaire brut mensuel 2"])) || null,
-          montant_salaire_brut3: parseFloat(ensureString(data["Salaire brut mensuel 3"])) || null,
-          montant_salaire_brut4: parseFloat(ensureString(data["Salaire brut mensuel 4"])) || null,
-          date_conclusion: ensureString(data["Date de conclusion"]),
-          date_debut_execution: ensureString(data["Date de début exécution"]),
-          numero_deca_ancien_contrat: ensureString(data["Numéro DECA de ancien contrat"]),
-          travail_machine_dangereuse: ensureString(data["Travail sur machines dangereuses ou exposition à des risques particuliers"]),
-          caisse_retraite: ensureString(data["Caisse de retraite"]),
-          date_avenant: ensureString(data["date Si avenant"]),
-          date_debut_2periode_1er_annee: ensureString(data["date_debut_2periode_1er_annee"]),
-          date_fin_2periode_1er_annee: ensureString(data["date_fin_2periode_1er_annee"]),
-          date_debut_1periode_2eme_annee: ensureString(data["date_debut_1periode_2eme_annee"]),
-          date_fin_1periode_2eme_annee: ensureString(data["date_fin_1periode_2eme_annee"]),
-          date_debut_2periode_2eme_annee: ensureString(data["date_debut_2periode_2eme_annee"]),
-          date_fin_2periode_2eme_annee: ensureString(data["date_fin_2periode_2eme_annee"]),
-          date_debut_1periode_3eme_annee: ensureString(data["date_debut_1periode_3eme_annee"]),
-          date_fin_1periode_3eme_annee: ensureString(data["date_fin_1periode_3eme_annee"]),
-          date_debut_2periode_3eme_annee: ensureString(data["date_debut_2periode_3eme_annee"]),
-          date_fin_2periode_3eme_annee: ensureString(data["date_fin_2periode_3eme_annee"]),
-          date_debut_1periode_4eme_annee: ensureString(data["date_debut_1periode_4eme_annee"]),
-          date_fin_1periode_4eme_annee: ensureString(data["date_fin_1periode_4eme_annee"]),
-          date_debut_2periode_4eme_annee: ensureString(data["date_debut_2periode_4eme_annee"]),
-          date_fin_2periode_4eme_annee: ensureString(data["date_fin_2periode_4eme_annee"])
-        },
-        formation_missions: {
-          formation_alternant: ensureString(data["Formation de lalternant(e) (pour les missions)"]),
-          formation_choisie: ensureString(data["Formation"]),
-          code_rncp: ensureString(data["Code Rncp"]),
-          code_diplome: ensureString(data["Code  diplome"]),
-          nombre_heures_formation: parseFloat(ensureString(data["nombre heure formation"])) || 0,
-          jours_de_cours: parseInt(ensureString(data["jour de cours"])) || 0,
-          cfaEnterprise: false, DenominationCFA: "", NumeroUAI: "", NumeroSiretCFA: "", AdresseCFA: "", complementAdresseCFA: "", codePostalCFA: "", communeCFA: ""
-        },
-        record_id_etudiant: ensureString(data["recordIdetudiant"])
+    identification: {
+      raison_sociale: ensureString(data["Raison sociale"]),
+      siret: ensureString(data["Numéro SIRET"]),
+      code_ape_naf: ensureString(data["Code APE/NAF"]),
+      type_employeur: ensureString(data["Type demployeur"]),
+      nombre_salaries: parseInt(ensureString(data["Effectif salarié de l'entreprise"])) || null,
+      convention_collective: ensureString(data["Convention collective"])
+    },
+    adresse: {
+      numero: ensureString(data["Numéro entreprise"]),
+      voie: ensureString(data["Voie entreprise"]),
+      complement: ensureString(data["Complément dadresse entreprise"]),
+      code_postal: ensureString(data["Code postal entreprise"]),
+      ville: ensureString(data["Ville entreprise"]),
+      telephone: ensureString(data["Téléphone entreprise"]),
+      email: ensureString(data["Email entreprise"])
+    },
+    maitre_apprentissage: {
+      nom: ensureString(data["Nom Maître apprentissage"]),
+      prenom: ensureString(data["Prénom Maître apprentissage"]),
+      date_naissance: ensureString(data["Date de naissance Maître apprentissage"]),
+      fonction: ensureString(data["Fonction Maître apprentissage"]),
+      diplome_plus_eleve: ensureString(data["Diplôme Maître apprentissage"]),
+      annees_experience: ensureString(data["Année experience pro Maître apprentissage"]),
+      telephone: ensureString(data["Téléphone Maître apprentissage"]),
+      email: ensureString(data["Email Maître apprentissage"])
+    },
+    opco: { nom_opco: ensureString(data["Nom OPCO"]) },
+    contrat: {
+      type_contrat: ensureString(data["Type de contrat"]),
+      type_derogation: ensureString(data["Type de dérogation"]),
+      date_debut: ensureString(data["Date de début exécution"]),
+      date_fin: ensureString(data["Fin du contrat apprentissage"]),
+      duree_hebdomadaire: ensureString(data["Durée hebdomadaire"]),
+      poste_occupe: ensureString(data["Poste occupé"]),
+      lieu_execution: ensureString(data["Lieu dexécution du contrat (si différent du siège)"]),
+      pourcentage_smic1: data["Pourcentage du SMIC 1"] || data["Pourcentage smic 1"] || 0,
+      smic1: ensureString(data["SMIC 1"] || data["smic 1"]),
+      pourcentage_smic2: data["Pourcentage smic 2"] || 0,
+      smic2: ensureString(data["smic 2"]),
+      pourcentage_smic3: data["Pourcentage smic 3"] || 0,
+      smic3: ensureString(data["smic 3"]),
+      pourcentage_smic4: data["Pourcentage smic 4"] || 0,
+      smic4: ensureString(data["smic 4"]),
+      montant_salaire_brut1: parseFloat(ensureString(data["Salaire brut mensuel 1"])) || null,
+      montant_salaire_brut2: parseFloat(ensureString(data["Salaire brut mensuel 2"])) || null,
+      montant_salaire_brut3: parseFloat(ensureString(data["Salaire brut mensuel 3"])) || null,
+      montant_salaire_brut4: parseFloat(ensureString(data["Salaire brut mensuel 4"])) || null,
+      date_conclusion: ensureString(data["Date de conclusion"]),
+      date_debut_execution: ensureString(data["Date de début exécution"]),
+      numero_deca_ancien_contrat: ensureString(data["Numéro DECA de ancien contrat"]),
+      travail_machine_dangereuse: ensureString(data["Travail sur machines dangereuses ou exposition à des risques particuliers"]),
+      caisse_retraite: ensureString(data["Caisse de retraite"]),
+      date_avenant: ensureString(data["date Si avenant"]),
+      date_debut_2periode_1er_annee: ensureString(data["date_debut_2periode_1er_annee"]),
+      date_fin_2periode_1er_annee: ensureString(data["date_fin_2periode_1er_annee"]),
+      date_debut_1periode_2eme_annee: ensureString(data["date_debut_1periode_2eme_annee"]),
+      date_fin_1periode_2eme_annee: ensureString(data["date_fin_1periode_2eme_annee"]),
+      date_debut_2periode_2eme_annee: ensureString(data["date_debut_2periode_2eme_annee"]),
+      date_fin_2periode_2eme_annee: ensureString(data["date_fin_2periode_2eme_annee"]),
+      date_debut_1periode_3eme_annee: ensureString(data["date_debut_1periode_3eme_annee"]),
+      date_fin_1periode_3eme_annee: ensureString(data["date_fin_1periode_3eme_annee"]),
+      date_debut_2periode_3eme_annee: ensureString(data["date_debut_2periode_3eme_annee"]),
+      date_fin_2periode_3eme_annee: ensureString(data["date_fin_2periode_3eme_annee"]),
+      date_debut_1periode_4eme_annee: ensureString(data["date_debut_1periode_4eme_annee"]),
+      date_fin_1periode_4eme_annee: ensureString(data["date_fin_1periode_4eme_annee"]),
+      date_debut_2periode_4eme_annee: ensureString(data["date_debut_2periode_4eme_annee"]),
+      date_fin_2periode_4eme_annee: ensureString(data["date_fin_2periode_4eme_annee"])
+    },
+    formation_missions: {
+      formation_alternant: ensureString(data["Formation de lalternant(e) (pour les missions)"]),
+      formation_choisie: ensureString(data["Formation"]),
+      code_rncp: ensureString(data["Code Rncp"]),
+      code_diplome: ensureString(data["Code  diplome"]),
+      nombre_heures_formation: parseFloat(ensureString(data["nombre heure formation"])) || 0,
+      jours_de_cours: parseInt(ensureString(data["jour de cours"])) || 0,
+      cfaEnterprise: false, DenominationCFA: "", NumeroUAI: "", NumeroSiretCFA: "", AdresseCFA: "", complementAdresseCFA: "", codePostalCFA: "", communeCFA: ""
+    },
+    record_id_etudiant: ensureString(data["recordIdetudiant"])
   };
 };
 
@@ -354,6 +354,21 @@ export const api = {
       return await response.json();
     } catch (error) {
       console.error('❌ API Error (Get Students List):', error);
+      throw error;
+    }
+  },
+
+  // Get RH Stats
+  async getRHStats(): Promise<any> {
+    try {
+      const response = await fetch(`${BASE_API_URL}/rh/statistiques`, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      });
+      if (!response.ok) throw new Error('Failed to fetch RH stats');
+      return await response.json();
+    } catch (error) {
+      console.error('❌ API Error (Get RH Stats):', error);
       throw error;
     }
   },
@@ -433,6 +448,29 @@ export const api = {
       const url = `${BASE_URL}/candidates/${recordId}/documents/${endpointMap[docType] || docType}`;
       const response = await fetch(url, { method: 'POST', headers: { 'Accept': 'application/json' }, body: formData });
       if (!response.ok) throw new Error(`Upload failed: ${response.statusText}`);
+      return await response.json();
+    } catch (error) { throw error; }
+  },
+
+  // --- GENERATION ---
+  async generateFicheRenseignement(recordId: string): Promise<any> {
+    try {
+      const response = await fetch(`${BASE_URL}/generate-fiche/${recordId}`, {
+        method: 'POST',
+        headers: { 'Accept': 'application/json' }
+      });
+      if (!response.ok) throw new Error('Generation failed');
+      return await response.json();
+    } catch (error) { throw error; }
+  },
+
+  async generateCerfa(recordId: string): Promise<any> {
+    try {
+      const response = await fetch(`${BASE_URL}/generate-cerfa/${recordId}`, {
+        method: 'POST',
+        headers: { 'Accept': 'application/json' }
+      });
+      if (!response.ok) throw new Error('Generation failed');
       return await response.json();
     } catch (error) { throw error; }
   },

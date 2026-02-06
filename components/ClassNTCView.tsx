@@ -131,7 +131,7 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                 code_postal: "93000",
                 commune: "BOBIGNY"
             },
-            missions: { 
+            missions: {
                 formation_alternant: f["Formation de lalternant(e) (pour les missions)"] || "",
                 selectionnees: []
             },
@@ -399,21 +399,21 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
 
     return (
         <div className="animate-fade-in space-y-10 pb-20">
-                        {/* Company Modal */}
-                        <CompanyDetailsModal 
-                            isOpen={isCompanyModalOpen}
-                            onClose={() => setIsCompanyModalOpen(false)}
-                            company={selectedCompany}
-                            loading={companyLoading}
-                            isEditing={isCompanyEditing}
-                            setIsEditing={setIsCompanyEditing}
-                            onEdit={handleEnterCompanyEditMode}
-                            editForm={companyEditForm}
-                            setEditForm={setCompanyEditForm}
-                            onSave={handleSaveCompanyEdit}
-                            isSaving={isSavingCompany}
-                        />
-                        {/* Modal for Details */}
+            {/* Company Modal */}
+            <CompanyDetailsModal
+                isOpen={isCompanyModalOpen}
+                onClose={() => setIsCompanyModalOpen(false)}
+                company={selectedCompany}
+                loading={companyLoading}
+                isEditing={isCompanyEditing}
+                setIsEditing={setIsCompanyEditing}
+                onEdit={handleEnterCompanyEditMode}
+                editForm={companyEditForm}
+                setEditForm={setCompanyEditForm}
+                onSave={handleSaveCompanyEdit}
+                isSaving={isSavingCompany}
+            />
+            {/* Modal for Details */}
             <CandidateDetailsModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
@@ -520,8 +520,8 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                                     key={f.id}
                                     onClick={() => setFilter(f.id as any)}
                                     className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap ${filter === f.id
-                                            ? 'bg-slate-900 text-white shadow-lg'
-                                            : 'text-slate-500 hover:bg-slate-50'
+                                        ? 'bg-slate-900 text-white shadow-lg'
+                                        : 'text-slate-500 hover:bg-slate-50'
                                         }`}
                                 >
                                     {f.label}
@@ -608,8 +608,8 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                                                     <button
                                                         onClick={() => handleViewCompanyDetails(student)}
                                                         className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all shadow-sm ${(student.id_entreprise || student.record_id_entreprise || student.entreprise_raison_sociale)
-                                                                ? 'bg-blue-50 text-blue-600 border-blue-100 hover:bg-blue-600 hover:text-white'
-                                                                : 'bg-amber-50 text-amber-600 border-amber-100 hover:bg-amber-600 hover:text-white'
+                                                            ? 'bg-blue-50 text-blue-600 border-blue-100 hover:bg-blue-600 hover:text-white'
+                                                            : 'bg-amber-50 text-amber-600 border-amber-100 hover:bg-amber-600 hover:text-white'
                                                             }`}
                                                     >
                                                         {(student.id_entreprise || student.record_id_entreprise || student.entreprise_raison_sociale)
@@ -797,7 +797,7 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                                         { label: '21-25 ans', count: statsData.ageDist.age21_25, color: 'from-purple-400 to-purple-500' },
                                         { label: '26+ ans', count: statsData.ageDist.over25, color: 'from-slate-700 to-slate-800' }
                                     ].map((item) => {
-                                        const maxAge = Math.max(...Object.values(statsData.ageDist));
+                                        const maxAge = Math.max(...(Object.values(statsData.ageDist) as number[]));
                                         const height = maxAge > 0 ? (item.count / maxAge) * 100 : 0;
                                         return (
                                             <div key={item.label} className="flex-1 flex flex-col items-center gap-4 group h-full justify-end">

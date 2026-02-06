@@ -248,7 +248,7 @@ const RHView: React.FC<{ activeSubView: ViewId }> = ({ activeSubView }) => {
     const fetchFichesData = async () => {
         setLoading(true);
         try {
-            const data = await api.getEtudiantsFiches(false, false, false);
+            const data = await api.getStudentsList({ avecFicheUniquement: false, avecCerfaUniquement: false, dossierCompletUniquement: false });
             setFichesData(data);
             setCandidates(data.etudiants || []);
         } catch (error) {
