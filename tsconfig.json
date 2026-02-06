@@ -39,3 +39,8 @@
     "*.tsx"
   ],
   "exclude": [
+    "node_modules",
+    "dist",
+    "backend"
+  ]
+}
