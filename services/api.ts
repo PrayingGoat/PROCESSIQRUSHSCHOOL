@@ -1,6 +1,6 @@
 import { StudentFormData, CompanyFormData, ApiResponse } from '../types';
 
-const BASE_API_URL = import.meta.env.VITE_BASE_API_URL || '';
+const BASE_API_URL = import.meta.env.VITE_BASE_API_URL || 'http://localhost:8000';
 const AUTH_API_URL = '/api'; // Local backend for Auth
 const BASE_URL = `${BASE_API_URL}/admission`;
 
@@ -11,15 +11,201 @@ const formatString = (str: string) => {
   return str.replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase());
 };
 
-const mapToBackendFormat = (data: any): any => {
-  if (typeof data !== 'object' || data === null) return data;
-  if (Array.isArray(data)) return data.map(mapToBackendFormat);
-  return Object.keys(data).reduce((acc, key) => {
-    // Convert camelCase to snake_case for backend
-    const snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
-    acc[snakeKey] = mapToBackendFormat(data[key]);
-    return acc;
-  }, {} as any);
+// Helper to safely access nested fields from Airtable-style response
+const getField = (data: any, fieldName: string, defaultValue: any = "") => {
+  if (!data || !data.fields) return defaultValue;
+  return data.fields[fieldName] ?? defaultValue;
+};
+
+// Mapper: Backend (Airtable fields) -> Frontend (StudentFormData)
+const mapBackendToStudent = (backendData: any): any => {
+  const fields = backendData.fields || {};
+  return {
+    // Meta
+    id: backendData.id,
+    record_id: backendData.id,
+
+    // Identité
+    prenom: fields["Prénom"] || "",
+    nom_naissance: fields["NOM de naissance"] || "",
+    nom_usage: fields["Nom d'usage"] || "",
+    sexe: fields["Sexe"] || "",
+    date_naissance: fields["Date de naissance"] || "",
+    nationalite: fields["Nationalité"] || "Française",
+    commune_naissance: fields["Commune de naissance"] || "",
+    departement: fields["Département de naissance"] || "",
+
+    // Coordonnées
+    email: fields["E-mail"] || "",
+    telephone: fields["Téléphone"] || "",
+    adresse_residence: fields["Adresse de résidence"] || "",
+    num_residence: "", // Souvent concaténé dans l'adresse
+    rue_residence: "",
+    complement_residence: fields["Complément d'adresse"] || "",
+    code_postal: fields["Code postal"]?.toString() || "",
+    ville: fields["Ville de résidence"] || "",
+
+    // Social / Admin
+    nir: fields["NIR"] || "",
+    situation: fields["Situation avant le contrat"] || "",
+    regime_social: fields["Régime social"] || "",
+    declare_inscription_sportif_haut_niveau: fields["Sportif de haut niveau"] || false,
+    declare_avoir_projet_creation_reprise_entreprise: fields["Projet de création/reprise d'entreprise"] || false,
+    declare_travailleur_handicape: fields["Reconnaissance travailleur handicapé"] || false,
+    alternance: fields["En alternance"] || false,
+
+    // Scolarité
+    dernier_diplome_prepare: fields["Dernier diplôme ou titre préparé"] || "",
+    derniere_classe: fields["Dernière classe suivie"] || "",
+    bac: fields["Diplôme ou titre le plus élevé obtenu"] || "",
+    intitulePrecisDernierDiplome: fields["Intitulé précis du dernier diplôme"] || "",
+    formation_souhaitee: fields["Formation souhaitée"] || "",
+
+    // Autres
+    date_de_visite: fields["Date de visite"] || "",
+    date_de_reglement: fields["Date de règlement"] || "",
+    entreprise_d_accueil: fields["Entreprise d'accueil"] || "",
+    connaissance_rush_how: fields["Comment avez-vous connu Rush School?"] || "",
+    motivation_projet_professionnel: fields["Motivation et projet professionnel"] || "",
+
+    // Représentant Légal 1
+    nom_representant_legal: fields["Nom du représentant légal"] || "",
+    prenom_representant_legal: fields["Prénom du représentant légal"] || "",
+    voie_representant_legal: fields["Voie du représentant légal"] || "",
+    lien_parente_legal: fields["Lien de parenté"] || "",
+    numero_legal: fields["Numéro du représentant légal"] || "", // Téléphone
+    numero_adress_legal: fields["Numéro adresse représentant légal"] || "",
+    complement_adresse_legal: fields["Complément d'adresse du représentant légal"] || "",
+    code_postal_legal: fields["Code postal du représentant légal"]?.toString() || "",
+    commune_legal: fields["Commune du représentant légal"] || "",
+    courriel_legal: fields["Email du représentant légal"] || "",
+
+    // Représentant Légal 2
+    nom_representant_legal2: fields["Nom du deuxième représentant légal"] || "",
+    prenom_representant_legal2: fields["Prénom du deuxième représentant légal"] || "",
+    voie_representant_legal2: fields["Voie du deuxième représentant légal"] || "",
+    lien_parente_legal2: fields["Lien de parenté avec le deuxième représentant légal"] || "",
+    numero_legal2: fields["Numéro du deuxième représentant légal"] || "",
+    numero_adress_legal2: fields["Numéro adresse représentant légal 2"] || "",
+    complement_adresse_legal2: fields["Complément d'adresse du deuxième représentant légal"] || "",
+    code_postal_legal2: fields["Code postal du deuxième représentant légal"]?.toString() || "",
+    commune_legal2: fields["Commune du deuxième représentant légal"] || "",
+    courriel_legal2: fields["Email du deuxième représentant légal"] || "",
+  };
+};
+
+// Mapper: Backend (Airtable fields) -> Frontend (CompanyFormData)
+const mapBackendToCompany = (backendData: any): any => {
+  const fields = backendData.fields || {};
+  return {
+    id: backendData.id,
+    record_id: backendData.id,
+    identification: {
+      raison_sociale: fields["Raison sociale"] || "",
+      siret: fields["Numéro SIRET"] || "",
+      code_ape_naf: fields["Code APE/NAF"] || "",
+      type_employeur: fields["Type demployeur"] || "",
+      effectif: fields["Effectif salarié de l'entreprise"] || "",
+      convention: fields["Convention collective"] || ""
+    },
+    adresse: {
+      num: fields["Numéro entreprise"] || "",
+      voie: fields["Voie entreprise"] || "",
+      complement: fields["Complément dadresse entreprise"] || "",
+      code_postal: fields["Code postal entreprise"] || "",
+      ville: fields["Ville entreprise"] || "",
+      telephone: fields["Téléphone entreprise"] || "",
+      email: fields["Email entreprise"] || ""
+    },
+    maitre_apprentissage: {
+      nom: fields["Nom Maître apprentissage"] || "",
+      prenom: fields["Prénom Maître apprentissage"] || "",
+      date_naissance: fields["Date de naissance Maître apprentissage"] || "",
+      fonction: fields["Fonction Maître apprentissage"] || "",
+      diplome: fields["Diplôme Maître apprentissage"] || "",
+      experience: fields["Année experience pro Maître apprentissage"] || "",
+      telephone: fields["Téléphone Maître apprentissage"] || "",
+      email: fields["Email Maître apprentissage"] || ""
+    },
+    opco: {
+      nom: fields["Nom OPCO"] || ""
+    },
+    contrat: {
+      type_contrat: fields["Type de contrat"] || "",
+      type_derogation: fields["Type de dérogation"] || "",
+      date_debut: fields["Date de début exécution"] || "",
+      date_fin: fields["Fin du contrat apprentissage"] || "",
+      duree_hebdomadaire: fields["Durée hebdomadaire"] || "",
+      poste_occupe: fields["Poste occupé"] || "",
+      lieu_execution: fields["Lieu dexécution du contrat (si différent du siège)"] || "",
+
+      pourcentage_smic1: fields["Pourcentage du SMIC 1"] || 0,
+      smic1: fields["SMIC 1"] || "",
+      montant_salaire_brut1: fields["Salaire brut mensuel 1"] || 0,
+
+      pourcentage_smic2: fields["Pourcentage smic 2"] || 0,
+      smic2: fields["smic 2"] || "",
+      montant_salaire_brut2: fields["Salaire brut mensuel 2"] || 0,
+
+      pourcentage_smic3: fields["Pourcentage smic 3"] || 0,
+      smic3: fields["smic 3"] || "",
+      montant_salaire_brut3: fields["Salaire brut mensuel 3"] || 0,
+
+      pourcentage_smic4: fields["Pourcentage smic 4"] || 0,
+      smic4: fields["smic 4"] || "",
+      montant_salaire_brut4: fields["Salaire brut mensuel 4"] || 0,
+
+      date_conclusion: fields["Date de conclusion"] || "",
+      date_debut_execution: fields["Date de début exécution"] || "",
+      numero_deca_ancien_contrat: fields["Numéro DECA de ancien contrat"] || "",
+      machines_dangereuses: fields["Travail sur machines dangereuses ou exposition à des risques particuliers"] || "",
+      caisse_retraite: fields["Caisse de retraite"] || "",
+      date_avenant: fields["date Si avenant"] || "",
+
+      // Périodes
+      date_debut_2periode_1er_annee: fields["date_debut_2periode_1er_annee"] || "",
+      date_fin_2periode_1er_annee: fields["date_fin_2periode_1er_annee"] || "",
+      date_debut_1periode_2eme_annee: fields["date_debut_1periode_2eme_annee"] || "",
+      date_fin_1periode_2eme_annee: fields["date_fin_1periode_2eme_annee"] || "",
+      date_debut_2periode_2eme_annee: fields["date_debut_2periode_2eme_annee"] || "",
+      date_fin_2periode_2eme_annee: fields["date_fin_2periode_2eme_annee"] || "",
+      date_debut_1periode_3eme_annee: fields["date_debut_1periode_3eme_annee"] || "",
+      date_fin_1periode_3eme_annee: fields["date_fin_1periode_3eme_annee"] || "",
+      date_debut_2periode_3eme_annee: fields["date_debut_2periode_3eme_annee"] || "",
+      date_fin_2periode_3eme_annee: fields["date_fin_2periode_3eme_annee"] || "",
+      date_debut_1periode_4eme_annee: fields["date_debut_1periode_4eme_annee"] || "",
+      date_fin_1periode_4eme_annee: fields["date_fin_1periode_4eme_annee"] || "",
+      date_debut_2periode_4eme_annee: fields["date_debut_2periode_4eme_annee"] || "",
+      date_fin_2periode_4eme_annee: fields["date_fin_2periode_4eme_annee"] || ""
+    },
+    formation: {
+      choisie: fields["Formation"] || "",
+      date_debut: fields["Date de début formation"] || "",
+      date_fin: fields["Date de fin formation"] || "",
+      code_rncp: fields["Code Rncp"] || "",
+      code_diplome: fields["Code  diplome"] || "",
+      nb_heures: fields["nombre heure formation"] || "",
+      jours_cours: fields["jour de cours"] || ""
+    },
+    cfa: {
+      rush_school: "",
+      entreprise: fields["cfaEnterprise"] ? "oui" : "non",
+      denomination: fields["DenominationCFA"] || "",
+      diplome_vise: fields["diplomeVise"] || "",
+      intitule_formation: fields["intituleDiplome"] || "",
+      uai: fields["NumeroUAI"] || "",
+      siret: fields["NumeroSiretCFA"] || "",
+      adresse: fields["AdresseCFA"] || "",
+      complement: fields["complementAdresseCFA"] || "",
+      code_postal: fields["codePostalCFA"] || "",
+      commune: fields["communeCFA"] || ""
+    },
+    missions: {
+      formation_alternant: fields["Formation de lalternant(e) (pour les missions)"] || "",
+      selectionnees: [] //TODO: Split if string
+    },
+    record_id_etudiant: fields["recordIdetudiant"] || ""
+  };
 };
 
 // Helper to map student data to backend format (STRICT)
@@ -354,20 +540,38 @@ export const api = {
         avec_cerfa_uniquement: params?.avecCerfaUniquement ? 'true' : 'false',
         dossier_complet_uniquement: params?.dossierCompletUniquement ? 'true' : 'false'
       });
-      const response = await fetch(`${BASE_URL}/etudiants-fiches?${queryParams}`, {
+      // New backend uses /candidats for everything
+      const response = await fetch(`${BASE_URL}/candidats?${queryParams}`, {
         method: 'GET',
         headers: { 'Accept': 'application/json' }
       });
       const data = await response.json();
-      // Ensure we include enterprise info in the returned etudiants
-      if (data.etudiants) {
-        data.etudiants = data.etudiants.map((s: any) => ({
-          ...s,
-          // Fields already in s from backend: id_entreprise, record_id_entreprise, entreprise_raison_sociale
-          // We ensure they are visible for the frontend logic
-        }));
+      console.log('API getStudentsList RAW:', data);
+
+      // Adaptation Local Backend: structure data { success: true, data: [...], count: ... }
+      let students: any[] = [];
+      if (Array.isArray(data)) {
+        students = data;
+      } else if (data.data && Array.isArray(data.data)) {
+        students = data.data;
+      } else if (data.etudiants && Array.isArray(data.etudiants)) {
+        students = data.etudiants;
       }
-      return data;
+
+      // Map backend fields to frontend format
+      const formattedStudents = students.map(s => {
+        // Use mapBackendToStudent if it looks like an Airtable record (has .fields)
+        if (s.fields) {
+          return mapBackendToStudent(s);
+        }
+        // Fallback for objects that might already be flat or different format
+        return s;
+      });
+
+      return {
+        ...data,
+        etudiants: formattedStudents
+      };
     } catch (error) {
       console.error('❌ API Error (Get Students List):', error);
       throw error;
@@ -393,7 +597,7 @@ export const api = {
   async submitStudent(data: StudentFormData): Promise<ApiResponse> {
     try {
       const payload = mapStudentToBackend(data);
-      const response = await fetch(`${BASE_URL}/candidates`, {
+      const response = await fetch(`${BASE_URL}/candidats`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify(payload),
@@ -412,30 +616,40 @@ export const api = {
 
   async getAllCandidates(): Promise<any[]> {
     try {
-      const response = await fetch(`${BASE_URL}/candidates`, {
+      const response = await fetch(`${BASE_URL}/candidats`, {
         method: 'GET',
         headers: { 'Accept': 'application/json' }
       });
       if (!response.ok) throw new Error('Failed to fetch candidates');
-      return await response.json();
+      const json = await response.json();
+      console.log('API getAllCandidates RAW:', json);
+      return Array.isArray(json) ? json : (json.data || []);
     } catch (error) { return []; }
   },
 
   async getCandidateById(id: string): Promise<any> {
     try {
-      const response = await fetch(`${BASE_URL}/candidates/${id}`, {
+      const response = await fetch(`${BASE_URL}/candidats/${id}`, {
         method: 'GET',
         headers: { 'Accept': 'application/json' }
       });
       if (!response.ok) throw new Error('Candidate not found');
-      return await response.json();
+      const json = await response.json();
+
+      // Adapt response for local backend (usually returns { success: true, data: { ... } })
+      const candidateData = json.data || json;
+
+      if (candidateData.fields) {
+        return mapBackendToStudent(candidateData);
+      }
+      return candidateData;
     } catch (error) { throw error; }
   },
 
   async updateCandidate(id: string, data: Partial<StudentFormData>): Promise<any> {
     try {
       const payload = mapStudentToBackend(data);
-      const response = await fetch(`${BASE_URL}/candidates/${id}`, {
+      const response = await fetch(`${BASE_URL}/candidats/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify(payload),
@@ -447,7 +661,7 @@ export const api = {
 
   async deleteCandidate(id: string): Promise<boolean> {
     try {
-      const response = await fetch(`${BASE_URL}/candidates/${id}`, {
+      const response = await fetch(`${BASE_URL}/candidats/${id}`, {
         method: 'DELETE',
         headers: { 'Accept': 'application/json' }
       });
@@ -461,7 +675,7 @@ export const api = {
       const formData = new FormData();
       formData.append('file', file);
       const endpointMap: Record<string, string> = { 'cv': 'cv', 'cni': 'cin', 'lettre': 'lettre-motivation', 'vitale': 'carte-vitale', 'diplome': 'dernier-diplome' };
-      const url = `${BASE_URL}/candidates/${recordId}/documents/${endpointMap[docType] || docType}`;
+      const url = `${BASE_URL}/candidats/${recordId}/documents/${endpointMap[docType] || docType}`;
       const response = await fetch(url, { method: 'POST', headers: { 'Accept': 'application/json' }, body: formData });
       if (!response.ok) throw new Error(`Upload failed: ${response.statusText}`);
       return await response.json();
@@ -471,7 +685,7 @@ export const api = {
   // --- GENERATION ---
   async generateFicheRenseignement(recordId: string): Promise<any> {
     try {
-      const response = await fetch(`${BASE_URL}/generate-fiche/${recordId}`, {
+      const response = await fetch(`${BASE_URL}/candidats/${recordId}/fiche-renseignement`, {
         method: 'POST',
         headers: { 'Accept': 'application/json' }
       });
@@ -482,7 +696,7 @@ export const api = {
 
   async generateCerfa(recordId: string): Promise<any> {
     try {
-      const response = await fetch(`${BASE_URL}/generate-cerfa/${recordId}`, {
+      const response = await fetch(`${BASE_URL}/candidats/${recordId}/cerfa`, {
         method: 'POST',
         headers: { 'Accept': 'application/json' }
       });
@@ -506,8 +720,8 @@ export const api = {
       }
       const json = await response.json();
       console.log('✅ Company Submission Success. Full Response:', json);
-      return { 
-        success: true, 
+      return {
+        success: true,
         data: json,
         // Helper fields for the frontend to update local state immediately if needed
         entreprise_info: {
@@ -532,7 +746,14 @@ export const api = {
     try {
       const response = await fetch(`${BASE_URL}/entreprise/${id}`, { method: 'GET', headers: { 'Accept': 'application/json' } });
       if (!response.ok) throw new Error('Company not found');
-      return await response.json();
+      const json = await response.json();
+
+      // Adapt response
+      const companyData = json.data || json;
+      if (companyData.fields) {
+        return mapBackendToCompany(companyData);
+      }
+      return companyData;
     } catch (error) { throw error; }
   },
 

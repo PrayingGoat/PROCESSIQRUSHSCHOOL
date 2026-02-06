@@ -47,32 +47,39 @@ export const useCandidates = () => {
         api.getStudentsList()
     ]), []);
 
-    const { execute, loading, error } = useApi(fetchApi, {
+    const mergedDataCallback = useCallback((rawData: any) => {
+        const [candidatesData, fichesData] = rawData as [any, any];
+        const fichesList = Array.isArray(fichesData?.etudiants) ? fichesData.etudiants : [];
+
+        // Handle candidatesData being wrapped in { data: [...] } or just [...]
+        const candidatesList = Array.isArray(candidatesData) ? candidatesData : (candidatesData?.data || []);
+
+        const mergedData = Array.isArray(candidatesList) ? candidatesList.map((c: any) => {
+            const d = c.fields || c;
+            const candidateId = c.id || d.id || d.record_id || c.record_id;
+            const fiche = fichesList.find((f: any) => f.record_id === candidateId || f.id === candidateId);
+
+            return {
+                ...c,
+                // Prioritize fiche info for real-time status
+                id_entreprise: fiche?.id_entreprise || c.id_entreprise || d.id_entreprise || d.record_id_entreprise,
+                record_id_entreprise: fiche?.record_id_entreprise || c.record_id_entreprise || d.record_id_entreprise,
+                entreprise_raison_sociale: fiche?.entreprise_raison_sociale || c.entreprise_raison_sociale || d.entreprise_raison_sociale || d['Raison sociale (from Entreprise)'],
+                has_cerfa: fiche?.has_cerfa || false,
+                has_fiche_renseignement: fiche?.has_fiche_renseignement || false,
+                has_cv: fiche?.has_cv || false,
+                dossier_complet: fiche?.dossier_complet || false
+            };
+        }) : [];
+        setCandidates(mergedData);
+    }, [setCandidates]);
+
+    const apiOptions = useMemo(() => ({
         silentLoading: cachedCandidates.length > 0,
-        onSuccess: (rawData: any) => {
-            const [candidatesData, fichesData] = rawData as [any, any];
-            const fichesList = Array.isArray(fichesData?.etudiants) ? fichesData.etudiants : [];
-            
-            const mergedData = Array.isArray(candidatesData) ? candidatesData.map((c: any) => {
-                const d = c.fields || c;
-                const candidateId = c.id || d.id || d.record_id || c.record_id;
-                const fiche = fichesList.find((f: any) => f.record_id === candidateId || f.id === candidateId);
-                
-                return {
-                    ...c,
-                    // Prioritize fiche info for real-time status
-                    id_entreprise: fiche?.id_entreprise || c.id_entreprise || d.id_entreprise || d.record_id_entreprise,
-                    record_id_entreprise: fiche?.record_id_entreprise || c.record_id_entreprise || d.record_id_entreprise,
-                    entreprise_raison_sociale: fiche?.entreprise_raison_sociale || c.entreprise_raison_sociale || d.entreprise_raison_sociale || d['Raison sociale (from Entreprise)'],
-                    has_cerfa: fiche?.has_cerfa || false,
-                    has_fiche_renseignement: fiche?.has_fiche_renseignement || false,
-                    has_cv: fiche?.has_cv || false,
-                    dossier_complet: fiche?.dossier_complet || false
-                };
-            }) : [];
-            setCandidates(mergedData);
-        }
-    });
+        onSuccess: mergedDataCallback
+    }), [cachedCandidates.length, mergedDataCallback]);
+
+    const { execute, loading, error } = useApi(fetchApi, apiOptions);
 
     useEffect(() => {
         // Fetch on mount if empty or if data is "old" (e.g. older than 5 minutes)
