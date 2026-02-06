@@ -107,11 +107,17 @@ type StudentFormValues = z.infer<typeof studentSchema>;
 interface QuestionnaireFormProps {
     onNext: (data: any) => void;
     onBack?: () => void;
+    initialData?: Partial<StudentFormValues>;
 }
 
-const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
+const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext, initialData }) => {
     const { showToast, draftStudent, setDraftStudent, clearDraftStudent } = useAppStore();
     const [activeSection, setActiveSection] = useState<string | null>('personal');
+
+    // Merge default values: initialData takes precedence over draftStudent (or draftStudent over initialData? Usually draft is fresher if user edited)
+    // Here we assume if initialData is provided (from backend), we want to use it, unless draft is newer? 
+    // Actually, usually when opening a student profile, we want to see the backend data.
+    const formDefaults = initialData || draftStudent;
 
     const toggleSection = (section: string) => {
         setActiveSection(prev => prev === section ? null : section);
@@ -122,49 +128,57 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext }) => {
         handleSubmit,
         watch,
         setValue,
+        reset,
         formState: { errors }
     } = useForm<StudentFormValues>({
         resolver: zodResolver(studentSchema),
         defaultValues: {
-            prenom: draftStudent?.prenom || '',
-            nom_naissance: draftStudent?.nom_naissance || '',
-            nom_usage: draftStudent?.nom_usage || '',
-            sexe: draftStudent?.sexe || '',
-            date_naissance: draftStudent?.date_naissance || '',
-            nationalite: draftStudent?.nationalite || '',
-            commune_naissance: draftStudent?.commune_naissance || '',
-            departement: draftStudent?.departement || '',
-            num_residence: draftStudent?.num_residence || '',
-            rue_residence: draftStudent?.rue_residence || '',
-            complement_residence: draftStudent?.complement_residence || '',
-            adresse_residence: draftStudent?.adresse_residence || '',
-            code_postal: draftStudent?.code_postal || '',
-            ville: draftStudent?.ville || '',
-            email: draftStudent?.email || '',
-            telephone: draftStudent?.telephone || '',
-            nir: draftStudent?.nir || '',
-            situation: draftStudent?.situation || '',
-            regime_social: draftStudent?.regime_social || '',
-            declare_inscription_sportif_haut_niveau: draftStudent?.declare_inscription_sportif_haut_niveau || false,
-            declare_avoir_projet_creation_reprise_entreprise: draftStudent?.declare_avoir_projet_creation_reprise_entreprise || false,
-            declare_travailleur_handicape: draftStudent?.declare_travailleur_handicape || false,
-            alternance: draftStudent?.alternance || false,
-            dernier_diplome_prepare: draftStudent?.dernier_diplome_prepare || '',
-            derniere_classe: draftStudent?.derniere_classe || '',
-            intitulePrecisDernierDiplome: draftStudent?.intitulePrecisDernierDiplome || '',
-            bac: draftStudent?.bac || '',
-            formation_souhaitee: draftStudent?.formation_souhaitee || '',
-            date_de_visite: draftStudent?.date_de_visite || '',
-            date_de_reglement: draftStudent?.date_de_reglement || '',
-            entreprise_d_accueil: draftStudent?.entreprise_d_accueil || '',
-            connaissance_rush_how: draftStudent?.connaissance_rush_how || '',
-            motivation_projet_professionnel: draftStudent?.motivation_projet_professionnel || '',
-            agreement: draftStudent?.agreement || false,
-            add_second_representative: draftStudent?.add_second_representative || false,
-            representant_legal_1: draftStudent?.representant_legal_1 || { nom: '', prenom: '', lien_parente: '', numero: '', voie: '', complement: '', code_postal: '', ville: '', email: '', telephone: '' },
-            representant_legal_2: draftStudent?.representant_legal_2 || { nom: '', prenom: '', lien_parente: '', numero: '', voie: '', complement: '', code_postal: '', ville: '', email: '', telephone: '' }
+            prenom: formDefaults?.prenom || '',
+            nom_naissance: formDefaults?.nom_naissance || '',
+            nom_usage: formDefaults?.nom_usage || '',
+            sexe: formDefaults?.sexe || '',
+            date_naissance: formDefaults?.date_naissance || '',
+            nationalite: formDefaults?.nationalite || '',
+            commune_naissance: formDefaults?.commune_naissance || '',
+            departement: formDefaults?.departement || '',
+            num_residence: formDefaults?.num_residence || '',
+            rue_residence: formDefaults?.rue_residence || '',
+            complement_residence: formDefaults?.complement_residence || '',
+            adresse_residence: formDefaults?.adresse_residence || '',
+            code_postal: formDefaults?.code_postal || '',
+            ville: formDefaults?.ville || '',
+            email: formDefaults?.email || '',
+            telephone: formDefaults?.telephone || '',
+            nir: formDefaults?.nir || '',
+            situation: formDefaults?.situation || '',
+            regime_social: formDefaults?.regime_social || '',
+            declare_inscription_sportif_haut_niveau: formDefaults?.declare_inscription_sportif_haut_niveau || false,
+            declare_avoir_projet_creation_reprise_entreprise: formDefaults?.declare_avoir_projet_creation_reprise_entreprise || false,
+            declare_travailleur_handicape: formDefaults?.declare_travailleur_handicape || false,
+            alternance: formDefaults?.alternance || false,
+            dernier_diplome_prepare: formDefaults?.dernier_diplome_prepare || '',
+            derniere_classe: formDefaults?.derniere_classe || '',
+            intitulePrecisDernierDiplome: formDefaults?.intitulePrecisDernierDiplome || '',
+            bac: formDefaults?.bac || '',
+            formation_souhaitee: formDefaults?.formation_souhaitee || '',
+            date_de_visite: formDefaults?.date_de_visite || '',
+            date_de_reglement: formDefaults?.date_de_reglement || '',
+            entreprise_d_accueil: formDefaults?.entreprise_d_accueil || '',
+            connaissance_rush_how: formDefaults?.connaissance_rush_how || '',
+            motivation_projet_professionnel: formDefaults?.motivation_projet_professionnel || '',
+            agreement: formDefaults?.agreement || false,
+            add_second_representative: formDefaults?.add_second_representative || false,
+            representant_legal_1: formDefaults?.representant_legal_1 || { nom: '', prenom: '', lien_parente: '', numero: '', voie: '', complement: '', code_postal: '', ville: '', email: '', telephone: '' },
+            representant_legal_2: formDefaults?.representant_legal_2 || { nom: '', prenom: '', lien_parente: '', numero: '', voie: '', complement: '', code_postal: '', ville: '', email: '', telephone: '' }
         }
     });
+
+    // Reset form when initialData is loaded
+    React.useEffect(() => {
+        if (initialData) {
+            reset(initialData);
+        }
+    }, [initialData, reset]);
 
     // Auto-save draft
     React.useEffect(() => {

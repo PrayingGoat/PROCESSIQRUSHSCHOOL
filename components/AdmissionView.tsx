@@ -700,13 +700,13 @@ const AdmissionView = ({ selectedStudent, selectedTab, onClearSelection }: Admis
                                 {FORMATION_CARDS.map(f => (
                                     <div key={f.id} onClick={() => setSelectedFormation(f.id)} className="bg-white border-2 border-slate-100 rounded-[32px] p-8 text-center cursor-pointer hover:border-blue-500 hover:-translate-y-2 hover:shadow-2xl transition-all duration-300 group relative overflow-hidden">
                                         <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-br ${f.gradient} opacity-0 group-hover:opacity-5 rounded-full -mr-8 -mt-8 blur-2xl transition-opacity`}></div>
-                                        
+
                                         <div className={`w-20 h-20 rounded-3xl mx-auto mb-8 flex items-center justify-center text-white bg-gradient-to-br ${f.gradient} shadow-lg group-hover:scale-110 transition-transform duration-500`}>
                                             <Briefcase size={32} />
                                         </div>
                                         <h4 className="font-black text-slate-900 text-xl mb-2 tracking-tight">{f.title}</h4>
                                         <p className="text-[10px] text-slate-400 font-black mb-8 h-10 leading-relaxed uppercase tracking-[0.2em]">{f.subtitle}</p>
-                                        
+
                                         <div className="flex items-center justify-center gap-2">
                                             <span className="px-4 py-2 bg-slate-50 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-blue-600 group-hover:bg-blue-50 transition-colors border border-slate-100">~20 min</span>
                                             <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0 transition-all">
@@ -747,10 +747,12 @@ const AdmissionView = ({ selectedStudent, selectedTab, onClearSelection }: Admis
 
             {activeTab === AdmissionTab.QUESTIONNAIRE && (
                 <div className="animate-slide-in">
-                    <QuestionnaireForm onNext={(data) => {
-                        setStudentData(data);
-                        setActiveTab(AdmissionTab.DOCUMENTS);
-                    }} />
+                    <QuestionnaireForm
+                        initialData={studentData}
+                        onNext={(data) => {
+                            setStudentData(data);
+                            setActiveTab(AdmissionTab.DOCUMENTS);
+                        }} />
                 </div>
             )}
 

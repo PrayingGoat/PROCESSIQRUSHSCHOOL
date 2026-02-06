@@ -20,10 +20,21 @@ const getField = (data: any, fieldName: string, defaultValue: any = "") => {
 // Mapper: Backend (Airtable fields) -> Frontend (StudentFormData)
 const mapBackendToStudent = (backendData: any): any => {
   const fields = backendData.fields || {};
+
+  // DEBUG: Inspect Dupont to find the missing company link
+  if (fields["NOM de naissance"]?.toLowerCase().includes("dupont")) {
+    console.log("🔍 DEBUG DUPONT FIELDS:", JSON.stringify(fields, null, 2));
+  }
+
   return {
     // Meta
     id: backendData.id,
     record_id: backendData.id,
+
+    // Enterprise Link (Critical for Dashboard)
+    id_entreprise: Array.isArray(fields["Entreprise"]) ? fields["Entreprise"][0] : (fields["Entreprise"] || ""),
+    entreprise_raison_sociale: fields["Entreprise d'accueil"] || fields["Raison sociale (from Entreprise)"] || fields["Nom Entreprise"] || "",
+
 
     // Identité
     prenom: fields["Prénom"] || "",
@@ -33,8 +44,9 @@ const mapBackendToStudent = (backendData: any): any => {
     date_naissance: fields["Date de naissance"] || "",
     nationalite: fields["Nationalité"] || "Française",
     commune_naissance: fields["Commune de naissance"] || "",
-    departement: fields["Département de naissance"] || "",
+    departement: fields["Département de naissance"] || fields["Département"] || "",
 
+    // Coordonnées
     // Coordonnées
     email: fields["E-mail"] || "",
     telephone: fields["Téléphone"] || "",
@@ -42,8 +54,8 @@ const mapBackendToStudent = (backendData: any): any => {
     num_residence: "", // Souvent concaténé dans l'adresse
     rue_residence: "",
     complement_residence: fields["Complément d'adresse"] || "",
-    code_postal: fields["Code postal"]?.toString() || "",
-    ville: fields["Ville de résidence"] || "",
+    code_postal: fields["Code postal"]?.toString() || fields["Code postal "]?.toString() || "",
+    ville: fields["Ville de résidence"] || fields["ville"] || "",
 
     // Social / Admin
     nir: fields["NIR"] || "",
@@ -56,10 +68,10 @@ const mapBackendToStudent = (backendData: any): any => {
 
     // Scolarité
     dernier_diplome_prepare: fields["Dernier diplôme ou titre préparé"] || "",
-    derniere_classe: fields["Dernière classe suivie"] || "",
-    bac: fields["Diplôme ou titre le plus élevé obtenu"] || "",
-    intitulePrecisDernierDiplome: fields["Intitulé précis du dernier diplôme"] || "",
-    formation_souhaitee: fields["Formation souhaitée"] || "",
+    derniere_classe: fields["Dernière classe suivie"] || fields["Dernière classe / année suivie"] || "",
+    bac: fields["Diplôme ou titre le plus élevé obtenu"] || fields["BAC"] || "",
+    intitulePrecisDernierDiplome: fields["Intitulé précis du dernier diplôme"] || fields["Intitulé précis du dernier diplôme ou titre préparé"] || "",
+    formation_souhaitee: fields["Formation souhaitée"] || fields["Formation"] || "",
 
     // Autres
     date_de_visite: fields["Date de visite"] || "",
@@ -503,6 +515,7 @@ const mapCompanyToBackend = (data: any) => {
 export const api = {
   // --- AUTH ---
   async login(email: string, pass: string): Promise<{ access_token: string }> {
+    console.log('📤 Login Attempt:', email);
     const response = await fetch(`${AUTH_API_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -510,9 +523,12 @@ export const api = {
     });
     if (!response.ok) {
       const error = await response.json();
+      console.error('❌ Login Failed:', error);
       throw new Error(error.message || 'Login failed');
     }
-    return await response.json();
+    const data = await response.json();
+    console.log('📥 Login Success:', data);
+    return data;
   },
 
   // --- HEALTH ---
@@ -540,8 +556,8 @@ export const api = {
         avec_cerfa_uniquement: params?.avecCerfaUniquement ? 'true' : 'false',
         dossier_complet_uniquement: params?.dossierCompletUniquement ? 'true' : 'false'
       });
-      // New backend uses /candidats for everything
-      const response = await fetch(`${BASE_URL}/candidats?${queryParams}`, {
+      // New backend uses /candidates for everything
+      const response = await fetch(`${BASE_URL}/candidats`, {
         method: 'GET',
         headers: { 'Accept': 'application/json' }
       });
@@ -581,12 +597,15 @@ export const api = {
   // Get RH Stats
   async getRHStats(): Promise<any> {
     try {
+      console.log('📤 Fetching RH Stats');
       const response = await fetch(`${BASE_API_URL}/rh/statistiques`, {
         method: 'GET',
         headers: { 'Accept': 'application/json' }
       });
       if (!response.ok) throw new Error('Failed to fetch RH stats');
-      return await response.json();
+      const data = await response.json();
+      console.log('📥 RH Stats Received:', data);
+      return data;
     } catch (error) {
       console.error('❌ API Error (Get RH Stats):', error);
       throw error;
@@ -597,16 +616,19 @@ export const api = {
   async submitStudent(data: StudentFormData): Promise<ApiResponse> {
     try {
       const payload = mapStudentToBackend(data);
-      const response = await fetch(`${BASE_URL}/candidats`, {
+      console.log('📤 Submit Student Payload:', payload);
+      const response = await fetch(`${BASE_URL}/candidates`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify(payload),
       });
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('❌ Submit Student Failed:', errorData);
         throw new Error(errorData.detail || `Error ${response.status}`);
       }
       const json = await response.json();
+      console.log('📥 Submit Student Success:', json);
       return { success: true, record_id: json.record_id || json.id, data: json };
     } catch (error: any) {
       console.error('❌ API Error (Submit Student):', error);
@@ -629,12 +651,14 @@ export const api = {
 
   async getCandidateById(id: string): Promise<any> {
     try {
+      console.log('📤 Fetching Candidate:', id);
       const response = await fetch(`${BASE_URL}/candidats/${id}`, {
         method: 'GET',
         headers: { 'Accept': 'application/json' }
       });
       if (!response.ok) throw new Error('Candidate not found');
       const json = await response.json();
+      console.log('📥 Candidate Received:', json);
 
       // Adapt response for local backend (usually returns { success: true, data: { ... } })
       const candidateData = json.data || json;
@@ -649,22 +673,30 @@ export const api = {
   async updateCandidate(id: string, data: Partial<StudentFormData>): Promise<any> {
     try {
       const payload = mapStudentToBackend(data);
-      const response = await fetch(`${BASE_URL}/candidats/${id}`, {
+      console.log('📤 Update Candidate Payload:', payload);
+      const response = await fetch(`${BASE_URL}/candidates/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify(payload),
       });
-      if (!response.ok) throw new Error('Update failed');
-      return await response.json();
+      if (!response.ok) {
+        console.error('❌ Update Candidate Failed');
+        throw new Error('Update failed');
+      }
+      const json = await response.json();
+      console.log('📥 Update Candidate Success:', json);
+      return json;
     } catch (error) { throw error; }
   },
 
   async deleteCandidate(id: string): Promise<boolean> {
     try {
-      const response = await fetch(`${BASE_URL}/candidats/${id}`, {
+      console.log('📤 Deleting Candidate:', id);
+      const response = await fetch(`${BASE_URL}/candidates/${id}`, {
         method: 'DELETE',
         headers: { 'Accept': 'application/json' }
       });
+      console.log('📥 Delete Candidate Status:', response.status);
       return response.ok;
     } catch (error) { return false; }
   },
@@ -672,36 +704,45 @@ export const api = {
   // --- DOCUMENTS ---
   async uploadDocument(recordId: string, docType: string, file: File): Promise<any> {
     try {
+      console.log(`📤 Uploading Document (${docType}) for ${recordId}:`, file.name);
       const formData = new FormData();
       formData.append('file', file);
       const endpointMap: Record<string, string> = { 'cv': 'cv', 'cni': 'cin', 'lettre': 'lettre-motivation', 'vitale': 'carte-vitale', 'diplome': 'dernier-diplome' };
-      const url = `${BASE_URL}/candidats/${recordId}/documents/${endpointMap[docType] || docType}`;
+      const url = `${BASE_URL}/candidates/${recordId}/documents/${endpointMap[docType] || docType}`;
       const response = await fetch(url, { method: 'POST', headers: { 'Accept': 'application/json' }, body: formData });
       if (!response.ok) throw new Error(`Upload failed: ${response.statusText}`);
-      return await response.json();
+      const json = await response.json();
+      console.log('📥 Upload Success:', json);
+      return json;
     } catch (error) { throw error; }
   },
 
   // --- GENERATION ---
   async generateFicheRenseignement(recordId: string): Promise<any> {
     try {
-      const response = await fetch(`${BASE_URL}/candidats/${recordId}/fiche-renseignement`, {
+      console.log('📤 Generating Fiche Renseignement:', recordId);
+      const response = await fetch(`${BASE_URL}/candidates/${recordId}/fiche-renseignement`, {
         method: 'POST',
         headers: { 'Accept': 'application/json' }
       });
       if (!response.ok) throw new Error('Generation failed');
-      return await response.json();
+      const json = await response.json();
+      console.log('📥 Generation Success:', json);
+      return json;
     } catch (error) { throw error; }
   },
 
   async generateCerfa(recordId: string): Promise<any> {
     try {
-      const response = await fetch(`${BASE_URL}/candidats/${recordId}/cerfa`, {
+      console.log('📤 Generating CERFA:', recordId);
+      const response = await fetch(`${BASE_URL}/candidates/${recordId}/cerfa`, {
         method: 'POST',
         headers: { 'Accept': 'application/json' }
       });
       if (!response.ok) throw new Error('Generation failed');
-      return await response.json();
+      const json = await response.json();
+      console.log('📥 CERFA Generation Success:', json);
+      return json;
     } catch (error) { throw error; }
   },
 
@@ -737,18 +778,39 @@ export const api = {
 
   async getAllCompanies(): Promise<any[]> {
     try {
+      console.log('📤 Fetching All Companies');
       const response = await fetch(`${BASE_URL}/entreprise`, { method: 'GET', headers: { 'Accept': 'application/json' } });
-      return response.ok ? await response.json() : [];
+      const json = await response.json();
+      console.log('📥 All Companies Received, count:', Array.isArray(json) ? json.length : 'N/A');
+      return response.ok ? json : [];
     } catch (error) { return []; }
   },
 
   async getCompanyById(id: string): Promise<any> {
     try {
+      console.log('📤 Fetching Company:', id);
       const response = await fetch(`${BASE_URL}/entreprise/${id}`, { method: 'GET', headers: { 'Accept': 'application/json' } });
       if (!response.ok) throw new Error('Company not found');
       const json = await response.json();
+      console.log('📥 Company Received:', json);
 
       // Adapt response
+      const companyData = json.data || json;
+      if (companyData.fields) {
+        return mapBackendToCompany(companyData);
+      }
+      return companyData;
+    } catch (error) { throw error; }
+  },
+
+  async getCompanyByStudentId(studentId: string): Promise<any> {
+    try {
+      console.log('📤 Fetching Company for Student:', studentId);
+      const response = await fetch(`${BASE_URL}/candidates/${studentId}/entreprise`, { method: 'GET', headers: { 'Accept': 'application/json' } });
+      if (!response.ok) throw new Error('Company not found for this student');
+      const json = await response.json();
+      console.log('📥 Company for Student Received:', json);
+
       const companyData = json.data || json;
       if (companyData.fields) {
         return mapBackendToCompany(companyData);

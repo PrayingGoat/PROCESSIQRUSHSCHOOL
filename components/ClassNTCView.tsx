@@ -311,19 +311,31 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
 
     const handleViewCompanyDetails = async (student: any) => {
         setIsCompanyEditing(false); // Default to view mode
-        if (!student.id_entreprise && !student.record_id_entreprise && !student.entreprise_raison_sociale) {
-            // Redirect to enterprise form if no company linked
-            onSelectStudent(student, AdmissionTab.ENTREPRISE);
-            navigate('/admission');
-            return;
-        }
 
+        // Strategy 1: Try ID Enterprise if present
         const companyId = student.id_entreprise || student.record_id_entreprise;
         if (companyId) {
             setIsCompanyModalOpen(true);
             await fetchCompanyDetails(companyId);
-        } else if (student.entreprise_raison_sociale) {
-            // Try to find company by name if ID is missing (fallback)
+            return;
+        }
+
+        // Strategy 2: Try fetching by Student ID (Backend Link)
+        try {
+            const studentId = student.record_id || student.id;
+            const company = await api.getCompanyByStudentId(studentId);
+            if (company) {
+                setIsCompanyModalOpen(true);
+                setSelectedCompany(company);
+                initializeCompanyForm(company);
+                return;
+            }
+        } catch (e) {
+            console.log("No company found via student ID link");
+        }
+
+        // Strategy 3: Try to find company by name if ID is missing
+        if (student.entreprise_raison_sociale) {
             showToast("Récupération de l'entreprise...", "info");
             try {
                 const companies = await api.getAllCompanies();
@@ -341,6 +353,7 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                 navigate('/admission');
             }
         } else {
+            // No info at all -> Go to create mode
             onSelectStudent(student, AdmissionTab.ENTREPRISE);
             navigate('/admission');
         }
