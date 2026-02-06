@@ -513,10 +513,12 @@ const AdmissionView = ({ selectedStudent, selectedTab, onClearSelection }: Admis
 
     // Handle pre-selected student from ClassNTC
     useEffect(() => {
-        if (selectedStudent && selectedTab) {
+        if (selectedStudent) {
             setPrefilledStudent(selectedStudent);
             setStudentData(selectedStudent);
-            setActiveTab(selectedTab);
+            if (selectedTab) {
+                setActiveTab(selectedTab);
+            }
             // Clear selection after handling
             if (onClearSelection) {
                 onClearSelection();
@@ -843,11 +845,18 @@ const AdmissionView = ({ selectedStudent, selectedTab, onClearSelection }: Admis
             {activeTab === AdmissionTab.ENTREPRISE && (
                 <div className="animate-slide-in">
                     <EntrepriseForm
-                        onNext={() => {
+                        onNext={(response?: any) => {
+                            if (response?.entreprise_info) {
+                                setStudentData((prev: any) => ({
+                                    ...prev,
+                                    id_entreprise: response.entreprise_info.id,
+                                    entreprise_raison_sociale: response.entreprise_info.raison_sociale
+                                }));
+                            }
                             setEntrepriseCompleted(true);
                             setActiveTab(AdmissionTab.ADMINISTRATIF);
                         }}
-                        studentRecordId={studentData?.record_id || localStorage.getItem('candidateRecordId')}
+                        studentRecordId={studentData?.record_id || studentData?.id || localStorage.getItem('candidateRecordId')}
                     />
                 </div>
             )}

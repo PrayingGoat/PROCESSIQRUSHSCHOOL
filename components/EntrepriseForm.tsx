@@ -143,13 +143,16 @@ const companySchema = z.object({
 
 type CompanyFormValues = z.infer<typeof companySchema>;
 
+import { useCandidates } from '../hooks/useCandidates';
+
 interface EntrepriseFormProps {
-    onNext: () => void;
+    onNext: (response?: any) => void;
     studentRecordId: string | null;
 }
 
 const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId }) => {
     const { showToast, draftCompany, setDraftCompany, clearDraftCompany } = useAppStore();
+    const { refresh: refreshCandidates } = useCandidates();
     const [activeSection, setActiveSection] = useState<string | null>('id');
 
     const toggleSection = (section: string) => {
@@ -200,6 +203,13 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
             record_id_etudiant: studentRecordId || ""
         }
     });
+
+    // Force sync studentRecordId prop to form state (avoids stale draft ID)
+    useEffect(() => {
+        if (studentRecordId) {
+            setValue('record_id_etudiant', studentRecordId);
+        }
+    }, [studentRecordId, setValue]);
 
     const formData = watch();
 
@@ -279,19 +289,24 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
 
     const { execute: submitCompany, loading: isSubmitting } = useApi(api.submitCompany, {
         successMessage: "Informations entreprise enregistrées avec succès !",
-        onSuccess: () => {
+        onSuccess: (response) => {
             clearDraftCompany();
-            onNext();
+            refreshCandidates();
+            onNext(response);
         },
         errorMessage: "Une erreur est survenue lors de l'enregistrement. Vérifiez les données et réessayez."
     });
 
     const onSubmit = async (data: CompanyFormValues) => {
+        console.log('📝 Submitting Company for Student ID (Prop):', studentRecordId);
         if (!studentRecordId) {
             showToast("Erreur: ID étudiant manquant. Veuillez revenir à l'étape précédente.", "error");
             return;
         }
-        await submitCompany(data as any);
+        // Force the correct ID from props into the payload to avoid stale draft data
+        const finalData = { ...data, record_id_etudiant: studentRecordId };
+        console.log('📦 Final Payload sent to API:', finalData);
+        await submitCompany(finalData as any);
     };
 
     return (

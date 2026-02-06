@@ -385,6 +385,10 @@ export interface ApiResponse<T = any> {
   data?: T;
   id?: string;
   detail?: any;
+  entreprise_info?: {
+    id: string;
+    raison_sociale: string;
+  };
 }
 
 // Evaluation types

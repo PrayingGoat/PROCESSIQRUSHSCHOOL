@@ -26,12 +26,14 @@ import { AdmissionTab } from '../types';
 import CandidateDetailsModal from './dashboard/CandidateDetailsModal';
 import CompanyDetailsModal from './dashboard/CompanyDetailsModal';
 import { useApi } from '../hooks/useApi';
+import { useCandidates, getC } from '../hooks/useCandidates';
 
 interface ClassNTCViewProps {
     onSelectStudent: (student: any, tab: AdmissionTab) => void;
 }
 
 const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
+    const { candidates, loading: hookLoading, refresh: refreshCandidates } = useCandidates();
     const [students, setStudents] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
@@ -181,44 +183,49 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
     };
 
     useEffect(() => {
-        fetchStudents();
+        if (currentTab === 'students') {
+            setStudents(candidates);
+            setLoading(hookLoading);
+        }
+    }, [candidates, hookLoading, currentTab]);
+
+    useEffect(() => {
+        if (currentTab !== 'students') {
+            fetchStudents();
+        }
     }, [filter, currentTab]);
 
     const fetchStudents = async () => {
+        if (currentTab === 'students') {
+            setStudents(candidates);
+            setLoading(hookLoading);
+            return;
+        }
+
         try {
             setLoading(true);
-            if (currentTab === 'stats') {
-                // Step 1: Get the list of IDs
-                const list = await api.getAllCandidates();
+            // Step 1: Get the list of IDs
+            const list = await api.getAllCandidates();
 
-                if (list && list.length > 0) {
-                    // Step 2: Fetch FULL details for each student in parallel
-                    // We use Promise.all to fetch everything as fast as possible
-                    const fullDetails = await Promise.all(
-                        list.map(async (s: any) => {
-                            try {
-                                const id = s.id || s.record_id || (s.fields && s.fields.id);
-                                return await api.getCandidateById(id);
-                            } catch (e) {
-                                console.error(`Failed to fetch details for student`, e);
-                                return null;
-                            }
-                        })
-                    );
+            if (list && list.length > 0) {
+                // Step 2: Fetch FULL details for each student in parallel
+                // We use Promise.all to fetch everything as fast as possible
+                const fullDetails = await Promise.all(
+                    list.map(async (s: any) => {
+                        try {
+                            const id = s.id || s.record_id || (s.fields && s.fields.id);
+                            return await api.getCandidateById(id);
+                        } catch (e) {
+                            console.error(`Failed to fetch details for student`, e);
+                            return null;
+                        }
+                    })
+                );
 
-                    // Filter out any failed requests
-                    setStudents(fullDetails.filter(s => s !== null));
-                } else {
-                    setStudents([]);
-                }
+                // Filter out any failed requests
+                setStudents(fullDetails.filter(s => s !== null));
             } else {
-                const params = {
-                    avecFicheUniquement: filter === 'withFiche',
-                    avecCerfaUniquement: filter === 'withCerfa',
-                    dossierCompletUniquement: filter === 'complete'
-                };
-                const data = await api.getStudentsList(params);
-                setStudents(data.etudiants || []);
+                setStudents([]);
             }
         } catch (error) {
             showToast('Erreur lors du chargement des données', 'error');
@@ -582,84 +589,87 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                                                     <p className="text-slate-400 font-medium">Réessayez avec d'autres termes de recherche.</p>
                                                 </td>
                                             </tr>
-                                        ) : filteredStudents.map((student) => (
-                                            <tr key={student.record_id} className="hover:bg-slate-50/50 transition-colors group">
-                                                <td className="px-8 py-6">
-                                                    <div className="flex items-center gap-5">
-                                                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center text-slate-500 font-black text-sm group-hover:from-blue-600 group-hover:to-indigo-600 group-hover:text-white transition-all duration-300 shadow-sm relative overflow-hidden">
-                                                            <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                                                            <span className="relative z-10">{student.prenom?.[0]}{student.nom?.[0]}</span>
+                                        ) : filteredStudents.map((rawStudent) => {
+                                            const student = getC(rawStudent);
+                                            return (
+                                                <tr key={student.id} className="hover:bg-slate-50/50 transition-colors group">
+                                                    <td className="px-8 py-6">
+                                                        <div className="flex items-center gap-5">
+                                                            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center text-slate-500 font-black text-sm group-hover:from-blue-600 group-hover:to-indigo-600 group-hover:text-white transition-all duration-300 shadow-sm relative overflow-hidden">
+                                                                <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                                                <span className="relative z-10">{student.prenom?.[0]}{student.nom?.[0]}</span>
+                                                            </div>
+                                                            <div>
+                                                                <div className="font-black text-slate-900 text-lg group-hover:text-blue-600 transition-colors tracking-tight">{student.nom} {student.prenom}</div>
+                                                                <div className="text-xs text-slate-400 font-bold uppercase tracking-wider mt-1">{student.email}</div>
+                                                            </div>
                                                         </div>
-                                                        <div>
-                                                            <div className="font-black text-slate-900 text-lg group-hover:text-blue-600 transition-colors tracking-tight">{student.nom} {student.prenom}</div>
-                                                            <div className="text-xs text-slate-400 font-bold uppercase tracking-wider mt-1">{student.email}</div>
+                                                    </td>
+                                                    <td className="px-8 py-6 text-center">
+                                                        <button
+                                                            onClick={() => handleViewDetails(student.id)}
+                                                            className="px-4 py-2 rounded-xl bg-rose-50 text-rose-600 text-[10px] font-black uppercase tracking-widest border border-rose-100 hover:bg-rose-600 hover:text-white transition-all shadow-sm"
+                                                        >
+                                                            Fiche Étudiant
+                                                        </button>
+                                                    </td>
+                                                    <td className="px-8 py-6 text-center">
+                                                        <button
+                                                            onClick={() => handleViewCompanyDetails(rawStudent)}
+                                                            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all shadow-sm ${(student.id_entreprise || rawStudent.record_id_entreprise || student.entreprise !== 'En recherche')
+                                                                ? 'bg-blue-50 text-blue-600 border-blue-100 hover:bg-blue-600 hover:text-white'
+                                                                : 'bg-amber-50 text-amber-600 border-amber-100 hover:bg-amber-600 hover:text-white'
+                                                                }`}
+                                                        >
+                                                            {(student.id_entreprise || rawStudent.record_id_entreprise || student.entreprise !== 'En recherche')
+                                                                ? 'Voir Entreprise'
+                                                                : 'Lier Entreprise'}
+                                                        </button>
+                                                    </td>
+                                                    <td className="px-8 py-6">
+                                                        <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-xl bg-slate-50 text-slate-600 border border-slate-100 font-black text-[10px] uppercase tracking-widest shadow-sm">
+                                                            <Briefcase size={12} />
+                                                            {student.formation}
                                                         </div>
-                                                    </div>
-                                                </td>
-                                                <td className="px-8 py-6 text-center">
-                                                    <button
-                                                        onClick={() => handleViewDetails(student.record_id || student.id)}
-                                                        className="px-4 py-2 rounded-xl bg-rose-50 text-rose-600 text-[10px] font-black uppercase tracking-widest border border-rose-100 hover:bg-rose-600 hover:text-white transition-all shadow-sm"
-                                                    >
-                                                        Fiche Étudiant
-                                                    </button>
-                                                </td>
-                                                <td className="px-8 py-6 text-center">
-                                                    <button
-                                                        onClick={() => handleViewCompanyDetails(student)}
-                                                        className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all shadow-sm ${(student.id_entreprise || student.record_id_entreprise || student.entreprise_raison_sociale)
-                                                            ? 'bg-blue-50 text-blue-600 border-blue-100 hover:bg-blue-600 hover:text-white'
-                                                            : 'bg-amber-50 text-amber-600 border-amber-100 hover:bg-amber-600 hover:text-white'
-                                                            }`}
-                                                    >
-                                                        {(student.id_entreprise || student.record_id_entreprise || student.entreprise_raison_sociale)
-                                                            ? 'Voir Entreprise'
-                                                            : 'Lier Entreprise'}
-                                                    </button>
-                                                </td>
-                                                <td className="px-8 py-6">
-                                                    <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-xl bg-slate-50 text-slate-600 border border-slate-100 font-black text-[10px] uppercase tracking-widest shadow-sm">
-                                                        <Briefcase size={12} />
-                                                        {student.formation}
-                                                    </div>
-                                                </td>
-                                                <td className="px-8 py-6">
-                                                    <div className="flex items-center justify-center gap-3">
-                                                        <div className="flex flex-col items-center gap-1.5">
-                                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Fiche</span>
-                                                            {student.has_fiche_renseignement ? (
-                                                                <button
-                                                                    onClick={() => handleDownload(student.fiche_entreprise?.url, student.fiche_entreprise?.filename)}
-                                                                    className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center hover:bg-emerald-600 hover:text-white transition-all shadow-sm border border-emerald-100/50"
-                                                                >
-                                                                    <CheckCircle2 size={18} />
-                                                                </button>
-                                                            ) : (
-                                                                <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center border border-amber-100/50">
-                                                                    <AlertCircle size={18} />
-                                                                </div>
-                                                            )}
+                                                    </td>
+                                                    <td className="px-8 py-6">
+                                                        <div className="flex items-center justify-center gap-3">
+                                                            <div className="flex flex-col items-center gap-1.5">
+                                                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Fiche</span>
+                                                                {student.has_fiche_renseignement ? (
+                                                                    <button
+                                                                        onClick={() => handleDownload(rawStudent.fiche_entreprise?.url, rawStudent.fiche_entreprise?.filename)}
+                                                                        className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center hover:bg-emerald-600 hover:text-white transition-all shadow-sm border border-emerald-100/50"
+                                                                    >
+                                                                        <CheckCircle2 size={18} />
+                                                                    </button>
+                                                                ) : (
+                                                                    <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center border border-amber-100/50">
+                                                                        <AlertCircle size={18} />
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                            <div className="w-px h-8 bg-slate-100"></div>
+                                                            <div className="flex flex-col items-center gap-1.5">
+                                                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">CERFA</span>
+                                                                {student.has_cerfa ? (
+                                                                    <button
+                                                                        onClick={() => handleDownload(rawStudent.cerfa?.url, rawStudent.cerfa?.filename)}
+                                                                        className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center hover:bg-indigo-600 hover:text-white transition-all shadow-sm border border-indigo-100/50"
+                                                                    >
+                                                                        <ShieldCheck size={18} />
+                                                                    </button>
+                                                                ) : (
+                                                                    <div className="w-10 h-10 rounded-xl bg-slate-50 text-slate-300 flex items-center justify-center border border-slate-100">
+                                                                        <ShieldCheck size={18} />
+                                                                    </div>
+                                                                )}
+                                                            </div>
                                                         </div>
-                                                        <div className="w-px h-8 bg-slate-100"></div>
-                                                        <div className="flex flex-col items-center gap-1.5">
-                                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">CERFA</span>
-                                                            {student.has_cerfa ? (
-                                                                <button
-                                                                    onClick={() => handleDownload(student.cerfa?.url, student.cerfa?.filename)}
-                                                                    className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center hover:bg-indigo-600 hover:text-white transition-all shadow-sm border border-indigo-100/50"
-                                                                >
-                                                                    <ShieldCheck size={18} />
-                                                                </button>
-                                                            ) : (
-                                                                <div className="w-10 h-10 rounded-xl bg-slate-50 text-slate-300 flex items-center justify-center border border-slate-100">
-                                                                    <ShieldCheck size={18} />
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))}
+                                                    </td>
+                                                </tr>
+                                            )
+                                        })}
                                     </tbody>
                                 </table>
                             </div>

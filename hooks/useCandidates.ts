@@ -4,24 +4,28 @@ import { useApi } from './useApi';
 import { useAppStore } from '../store/useAppStore';
 
 export const getC = (c: any) => {
-    // ... (same implementation)
     const d = c.fields || c.data || c || {};
     const info = c.informations_personnelles || {};
-    let alt = d.alternance || info.alternance;
-    if (alt === true) alt = "Oui";
-    else if (alt === false) alt = "Non";
+    let alt = d.alternance || info.alternance || c.alternance;
+    if (alt === true || alt === 'Oui') alt = "Oui";
+    else if (alt === false || alt === 'Non') alt = "Non";
     else alt = alt || "Non";
 
+    // Normalize enterprise info
+    const id_ent = c.id_entreprise || c.record_id_entreprise || d.id_entreprise || d.record_id_entreprise || d['ID Entreprise'] || d['record_id_entreprise'];
+    const nom_ent = c.entreprise_raison_sociale || d.entreprise_raison_sociale || d['Raison sociale (from Entreprise)'] || d['Entreprise daccueil'] || info.entreprise_d_accueil || d.entreprise;
+
     return {
-        id: c.id || d.id || d.record_id,
-        prenom: info.prenom || d['Prénom'] || d.prenom || d.firstname || "",
-        nom: info.nom_naissance || d['NOM de naissance'] || d.nom_naissance || d.nom || d.lastname || "",
-        email: info.email || d['E-mail'] || d.email || "",
-        formation: info.formation_souhaitee || d['Formation'] || d.formation_souhaitee || d.formation || "Non renseigné",
-        ville: info.ville || d['Commune de naissance'] || d.ville || d.commune_naissance || "Non renseigné",
-        entreprise: info.entreprise_d_accueil || d['Entreprise daccueil'] || d.entreprise_d_accueil || d.entreprise || "En recherche",
-        telephone: info.telephone || d['Téléphone'] || d.telephone || "",
+        id: c.record_id || c.id || d.id || d.record_id,
+        prenom: info.prenom || d['Prénom'] || d.prenom || d.firstname || c.prenom || "",
+        nom: info.nom_naissance || d['NOM de naissance'] || d.nom_naissance || d.nom || d.lastname || c.nom || "",
+        email: info.email || d['E-mail'] || d.email || c.email || "",
+        formation: info.formation_souhaitee || d['Formation'] || d.formation_souhaitee || d.formation || c.formation || "Non renseigné",
+        ville: info.ville || d['Commune de naissance'] || d.ville || d.commune_naissance || c.ville || "Non renseigné",
+        entreprise: nom_ent || "En recherche",
+        telephone: info.telephone || d['Téléphone'] || d.telephone || c.telephone || "",
         alternance: alt,
+        id_entreprise: id_ent,
         has_cerfa: c.has_cerfa,
         has_fiche_renseignement: c.has_fiche_renseignement,
         has_cv: c.has_cv
@@ -30,9 +34,9 @@ export const getC = (c: any) => {
 
 export const isPlaced = (c: any) => {
     const data = getC(c);
-    if (data.alternance === 'Oui') return true;
     const ent = data.entreprise;
-    return ent && ent !== 'Non' && ent !== 'En recherche' && ent !== 'En cours' && ent !== 'null';
+    const hasEntId = !!data.id_entreprise;
+    return hasEntId || (ent && ent !== 'Non' && ent !== 'En recherche' && ent !== 'En cours' && ent !== 'null' && ent !== 'En recherche');
 };
 
 export const useCandidates = () => {
@@ -40,22 +44,30 @@ export const useCandidates = () => {
 
     const fetchApi = useCallback(() => Promise.all([
         api.getAllCandidates(),
-        api.getEtudiantsFiches(false)
+        api.getStudentsList()
     ]), []);
 
     const { execute, loading, error } = useApi(fetchApi, {
-        silentLoading: cachedCandidates.length > 0, // Silent if we have cache
+        silentLoading: cachedCandidates.length > 0,
         onSuccess: (rawData: any) => {
             const [candidatesData, fichesData] = rawData as [any, any];
+            const fichesList = Array.isArray(fichesData?.etudiants) ? fichesData.etudiants : [];
+            
             const mergedData = Array.isArray(candidatesData) ? candidatesData.map((c: any) => {
-                const candidateId = c.id || (c.fields && (c.fields.id || c.fields.record_id)) || c.record_id;
-                const fichesList = Array.isArray(fichesData?.etudiants) ? fichesData.etudiants : [];
-                const fiche = fichesList.find((f: any) => f.record_id === candidateId);
+                const d = c.fields || c;
+                const candidateId = c.id || d.id || d.record_id || c.record_id;
+                const fiche = fichesList.find((f: any) => f.record_id === candidateId || f.id === candidateId);
+                
                 return {
                     ...c,
+                    // Prioritize fiche info for real-time status
+                    id_entreprise: fiche?.id_entreprise || c.id_entreprise || d.id_entreprise || d.record_id_entreprise,
+                    record_id_entreprise: fiche?.record_id_entreprise || c.record_id_entreprise || d.record_id_entreprise,
+                    entreprise_raison_sociale: fiche?.entreprise_raison_sociale || c.entreprise_raison_sociale || d.entreprise_raison_sociale || d['Raison sociale (from Entreprise)'],
                     has_cerfa: fiche?.has_cerfa || false,
                     has_fiche_renseignement: fiche?.has_fiche_renseignement || false,
-                    has_cv: fiche?.has_cv || false
+                    has_cv: fiche?.has_cv || false,
+                    dossier_complet: fiche?.dossier_complet || false
                 };
             }) : [];
             setCandidates(mergedData);

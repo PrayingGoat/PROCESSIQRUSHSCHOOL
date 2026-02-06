@@ -133,6 +133,7 @@ const mapStudentToBackend = (data: any) => {
 };
 
 const mapCompanyToBackend = (data: any) => {
+  console.log('🔍 mapCompanyToBackend input:', data);
   const ensureString = (val: any) => (val === undefined || val === null) ? "" : String(val);
 
   // Si les données sont déjà au format backend (cas de l'update avec fields)
@@ -188,10 +189,6 @@ const mapCompanyToBackend = (data: any) => {
         montant_salaire_brut4: data.contrat?.montant_salaire_brut4 ? parseFloat(data.contrat.montant_salaire_brut4.toString()) : null,
         date_conclusion: ensureString(data.contrat?.date_conclusion),
         date_debut_execution: ensureString(data.contrat?.date_debut_execution),
-        numero_deca_ancien_contrat: ensureString(data.contrat?.numero_deca_ancien_contrat),
-        travail_machine_dangereuse: ensureString(data.contrat?.machines_dangereuses || data.contrat?.travail_machine_dangereuse),
-        caisse_retraite: ensureString(data.contrat?.caisse_retraite),
-        date_avenant: ensureString(data.contrat?.date_avenant),
         date_debut_2periode_1er_annee: ensureString(data.contrat?.date_debut_2periode_1er_annee),
         date_fin_2periode_1er_annee: ensureString(data.contrat?.date_fin_2periode_1er_annee),
         date_debut_1periode_2eme_annee: ensureString(data.contrat?.date_debut_1periode_2eme_annee),
@@ -205,7 +202,11 @@ const mapCompanyToBackend = (data: any) => {
         date_debut_1periode_4eme_annee: ensureString(data.contrat?.date_debut_1periode_4eme_annee),
         date_fin_1periode_4eme_annee: ensureString(data.contrat?.date_fin_1periode_4eme_annee),
         date_debut_2periode_4eme_annee: ensureString(data.contrat?.date_debut_2periode_4eme_annee),
-        date_fin_2periode_4eme_annee: ensureString(data.contrat?.date_fin_2periode_4eme_annee)
+        date_fin_2periode_4eme_annee: ensureString(data.contrat?.date_fin_2periode_4eme_annee),
+        numero_deca_ancien_contrat: ensureString(data.contrat?.numero_deca_ancien_contrat),
+        travail_machine_dangereuse: ensureString(data.contrat?.machines_dangereuses || data.contrat?.travail_machine_dangereuse),
+        caisse_retraite: ensureString(data.contrat?.caisse_retraite),
+        date_avenant: ensureString(data.contrat?.date_avenant)
       },
       formation_missions: {
         formation_alternant: data.missions?.selectionnees?.length > 0 ? data.missions.selectionnees.join(', ') : (data.formation_missions?.formation_alternant || ""),
@@ -214,7 +215,7 @@ const mapCompanyToBackend = (data: any) => {
         code_diplome: ensureString(data.formation?.code_diplome || data.formation_missions?.code_diplome),
         nombre_heures_formation: data.formation?.nb_heures ? parseFloat(data.formation.nb_heures.toString()) : (data.formation_missions?.nombre_heures_formation || 0),
         jours_de_cours: data.formation_missions?.jours_de_cours || 0,
-        cfaEnterprise: data.cfa?.entreprise === 'oui' || data.formation_missions?.cfaEnterprise,
+        cfaEnterprise: !!(data.cfa?.entreprise === 'oui' || data.formation_missions?.cfaEnterprise),
         DenominationCFA: ensureString(data.cfa?.denomination || data.formation_missions?.DenominationCFA),
         NumeroUAI: ensureString(data.cfa?.uai || data.formation_missions?.NumeroUAI),
         NumeroSiretCFA: ensureString(data.cfa?.siret || data.formation_missions?.NumeroSiretCFA),
@@ -227,6 +228,7 @@ const mapCompanyToBackend = (data: any) => {
     };
   }
 
+  console.log('🔍 record_id_etudiant being mapped (flat case):', data["recordIdetudiant"]);
   // Cas des données plates provenant directement des "fields" d'Airtable
   return {
     identification: {
@@ -305,9 +307,10 @@ const mapCompanyToBackend = (data: any) => {
       code_diplome: ensureString(data["Code  diplome"]),
       nombre_heures_formation: parseFloat(ensureString(data["nombre heure formation"])) || 0,
       jours_de_cours: parseInt(ensureString(data["jour de cours"])) || 0,
-      cfaEnterprise: false, DenominationCFA: "", NumeroUAI: "", NumeroSiretCFA: "", AdresseCFA: "", complementAdresseCFA: "", codePostalCFA: "", communeCFA: ""
+      cfaEnterprise: !!(data["cfaEnterprise"]),
+      DenominationCFA: "", NumeroUAI: "", NumeroSiretCFA: "", AdresseCFA: "", complementAdresseCFA: "", codePostalCFA: "", communeCFA: ""
     },
-    record_id_etudiant: ensureString(data["recordIdetudiant"])
+    record_id_etudiant: ensureString(data["recordIdetudiant"] || data.record_id_etudiant)
   };
 };
 
@@ -329,9 +332,14 @@ export const api = {
   // --- HEALTH ---
   async checkHealth(): Promise<boolean> {
     try {
+      console.log('🔍 Checking API Health at:', `${BASE_URL}/health`);
       const response = await fetch(`${BASE_URL}/health`, { method: 'GET' });
+      console.log('📊 Health Check Result:', response.ok ? '✅ OK' : `❌ Failed (${response.status})`);
       return response.ok;
-    } catch (error) { return false; }
+    } catch (error) {
+      console.error('❌ Health Check Error:', error);
+      return false;
+    }
   },
 
   // Get students list with documents
@@ -350,8 +358,16 @@ export const api = {
         method: 'GET',
         headers: { 'Accept': 'application/json' }
       });
-      if (!response.ok) throw new Error('Failed to fetch students list');
-      return await response.json();
+      const data = await response.json();
+      // Ensure we include enterprise info in the returned etudiants
+      if (data.etudiants) {
+        data.etudiants = data.etudiants.map((s: any) => ({
+          ...s,
+          // Fields already in s from backend: id_entreprise, record_id_entreprise, entreprise_raison_sociale
+          // We ensure they are visible for the frontend logic
+        }));
+      }
+      return data;
     } catch (error) {
       console.error('❌ API Error (Get Students List):', error);
       throw error;
@@ -484,10 +500,25 @@ export const api = {
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify(payload),
       });
-      if (!response.ok) throw new Error(`Submission failed: ${response.status}`);
+      if (!response.ok) {
+        console.error(`❌ Company Submission Failed (${response.status}):`, response.statusText);
+        throw new Error(`Submission failed: ${response.status}`);
+      }
       const json = await response.json();
-      return { success: true, data: json };
-    } catch (error: any) { throw error; }
+      console.log('✅ Company Submission Success. Full Response:', json);
+      return { 
+        success: true, 
+        data: json,
+        // Helper fields for the frontend to update local state immediately if needed
+        entreprise_info: {
+          id: json.id || json.record_id,
+          raison_sociale: payload.identification?.raison_sociale
+        }
+      };
+    } catch (error: any) {
+      console.error('❌ Company Submission Error:', error);
+      throw error;
+    }
   },
 
   async getAllCompanies(): Promise<any[]> {
@@ -508,13 +539,22 @@ export const api = {
   async updateCompany(id: string, data: any): Promise<any> {
     try {
       const payload = mapCompanyToBackend(data);
+      console.log('📤 Updating Company Payload:', payload);
       const response = await fetch(`${BASE_URL}/entreprise/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify(payload),
       });
-      if (!response.ok) throw new Error('Update company failed');
-      return await response.json();
-    } catch (error) { throw error; }
+      if (!response.ok) {
+        console.error(`❌ Company Update Failed (${response.status}):`, response.statusText);
+        throw new Error('Update company failed');
+      }
+      const json = await response.json();
+      console.log('✅ Company Update Success:', json);
+      return json;
+    } catch (error) {
+      console.error('❌ Company Update Error:', error);
+      throw error;
+    }
   }
 };
