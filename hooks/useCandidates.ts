@@ -44,12 +44,14 @@ export const useCandidates = () => {
 
     const fetchApi = useCallback(() => Promise.all([
         api.getAllCandidates(),
-        api.getStudentsList()
+        api.getStudentsList(),
+        api.getAllCompanies()
     ]), []);
 
     const mergedDataCallback = useCallback((rawData: any) => {
-        const [candidatesData, fichesData] = rawData as [any, any];
+        const [candidatesData, fichesData, companiesData] = rawData as [any, any, any[]];
         const fichesList = Array.isArray(fichesData?.etudiants) ? fichesData.etudiants : [];
+        const companiesList = Array.isArray(companiesData) ? companiesData : [];
 
         // Handle candidatesData being wrapped in { data: [...] } or just [...]
         const candidatesList = Array.isArray(candidatesData) ? candidatesData : (candidatesData?.data || []);
@@ -59,12 +61,19 @@ export const useCandidates = () => {
             const candidateId = c.id || d.id || d.record_id || c.record_id;
             const fiche = fichesList.find((f: any) => f.record_id === candidateId || f.id === candidateId);
 
+            // Find company where recordIdetudiant matches this candidate
+            const company = companiesList.find((ent: any) => {
+                const entFields = ent.fields || ent;
+                const entStudentId = entFields.recordIdetudiant || entFields.record_id_etudiant;
+                return entStudentId === candidateId || (Array.isArray(entStudentId) && entStudentId.includes(candidateId));
+            });
+
             return {
                 ...c,
-                // Prioritize fiche info for real-time status
-                id_entreprise: fiche?.id_entreprise || c.id_entreprise || d.id_entreprise || d.record_id_entreprise,
-                record_id_entreprise: fiche?.record_id_entreprise || c.record_id_entreprise || d.record_id_entreprise,
-                entreprise_raison_sociale: fiche?.entreprise_raison_sociale || c.entreprise_raison_sociale || d.entreprise_raison_sociale || d['Raison sociale (from Entreprise)'],
+                // Prioritize fiche info for real-time status, then manual join, then candidate fields
+                id_entreprise: fiche?.id_entreprise || company?.id || c.id_entreprise || d.id_entreprise || d.record_id_entreprise,
+                record_id_entreprise: fiche?.record_id_entreprise || company?.id || c.record_id_entreprise || d.record_id_entreprise,
+                entreprise_raison_sociale: fiche?.entreprise_raison_sociale || (company?.fields || company)?.['Raison sociale'] || c.entreprise_raison_sociale || d.entreprise_raison_sociale || d['Raison sociale (from Entreprise)'],
                 has_cerfa: fiche?.has_cerfa || false,
                 has_fiche_renseignement: fiche?.has_fiche_renseignement || false,
                 has_cv: fiche?.has_cv || false,

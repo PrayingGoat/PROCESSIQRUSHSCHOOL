@@ -1,7 +1,7 @@
 import { StudentFormData, CompanyFormData, ApiResponse } from '../types';
 
 const BASE_API_URL = import.meta.env.VITE_BASE_API_URL || 'http://localhost:8000';
-const AUTH_API_URL = '/api'; // Local backend for Auth
+const AUTH_API_URL = `${BASE_API_URL}/auth`;
 const BASE_URL = `${BASE_API_URL}/admission`;
 
 // Helper to format string (remove underscores, capitalize)
@@ -32,8 +32,8 @@ const mapBackendToStudent = (backendData: any): any => {
     record_id: backendData.id,
 
     // Enterprise Link (Critical for Dashboard)
-    id_entreprise: Array.isArray(fields["Entreprise"]) ? fields["Entreprise"][0] : (fields["Entreprise"] || ""),
-    entreprise_raison_sociale: fields["Entreprise d'accueil"] || fields["Raison sociale (from Entreprise)"] || fields["Nom Entreprise"] || "",
+    id_entreprise: Array.isArray(fields["Entreprise"]) ? fields["Entreprise"][0] : (fields["Entreprise"] || fields["ID Entreprise"] || fields["record_id_entreprise"] || ""),
+    entreprise_raison_sociale: fields["Entreprise d'accueil"] || fields["Raison sociale (from Entreprise)"] || fields["Nom Entreprise"] || fields["Entreprise"] || "",
 
 
     // Identité
@@ -516,7 +516,7 @@ export const api = {
   // --- AUTH ---
   async login(email: string, pass: string): Promise<{ access_token: string }> {
     console.log('📤 Login Attempt:', email);
-    const response = await fetch(`${AUTH_API_URL}/auth/login`, {
+    const response = await fetch(`${BASE_API_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password: pass }),
@@ -534,8 +534,8 @@ export const api = {
   // --- HEALTH ---
   async checkHealth(): Promise<boolean> {
     try {
-      console.log('🔍 Checking API Health at:', `${BASE_URL}/health`);
-      const response = await fetch(`${BASE_URL}/health`, { method: 'GET' });
+      console.log('🔍 Checking API Health at:', `${BASE_API_URL}/health`);
+      const response = await fetch(`${BASE_API_URL}/health`, { method: 'GET' });
       console.log('📊 Health Check Result:', response.ok ? '✅ OK' : `❌ Failed (${response.status})`);
       return response.ok;
     } catch (error) {
@@ -721,7 +721,7 @@ export const api = {
   async generateFicheRenseignement(recordId: string): Promise<any> {
     try {
       console.log('📤 Generating Fiche Renseignement:', recordId);
-      const response = await fetch(`${BASE_URL}/candidates/${recordId}/fiche-renseignement`, {
+      const response = await fetch(`${BASE_URL}/candidats/${recordId}/fiche-renseignement`, {
         method: 'POST',
         headers: { 'Accept': 'application/json' }
       });
@@ -735,7 +735,7 @@ export const api = {
   async generateCerfa(recordId: string): Promise<any> {
     try {
       console.log('📤 Generating CERFA:', recordId);
-      const response = await fetch(`${BASE_URL}/candidates/${recordId}/cerfa`, {
+      const response = await fetch(`${BASE_URL}/candidats/${recordId}/cerfa`, {
         method: 'POST',
         headers: { 'Accept': 'application/json' }
       });
@@ -779,43 +779,37 @@ export const api = {
   async getAllCompanies(): Promise<any[]> {
     try {
       console.log('📤 Fetching All Companies');
-      const response = await fetch(`${BASE_URL}/entreprise`, { method: 'GET', headers: { 'Accept': 'application/json' } });
+      const response = await fetch(`${BASE_URL}/entreprises`, { method: 'GET', headers: { 'Accept': 'application/json' } });
       const json = await response.json();
-      console.log('📥 All Companies Received, count:', Array.isArray(json) ? json.length : 'N/A');
-      return response.ok ? json : [];
+      const data = json.data || json;
+      console.log('📥 All Companies Received, count:', Array.isArray(data) ? data.length : 'N/A');
+      return response.ok ? data : [];
     } catch (error) { return []; }
   },
 
   async getCompanyById(id: string): Promise<any> {
     try {
       console.log('📤 Fetching Company:', id);
-      const response = await fetch(`${BASE_URL}/entreprise/${id}`, { method: 'GET', headers: { 'Accept': 'application/json' } });
+      const response = await fetch(`${BASE_URL}/entreprises/${id}`, { method: 'GET', headers: { 'Accept': 'application/json' } });
       if (!response.ok) throw new Error('Company not found');
       const json = await response.json();
       console.log('📥 Company Received:', json);
 
-      // Adapt response
-      const companyData = json.data || json;
-      if (companyData.fields) {
-        return mapBackendToCompany(companyData);
-      }
-      return companyData;
+      // Return raw record (id, fields) expected by components
+      return json.data || json;
     } catch (error) { throw error; }
   },
 
   async getCompanyByStudentId(studentId: string): Promise<any> {
     try {
       console.log('📤 Fetching Company for Student:', studentId);
-      const response = await fetch(`${BASE_URL}/candidates/${studentId}/entreprise`, { method: 'GET', headers: { 'Accept': 'application/json' } });
+      const response = await fetch(`${BASE_URL}/candidats/${studentId}/entreprise`, { method: 'GET', headers: { 'Accept': 'application/json' } });
       if (!response.ok) throw new Error('Company not found for this student');
       const json = await response.json();
       console.log('📥 Company for Student Received:', json);
 
-      const companyData = json.data || json;
-      if (companyData.fields) {
-        return mapBackendToCompany(companyData);
-      }
-      return companyData;
+      // Return raw record (id, fields) expected by components
+      return json.data || json;
     } catch (error) { throw error; }
   },
 
@@ -823,7 +817,7 @@ export const api = {
     try {
       const payload = mapCompanyToBackend(data);
       console.log('📤 Updating Company Payload:', payload);
-      const response = await fetch(`${BASE_URL}/entreprise/${id}`, {
+      const response = await fetch(`${BASE_URL}/entreprises/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify(payload),
