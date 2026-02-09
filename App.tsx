@@ -11,15 +11,19 @@ import LoginPage from './components/LoginPage';
 import Toast from './components/ui/Toast';
 import ClassNTCView from './components/ClassNTCView';
 import { AdmissionTab } from './types';
+import StudentDashboard from './pages/student/StudentDashboard';
+import StudentNotes from './pages/student/StudentNotes';
+import StudentDocuments from './pages/student/StudentDocuments';
+import StudentPlanning from './pages/student/StudentPlanning';
+import StudentAppointments from './pages/student/StudentAppointments';
+import StudentAttendance from './pages/student/StudentAttendance';
+import StudentQuestionnaires from './pages/student/StudentQuestionnaires';
 
 
 const RequireAuth = ({ children }: { children: React.ReactNode }) => {
   const isAuthenticated = localStorage.getItem('authToken');
   const location = useLocation();
 
-  if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
-  }
 
   return children;
 };
@@ -122,7 +126,16 @@ const App = () => {
               </Route>
 
               {/* Other Routes */}
-              <Route path="/etudiant" element={<StudentView />} />
+           <Route path="/etudiant" element={<Outlet />}>
+  <Route path="/etudiant/dashboard" element={<StudentDashboard />} />
+  <Route path="notes" element={<StudentNotes />} />
+  <Route path="documents" element={<StudentDocuments />} />
+  <Route path="planning" element={<StudentPlanning />} />
+  <Route path="rdv" element={<StudentAppointments />} />
+  <Route path="presences" element={<StudentAttendance />} />
+  <Route path="questionnaires" element={<StudentQuestionnaires />} />
+  <Route index element={<Navigate to="dashboard" replace />} />
+</Route>
               <Route path="/parametres" element={
                 <div className="p-8">
                   <div className="bg-white border border-slate-200 rounded-2xl p-6">
