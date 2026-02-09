@@ -11,13 +11,13 @@ import LoginPage from './components/LoginPage';
 import Toast from './components/ui/Toast';
 import ClassNTCView from './components/ClassNTCView';
 import { AdmissionTab } from './types';
-import StudentDashboard from './pages/student/StudentDashboard';
-import StudentNotes from './pages/student/StudentNotes';
-import StudentDocuments from './pages/student/StudentDocuments';
-import StudentPlanning from './pages/student/StudentPlanning';
-import StudentAppointments from './pages/student/StudentAppointments';
-import StudentAttendance from './pages/student/StudentAttendance';
-import StudentQuestionnaires from './pages/student/StudentQuestionnaires';
+import StudentDashboard from './pages/student/StudentDashboard.tsx';
+import StudentNotes from './pages/student/StudentNotes.tsx';
+import StudentDocuments from './pages/student/StudentDocuments.tsx';
+import StudentPlanning from './pages/student/StudentPlanning.tsx';
+import StudentAppointments from './pages/student/StudentAppointments.tsx';
+import StudentAttendance from './pages/student/StudentAttendance.tsx';
+import StudentQuestionnaires from './pages/student/StudentQuestionnaires.tsx';
 
 
 const RequireAuth = ({ children }: { children: React.ReactNode }) => {
@@ -75,7 +75,6 @@ const App = () => {
         {!isLoginPage && (
           <Header
             toggleSidebar={toggleSidebar}
-            activeModule={activeModule}
           />
         )}
 
