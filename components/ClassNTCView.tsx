@@ -312,15 +312,7 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
     const handleViewCompanyDetails = async (student: any) => {
         setIsCompanyEditing(false); // Default to view mode
 
-        // Strategy 1: Try ID Enterprise if present
-        const companyId = student.id_entreprise || student.record_id_entreprise;
-        if (companyId) {
-            setIsCompanyModalOpen(true);
-            await fetchCompanyDetails(companyId);
-            return;
-        }
-
-        // Strategy 2: Try fetching by Student ID (Backend Link)
+        // Strategy 1: Try fetching by Student ID (Backend Link)
         try {
             const studentId = student.record_id || student.id;
             const company = await api.getCompanyByStudentId(studentId);
@@ -332,6 +324,14 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
             }
         } catch (e) {
             console.log("No company found via student ID link");
+        }
+
+        // Strategy 2: Try ID Enterprise if present (Fallback)
+        const companyId = student.id_entreprise || student.record_id_entreprise;
+        if (companyId) {
+            setIsCompanyModalOpen(true);
+            await fetchCompanyDetails(companyId);
+            return;
         }
 
         // Strategy 3: Try to find company by name if ID is missing

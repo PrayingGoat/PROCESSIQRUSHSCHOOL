@@ -30,6 +30,7 @@ const mapBackendToStudent = (backendData: any): any => {
     // Meta
     id: backendData.id,
     record_id: backendData.id,
+    fields: fields, // Maintain raw fields for modal view modes
 
     // Enterprise Link (Critical for Dashboard)
     id_entreprise: Array.isArray(fields["Entreprise"]) ? fields["Entreprise"][0] : (fields["Entreprise"] || fields["ID Entreprise"] || fields["record_id_entreprise"] || ""),
@@ -112,6 +113,7 @@ const mapBackendToCompany = (backendData: any): any => {
   return {
     id: backendData.id,
     record_id: backendData.id,
+    fields: fields, // Maintain raw fields for modal view modes
     identification: {
       raison_sociale: fields["Raison sociale"] || "",
       siret: fields["Numéro SIRET"] || "",
@@ -782,8 +784,9 @@ export const api = {
       const response = await fetch(`${BASE_URL}/entreprises`, { method: 'GET', headers: { 'Accept': 'application/json' } });
       const json = await response.json();
       const data = json.data || json;
-      console.log('📥 All Companies Received, count:', Array.isArray(data) ? data.length : 'N/A');
-      return response.ok ? data : [];
+      const companies = Array.isArray(data) ? data.map(c => c.fields ? mapBackendToCompany(c) : c) : [];
+      console.log('📥 All Companies Received, count:', companies.length);
+      return response.ok ? companies : [];
     } catch (error) { return []; }
   },
 
@@ -795,7 +798,7 @@ export const api = {
       const json = await response.json();
       console.log('📥 Company Received:', json);
 
-      // Return raw record (id, fields) expected by components
+      // Return raw record (id, fields) directly for modal view compatibility
       return json.data || json;
     } catch (error) { throw error; }
   },
@@ -808,7 +811,7 @@ export const api = {
       const json = await response.json();
       console.log('📥 Company for Student Received:', json);
 
-      // Return raw record (id, fields) expected by components
+      // Return raw record (id, fields) directly for modal view compatibility
       return json.data || json;
     } catch (error) { throw error; }
   },

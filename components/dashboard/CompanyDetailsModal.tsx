@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { 
-    X, 
-    Building2, 
-    MapPin, 
-    User, 
-    FileText, 
-    Briefcase, 
-    ShieldCheck, 
+import {
+    X,
+    Building2,
+    MapPin,
+    User,
+    FileText,
+    Briefcase,
+    ShieldCheck,
     Calculator,
     GraduationCap,
     Clock,
@@ -130,11 +130,10 @@ const CompanyDetailsModal: React.FC<CompanyDetailsModalProps> = ({
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id as any)}
-                            className={`flex items-center gap-2 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
-                                activeTab === tab.id 
-                                ? 'bg-white text-blue-600 shadow-sm' 
+                            className={`flex items-center gap-2 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id
+                                ? 'bg-white text-blue-600 shadow-sm'
                                 : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
-                            }`}
+                                }`}
                         >
                             <tab.icon size={14} />
                             {tab.label}
@@ -214,7 +213,7 @@ const CompanyDetailsModal: React.FC<CompanyDetailsModalProps> = ({
                                     {activeTab === 'formation' && (
                                         <div className="space-y-8">
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <Select label="Formation" options={Object.keys(FORMATION_DETAILS).map(k => ({value: k, label: k}))} value={editForm?.formation?.choisie} onChange={e => updateNestedField('formation.choisie', e.target.value)} />
+                                                <Select label="Formation" options={Object.keys(FORMATION_DETAILS).map(k => ({ value: k, label: k }))} value={editForm?.formation?.choisie} onChange={e => updateNestedField('formation.choisie', e.target.value)} />
                                                 <Input label="Date début" type="date" value={editForm?.formation?.date_debut} onChange={e => updateNestedField('formation.date_debut', e.target.value)} />
                                                 <Input label="Date fin" type="date" value={editForm?.formation?.date_fin} onChange={e => updateNestedField('formation.date_fin', e.target.value)} />
                                                 <Input label="Heures" value={editForm?.formation?.nb_heures} onChange={e => updateNestedField('formation.nb_heures', e.target.value)} />
@@ -233,8 +232,8 @@ const CompanyDetailsModal: React.FC<CompanyDetailsModalProps> = ({
                                             <div className="h-px bg-slate-100" />
                                             <div className="flex flex-col gap-2">
                                                 <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Missions</label>
-                                                <textarea 
-                                                    value={editForm?.missions?.formation_alternant} 
+                                                <textarea
+                                                    value={editForm?.missions?.formation_alternant}
                                                     onChange={e => updateNestedField('missions.formation_alternant', e.target.value)}
                                                     rows={4}
                                                     className="w-full px-5 py-4 bg-slate-50 border-2 border-transparent rounded-2xl text-[15px] font-bold text-slate-700 placeholder:text-slate-300 transition-all duration-300 outline-none focus:bg-white focus:border-blue-500 focus:shadow-blue-500/10 resize-none"
@@ -294,7 +293,7 @@ const CompanyDetailsModal: React.FC<CompanyDetailsModalProps> = ({
                                                 {renderInfoRow("Durée hebdomadaire", fields["Durée hebdomadaire"], Clock)}
                                                 {renderInfoRow("Machines dangereuses", fields["Travail sur machines dangereuses ou exposition à des risques particuliers"], ShieldCheck)}
                                             </div>
-                                            
+
                                             <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100">
                                                 <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Rémunération</h4>
                                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -332,7 +331,7 @@ const CompanyDetailsModal: React.FC<CompanyDetailsModalProps> = ({
                 <div className="p-8 border-t border-slate-100 bg-slate-50/50 flex justify-between items-center">
                     <div>
                         {!isEditing && (
-                            <button 
+                            <button
                                 onClick={() => onEdit ? onEdit() : setIsEditing(true)}
                                 className="px-5 py-2.5 bg-white border border-slate-200 text-slate-500 rounded-xl font-black text-[10px] uppercase tracking-widest hover:border-blue-500 hover:text-blue-600 transition-all flex items-center gap-2"
                             >
@@ -345,10 +344,10 @@ const CompanyDetailsModal: React.FC<CompanyDetailsModalProps> = ({
                             {isEditing ? 'Annuler' : 'Fermer'}
                         </Button>
                         {isEditing && (
-                            <Button 
-                                variant="primary" 
-                                onClick={handleSave} 
-                                isLoading={isSaving} 
+                            <Button
+                                variant="primary"
+                                onClick={handleSave}
+                                isLoading={isSaving}
                                 leftIcon={<Save size={18} />}
                             >
                                 Enregistrer
