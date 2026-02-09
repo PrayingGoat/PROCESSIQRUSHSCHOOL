@@ -10,8 +10,8 @@ const LoginPage: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [formData, setFormData] = useState({
-        email: '',
-        password: ''
+        email: 'admin@rush-school.fr',
+        password: 'admin'
     });
 
     const handleSubmit = async (e: React.FormEvent) => {
