@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     X,
     UserCircle,
@@ -19,12 +19,15 @@ import {
     Briefcase,
     FileCheck,
     RefreshCw,
-    Building2
+    Building2,
+    History
 } from 'lucide-react';
 
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
+import HistoryTimeline from './HistoryTimeline';
+import { api } from '../../services/api';
 
 import {
     NATIONALITY_OPTIONS,
@@ -71,7 +74,27 @@ const CandidateDetailsModal: React.FC<CandidateDetailsModalProps> = ({
     isDeleting,
     onRelaunch
 }) => {
-    const [activeTab, setActiveTab] = useState<'personal' | 'school' | 'documents'>('personal');
+    const [activeTab, setActiveTab] = useState<'personal' | 'school' | 'documents' | 'history'>('personal');
+    const [history, setHistory] = useState<any[]>([]);
+    const [loadingHistory, setLoadingHistory] = useState(false);
+
+    useEffect(() => {
+        if (isOpen && activeTab === 'history' && candidate) {
+            const fetchHistory = async () => {
+                setLoadingHistory(true);
+                try {
+                    const id = candidate.id || candidate.record_id;
+                    const data = await api.getHistory(id);
+                    setHistory(data);
+                } catch (error) {
+                    console.error("Failed to fetch history", error);
+                } finally {
+                    setLoadingHistory(false);
+                }
+            };
+            fetchHistory();
+        }
+    }, [isOpen, activeTab, candidate]);
 
     if (!isOpen) return null;
 
@@ -81,6 +104,7 @@ const CandidateDetailsModal: React.FC<CandidateDetailsModalProps> = ({
         { id: 'personal', label: 'Infos Perso', icon: User },
         { id: 'school', label: 'Scolarité', icon: GraduationCap },
         { id: 'documents', label: 'Documents', icon: FileCheck },
+        { id: 'history', label: 'Historique', icon: History },
     ];
 
     const renderInfoRow = (label: string, value: any, icon?: any) => (
@@ -121,8 +145,8 @@ const CandidateDetailsModal: React.FC<CandidateDetailsModalProps> = ({
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id as any)}
                             className={`flex items-center gap-2 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id
-                                    ? 'bg-white text-rose-600 shadow-sm'
-                                    : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
+                                ? 'bg-white text-rose-600 shadow-sm'
+                                : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
                                 }`}
                         >
                             <tab.icon size={14} />
@@ -297,6 +321,11 @@ const CandidateDetailsModal: React.FC<CandidateDetailsModalProps> = ({
                                     <p className="text-slate-400 font-bold">Les documents se gèrent via le téléchargement direct dans la vue consultation.</p>
                                 </div>
                             )}
+                            {activeTab === 'history' && (
+                                <div className="text-center py-10 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                                    <p className="text-slate-400 font-bold mb-4">L'historique est lié à l'étudiant mais n'est pas éditable dans ce formulaire.</p>
+                                </div>
+                            )}
                         </div>
                     ) : (
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -356,6 +385,10 @@ const CandidateDetailsModal: React.FC<CandidateDetailsModalProps> = ({
                                         </div>
                                     ))}
                                 </div>
+                            )}
+
+                            {activeTab === 'history' && (
+                                <HistoryTimeline history={history} loading={loadingHistory} />
                             )}
                         </div>
                     )}

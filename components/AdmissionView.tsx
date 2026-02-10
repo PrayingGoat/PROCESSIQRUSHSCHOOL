@@ -181,7 +181,119 @@ const EvaluationGrid = ({ studentData }: { studentData: any }) => {
 
 
     const exportEvaluationPDF = () => {
-        window.print();
+        const printWindow = window.open('', '_blank');
+        if (!printWindow) {
+            alert("Veuillez autoriser les pop-ups pour générer le PDF.");
+            return;
+        }
+
+        const content = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Rapport d'Entretien - ${evalData.candidatNom}</title>
+                <style>
+                    @page { size: A4; margin: 10mm; }
+                    body { font-family: sans-serif; color: #334155; margin: 0; padding: 15px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 20px; }
+                    .title { font-size: 20px; font-weight: 800; color: #0f172a; margin: 0; }
+                    .subtitle { font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin: 2px 0 0 0; }
+                    .logo { height: 35px; }
+                    .meta-grid { display: grid; grid-cols: 2; gap: 15px; margin-bottom: 25px; }
+                    .meta-item { margin-bottom: 5px; }
+                    .meta-label { font-size: 9px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1px; }
+                    .meta-value { font-size: 12px; font-weight: 600; color: #1e293b; }
+                    h3 { font-size: 14px; font-weight: 700; color: #0f172a; margin: 20px 0 10px 0; padding-bottom: 5px; border-bottom: 1px solid #e2e8f0; }
+                    .criterion { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f1f5f9; break-inside: avoid; }
+                    .criterion-info { max-width: 80%; }
+                    .criterion-title { font-weight: 700; font-size: 12px; color: #1e293b; margin-bottom: 2px; }
+                    .criterion-desc { font-size: 10px; color: #64748b; }
+                    .score { background: #10b981; color: white; width: 32px; height: 32px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; }
+                    .comments { background: #f8fafc; padding: 15px; border-radius: 12px; font-style: italic; font-size: 12px; line-height: 1.4; color: #475569; border: 1px solid #e2e8f0; min-height: 50px; }
+                    .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
+                    .signature-box { border: 1px dashed #cbd5e1; height: 60px; width: 180px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 10px; background: #f8fafc; }
+                    .total-box { background: #0f172a; color: white; padding: 15px 30px; border-radius: 12px; text-align: center; }
+                    .total-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.8; margin-bottom: 4px; }
+                    .total-value { font-size: 28px; font-weight: 900; line-height: 1; color: #10b981; }
+                    .total-max { font-size: 12px; font-weight: 600; opacity: 0.6; }
+                    .appreciation { margin-top: 5px; font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: #10b981; background: rgba(16,185,129,0.1); padding: 3px 8px; border-radius: 16px; display: inline-block; }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <div>
+                        <h1 class="title">Rapport d'Entretien</h1>
+                        <p class="subtitle">CFA Process IQ - Rush School</p>
+                    </div>
+                </div>
+
+                <div class="meta-grid">
+                    <div class="meta-item">
+                        <div class="meta-label">Candidat</div>
+                        <div class="meta-value">${evalData.candidatNom || 'Non renseigné'}</div>
+                    </div>
+                    <div class="meta-item">
+                        <div class="meta-label">Formation visée</div>
+                        <div class="meta-value">${evalData.formation || 'Non renseignée'}</div>
+                    </div>
+                    <div class="meta-item">
+                        <div class="meta-label">Chargé d'admission</div>
+                        <div class="meta-value">${evalData.chargeAdmission || 'Non renseigné'}</div>
+                    </div>
+                    <div class="meta-item">
+                        <div class="meta-label">Date et Heure</div>
+                        <div class="meta-value">${evalData.dateEntretien} à ${evalData.heureEntretien || '--:--'}</div>
+                    </div>
+                </div>
+
+                <h3>Synthèse de l'évaluation</h3>
+                <div>
+                    ${[
+                { id: 'critere1', title: 'Savoir-être et présentation', desc: 'Points forts, progression, curiosité.' },
+                { id: 'critere2', title: 'Cohérence projet académique', desc: 'Logique, motivation programme.' },
+                { id: 'critere3', title: 'Engagements et expérience', desc: 'Activités, richesse expériences.' },
+                { id: 'critere4', title: 'Expression en Anglais', desc: 'Spontanéité réponses anglais.' }
+            ].map(c => `
+                        <div class="criterion">
+                            <div class="criterion-info">
+                                <div class="criterion-title">${c.title}</div>
+                                <div class="criterion-desc">${c.desc}</div>
+                            </div>
+                            <div class="score">${evalData[c.id as keyof typeof evalData] || '-'}</div>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <h3>Commentaires et observations</h3>
+                <div class="comments">
+                    ${evalData.commentaires ? evalData.commentaires.replace(/\n/g, '<br>') : "Aucune observation particulière."}
+                </div>
+
+                <div class="footer">
+                    <div>
+                        <div class="meta-label" style="margin-bottom: 8px;">Signature</div>
+                        <div class="signature-box">Signature du chargé d'admission</div>
+                    </div>
+                    <div class="total-box">
+                        <div class="total-label">Note Globale</div>
+                        <div>
+                            <span class="total-value">${totalScore}</span>
+                            <span class="total-max">/ 20</span>
+                        </div>
+                        <div class="appreciation">${getAppreciation(totalScore)}</div>
+                    </div>
+                </div>
+
+                <script>
+                    window.onload = function() { window.print(); window.onafterprint = function(){ window.close(); } };
+                </script>
+            </body>
+            </html>
+        `;
+
+        printWindow.document.open();
+        printWindow.document.write(content);
+        printWindow.document.close();
     };
 
     const handleScoreChange = (critere: string, value: number) => {
@@ -189,127 +301,129 @@ const EvaluationGrid = ({ studentData }: { studentData: any }) => {
     };
 
     return (
-        <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-xl animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <div className="px-8 py-6 bg-gradient-to-r from-slate-900 to-slate-800 text-white flex justify-between items-center">
-                <div>
-                    <h2 className="text-xl font-bold">CR d'entretien / Grille d'évaluation</h2>
-                    <p className="text-slate-400 text-sm">Évaluation des compétences et du savoir-être</p>
-                </div>
-                <div className="flex flex-col items-end">
-                    <img src="/images/logo-process-iq.png" alt="Process IQ" className="h-8 brightness-0 invert" />
-                </div>
-            </div>
-
-            <div className="p-8 space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-4">
-                        <Input label="Nom et Prénom du candidat" placeholder="Entrez le nom complet" value={evalData.candidatNom} onChange={(e) => setEvalData({ ...evalData, candidatNom: e.target.value })} />
-                        <Input label="Heure d'entretien" type="time" value={evalData.heureEntretien} onChange={(e) => setEvalData({ ...evalData, heureEntretien: e.target.value })} />
+        <div className="space-y-8">
+            <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-xl animate-in fade-in slide-in-from-bottom-4 duration-700">
+                <div className="px-8 py-6 bg-gradient-to-r from-slate-900 to-slate-800 text-white flex justify-between items-center">
+                    <div>
+                        <h2 className="text-xl font-bold">CR d'entretien / Grille d'évaluation</h2>
+                        <p className="text-slate-400 text-sm">Évaluation des compétences et du savoir-être</p>
                     </div>
-                    <div className="space-y-4">
-                        <Input label="Nom et Prénom chargé(e) d'admission" placeholder="Votre nom" value={evalData.chargeAdmission} onChange={(e) => setEvalData({ ...evalData, chargeAdmission: e.target.value })} />
-                        <Input label="Date d'entretien" type="date" value={evalData.dateEntretien} onChange={(e) => setEvalData({ ...evalData, dateEntretien: e.target.value })} />
+                    <div className="flex flex-col items-end">
+                        <img src="/images/logo-process-iq.png" alt="Process IQ" className="h-8 brightness-0 invert" />
                     </div>
                 </div>
 
-                <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
-                    <label className="block text-xs font-bold text-slate-500 uppercase mb-4 ml-1">Formation visée</label>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-                        {['TP NTC', 'BTS CI', 'BTS COM', 'BTS MCO', 'BTS NDRC', 'BACHELOR RDC'].map((f) => (
-                            <label key={f} className={`relative cursor-pointer group`}>
-                                <input
-                                    type="radio"
-                                    name="formation-eval"
-                                    className="peer sr-only"
-                                    value={f}
-                                    checked={evalData.formation === f}
-                                    onChange={(e) => setEvalData({ ...evalData, formation: e.target.value })}
-                                />
-                                <div className={`px-4 py-3 rounded-xl border-2 text-center text-xs font-bold transition-all ${evalData.formation === f ? 'bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'bg-white border-slate-200 text-slate-600 hover:border-emerald-200'}`}>
-                                    {f}
+                <div className="p-8 space-y-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-4">
+                            <Input label="Nom et Prénom du candidat" placeholder="Entrez le nom complet" value={evalData.candidatNom} onChange={(e) => setEvalData({ ...evalData, candidatNom: e.target.value })} />
+                            <Input label="Heure d'entretien" type="time" value={evalData.heureEntretien} onChange={(e) => setEvalData({ ...evalData, heureEntretien: e.target.value })} />
+                        </div>
+                        <div className="space-y-4">
+                            <Input label="Nom et Prénom chargé(e) d'admission" placeholder="Votre nom" value={evalData.chargeAdmission} onChange={(e) => setEvalData({ ...evalData, chargeAdmission: e.target.value })} />
+                            <Input label="Date d'entretien" type="date" value={evalData.dateEntretien} onChange={(e) => setEvalData({ ...evalData, dateEntretien: e.target.value })} />
+                        </div>
+                    </div>
+
+                    <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                        <label className="block text-xs font-bold text-slate-500 uppercase mb-4 ml-1">Formation visée</label>
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                            {['TP NTC', 'BTS CI', 'BTS COM', 'BTS MCO', 'BTS NDRC', 'BACHELOR RDC'].map((f) => (
+                                <label key={f} className={`relative cursor-pointer group`}>
+                                    <input
+                                        type="radio"
+                                        name="formation-eval"
+                                        className="peer sr-only"
+                                        value={f}
+                                        checked={evalData.formation === f}
+                                        onChange={(e) => setEvalData({ ...evalData, formation: e.target.value })}
+                                    />
+                                    <div className={`px-4 py-3 rounded-xl border-2 text-center text-xs font-bold transition-all ${evalData.formation === f ? 'bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'bg-white border-slate-200 text-slate-600 hover:border-emerald-200'}`}>
+                                        {f}
+                                    </div>
+                                </label>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="space-y-6">
+                        <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 bg-slate-100 rounded-lg text-[10px] font-black text-slate-500 uppercase tracking-wider">
+                            <div className="col-span-7">Critères d'évaluation</div>
+                            <div className="col-span-5 grid grid-cols-5 text-center">
+                                <div>Insuff. (1)</div>
+                                <div>Pass. (2)</div>
+                                <div>Satisf. (3)</div>
+                                <div>T.Satisf (4)</div>
+                                <div>Exc. (5)</div>
+                            </div>
+                        </div>
+
+                        {[
+                            { id: 'critere1', title: 'Savoir-être et présentation', desc: 'Capacité à bien se connaître : ses points forts, ses points de progression, culture générale, curiosité, ouverture aux autres.' },
+                            { id: 'critere2', title: 'Cohérence du projet académique et professionnel', desc: 'Logique de construction du projet d\'orientation, projet professionnel, motivation pour le programme.' },
+                            { id: 'critere3', title: 'Engagements et expérience péri ou extra-scolaires', desc: 'Activités extra-scolaires, richesse des expériences, valorisation des compétences développées.' },
+                            { id: 'critere4', title: 'Expression en Anglais', desc: 'Savoir répondre spontanément à quelques questions en anglais.' }
+                        ].map((c) => (
+                            <div key={c.id} className="grid grid-cols-1 md:grid-cols-12 gap-6 p-4 rounded-2xl border border-slate-100 hover:bg-slate-50 transition-colors">
+                                <div className="md:col-span-7">
+                                    <h4 className="font-bold text-slate-800 text-sm mb-1">{c.title}</h4>
+                                    <p className="text-xs text-slate-500 leading-relaxed">{c.desc}</p>
                                 </div>
-                            </label>
+                                <div className="md:col-span-5 flex items-center justify-between md:grid md:grid-cols-5 gap-2">
+                                    {[1, 2, 3, 4, 5].map((score) => (
+                                        <label key={score} className="cursor-pointer">
+                                            <input
+                                                type="radio"
+                                                name={c.id}
+                                                className="peer sr-only"
+                                                value={score}
+                                                checked={evalData[c.id as keyof typeof evalData] === score}
+                                                onChange={() => handleScoreChange(c.id, score)}
+                                            />
+                                            <div className={`w-10 h-10 rounded-xl border-2 flex items-center justify-center font-bold text-sm transition-all ${evalData[c.id as keyof typeof evalData] === score ? 'bg-emerald-500 border-emerald-500 text-white shadow-md' : 'bg-white border-slate-200 text-slate-400 hover:border-emerald-200'}`}>
+                                                {score}
+                                            </div>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
                         ))}
                     </div>
-                </div>
 
-                <div className="space-y-6">
-                    <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 bg-slate-100 rounded-lg text-[10px] font-black text-slate-500 uppercase tracking-wider">
-                        <div className="col-span-7">Critères d'évaluation</div>
-                        <div className="col-span-5 grid grid-cols-5 text-center">
-                            <div>Insuff. (1)</div>
-                            <div>Pass. (2)</div>
-                            <div>Satisf. (3)</div>
-                            <div>T.Satisf (4)</div>
-                            <div>Exc. (5)</div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-8 border-t border-slate-100">
+                        <div className="md:col-span-2">
+                            <label className="block text-xs font-bold text-slate-500 uppercase mb-3 ml-1">Commentaires et observations</label>
+                            <textarea
+                                className="w-full h-32 px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:border-emerald-500 outline-none font-medium transition-all resize-none"
+                                value={evalData.commentaires}
+                                onChange={(e) => setEvalData({ ...evalData, commentaires: e.target.value })}
+                                placeholder="Vos observations sur le candidat..."
+                            ></textarea>
                         </div>
-                    </div>
-
-                    {[
-                        { id: 'critere1', title: 'Savoir-être et présentation', desc: 'Capacité à bien se connaître : ses points forts, ses points de progression, culture générale, curiosité, ouverture aux autres.' },
-                        { id: 'critere2', title: 'Cohérence du projet académique et professionnel', desc: 'Logique de construction du projet d\'orientation, projet professionnel, motivation pour le programme.' },
-                        { id: 'critere3', title: 'Engagements et expérience péri ou extra-scolaires', desc: 'Activités extra-scolaires, richesse des expériences, valorisation des compétences développées.' },
-                        { id: 'critere4', title: 'Expression en Anglais', desc: 'Savoir répondre spontanément à quelques questions en anglais.' }
-                    ].map((c) => (
-                        <div key={c.id} className="grid grid-cols-1 md:grid-cols-12 gap-6 p-4 rounded-2xl border border-slate-100 hover:bg-slate-50 transition-colors">
-                            <div className="md:col-span-7">
-                                <h4 className="font-bold text-slate-800 text-sm mb-1">{c.title}</h4>
-                                <p className="text-xs text-slate-500 leading-relaxed">{c.desc}</p>
+                        <div className="bg-slate-900 rounded-3xl p-8 text-white flex flex-col items-center justify-center text-center shadow-2xl shadow-slate-900/20 relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-emerald-500/20 transition-colors"></div>
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] mb-4">Note globale</span>
+                            <div className="flex items-baseline gap-1 mb-2">
+                                <span className="text-6xl font-black text-emerald-400">{totalScore}</span>
+                                <span className="text-xl font-bold text-slate-500">/ 20</span>
                             </div>
-                            <div className="md:col-span-5 flex items-center justify-between md:grid md:grid-cols-5 gap-2">
-                                {[1, 2, 3, 4, 5].map((score) => (
-                                    <label key={score} className="cursor-pointer">
-                                        <input
-                                            type="radio"
-                                            name={c.id}
-                                            className="peer sr-only"
-                                            value={score}
-                                            checked={evalData[c.id as keyof typeof evalData] === score}
-                                            onChange={() => handleScoreChange(c.id, score)}
-                                        />
-                                        <div className={`w-10 h-10 rounded-xl border-2 flex items-center justify-center font-bold text-sm transition-all ${evalData[c.id as keyof typeof evalData] === score ? 'bg-emerald-500 border-emerald-500 text-white shadow-md' : 'bg-white border-slate-200 text-slate-400 hover:border-emerald-200'}`}>
-                                            {score}
-                                        </div>
-                                    </label>
-                                ))}
+                            <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${totalScore >= 12 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}`}>
+                                {getAppreciation(totalScore)}
                             </div>
                         </div>
-                    ))}
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-8 border-t border-slate-100">
-                    <div className="md:col-span-2">
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-3 ml-1">Commentaires et observations</label>
-                        <textarea
-                            className="w-full h-32 px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:border-emerald-500 outline-none font-medium transition-all resize-none"
-                            value={evalData.commentaires}
-                            onChange={(e) => setEvalData({ ...evalData, commentaires: e.target.value })}
-                            placeholder="Vos observations sur le candidat..."
-                        ></textarea>
                     </div>
-                    <div className="bg-slate-900 rounded-3xl p-8 text-white flex flex-col items-center justify-center text-center shadow-2xl shadow-slate-900/20 relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-emerald-500/20 transition-colors"></div>
-                        <span className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] mb-4">Note globale</span>
-                        <div className="flex items-baseline gap-1 mb-2">
-                            <span className="text-6xl font-black text-emerald-400">{totalScore}</span>
-                            <span className="text-xl font-bold text-slate-500">/ 20</span>
-                        </div>
-                        <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${totalScore >= 12 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}`}>
-                            {getAppreciation(totalScore)}
-                        </div>
-                    </div>
-                </div>
 
-                <div className="flex flex-col md:flex-row gap-4 pt-8 border-t border-slate-100">
-                    <Button variant="secondary" className="flex-1" onClick={resetEvaluation} leftIcon={<RotateCcw size={18} />}>
-                        Réinitialiser
-                    </Button>
-                    <Button variant="success" className="flex-1" onClick={saveEvaluation} leftIcon={<Save size={18} />}>
-                        Enregistrer
-                    </Button>
-                    <Button variant="primary" className="flex-1 !bg-slate-900" onClick={exportEvaluationPDF} leftIcon={<Printer size={18} />}>
-                        Exporter PDF
-                    </Button>
+                    <div className="flex flex-col md:flex-row gap-4 pt-8 border-t border-slate-100">
+                        <Button variant="secondary" className="flex-1" onClick={resetEvaluation} leftIcon={<RotateCcw size={18} />}>
+                            Réinitialiser
+                        </Button>
+                        <Button variant="success" className="flex-1" onClick={saveEvaluation} leftIcon={<Save size={18} />}>
+                            Enregistrer
+                        </Button>
+                        <Button variant="primary" className="flex-1 !bg-slate-900" onClick={exportEvaluationPDF} leftIcon={<Printer size={18} />}>
+                            Exporter PDF
+                        </Button>
+                    </div>
                 </div>
             </div>
         </div>

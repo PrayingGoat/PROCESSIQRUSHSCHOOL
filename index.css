@@ -300,3 +300,29 @@ body {
 .scrollbar-custom::-webkit-scrollbar-thumb {
     @apply bg-slate-300 rounded-full;
 }
+
+/* Print Styles */
+@media print {
+    @page {
+        size: A4;
+        margin: 5mm;
+    }
+
+    body {
+        background: white !important;
+        font-size: 8pt;
+        line-height: 1.1;
+    }
+
+    /* Hide UI elements */
+    .sidebar,
+    header,
+    nav,
+    .no-print,
+    button,
+    footer,
+    .admission-hero,
+    .step-indicator-container {
+        display: none !important;
+    }
+}

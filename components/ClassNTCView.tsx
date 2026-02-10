@@ -16,7 +16,8 @@ import {
     ChevronRight,
     MoreHorizontal,
     LayoutGrid,
-    List
+    List,
+    History
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
@@ -25,6 +26,7 @@ import { useAppStore } from '../store/useAppStore';
 import { AdmissionTab } from '../types';
 import CandidateDetailsModal from './dashboard/CandidateDetailsModal';
 import CompanyDetailsModal from './dashboard/CompanyDetailsModal';
+import HistoryTimeline from './dashboard/HistoryTimeline';
 import { useApi } from '../hooks/useApi';
 import { useCandidates, getC } from '../hooks/useCandidates';
 
@@ -38,7 +40,9 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
-    const [currentTab, setCurrentTab] = useState<'students' | 'stats'>('students');
+    const [currentTab, setCurrentTab] = useState<'students' | 'stats' | 'history'>('students');
+    const [globalHistory, setGlobalHistory] = useState<any[]>([]);
+    const [loadingHistory, setLoadingHistory] = useState(false);
     const [filter, setFilter] = useState<'all' | 'withFiche' | 'withCerfa' | 'complete'>('all');
 
     // Modal State
@@ -513,9 +517,16 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                     Statistiques
                     {currentTab === 'stats' && <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full"></div>}
                 </button>
+                <button
+                    onClick={() => setCurrentTab('history')}
+                    className={`pb-4 px-2 text-sm font-black uppercase tracking-widest transition-all relative ${currentTab === 'history' ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}
+                >
+                    Historique Global
+                    {currentTab === 'history' && <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full"></div>}
+                </button>
             </div>
 
-            {currentTab === 'students' ? (
+            {currentTab === 'students' && (
                 <>
                     {/* Toolbar */}
                     <div className="flex flex-col lg:flex-row gap-6 items-center justify-between">
@@ -694,7 +705,7 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                                     <div key={i} className="bg-white rounded-[32px] p-8 border border-slate-100 animate-pulse h-64"></div>
                                 ))
                             ) : filteredStudents.map((student) => (
-                                <div key={student.record_id} className="bg-white border border-slate-200 rounded-[32px] p-8 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 group relative overflow-hidden">
+                                <div key={student.record_id || student.id} className="bg-white border border-slate-200 rounded-[32px] p-8 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 group relative overflow-hidden">
                                     <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full -mr-16 -mt-16 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
 
                                     <div className="flex justify-between items-start mb-8 relative z-10">
@@ -748,8 +759,9 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                         </div>
                     )}
                 </>
-            ) : (
-                /* Stats View */
+            )}
+
+            {currentTab === 'stats' && (
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
                     {loading ? (
                         <div className="flex flex-col items-center justify-center py-32 gap-4">
@@ -855,6 +867,21 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                             <p className="text-slate-500 font-bold">Impossible de générer les statistiques. Données insuffisantes.</p>
                         </div>
                     )}
+                </div>
+            )}
+
+            {currentTab === 'history' && (
+                <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-xl shadow-slate-200/50 min-h-[500px]">
+                    <div className="flex items-center gap-4 mb-8">
+                        <div className="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center">
+                            <History size={24} />
+                        </div>
+                        <div>
+                            <h2 className="text-xl font-black text-slate-800">Historique des actions</h2>
+                            <p className="text-slate-400 font-medium text-sm">Toutes les activités récentes de la classe</p>
+                        </div>
+                    </div>
+                    <HistoryTimeline history={globalHistory} loading={loadingHistory} />
                 </div>
             )}
         </div>

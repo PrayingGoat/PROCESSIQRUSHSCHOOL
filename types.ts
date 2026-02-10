@@ -406,6 +406,15 @@ export interface EvaluationData {
   commentaires?: string;
 }
 
+export interface HistoryEntry {
+  id: string;
+  action: string;
+  details?: string;
+  date: string;
+  utilisateur?: string;
+  studentId?: string;
+}
+
 export interface EvaluationResponse {
   _id: string;
   studentId: string;

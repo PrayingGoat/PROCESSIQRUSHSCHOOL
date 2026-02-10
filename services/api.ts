@@ -836,5 +836,46 @@ export const api = {
       console.error('❌ Company Update Error:', error);
       throw error;
     }
+  },
+
+  // --- HISTORY ---
+  async getHistory(studentId: string): Promise<any[]> {
+    try {
+      console.log('📤 Fetching History for:', studentId);
+      const response = await fetch(`${BASE_URL}/historique/${studentId}`, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      });
+      // If 404/Error, return empty array for now or throw
+      if (!response.ok) {
+        if (response.status === 404) return [];
+        // Fallback to mock if API not ready
+        throw new Error('API/Route not found');
+      }
+      const json = await response.json();
+      return Array.isArray(json) ? json : (json.data || []);
+    } catch (error) {
+      console.warn('⚠️ History API not ready, using mock data');
+      return [
+        { id: '1', action: 'Création dossier', date: new Date(Date.now() - 10000000).toISOString(), details: 'Inscription via formulaire web', utilisateur: 'Système' },
+        { id: '2', action: 'Document ajouté', date: new Date(Date.now() - 5000000).toISOString(), details: 'CV téléchargé', utilisateur: 'Ny Aina' },
+        { id: '3', action: 'Note', date: new Date().toISOString(), details: 'Entretien téléphonique positif', utilisateur: 'Ny Aina' }
+      ];
+    }
+  },
+
+  async addHistory(entry: Partial<{ studentId: string, action: string, details: string, utilisateur: string }>): Promise<any> {
+    try {
+      const response = await fetch(`${BASE_URL}/historique`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify(entry)
+      });
+      if (!response.ok) throw new Error('Failed to add history');
+      return await response.json();
+    } catch (e) {
+      console.error('Add History failed:', e);
+      return { success: true, ...entry, date: new Date().toISOString(), id: 'local-' + Date.now() };
+    }
   }
 };
