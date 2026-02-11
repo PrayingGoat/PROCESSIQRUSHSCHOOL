@@ -17,7 +17,8 @@ import {
     MoreHorizontal,
     LayoutGrid,
     List,
-    History
+    History,
+    ClipboardList
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
@@ -662,30 +663,63 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                                                                 <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Fiche</span>
                                                                 {student.has_fiche_renseignement ? (
                                                                     <button
-                                                                        onClick={() => handleDownload(rawStudent.fiche_entreprise?.url, rawStudent.fiche_entreprise?.filename)}
-                                                                        className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center hover:bg-emerald-600 hover:text-white transition-all shadow-sm border border-emerald-100/50"
+                                                                        onClick={() => handleDownload(rawStudent.fiche_entreprise?.url || rawStudent.fields?.["Fiche entreprise"]?.[0]?.url, rawStudent.fiche_entreprise?.filename || rawStudent.fields?.["Fiche entreprise"]?.[0]?.filename)}
+                                                                        className="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center hover:bg-emerald-600 hover:text-white transition-all shadow-sm border border-emerald-100/50"
+                                                                        title="Télécharger Fiche Renseignement"
                                                                     >
-                                                                        <CheckCircle2 size={18} />
+                                                                        <CheckCircle2 size={16} />
                                                                     </button>
                                                                 ) : (
-                                                                    <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center border border-amber-100/50">
-                                                                        <AlertCircle size={18} />
+                                                                    <div className="w-9 h-9 rounded-lg bg-slate-50 text-slate-200 flex items-center justify-center border border-slate-100">
+                                                                        <CheckCircle2 size={16} />
                                                                     </div>
                                                                 )}
                                                             </div>
-                                                            <div className="w-px h-8 bg-slate-100"></div>
                                                             <div className="flex flex-col items-center gap-1.5">
                                                                 <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">CERFA</span>
                                                                 {student.has_cerfa ? (
                                                                     <button
-                                                                        onClick={() => handleDownload(rawStudent.cerfa?.url, rawStudent.cerfa?.filename)}
-                                                                        className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center hover:bg-indigo-600 hover:text-white transition-all shadow-sm border border-indigo-100/50"
+                                                                        onClick={() => handleDownload(rawStudent.cerfa?.url || rawStudent.fields?.["cerfa"]?.[0]?.url, rawStudent.cerfa?.filename || rawStudent.fields?.["cerfa"]?.[0]?.filename)}
+                                                                        className="w-9 h-9 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center hover:bg-indigo-600 hover:text-white transition-all shadow-sm border border-indigo-100/50"
+                                                                        title="Télécharger CERFA"
                                                                     >
-                                                                        <ShieldCheck size={18} />
+                                                                        <ShieldCheck size={16} />
                                                                     </button>
                                                                 ) : (
-                                                                    <div className="w-10 h-10 rounded-xl bg-slate-50 text-slate-300 flex items-center justify-center border border-slate-100">
-                                                                        <ShieldCheck size={18} />
+                                                                    <div className="w-9 h-9 rounded-lg bg-slate-50 text-slate-200 flex items-center justify-center border border-slate-100">
+                                                                        <ShieldCheck size={16} />
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                            <div className="flex flex-col items-center gap-1.5">
+                                                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">ATRE</span>
+                                                                {student.has_atre ? (
+                                                                    <button
+                                                                        onClick={() => handleDownload(rawStudent.atre_url || rawStudent.fields?.["Atre"]?.[0]?.url, rawStudent.atre_name || rawStudent.fields?.["Atre"]?.[0]?.filename)}
+                                                                        className="w-9 h-9 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center hover:bg-orange-600 hover:text-white transition-all shadow-sm border border-orange-100/50"
+                                                                        title="Télécharger ATRE"
+                                                                    >
+                                                                        <FileText size={16} />
+                                                                    </button>
+                                                                ) : (
+                                                                    <div className="w-9 h-9 rounded-lg bg-slate-50 text-slate-200 flex items-center justify-center border border-slate-100">
+                                                                        <FileText size={16} />
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                            <div className="flex flex-col items-center gap-1.5">
+                                                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">CR</span>
+                                                                {student.has_compte_rendu ? (
+                                                                    <button
+                                                                        onClick={() => handleDownload(rawStudent.compte_rendu_url || rawStudent.fields?.["compte rendu de visite"]?.[0]?.url, rawStudent.compte_rendu_name || rawStudent.fields?.["compte rendu de visite"]?.[0]?.filename)}
+                                                                        className="w-9 h-9 rounded-lg bg-pink-50 text-pink-600 flex items-center justify-center hover:bg-pink-600 hover:text-white transition-all shadow-sm border border-pink-100/50"
+                                                                        title="Télécharger Compte Rendu"
+                                                                    >
+                                                                        <ClipboardList size={16} />
+                                                                    </button>
+                                                                ) : (
+                                                                    <div className="w-9 h-9 rounded-lg bg-slate-50 text-slate-200 flex items-center justify-center border border-slate-100">
+                                                                        <ClipboardList size={16} />
                                                                     </div>
                                                                 )}
                                                             </div>

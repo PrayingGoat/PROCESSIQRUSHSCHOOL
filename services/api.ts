@@ -104,6 +104,15 @@ const mapBackendToStudent = (backendData: any): any => {
     code_postal_legal2: fields["Code postal du deuxième représentant légal"]?.toString() || "",
     commune_legal2: fields["Commune du deuxième représentant légal"] || "",
     courriel_legal2: fields["Email du deuxième représentant légal"] || "",
+
+    // Documents (PDF generated)
+    atre_url: fields["Atre"]?.[0]?.url || "",
+    atre_name: fields["Atre"]?.[0]?.filename || "",
+    has_atre: !!(fields["Atre"] && fields["Atre"].length > 0),
+
+    compte_rendu_url: fields["compte rendu de visite"]?.[0]?.url || "",
+    compte_rendu_name: fields["compte rendu de visite"]?.[0]?.filename || "",
+    has_compte_rendu: !!(fields["compte rendu de visite"] && fields["compte rendu de visite"].length > 0),
   };
 };
 
