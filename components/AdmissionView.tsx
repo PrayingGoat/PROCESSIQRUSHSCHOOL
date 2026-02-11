@@ -60,9 +60,10 @@ const REQUIRED_DOCUMENTS = [
 ];
 
 const ADMIN_DOCS = [
-    { id: 'atre', title: "Fiche ATRE", subtitle: "Autorisation de Travail et Renseignements", desc: "Information entreprise et tuteur", color: 'orange', btnText: 'Compléter', gradient: 'from-orange-400 to-orange-600', shadow: 'shadow-orange-500/20' },
-    { id: 'renseignements', title: "Fiche de renseignements", subtitle: "Informations personnelles", desc: "Coordonnées et état civil", color: 'blue', btnText: 'Compléter', gradient: 'from-blue-400 to-blue-600', shadow: 'shadow-blue-500/20' },
+    { id: 'atre', title: "Fiche ATRE", subtitle: "Autorisation de Travail et Renseignements", desc: "Information entreprise et tuteur", color: 'orange', btnText: 'Générer', gradient: 'from-orange-400 to-orange-600', shadow: 'shadow-orange-500/20' },
+    { id: 'renseignements', title: "Fiche de renseignements", subtitle: "Informations personnelles", desc: "Coordonnées et état civil", color: 'blue', btnText: 'Générer', gradient: 'from-blue-400 to-blue-600', shadow: 'shadow-blue-500/20' },
     { id: 'cerfa', title: "Fiche CERFA", subtitle: "Contrat d'apprentissage", desc: "Génération du contrat officiel FA13", color: 'emerald', btnText: 'Générer', gradient: 'from-emerald-400 to-emerald-600', shadow: 'shadow-emerald-500/20' },
+    { id: 'compte-rendu', title: "Compte Rendu", subtitle: "Visite Entretien", desc: "Génération du Compte Rendu de Visite", color: 'pink', btnText: 'Générer', gradient: 'from-pink-400 to-pink-600', shadow: 'shadow-pink-500/20' },
     { id: 'reglement', title: "Règlement intérieur", subtitle: "Engagement étudiant", desc: "Document à lire et signer", color: 'green', btnText: 'Signer', gradient: 'from-green-400 to-green-600', shadow: 'shadow-green-500/20' },
     { id: 'connaissance', title: "Prise de connaissance", subtitle: "Attestation documents", desc: "Charte informatique, Livret d'accueil...", color: 'purple', btnText: 'Signer', gradient: 'from-purple-400 to-purple-600', shadow: 'shadow-purple-500/20' },
     { id: 'livret', title: "Livret d'apprentissage", subtitle: "Suivi pédagogique", desc: "Document de liaison CFA/Entreprise", color: 'cyan', btnText: 'Générer', gradient: 'from-cyan-400 to-cyan-600', shadow: 'shadow-cyan-500/20' },
@@ -667,6 +668,16 @@ const AdmissionView = ({ selectedStudent, selectedTab, onClearSelection }: Admis
         errorMessage: "Erreur lors de la génération du CERFA."
     });
 
+    const { execute: generateAtreApi, loading: isGeneratingAtre } = useApi(api.generateAtre, {
+        onSuccess: () => setShowSuccessModal(true),
+        errorMessage: "Erreur lors de la génération de la fiche ATRE."
+    });
+
+    const { execute: generateCompteRenduApi, loading: isGeneratingCompteRendu } = useApi(api.generateCompteRendu, {
+        onSuccess: () => setShowSuccessModal(true),
+        errorMessage: "Erreur lors de la génération du compte rendu."
+    });
+
     const handleFinishTest = () => {
         setTestCompleted(true);
         setActiveTab(AdmissionTab.QUESTIONNAIRE);
@@ -697,7 +708,7 @@ const AdmissionView = ({ selectedStudent, selectedTab, onClearSelection }: Admis
     const handleDocAction = async (doc: any) => {
         const recordId = studentData?.record_id || studentData?.id || localStorage.getItem('candidateRecordId');
 
-        if (!recordId && (doc.id === 'renseignements' || doc.id === 'cerfa')) {
+        if (!recordId && (['renseignements', 'cerfa', 'atre', 'compte-rendu'].includes(doc.id))) {
             showToast("Veuillez d'abord compléter la Fiche Étudiant.", "info");
             return;
         }
@@ -706,6 +717,10 @@ const AdmissionView = ({ selectedStudent, selectedTab, onClearSelection }: Admis
             await generateFicheApi(recordId);
         } else if (doc.id === 'cerfa') {
             await generateCerfaApi(recordId);
+        } else if (doc.id === 'atre') {
+            await generateAtreApi(recordId);
+        } else if (doc.id === 'compte-rendu') {
+            await generateCompteRenduApi(recordId);
         } else {
             console.log("Action pour le document:", doc.title);
         }

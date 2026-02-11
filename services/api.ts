@@ -748,6 +748,34 @@ export const api = {
     } catch (error) { throw error; }
   },
 
+  async generateAtre(recordId: string): Promise<any> {
+    try {
+      console.log('📤 Generating ATRE:', recordId);
+      const response = await fetch(`${BASE_URL}/candidats/${recordId}/atre`, {
+        method: 'POST',
+        headers: { 'Accept': 'application/json' }
+      });
+      if (!response.ok) throw new Error('Generation failed');
+      const json = await response.json();
+      console.log('📥 ATRE Generation Success:', json);
+      return json;
+    } catch (error) { throw error; }
+  },
+
+  async generateCompteRendu(recordId: string): Promise<any> {
+    try {
+      console.log('📤 Generating Compte Rendu:', recordId);
+      const response = await fetch(`${BASE_URL}/candidats/${recordId}/compte-rendu`, {
+        method: 'POST',
+        headers: { 'Accept': 'application/json' }
+      });
+      if (!response.ok) throw new Error('Generation failed');
+      const json = await response.json();
+      console.log('📥 Compte Rendu Generation Success:', json);
+      return json;
+    } catch (error) { throw error; }
+  },
+
   // --- ENTREPRISE (CRUD) ---
   async submitCompany(data: CompanyFormData): Promise<ApiResponse> {
     try {
