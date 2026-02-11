@@ -71,12 +71,14 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
 
           <div className="flex items-center gap-3 pl-2 cursor-pointer group">
             <div className="flex flex-col items-end hidden sm:flex">
-              <span className="text-sm font-black text-slate-800 leading-none group-hover:text-indigo-600 transition-colors">Admin Portal</span>
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Super Admin</span>
+              <span className="text-sm font-black text-slate-800 leading-none group-hover:text-indigo-600 transition-colors uppercase italic tracking-tighter">
+                {localStorage.getItem('userRole') || 'Guest'}
+              </span>
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Utilisateur</span>
             </div>
             <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 p-0.5 shadow-lg shadow-indigo-200 group-hover:shadow-indigo-300 transition-all active:scale-95">
-              <div className="w-full h-full rounded-[14px] bg-white/20 backdrop-blur-sm flex items-center justify-center text-white font-black text-sm">
-                AP
+              <div className="w-full h-full rounded-[14px] bg-white/20 backdrop-blur-sm flex items-center justify-center text-white font-black text-sm uppercase">
+                {(localStorage.getItem('userRole') || 'G').charAt(0)}
               </div>
             </div>
           </div>

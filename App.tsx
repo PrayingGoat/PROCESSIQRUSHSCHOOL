@@ -11,14 +11,33 @@ import LoginPage from './components/LoginPage';
 import Toast from './components/ui/Toast';
 import ClassNTCView from './components/ClassNTCView';
 import { AdmissionTab } from './types';
+import AdminLoginPage from './components/AdminLoginPage';
+import AdminDashboard from './components/AdminDashboard';
 
 
-const RequireAuth = ({ children }: { children: React.ReactNode }) => {
+const RequireAuth = ({ children, allowedRoles }: { children: React.ReactNode, allowedRoles?: string[] }) => {
   const isAuthenticated = localStorage.getItem('authToken');
+  const userRole = localStorage.getItem('userRole');
   const location = useLocation();
 
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  if (allowedRoles && userRole && !allowedRoles.includes(userRole)) {
+    // Redirect to default home based on role if they try to access forbidden route
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
+};
+
+const RequireAdminAuth = ({ children }: { children: React.ReactNode }) => {
+  const isAdminAuthenticated = localStorage.getItem('adminAuthToken');
+  const location = useLocation();
+
+  if (!isAdminAuthenticated) {
+    return <Navigate to="/admin/login" state={{ from: location }} replace />;
   }
 
   return children;
@@ -29,7 +48,7 @@ const App = () => {
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
   const [selectedTab, setSelectedTab] = useState<AdmissionTab | null>(null);
   const location = useLocation();
-  const isLoginPage = location.pathname === '/login';
+  const isLoginPage = location.pathname === '/login' || location.pathname === '/admin/login' || location.pathname.startsWith('/admin');
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
@@ -79,12 +98,25 @@ const App = () => {
           <Routes>
             <Route path="/login" element={<LoginPage />} />
 
+            {/* Admin Routes */}
+            <Route path="/admin/login" element={<AdminLoginPage />} />
+            <Route path="/admin" element={<RequireAdminAuth><AdminDashboard /></RequireAdminAuth>} />
+
             <Route element={<RequireAuth><Outlet /></RequireAuth>}>
-              {/* Redirect root to commercial dashboard */}
-              <Route path="/" element={<Navigate to="/commercial/dashboard" replace />} />
+              {/* Redirect root based on role */}
+              <Route path="/" element={
+                (() => {
+                  const role = localStorage.getItem('userRole');
+                  if (role === 'commercial') return <Navigate to="/commercial/dashboard" replace />;
+                  if (role === 'admission') return <Navigate to="/admission" replace />;
+                  if (role === 'rh') return <Navigate to="/rh/dashboard" replace />;
+                  if (role === 'eleve') return <Navigate to="/etudiant" replace />;
+                  return <Navigate to="/commercial/dashboard" replace />;
+                })()
+              } />
 
               {/* Commercial Routes */}
-              <Route path="/commercial" element={<Outlet />}>
+              <Route path="/commercial" element={<RequireAuth allowedRoles={['commercial']}><Outlet /></RequireAuth>}>
                 <Route path="dashboard" element={<DashboardView activeSubView="commercial-dashboard" />} />
                 <Route path="placer" element={<DashboardView activeSubView="commercial-placer" />} />
                 <Route path="alternance" element={<DashboardView activeSubView="commercial-alternance" />} />
@@ -93,26 +125,30 @@ const App = () => {
 
               {/* Admission Routes */}
               <Route path="/admission" element={
-                <AdmissionView
-                  selectedStudent={selectedStudent}
-                  selectedTab={selectedTab}
-                  onClearSelection={() => {
-                    setSelectedStudent(null);
-                    setSelectedTab(null);
-                  }}
-                />
+                <RequireAuth allowedRoles={['admission']}>
+                  <AdmissionView
+                    selectedStudent={selectedStudent}
+                    selectedTab={selectedTab}
+                    onClearSelection={() => {
+                      setSelectedStudent(null);
+                      setSelectedTab(null);
+                    }}
+                  />
+                </RequireAuth>
               } />
               <Route path="/classe-ntc" element={
-                <ClassNTCView
-                  onSelectStudent={(student, tab) => {
-                    setSelectedStudent(student);
-                    setSelectedTab(tab);
-                  }}
-                />
+                <RequireAuth allowedRoles={['admission']}>
+                  <ClassNTCView
+                    onSelectStudent={(student, tab) => {
+                      setSelectedStudent(student);
+                      setSelectedTab(tab);
+                    }}
+                  />
+                </RequireAuth>
               } />
 
               {/* RH Routes */}
-              <Route path="/rh" element={<Outlet />}>
+              <Route path="/rh" element={<RequireAuth allowedRoles={['rh']}><Outlet /></RequireAuth>}>
                 <Route path="dashboard" element={<RHView activeSubView="rh-dashboard" />} />
                 <Route path="fiche" element={<RHView activeSubView="rh-fiche" />} />
                 <Route path="cerfa" element={<RHView activeSubView="rh-cerfa" />} />
@@ -122,7 +158,7 @@ const App = () => {
               </Route>
 
               {/* Other Routes */}
-              <Route path="/etudiant" element={<StudentView />} />
+              <Route path="/etudiant" element={<RequireAuth allowedRoles={['eleve']}><StudentView /></RequireAuth>} />
               <Route path="/parametres" element={
                 <div className="p-8">
                   <div className="bg-white border border-slate-200 rounded-2xl p-6">
