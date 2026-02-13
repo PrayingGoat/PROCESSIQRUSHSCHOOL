@@ -4,6 +4,7 @@ const STUDENT_ID_KEY = 'currentStudentId';
 type JwtPayload = {
   username?: string;
   sub?: string;
+  role?: string;
   studentId?: string | null;
   exp?: number;
   iat?: number;

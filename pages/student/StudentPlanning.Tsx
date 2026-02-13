@@ -66,6 +66,7 @@ const StudentPlanning: React.FC = () => {
   const [activeFilter, setActiveFilter] = useState<'all' | PlanningType>('all');
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [remoteEvents, setRemoteEvents] = useState<PlanningEvent[]>([]);
+  const [studentResolved, setStudentResolved] = useState<boolean>(false);
   const [showCreateModal, setShowCreateModal] = useState<boolean>(false);
   const [meetingTitle, setMeetingTitle] = useState<string>('Student follow-up meeting');
   const [meetingDate, setMeetingDate] = useState<string>(new Date().toISOString().slice(0, 10));
@@ -77,11 +78,12 @@ const StudentPlanning: React.FC = () => {
   const loadEvents = useCallback(async () => {
     try {
       const studentId = await api.getCurrentStudentId();
-      let raw = await fetchEvents(studentId);
-      if (!Array.isArray(raw) || raw.length === 0) {
-        // Fallback: some events are global school events and may not include attendees.studentId.
-        raw = await fetchEvents();
+      setStudentResolved(Boolean(studentId));
+      if (!studentId) {
+        setRemoteEvents([]);
+        return;
       }
+      const raw = await fetchEvents(studentId);
       const mapped: PlanningEvent[] = (Array.isArray(raw) ? raw : []).map((e: any, idx: number) => ({
         id: e._id || e.id || `event-${idx}`,
         title: e.title || 'Event',
@@ -96,6 +98,7 @@ const StudentPlanning: React.FC = () => {
       setRemoteEvents(mapped);
     } catch (err) {
       console.error('Failed to fetch events', err);
+      setRemoteEvents([]);
     }
   }, [fetchEvents]);
 
@@ -321,6 +324,16 @@ const StudentPlanning: React.FC = () => {
           </button>
         ))}
       </div>
+      {!studentResolved && (
+        <div className="mb-6 rounded-xl border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
+          Aucun etudiant associe a cette session. Reconnecte-toi avec un compte etudiant lie.
+        </div>
+      )}
+      {studentResolved && filteredEvents.length === 0 && (
+        <div className="mb-6 rounded-xl border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
+          Aucun evenement pour cet etudiant sur cette periode.
+        </div>
+      )}
 
       <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
         <div className="grid grid-cols-6 bg-gray-50 border-b border-gray-200">

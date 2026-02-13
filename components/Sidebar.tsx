@@ -16,6 +16,7 @@ import {
   Video
 } from 'lucide-react';
 import { clearSession } from '../services/session';
+import { decodeJwtPayload, getAuthToken } from '../services/session';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -25,6 +26,9 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const tokenPayload = decodeJwtPayload(getAuthToken());
+  const userRole = localStorage.getItem('userRole');
+  const isStudentSession = tokenPayload?.role === 'student' || userRole === 'eleve';
 
   const [admissionOpen, setAdmissionOpen] = useState(false);
   const [commercialOpen, setCommercialOpen] = useState(false);
@@ -60,42 +64,45 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       </div>
 
       <nav className="flex-1 overflow-y-auto px-4 py-2 space-y-1">
+        {!isStudentSession && (
+          <>
+            {/* Admissions */}
+            <div className="mb-1">
+              <div
+                onClick={() => setAdmissionOpen(!admissionOpen)}
+                className={`flex items-center gap-[14px] px-[18px] py-[14px] rounded-xl cursor-pointer transition-all duration-200 font-medium text-[0.95rem] ${isModuleActive('/admission') ? 'bg-brand text-white' : 'text-slate-400 hover:bg-white/10 hover:text-white'}`}
+              >
+                <Briefcase size={22} />
+                <span>Admissions</span>
+                <ChevronDown size={18} className={`ml-auto transition-transform ${admissionOpen ? 'rotate-180' : ''}`} />
+              </div>
+            </div>
 
-        {/* Admissions */}
-        <div className="mb-1">
-          <div
-            onClick={() => setAdmissionOpen(!admissionOpen)}
-            className={`flex items-center gap-[14px] px-[18px] py-[14px] rounded-xl cursor-pointer transition-all duration-200 font-medium text-[0.95rem] ${isModuleActive('/admission') ? 'bg-brand text-white' : 'text-slate-400 hover:bg-white/10 hover:text-white'}`}
-          >
-            <Briefcase size={22} />
-            <span>Admissions</span>
-            <ChevronDown size={18} className={`ml-auto transition-transform ${admissionOpen ? 'rotate-180' : ''}`} />
-          </div>
-        </div>
+            {/* Commercial */}
+            <div className="mb-1">
+              <div
+                onClick={() => setCommercialOpen(!commercialOpen)}
+                className={`flex items-center gap-[14px] px-[18px] py-[14px] rounded-xl cursor-pointer transition-all duration-200 font-medium text-[0.95rem] ${isModuleActive('/commercial') ? 'bg-brand text-white' : 'text-slate-400 hover:bg-white/10 hover:text-white'}`}
+              >
+                <LayoutDashboard size={22} />
+                <span>Commercial</span>
+                <ChevronDown size={18} className={`ml-auto transition-transform ${commercialOpen ? 'rotate-180' : ''}`} />
+              </div>
+            </div>
 
-        {/* Commercial */}
-        <div className="mb-1">
-          <div
-            onClick={() => setCommercialOpen(!commercialOpen)}
-            className={`flex items-center gap-[14px] px-[18px] py-[14px] rounded-xl cursor-pointer transition-all duration-200 font-medium text-[0.95rem] ${isModuleActive('/commercial') ? 'bg-brand text-white' : 'text-slate-400 hover:bg-white/10 hover:text-white'}`}
-          >
-            <LayoutDashboard size={22} />
-            <span>Commercial</span>
-            <ChevronDown size={18} className={`ml-auto transition-transform ${commercialOpen ? 'rotate-180' : ''}`} />
-          </div>
-        </div>
-
-        {/* RH */}
-        <div className="mb-1">
-          <div
-            onClick={() => setRhOpen(!rhOpen)}
-            className={`flex items-center gap-[14px] px-[18px] py-[14px] rounded-xl cursor-pointer transition-all duration-200 font-medium text-[0.95rem] ${isModuleActive('/rh') ? 'bg-brand text-white' : 'text-slate-400 hover:bg-white/10 hover:text-white'}`}
-          >
-            <Users size={22} />
-            <span>RH</span>
-            <ChevronDown size={18} className={`ml-auto transition-transform ${rhOpen ? 'rotate-180' : ''}`} />
-          </div>
-        </div>
+            {/* RH */}
+            <div className="mb-1">
+              <div
+                onClick={() => setRhOpen(!rhOpen)}
+                className={`flex items-center gap-[14px] px-[18px] py-[14px] rounded-xl cursor-pointer transition-all duration-200 font-medium text-[0.95rem] ${isModuleActive('/rh') ? 'bg-brand text-white' : 'text-slate-400 hover:bg-white/10 hover:text-white'}`}
+              >
+                <Users size={22} />
+                <span>RH</span>
+                <ChevronDown size={18} className={`ml-auto transition-transform ${rhOpen ? 'rotate-180' : ''}`} />
+              </div>
+            </div>
+          </>
+        )}
 
         {/* ================= ETUDIANT ================= */}
         <div className="mb-1">

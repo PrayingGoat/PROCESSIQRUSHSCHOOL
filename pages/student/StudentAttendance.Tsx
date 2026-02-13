@@ -51,7 +51,7 @@ const isInPeriod = (date: Date, period: PeriodFilter): boolean => {
 };
 
 const StudentAttendance: React.FC = () => {
-  const [selectedPeriod, setSelectedPeriod] = useState<PeriodFilter>('this-month');
+  const [selectedPeriod, setSelectedPeriod] = useState<PeriodFilter>('this-semester');
   const [showJustificationModal, setShowJustificationModal] = useState<boolean>(false);
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
 
@@ -96,6 +96,8 @@ const StudentAttendance: React.FC = () => {
     const unjustified = filteredRecords.filter((r) => r.status === 'unjustified').length;
     return { present, absences, delays, totalHours, presenceRate, totalTracked, pendingItems, unjustified };
   }, [filteredRecords]);
+
+  const allRecordsCount = records.length;
 
   const periods: Array<{ id: PeriodFilter; label: string }> = [
     { id: 'this-month', label: 'This month' },
@@ -272,6 +274,15 @@ const StudentAttendance: React.FC = () => {
               </tr>
             </thead>
             <tbody>
+              {filteredRecords.length === 0 && (
+                <tr>
+                  <td className="p-6 text-center text-gray-500" colSpan={6}>
+                    {allRecordsCount > 0
+                      ? 'Aucune donnee pour ce filtre. Change la periode pour voir les autres presences.'
+                      : 'Aucune donnee de presence trouvee pour cet etudiant.'}
+                  </td>
+                </tr>
+              )}
               {filteredRecords.map((record) => (
                 <tr key={record.id} className={`border-b border-gray-200 hover:bg-gray-50 ${record.status === 'pending' ? 'bg-yellow-50' : ''}`}>
                   <td className="p-4 font-medium">{record.date.toLocaleDateString('fr-FR')}</td>

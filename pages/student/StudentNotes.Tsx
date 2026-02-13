@@ -29,12 +29,18 @@ const StudentNotes: React.FC = () => {
   const [selectedSubject, setSelectedSubject] = useState<string>('all');
   const [showEvolution, setShowEvolution] = useState<boolean>(true);
   const [remoteGrades, setRemoteGrades] = useState<Grade[]>([]);
+  const [studentResolved, setStudentResolved] = useState<boolean>(false);
 
   // DEBUG: verify backend data arrival
   useEffect(() => {
     (async () => {
       try {
         const studentId = await api.getCurrentStudentId();
+        setStudentResolved(Boolean(studentId));
+        if (!studentId) {
+          setRemoteGrades([]);
+          return;
+        }
         const grades = await api.getGrades(studentId);
         const mapped: Grade[] = (Array.isArray(grades) ? grades : []).map((g: any) => ({
           subject: g.subject || 'N/A',
@@ -50,91 +56,72 @@ const StudentNotes: React.FC = () => {
         console.log('🔔 StudentNotes - getGrades:', grades);
       } catch (err) {
         console.error('🔔 StudentNotes - error fetching grades:', err);
+        setRemoteGrades([]);
       }
     })();
   }, []);
+  const displayedGrades = remoteGrades;
+  const weightedTotal = displayedGrades.reduce((acc, g) => acc + (g.grade * g.coefficient), 0);
+  const totalCoef = displayedGrades.reduce((acc, g) => acc + g.coefficient, 0);
+  const overallAverage = totalCoef > 0 ? weightedTotal / totalCoef : 0;
+  const overallAverageLabel = displayedGrades.length > 0 ? overallAverage.toFixed(2) : '-';
+  const bestGrade = displayedGrades.length > 0 ? Math.max(...displayedGrades.map((g) => g.grade)) : null;
+  const lowestGrade = displayedGrades.length > 0 ? Math.min(...displayedGrades.map((g) => g.grade)) : null;
+  const classAverage = displayedGrades.length > 0
+    ? displayedGrades.reduce((acc, g) => acc + (Number.isFinite(g.classAverage) ? g.classAverage : 0), 0) / displayedGrades.length
+    : 0;
 
-  // Données des statistiques rapides
   const quickStats = [
-    { value: '16.5', label: 'Best rating', subLabel: 'Digital marketing', color: 'text-green-600' },
-    { value: '11.0', label: 'Lowest rating', subLabel: 'English', color: 'text-yellow-600' },
-    { value: '13.8', label: 'Middle class', subLabel: '+0.4 vs you', color: 'text-blue-600' },
-    { value: '8', label: 'Evaluations', subLabel: 'this semester', color: 'text-purple-600' }
+    { value: bestGrade !== null ? bestGrade.toFixed(1) : '-', label: 'Best rating', subLabel: 'From your evaluations', color: 'text-green-600' },
+    { value: lowestGrade !== null ? lowestGrade.toFixed(1) : '-', label: 'Lowest rating', subLabel: 'From your evaluations', color: 'text-yellow-600' },
+    { value: displayedGrades.length > 0 ? classAverage.toFixed(1) : '-', label: 'Middle class', subLabel: 'Average class', color: 'text-blue-600' },
+    { value: `${displayedGrades.length}`, label: 'Evaluations', subLabel: 'Loaded from API', color: 'text-purple-600' }
   ];
 
-  // Données des compétences
-  const skills: Skill[] = [
-    { name: 'Negotiation', score: 15, maxScore: 20, percentage: 75, color: 'bg-green-500' },
-    { name: 'Marketing', score: 16.5, maxScore: 20, percentage: 82.5, color: 'bg-green-500' },
-    { name: 'Customer relations', score: 14, maxScore: 20, percentage: 70, color: 'bg-blue-500' },
-    { name: 'Communication', score: 13.5, maxScore: 20, percentage: 67.5, color: 'bg-blue-500' },
-    { name: 'English', score: 11, maxScore: 20, percentage: 55, color: 'bg-yellow-500' }
-  ];
+  const bySubject: Record<string, { total: number; count: number }> = {};
+  displayedGrades.forEach((g) => {
+    const key = g.subject || 'N/A';
+    if (!bySubject[key]) bySubject[key] = { total: 0, count: 0 };
+    bySubject[key].total += g.grade;
+    bySubject[key].count += 1;
+  });
 
-  // Données des notes détaillées
-  const grades: Grade[] = [
-    {
-      subject: 'Digital marketing',
-      type: 'Exam',
-      grade: 16.5,
-      coefficient: 3,
-      classAverage: 14.2,
-      date: '15/01/2026',
-      appreciation: 'Excellent work, very good command of the subject',
-      color: 'text-green-600'
-    },
-    {
-      subject: 'Business negotiation',
-      type: 'Oral',
-      grade: 15,
-      coefficient: 4,
-      classAverage: 13.5,
-      date: '10/01/2026',
-      appreciation: 'Good argument',
-      color: 'text-green-600'
-    },
-    {
-      subject: 'Customer relations',
-      type: 'CC',
-      grade: 14,
-      coefficient: 2,
-      classAverage: 14.8,
-      date: '08/01/2026',
-      appreciation: 'Good level, keep it up!',
-      color: 'text-blue-600'
-    },
-    {
-      subject: 'General knowledge',
-      type: 'Writing',
-      grade: 13.5,
-      coefficient: 2,
-      classAverage: 12.9,
-      date: '18/12/2025',
-      appreciation: 'Relevant analysis',
-      color: 'text-blue-600'
-    },
-    {
-      subject: 'Professional English',
-      type: 'Exam',
-      grade: 11,
-      coefficient: 2,
-      classAverage: 12.3,
-      date: '12/12/2025',
-      appreciation: 'To improve, work on your speaking skills.',
-      color: 'text-yellow-600'
-    }
-  ];
-
-  const displayedGrades = remoteGrades.length > 0 ? remoteGrades : grades;
+  const skills: Skill[] = Object.entries(bySubject)
+    .map(([name, data]) => {
+      const avg = data.count > 0 ? data.total / data.count : 0;
+      return {
+        name,
+        score: Number(avg.toFixed(1)),
+        maxScore: 20,
+        percentage: Math.max(0, Math.min(100, (avg / 20) * 100)),
+        color: avg >= 15 ? 'bg-green-500' : avg >= 12 ? 'bg-blue-500' : 'bg-yellow-500'
+      };
+    })
+    .slice(0, 5);
 
   // Données de l'évolution des notes
-  const monthlyEvolution = [
-    { month: 'Sep', value: 65, label: 'Sep' },
-    { month: 'Oct', value: 70, label: 'Oct' },
-    { month: 'Nov', value: 68, label: 'Nov' },
-    { month: 'Dec', value: 72, label: 'Dec' },
-    { month: 'Jan', value: 71, label: 'Jan', isCurrent: true }
-  ];
+  const monthlyEvolution = (() => {
+    const map = new Map<string, { sum: number; count: number; date: Date }>();
+    displayedGrades.forEach((g) => {
+      const parsed = new Date(g.date.split('/').reverse().join('-'));
+      if (Number.isNaN(parsed.getTime())) return;
+      const key = "" + parsed.getFullYear() + '-' + String(parsed.getMonth() + 1).padStart(2, '0');
+      const current = map.get(key) || { sum: 0, count: 0, date: parsed };
+      current.sum += g.grade;
+      current.count += 1;
+      map.set(key, current);
+    });
+    const sorted = Array.from(map.values()).sort((a, b) => a.date.getTime() - b.date.getTime()).slice(-5);
+    return sorted.map((item, index) => {
+      const avg = item.count > 0 ? item.sum / item.count : 0;
+      return {
+        month: item.date.toLocaleString('en', { month: 'short' }),
+        value: Math.round((avg / 20) * 100),
+        label: item.date.toLocaleString('en', { month: 'short' }),
+        isCurrent: index === sorted.length - 1
+      };
+    });
+  })();
 
   const subjects = [
     'All materials',
@@ -184,7 +171,7 @@ const StudentNotes: React.FC = () => {
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-start gap-6 mb-8">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
           <div className="bg-gradient-to-br from-purple-600 to-purple-800 p-6 rounded-2xl text-center text-white">
-            <div className="text-4xl font-bold mb-1">14.2</div>
+            <div className="text-4xl font-bold mb-1">{overallAverageLabel}</div>
             <div className="text-sm opacity-90">Overall average</div>
           </div>
           
@@ -193,10 +180,10 @@ const StudentNotes: React.FC = () => {
             <p className="text-gray-600 mb-4">Semester 1 - 2025/2026</p>
             <div className="flex flex-wrap gap-3">
               <span className="px-3 py-1.5 bg-green-100 text-green-800 rounded-full text-sm font-semibold">
-                ↑ +0.8 vs S1
+                {displayedGrades.length > 0 ? 'Data loaded' : 'No grades yet'}
               </span>
               <span className="px-3 py-1.5 bg-blue-100 text-blue-800 rounded-full text-sm font-semibold">
-                Rank: 5/28
+                {displayedGrades.length} evaluation(s)
               </span>
             </div>
           </div>
@@ -289,10 +276,10 @@ const StudentNotes: React.FC = () => {
               </div>
               
               <div className="flex flex-col sm:flex-row justify-between items-center gap-3 mt-6 text-sm text-gray-600">
-                <span>Average class: 13.8</span>
+                <span>Average class: {displayedGrades.length > 0 ? classAverage.toFixed(1) : '-'}</span>
                 <span className="text-green-600 font-semibold flex items-center gap-1">
                   <TrendingUp size={16} />
-                  Trend: ↑ Progress
+                  Trend: {displayedGrades.length > 0 ? 'Data-based' : 'No data'}
                 </span>
               </div>
             </>
@@ -388,6 +375,15 @@ const StudentNotes: React.FC = () => {
               </tr>
             </thead>
             <tbody>
+              {displayedGrades.length === 0 && (
+                <tr>
+                  <td className="p-6 text-center text-gray-500" colSpan={7}>
+                    {studentResolved
+                      ? 'Aucune note disponible pour cet etudiant.'
+                      : 'Aucun etudiant associe a la session. Reconnecte-toi avec un compte etudiant lie.'}
+                  </td>
+                </tr>
+              )}
               {displayedGrades.map((grade, index) => (
                 <tr key={index} className="border-b border-gray-200 hover:bg-gray-50">
                   <td className="p-4">
@@ -498,3 +494,9 @@ const StudentNotes: React.FC = () => {
 };
 
 export default StudentNotes;
+
+
+
+
+
+
