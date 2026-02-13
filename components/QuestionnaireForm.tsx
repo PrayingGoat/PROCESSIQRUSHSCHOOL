@@ -11,6 +11,7 @@ import Button from './ui/Button';
 
 import Input from './ui/Input';
 import Select from './ui/Select';
+import { formatPhone, formatNIR } from '../utils/formatters';
 import {
     NATIONALITY_OPTIONS,
     SITUATION_BEFORE_CONTRACT_OPTIONS,
@@ -319,10 +320,18 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext, initialDa
                             <Input label="E-mail" required type="email" placeholder="votre@email.com" error={errors.email?.message} {...register('email')} />
                         </div>
                         <div className="col-span-12 md:col-span-6">
-                            <Input label="Téléphone" required type="tel" placeholder="06 12 34 56 78" error={errors.telephone?.message} {...register('telephone')} />
+                            <Input label="Téléphone" required type="tel" placeholder="06 12 34 56 78" error={errors.telephone?.message} {...register('telephone', {
+                                onChange: (e) => {
+                                    e.target.value = formatPhone(e.target.value);
+                                }
+                            })} />
                         </div>
                         <div className="col-span-12">
-                            <Input label="NIR (Numéro de Sécurité Sociale)" placeholder="1 85 12 75 108 123 45" error={errors.nir?.message} {...register('nir')} />
+                            <Input label="NIR (Numéro de Sécurité Sociale)" placeholder="1 85 12 75 108 123 45" error={errors.nir?.message} {...register('nir', {
+                                onChange: (e) => {
+                                    e.target.value = formatNIR(e.target.value);
+                                }
+                            })} />
                         </div>
                     </div>
                 </Card>
@@ -349,7 +358,11 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext, initialDa
                                         <Input label="Lien de parenté" placeholder="Père, Mère, Tuteur..." required={isMinor} {...register('representant_legal_1.lien_parente')} />
                                     </div>
                                     <div className="col-span-12 md:col-span-6">
-                                        <Input label="Téléphone" required={isMinor} type="tel" {...register('representant_legal_1.telephone')} />
+                                        <Input label="Téléphone" required={isMinor} type="tel" {...register('representant_legal_1.telephone', {
+                                            onChange: (e) => {
+                                                e.target.value = formatPhone(e.target.value);
+                                            }
+                                        })} />
                                     </div>
                                     <div className="col-span-12 md:col-span-4">
                                         <Input label="Numéro" required={isMinor} {...register('representant_legal_1.numero')} />
@@ -398,7 +411,11 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext, initialDa
                                             <Input label="Lien de parenté" placeholder="Père, Mère, Tuteur..." {...register('representant_legal_2.lien_parente')} />
                                         </div>
                                         <div className="col-span-12 md:col-span-6">
-                                            <Input label="Téléphone" type="tel" {...register('representant_legal_2.telephone')} />
+                                            <Input label="Téléphone" type="tel" {...register('representant_legal_2.telephone', {
+                                                onChange: (e) => {
+                                                    e.target.value = formatPhone(e.target.value);
+                                                }
+                                            })} />
                                         </div>
                                         <div className="col-span-12 md:col-span-4">
                                             <Input label="Numéro" {...register('representant_legal_2.numero')} />

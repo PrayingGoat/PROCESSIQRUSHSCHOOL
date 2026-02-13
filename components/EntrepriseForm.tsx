@@ -10,6 +10,7 @@ import Button from './ui/Button';
 
 import Input from './ui/Input';
 import Select from './ui/Select';
+import { formatPhone, formatSIRET } from '../utils/formatters';
 import {
     EMPLOYER_TYPE_OPTIONS,
     MAITRE_DIPLOMA_OPTIONS,
@@ -28,7 +29,10 @@ import Card from './ui/Card';
 const companySchema = z.object({
     identification: z.object({
         raison_sociale: z.string().min(2, "La raison sociale est requise"),
-        siret: z.string().regex(/^[0-9]{14}$/, "Le SIRET doit contenir exactement 14 chiffres"),
+        siret: z.string().refine(val => {
+            const cleaned = val.replace(/\s/g, '');
+            return /^[0-9]{14}$/.test(cleaned);
+        }, "Le SIRET doit contenir exactement 14 chiffres"),
         code_ape_naf: z.string().regex(/^[0-9]{4}[A-Z]$/, "Code APE invalide (ex: 4711D)"),
         type_employeur: z.string().min(1, "Veuillez sélectionner le type d'employeur"),
         effectif: z.string().min(1, "L'effectif est requis"),
@@ -176,7 +180,7 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
             formation: draftCompany?.formation || { choisie: "", date_debut: "", date_fin: "", code_rncp: "", code_diplome: "", nb_heures: "", jours_cours: "" },
             cfa: draftCompany?.cfa || {
                 rush_school: "oui", entreprise: "non", denomination: "RUSH SCHOOL", uai: "0932731W",
-                siret: "91901416300018", adresse: "11-13 AVENUE DE LA DIVISION LECLERC", complement: "", code_postal: "93000", commune: "BOBIGNY"
+                siret: "919 014 163 00018", adresse: "11-13 AVENUE DE LA DIVISION LECLERC", complement: "", code_postal: "93000", commune: "BOBIGNY"
             },
             contrat: draftCompany?.contrat || {
                 type_contrat: "", type_derogation: "", date_debut: "", date_fin: "", duree_hebdomadaire: "35h", poste_occupe: "",
@@ -337,7 +341,11 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
                                 <Input label="Raison sociale" required placeholder="Nom de l'entreprise" error={errors.identification?.raison_sociale?.message} {...register('identification.raison_sociale')} />
                             </div>
                             <div className="col-span-12 md:col-span-6">
-                                <Input label="Numéro SIRET" required placeholder="14 chiffres" error={errors.identification?.siret?.message} {...register('identification.siret')} />
+                                <Input label="Numéro SIRET" required placeholder="14 chiffres" error={errors.identification?.siret?.message} {...register('identification.siret', {
+                                    onChange: (e) => {
+                                        e.target.value = formatSIRET(e.target.value);
+                                    }
+                                })} />
                             </div>
                             <div className="col-span-12 md:col-span-6">
                                 <Input label="Code APE/NAF" required placeholder="Ex: 4711D" error={errors.identification?.code_ape_naf?.message} {...register('identification.code_ape_naf')} />
@@ -385,7 +393,11 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
                                 <Input label="Ville" required placeholder="Ville" error={errors.adresse?.ville?.message} {...register('adresse.ville')} />
                             </div>
                             <div className="col-span-12 md:col-span-6">
-                                <Input label="Téléphone" required type="tel" placeholder="Téléphone entreprise" error={errors.adresse?.telephone?.message} {...register('adresse.telephone')} />
+                                <Input label="Téléphone" required type="tel" placeholder="Téléphone entreprise" error={errors.adresse?.telephone?.message} {...register('adresse.telephone', {
+                                    onChange: (e) => {
+                                        e.target.value = formatPhone(e.target.value);
+                                    }
+                                })} />
                             </div>
                             <div className="col-span-12 md:col-span-6">
                                 <Input label="Email" required type="email" placeholder="Email de contact" error={errors.adresse?.email?.message} {...register('adresse.email')} />
@@ -427,7 +439,11 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
                                 <Input label="Années d'expérience" type="number" placeholder="Années" {...register('maitre_apprentissage.experience')} />
                             </div>
                             <div className="col-span-12 md:col-span-4">
-                                <Input label="Téléphone" required type="tel" placeholder="Téléphone" error={errors.maitre_apprentissage?.telephone?.message} {...register('maitre_apprentissage.telephone')} />
+                                <Input label="Téléphone" required type="tel" placeholder="Téléphone" error={errors.maitre_apprentissage?.telephone?.message} {...register('maitre_apprentissage.telephone', {
+                                    onChange: (e) => {
+                                        e.target.value = formatPhone(e.target.value);
+                                    }
+                                })} />
                             </div>
                             <div className="col-span-12 md:col-span-4">
                                 <Input label="Email" required type="email" placeholder="Email" error={errors.maitre_apprentissage?.email?.message} {...register('maitre_apprentissage.email')} />
@@ -553,7 +569,11 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
                                             <Input label="Dénomination du CFA" required {...register('cfa.denomination')} />
                                         </div>
                                         <div className="col-span-12 md:col-span-6">
-                                            <Input label="N° SIRET" required {...register('cfa.siret')} />
+                                            <Input label="N° SIRET" required {...register('cfa.siret', {
+                                                onChange: (e) => {
+                                                    e.target.value = formatSIRET(e.target.value);
+                                                }
+                                            })} />
                                         </div>
                                         <div className="col-span-12 md:col-span-6">
                                             <Input label="Code UAI" required {...register('cfa.uai')} />
