@@ -255,14 +255,8 @@ const mapStudentToBackend = (data: any) => {
   };
 
   const mapSituation = (v: string) => {
-    const map: Record<string, string> = {
-      'scolaire': 'Scolaire : (Bac / brevet...)',
-      'etudiant': 'Etudiant : (Etude supérieur)',
-      'contrat_pro': 'Contrat pro',
-      'salarie': 'Salarié : (CDD/CDI)',
-      'apprentissage': "Contrat d'apprentissage"
-    };
-    return map[v] || v || formatString(v);
+    // New values are already in the format expected by the backend
+    return v || "";
   };
 
   const mapDiplome = (v: string) => {

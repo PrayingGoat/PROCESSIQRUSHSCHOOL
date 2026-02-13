@@ -31,6 +31,7 @@ import { api } from '../../services/api';
 
 import {
     NATIONALITY_OPTIONS,
+    DEPARTMENT_OPTIONS,
     SITUATION_BEFORE_CONTRACT_OPTIONS,
     REGIME_SOCIAL_OPTIONS,
     DIPLOMA_PREPARED_OPTIONS,
@@ -186,7 +187,12 @@ const CandidateDetailsModal: React.FC<CandidateDetailsModalProps> = ({
                                             options={NATIONALITY_OPTIONS}
                                         />
                                         <Input label="Commune de naissance" value={editForm?.commune_naissance || ""} onChange={(e) => setEditForm({ ...editForm, commune_naissance: e.target.value })} />
-                                        <Input label="Département de naissance" value={editForm?.departement || ""} onChange={(e) => setEditForm({ ...editForm, departement: e.target.value })} />
+                                        <Select
+                                            label="Département de naissance"
+                                            value={editForm?.departement || ""}
+                                            onChange={(e) => setEditForm({ ...editForm, departement: e.target.value })}
+                                            options={DEPARTMENT_OPTIONS}
+                                        />
                                     </div>
                                     <div className="h-px bg-slate-100" />
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

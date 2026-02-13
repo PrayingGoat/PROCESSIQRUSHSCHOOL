@@ -14,6 +14,7 @@ import Select from './ui/Select';
 import { formatPhone, formatNIR } from '../utils/formatters';
 import {
     NATIONALITY_OPTIONS,
+    DEPARTMENT_OPTIONS,
     SITUATION_BEFORE_CONTRACT_OPTIONS,
     REGIME_SOCIAL_OPTIONS,
     DIPLOMA_PREPARED_OPTIONS,
@@ -288,7 +289,14 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext, initialDa
                             <Input label="Commune de naissance" required placeholder="Ville de naissance" error={errors.commune_naissance?.message} {...register('commune_naissance')} />
                         </div>
                         <div className="col-span-12 md:col-span-6">
-                            <Input label="Département de naissance" required placeholder="Ex: 75 - Paris" error={errors.departement?.message} {...register('departement')} />
+                            <Select
+                                label="Département de naissance"
+                                required
+                                error={errors.departement?.message}
+                                {...register('departement')}
+                                options={DEPARTMENT_OPTIONS}
+                                placeholder="Sélectionnez"
+                            />
                         </div>
                     </div>
                 </Card>
