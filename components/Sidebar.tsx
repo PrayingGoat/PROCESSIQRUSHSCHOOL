@@ -15,6 +15,7 @@ import {
   HelpCircle,
   Video
 } from 'lucide-react';
+import { clearSession } from '../services/session';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -45,7 +46,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('authToken');
+    clearSession();
     navigate('/login');
     if (onClose) onClose();
   };

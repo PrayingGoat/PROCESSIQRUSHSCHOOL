@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   TrendingUp, Download, Calculator, BarChart3, 
   Trophy, Activity, Eye, Filter
 } from 'lucide-react';
 import StudentNavbar from '../../components/StudentNavbar';
+import { api } from '../../services/api';
 
 interface Grade {
   subject: string;
@@ -27,6 +28,31 @@ interface Skill {
 const StudentNotes: React.FC = () => {
   const [selectedSubject, setSelectedSubject] = useState<string>('all');
   const [showEvolution, setShowEvolution] = useState<boolean>(true);
+  const [remoteGrades, setRemoteGrades] = useState<Grade[]>([]);
+
+  // DEBUG: verify backend data arrival
+  useEffect(() => {
+    (async () => {
+      try {
+        const studentId = await api.getCurrentStudentId();
+        const grades = await api.getGrades(studentId);
+        const mapped: Grade[] = (Array.isArray(grades) ? grades : []).map((g: any) => ({
+          subject: g.subject || 'N/A',
+          type: g.type || 'exam',
+          grade: Number(g.grade ?? 0),
+          coefficient: Number(g.coefficient ?? 1),
+          classAverage: Number(g.classAverage ?? 0),
+          date: g.date ? new Date(g.date).toLocaleDateString('fr-FR') : '',
+          appreciation: g.appreciation || '',
+          color: Number(g.grade ?? 0) >= 15 ? 'text-green-600' : Number(g.grade ?? 0) >= 12 ? 'text-blue-600' : 'text-yellow-600'
+        }));
+        setRemoteGrades(mapped);
+        console.log('🔔 StudentNotes - getGrades:', grades);
+      } catch (err) {
+        console.error('🔔 StudentNotes - error fetching grades:', err);
+      }
+    })();
+  }, []);
 
   // Données des statistiques rapides
   const quickStats = [
@@ -99,6 +125,8 @@ const StudentNotes: React.FC = () => {
     }
   ];
 
+  const displayedGrades = remoteGrades.length > 0 ? remoteGrades : grades;
+
   // Données de l'évolution des notes
   const monthlyEvolution = [
     { month: 'Sep', value: 65, label: 'Sep' },
@@ -118,14 +146,34 @@ const StudentNotes: React.FC = () => {
 
   // Fonction pour simuler la moyenne
   const simulateAverage = () => {
-    console.log('Simulating average...');
-    // Logique de simulation
+    const weighted = displayedGrades.reduce((acc, g) => acc + (g.grade * g.coefficient), 0);
+    const totalCoef = displayedGrades.reduce((acc, g) => acc + g.coefficient, 0);
+    const avg = totalCoef > 0 ? (weighted / totalCoef).toFixed(2) : '0.00';
+    alert(`Current weighted average: ${avg}/20`);
   };
 
   // Fonction pour télécharger le bulletin
   const downloadReport = () => {
-    console.log('Downloading report...');
-    // Logique de téléchargement
+    const header = 'Subject,Type,Grade,Coefficient,ClassAverage,Date,Appreciation';
+    const rows = displayedGrades.map((g) =>
+      [
+        g.subject,
+        g.type,
+        g.grade,
+        g.coefficient,
+        g.classAverage,
+        g.date,
+        `"${String(g.appreciation || '').replace(/"/g, '""')}"`
+      ].join(',')
+    );
+    const csv = [header, ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'student-newsletter.csv';
+    link.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -340,7 +388,7 @@ const StudentNotes: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {grades.map((grade, index) => (
+              {displayedGrades.map((grade, index) => (
                 <tr key={index} className="border-b border-gray-200 hover:bg-gray-50">
                   <td className="p-4">
                     <span className="font-medium">{grade.subject}</span>
@@ -387,7 +435,7 @@ const StudentNotes: React.FC = () => {
         <div className="p-4 bg-gray-50 border-t border-gray-200">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-3 text-sm">
             <div className="text-gray-600">
-              Showing <span className="font-semibold">{grades.length}</span> of {grades.length} evaluations
+              Showing <span className="font-semibold">{displayedGrades.length}</span> of {displayedGrades.length} evaluations
             </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">

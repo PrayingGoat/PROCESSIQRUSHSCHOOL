@@ -1,8 +1,24 @@
 import { StudentFormData, CompanyFormData, ApiResponse } from '../types';
+import { getAuthEmail, getAuthStudentId, getCurrentStudentId as getStoredStudentId, setCurrentStudentId } from './session';
 
 const BASE_API_URL = import.meta.env.VITE_BASE_API_URL || '';
 const AUTH_API_URL = '/api'; // Local backend for Auth
 const BASE_URL = `${BASE_API_URL}/admission`;
+// Candidates endpoint exposed by backend: '/api/candidates'
+const CANDIDATES_URL = '/api/candidates';
+const STUDENTS_URL = '/api/students';
+const ATTENDANCES_URL = '/api/attendances';
+const GRADES_URL = '/api/grades';
+const EVENTS_URL = '/api/events';
+const APPOINTMENTS_URL = '/api/appointments';
+const DOCUMENTS_URL = '/api/documents';
+const QUESTIONNAIRES_URL = '/api/questionnaires';
+
+const parseApiList = (json: any): any[] => {
+  if (Array.isArray(json)) return json;
+  if (json && Array.isArray(json.data)) return json.data;
+  return [];
+};
 
 // Helper to format string (remove underscores, capitalize)
 const formatString = (str: string) => {
@@ -315,6 +331,45 @@ const mapCompanyToBackend = (data: any) => {
 };
 
 export const api = {
+  async getCurrentStudent(): Promise<any | null> {
+    try {
+      const students = await this.getAllStudents();
+      if (!Array.isArray(students) || students.length === 0) return null;
+
+      const authEmail = (getAuthEmail() || '').toLowerCase().trim();
+      const authStudentId = (getAuthStudentId() || '').trim();
+      const storedId = getStoredStudentId();
+
+      let student =
+        (authStudentId && students.find((s: any) => String(s._id || s.id) === authStudentId)) ||
+        (authEmail && students.find((s: any) => String(s.email || '').toLowerCase().trim() === authEmail)) ||
+        null;
+
+      if (!student && storedId) {
+        student = students.find((s: any) => String(s._id || s.id) === storedId) || null;
+      }
+
+      if (!student && students.length === 1) {
+        student = students[0];
+      }
+
+      if (student) {
+        const id = String(student._id || student.id || '');
+        if (id) setCurrentStudentId(id);
+      }
+
+      return student;
+    } catch (error) {
+      return null;
+    }
+  },
+
+  async getCurrentStudentId(): Promise<string | undefined> {
+    const student = await this.getCurrentStudent();
+    const id = student?._id || student?.id;
+    return id ? String(id) : undefined;
+  },
+
   // --- AUTH ---
   async login(email: string, pass: string): Promise<{ access_token: string }> {
     const response = await fetch(`${AUTH_API_URL}/auth/login`, {
@@ -390,10 +445,142 @@ export const api = {
   },
 
   // --- CANDIDATES (CRUD) ---
+  async getAllStudents(): Promise<any[]> {
+    try {
+      const response = await fetch(`${STUDENTS_URL}`, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      });
+      if (!response.ok) throw new Error('Failed to fetch students');
+      const json = await response.json();
+      return parseApiList(json);
+    } catch (error) { return []; }
+  },
+
+  async getAttendances(studentId?: string): Promise<any[]> {
+    try {
+      const query = studentId ? `?studentId=${encodeURIComponent(studentId)}` : '';
+      const response = await fetch(`${ATTENDANCES_URL}${query}`, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      });
+      if (!response.ok) throw new Error('Failed to fetch attendances');
+      const json = await response.json();
+      return parseApiList(json);
+    } catch (error) { return []; }
+  },
+
+  async getGrades(studentId?: string): Promise<any[]> {
+    try {
+      const query = studentId ? `?studentId=${encodeURIComponent(studentId)}` : '';
+      const response = await fetch(`${GRADES_URL}${query}`, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      });
+      if (!response.ok) throw new Error('Failed to fetch grades');
+      const json = await response.json();
+      return parseApiList(json);
+    } catch (error) { return []; }
+  },
+
+  async getEvents(studentId?: string): Promise<any[]> {
+    try {
+      const query = studentId ? `?studentId=${encodeURIComponent(studentId)}` : '';
+      const response = await fetch(`${EVENTS_URL}${query}`, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      });
+      if (!response.ok) throw new Error('Failed to fetch events');
+      const json = await response.json();
+      return parseApiList(json);
+    } catch (error) { return []; }
+  },
+
+  async getAppointments(studentId?: string): Promise<any[]> {
+    try {
+      const query = studentId ? `?studentId=${encodeURIComponent(studentId)}` : '';
+      const response = await fetch(`${APPOINTMENTS_URL}${query}`, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      });
+      if (!response.ok) throw new Error('Failed to fetch appointments');
+      const json = await response.json();
+      return parseApiList(json);
+    } catch (error) { return []; }
+  },
+
+  async getDocuments(studentId?: string): Promise<any[]> {
+    try {
+      const query = studentId ? `?studentId=${encodeURIComponent(studentId)}` : '';
+      const response = await fetch(`${DOCUMENTS_URL}${query}`, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      });
+      if (!response.ok) throw new Error('Failed to fetch documents');
+      const json = await response.json();
+      return parseApiList(json);
+    } catch (error) { return []; }
+  },
+
+  async getQuestionnaires(candidateId?: string): Promise<any[]> {
+    try {
+      const query = candidateId ? `?candidateId=${encodeURIComponent(candidateId)}` : '';
+      const response = await fetch(`${QUESTIONNAIRES_URL}${query}`, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      });
+      if (!response.ok) throw new Error('Failed to fetch questionnaires');
+      const json = await response.json();
+      return parseApiList(json);
+    } catch (error) { return []; }
+  },
+
+  async createEvent(payload: any): Promise<any> {
+    const response = await fetch(`${EVENTS_URL}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || error.message || 'Failed to create event');
+    }
+    const json = await response.json();
+    return json?.data || json;
+  },
+
+  async createAppointment(payload: any): Promise<any> {
+    const response = await fetch(`${APPOINTMENTS_URL}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || error.message || 'Failed to create appointment');
+    }
+    const json = await response.json();
+    return json?.data || json;
+  },
+
+  async createDocument(payload: any): Promise<any> {
+    const response = await fetch(`${DOCUMENTS_URL}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || error.message || 'Failed to create document');
+    }
+    const json = await response.json();
+    return json?.data || json;
+  },
+
   async submitStudent(data: StudentFormData): Promise<ApiResponse> {
     try {
       const payload = mapStudentToBackend(data);
-      const response = await fetch(`${BASE_URL}/candidates`, {
+      const response = await fetch(`${CANDIDATES_URL}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify(payload),
@@ -412,42 +599,48 @@ export const api = {
 
   async getAllCandidates(): Promise<any[]> {
     try {
-      const response = await fetch(`${BASE_URL}/candidates`, {
+      const response = await fetch(`${CANDIDATES_URL}`, {
         method: 'GET',
         headers: { 'Accept': 'application/json' }
       });
       if (!response.ok) throw new Error('Failed to fetch candidates');
-      return await response.json();
+      const json = await response.json();
+      // Backend returns { success: true, data: [...] } or raw array
+      if (json && Array.isArray(json)) return json;
+      if (json && Array.isArray(json.data)) return json.data;
+      return [];
     } catch (error) { return []; }
   },
 
   async getCandidateById(id: string): Promise<any> {
     try {
-      const response = await fetch(`${BASE_URL}/candidates/${id}`, {
+      const response = await fetch(`${CANDIDATES_URL}/${id}`, {
         method: 'GET',
         headers: { 'Accept': 'application/json' }
       });
       if (!response.ok) throw new Error('Candidate not found');
-      return await response.json();
+      const json = await response.json();
+      return json && json.data ? json.data : json;
     } catch (error) { throw error; }
   },
 
   async updateCandidate(id: string, data: Partial<StudentFormData>): Promise<any> {
     try {
       const payload = mapStudentToBackend(data);
-      const response = await fetch(`${BASE_URL}/candidates/${id}`, {
+      const response = await fetch(`${CANDIDATES_URL}/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify(payload),
       });
       if (!response.ok) throw new Error('Update failed');
-      return await response.json();
+      const json = await response.json();
+      return json && json.data ? json.data : json;
     } catch (error) { throw error; }
   },
 
   async deleteCandidate(id: string): Promise<boolean> {
     try {
-      const response = await fetch(`${BASE_URL}/candidates/${id}`, {
+      const response = await fetch(`${CANDIDATES_URL}/${id}`, {
         method: 'DELETE',
         headers: { 'Accept': 'application/json' }
       });
@@ -461,7 +654,7 @@ export const api = {
       const formData = new FormData();
       formData.append('file', file);
       const endpointMap: Record<string, string> = { 'cv': 'cv', 'cni': 'cin', 'lettre': 'lettre-motivation', 'vitale': 'carte-vitale', 'diplome': 'dernier-diplome' };
-      const url = `${BASE_URL}/candidates/${recordId}/documents/${endpointMap[docType] || docType}`;
+      const url = `${CANDIDATES_URL}/${recordId}/documents/${endpointMap[docType] || docType}`;
       const response = await fetch(url, { method: 'POST', headers: { 'Accept': 'application/json' }, body: formData });
       if (!response.ok) throw new Error(`Upload failed: ${response.statusText}`);
       return await response.json();

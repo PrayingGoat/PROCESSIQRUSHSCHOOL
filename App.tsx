@@ -18,14 +18,15 @@ import StudentPlanning from './pages/student/StudentPlanning.tsx';
 import StudentAppointments from './pages/student/StudentAppointments.tsx';
 import StudentAttendance from './pages/student/StudentAttendance.tsx';
 import StudentQuestionnaires from './pages/student/StudentQuestionnaires.tsx';
+import { isAuthenticated } from './services/session';
 
 
 const RequireAuth = ({ children }: { children: React.ReactNode }) => {
-  const isAuthenticated = localStorage.getItem('authToken');
   const location = useLocation();
-
-
-  return children;
+  if (!isAuthenticated()) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+  return <>{children}</>;
 };
 
 const App = () => {

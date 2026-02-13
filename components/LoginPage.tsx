@@ -4,6 +4,7 @@ import { Mail, Lock, ArrowRight, Eye, EyeOff, Loader2 } from 'lucide-react';
 import Input from './ui/Input';
 import Button from './ui/Button';
 import { api } from '../services/api';
+import { setAuthToken } from '../services/session';
 
 const LoginPage: React.FC = () => {
     const navigate = useNavigate();
@@ -22,7 +23,7 @@ const LoginPage: React.FC = () => {
             console.log("Authenticating against backend...");
             const result = await api.login(formData.email, formData.password);
 
-            localStorage.setItem('authToken', result.access_token);
+            setAuthToken(result.access_token);
             setIsLoading(false);
             navigate('/');
 
