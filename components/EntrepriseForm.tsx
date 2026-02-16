@@ -185,10 +185,10 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
             contrat: draftCompany?.contrat || {
                 type_contrat: "", type_derogation: "", date_debut: "", date_fin: "", duree_hebdomadaire: "35h", poste_occupe: "",
                 lieu_execution: "",
-                pourcentage_smic1: 0, smic1: "1823.03", montant_salaire_brut1: 0,
-                pourcentage_smic2: 0, smic2: "1823.03", montant_salaire_brut2: 0,
-                pourcentage_smic3: 0, smic3: "1823.03", montant_salaire_brut3: 0,
-                pourcentage_smic4: 0, smic4: "1823.03", montant_salaire_brut4: 0,
+                pourcentage_smic1: 0, smic1: "smic", montant_salaire_brut1: 0,
+                pourcentage_smic2: 0, smic2: "smic", montant_salaire_brut2: 0,
+                pourcentage_smic3: 0, smic3: "smic", montant_salaire_brut3: 0,
+                pourcentage_smic4: 0, smic4: "smic", montant_salaire_brut4: 0,
                 date_conclusion: "", date_debut_execution: "",
                 numero_deca_ancien_contrat: "", machines_dangereuses: "Non", caisse_retraite: "", date_avenant: "", nombre_mois: 12,
                 // Initialisation des dates de périodes de salaire
@@ -277,7 +277,7 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
         // Update the specific year in contrat object for API
         setValue(`contrat.pourcentage_smic${yearIndex}` as any, pct);
         setValue(`contrat.montant_salaire_brut${yearIndex}` as any, montant);
-        setValue(`contrat.smic${yearIndex}` as any, "1823.03");
+        setValue(`contrat.smic${yearIndex}` as any, "smic");
 
         // Update the age for this specific year
         setValue(`salaire.age${yearIndex}` as any, age);
