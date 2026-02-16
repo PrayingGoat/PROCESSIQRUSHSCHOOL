@@ -264,7 +264,7 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
         let studentsWithAge = 0;
 
         students.forEach(s => {
-            const info = s.informations_personnelles || s.fields || s;
+            const info = getC(s);
 
             // Sexe
             const sexe = (info.sexe || "").toLowerCase();

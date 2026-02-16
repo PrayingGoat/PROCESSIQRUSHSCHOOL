@@ -24,6 +24,8 @@ export const getC = (c: any) => {
         ville: info.ville || d['Commune de naissance'] || d.ville || d.commune_naissance || c.ville || "Non renseigné",
         entreprise: nom_ent || "En recherche",
         telephone: info.telephone || d['Téléphone'] || d.telephone || c.telephone || "",
+        sexe: info.sexe || d['Sexe'] || d.sexe || c.sexe || "",
+        date_naissance: info.date_naissance || d['Date de naissance'] || d.date_naissance || c.date_naissance || "",
         alternance: alt,
         id_entreprise: id_ent,
         has_cerfa: c.has_cerfa || d.has_cerfa,
