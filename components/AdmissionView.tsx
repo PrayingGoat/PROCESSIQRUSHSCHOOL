@@ -1013,7 +1013,10 @@ const AdmissionView = ({ selectedStudent, selectedTab, onClearSelection }: Admis
                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">{doc.subtitle}</p>
                                 <p className="text-sm text-slate-500 font-medium mb-8 leading-relaxed h-12 overflow-hidden">{doc.desc}</p>
                                 {(() => {
-                                    const isGenerating = (doc.id === 'renseignements' && isGeneratingFiche) || (doc.id === 'cerfa' && isGeneratingCerfa);
+                                    const isGenerating = (doc.id === 'renseignements' && isGeneratingFiche) || 
+                                                       (doc.id === 'cerfa' && isGeneratingCerfa) ||
+                                                       (doc.id === 'atre' && isGeneratingAtre) ||
+                                                       (doc.id === 'compte-rendu' && isGeneratingCompteRendu);
                                     return (
                                         <button
                                             disabled={isGenerating}

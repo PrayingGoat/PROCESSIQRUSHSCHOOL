@@ -731,9 +731,15 @@ export const api = {
         headers: { 'Accept': 'application/json' }
       });
       if (!response.ok) throw new Error('Generation failed');
-      const json = await response.json();
-      console.log('📥 Generation Success:', json);
-      return json;
+      const text = await response.text();
+      try {
+        const json = JSON.parse(text);
+        console.log('📥 Generation Success:', json);
+        return json;
+      } catch (e) {
+        console.log('📥 Generation Success (Non-JSON):', text);
+        return { success: true, message: text };
+      }
     } catch (error) { throw error; }
   },
 
@@ -745,9 +751,15 @@ export const api = {
         headers: { 'Accept': 'application/json' }
       });
       if (!response.ok) throw new Error('Generation failed');
-      const json = await response.json();
-      console.log('📥 CERFA Generation Success:', json);
-      return json;
+      const text = await response.text();
+      try {
+        const json = JSON.parse(text);
+        console.log('📥 CERFA Generation Success:', json);
+        return json;
+      } catch (e) {
+        console.log('📥 CERFA Generation Success (Non-JSON):', text);
+        return { success: true, message: text };
+      }
     } catch (error) { throw error; }
   },
 
@@ -759,9 +771,15 @@ export const api = {
         headers: { 'Accept': 'application/json' }
       });
       if (!response.ok) throw new Error('Generation failed');
-      const json = await response.json();
-      console.log('📥 ATRE Generation Success:', json);
-      return json;
+      const text = await response.text();
+      try {
+        const json = JSON.parse(text);
+        console.log('📥 ATRE Generation Success:', json);
+        return json;
+      } catch (e) {
+        console.log('📥 ATRE Generation Success (Non-JSON):', text);
+        return { success: true, message: text };
+      }
     } catch (error) { throw error; }
   },
 
@@ -773,9 +791,15 @@ export const api = {
         headers: { 'Accept': 'application/json' }
       });
       if (!response.ok) throw new Error('Generation failed');
-      const json = await response.json();
-      console.log('📥 Compte Rendu Generation Success:', json);
-      return json;
+      const text = await response.text();
+      try {
+        const json = JSON.parse(text);
+        console.log('📥 Compte Rendu Generation Success:', json);
+        return json;
+      } catch (e) {
+        console.log('📥 Compte Rendu Generation Success (Non-JSON):', text);
+        return { success: true, message: text };
+      }
     } catch (error) { throw error; }
   },
 
