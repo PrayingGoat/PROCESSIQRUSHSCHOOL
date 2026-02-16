@@ -364,7 +364,7 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
                                 <Input label="Effectif salarié" required type="number" placeholder="Nombre" error={errors.identification?.effectif?.message} {...register('identification.effectif')} />
                             </div>
                             <div className="col-span-12 md:col-span-6">
-                                <Input label="Convention collective" placeholder="Intitulé" {...register('identification.convention')} />
+                                <Input label="IDCC" placeholder="Intitulé" {...register('identification.convention')} />
                             </div>
                         </div>
                     </Card>
