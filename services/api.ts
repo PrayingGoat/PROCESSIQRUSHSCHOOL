@@ -1,6 +1,6 @@
 import { StudentFormData, CompanyFormData, ApiResponse } from '../types';
 
-const BASE_API_URL = import.meta.env.VITE_BASE_API_URL || 'http://localhost:8000';
+const BASE_API_URL = import.meta.env.VITE_BASE_API_URL || 'https://processiqfilegenerator.onrender.com/api';
 const AUTH_API_URL = `${BASE_API_URL}/auth`;
 const BASE_URL = `${BASE_API_URL}/admission`;
 

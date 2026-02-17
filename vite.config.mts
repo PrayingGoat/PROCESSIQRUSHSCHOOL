@@ -8,10 +8,9 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 3000,
       host: '0.0.0.0',
-      allowedHosts: ['nemoricole-fruitlike-cayson.ngrok-free.dev'],
       proxy: {
         '/api': {
-          target: 'http://localhost:8000',
+          target: 'https://processiqfilegenerator.onrender.com',
           changeOrigin: true,
         }
       }
