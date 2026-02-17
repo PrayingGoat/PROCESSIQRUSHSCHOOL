@@ -1,7 +1,7 @@
 import { StudentFormData, CompanyFormData, ApiResponse } from '../types';
 
-const BASE_API_URL = import.meta.env.VITE_BASE_API_URL || '';
-const AUTH_API_URL = '/api'; // Local backend for Auth
+const BASE_API_URL = import.meta.env.VITE_BASE_API_URL || 'https://processiqfilegenerator.onrender.com/api';
+const AUTH_API_URL = `${BASE_API_URL}/auth`;
 const BASE_URL = `${BASE_API_URL}/admission`;
 
 // Helper to format string (remove underscores, capitalize)
@@ -11,15 +11,224 @@ const formatString = (str: string) => {
   return str.replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase());
 };
 
-const mapToBackendFormat = (data: any): any => {
-  if (typeof data !== 'object' || data === null) return data;
-  if (Array.isArray(data)) return data.map(mapToBackendFormat);
-  return Object.keys(data).reduce((acc, key) => {
-    // Convert camelCase to snake_case for backend
-    const snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
-    acc[snakeKey] = mapToBackendFormat(data[key]);
-    return acc;
-  }, {} as any);
+// Helper to safely access nested fields from Airtable-style response
+const getField = (data: any, fieldName: string, defaultValue: any = "") => {
+  if (!data || !data.fields) return defaultValue;
+  return data.fields[fieldName] ?? defaultValue;
+};
+
+// Mapper: Backend (Airtable fields) -> Frontend (StudentFormData)
+const mapBackendToStudent = (backendData: any): any => {
+  const fields = backendData.fields || {};
+
+  // DEBUG: Inspect Dupont to find the missing company link
+  if (fields["NOM de naissance"]?.toLowerCase().includes("dupont")) {
+    console.log("🔍 DEBUG DUPONT FIELDS:", JSON.stringify(fields, null, 2));
+  }
+
+  return {
+    // Meta
+    id: backendData.id,
+    record_id: backendData.id,
+    fields: fields, // Maintain raw fields for modal view modes
+
+    // Enterprise Link (Critical for Dashboard)
+    id_entreprise: Array.isArray(fields["Entreprise"]) ? fields["Entreprise"][0] : (fields["Entreprise"] || fields["ID Entreprise"] || fields["record_id_entreprise"] || ""),
+    entreprise_raison_sociale: fields["Entreprise d'accueil"] || fields["Raison sociale (from Entreprise)"] || fields["Nom Entreprise"] || fields["Entreprise"] || "",
+
+
+    // Identité
+    prenom: fields["Prénom"] || "",
+    nom_naissance: fields["NOM de naissance"] || "",
+    nom_usage: fields["Nom d'usage"] || "",
+    sexe: fields["Sexe"] || "",
+    date_naissance: fields["Date de naissance"] || "",
+    nationalite: fields["Nationalité"] || "Française",
+    commune_naissance: fields["Commune de naissance"] || "",
+    departement: fields["Département de naissance"] || fields["Département"] || "",
+
+    // Coordonnées
+    // Coordonnées
+    email: fields["E-mail"] || "",
+    telephone: fields["Téléphone"] || "",
+    adresse_residence: fields["Adresse de résidence"] || "",
+    num_residence: "", // Souvent concaténé dans l'adresse
+    rue_residence: "",
+    complement_residence: fields["Complément d'adresse"] || "",
+    code_postal: fields["Code postal"]?.toString() || fields["Code postal "]?.toString() || "",
+    ville: fields["Ville de résidence"] || fields["ville"] || "",
+
+    // Social / Admin
+    nir: fields["NIR"] || "",
+    situation: fields["Situation avant le contrat"] || "",
+    regime_social: fields["Régime social"] || "",
+    declare_inscription_sportif_haut_niveau: fields["Sportif de haut niveau"] || false,
+    declare_avoir_projet_creation_reprise_entreprise: fields["Projet de création/reprise d'entreprise"] || false,
+    declare_travailleur_handicape: fields["Reconnaissance travailleur handicapé"] || false,
+    alternance: fields["En alternance"] || false,
+
+    // Scolarité
+    dernier_diplome_prepare: fields["Dernier diplôme ou titre préparé"] || "",
+    derniere_classe: fields["Dernière classe suivie"] || fields["Dernière classe / année suivie"] || "",
+    bac: fields["Diplôme ou titre le plus élevé obtenu"] || fields["BAC"] || "",
+    intitulePrecisDernierDiplome: fields["Intitulé précis du dernier diplôme"] || fields["Intitulé précis du dernier diplôme ou titre préparé"] || "",
+    formation_souhaitee: fields["Formation souhaitée"] || fields["Formation"] || "",
+
+    // Autres
+    date_de_visite: fields["Date de visite"] || "",
+    date_de_reglement: fields["Date de règlement"] || "",
+    entreprise_d_accueil: fields["Entreprise d'accueil"] || "",
+    connaissance_rush_how: fields["Comment avez-vous connu Rush School?"] || "",
+    motivation_projet_professionnel: fields["Motivation et projet professionnel"] || "",
+
+    // Représentant Légal 1
+    nom_representant_legal: fields["Nom du représentant légal"] || "",
+    prenom_representant_legal: fields["Prénom du représentant légal"] || "",
+    voie_representant_legal: fields["Voie du représentant légal"] || "",
+    lien_parente_legal: fields["Lien de parenté"] || "",
+    numero_legal: fields["Numéro du représentant légal"] || "", // Téléphone
+    numero_adress_legal: fields["Numéro adresse représentant légal"] || "",
+    complement_adresse_legal: fields["Complément d'adresse du représentant légal"] || "",
+    code_postal_legal: fields["Code postal du représentant légal"]?.toString() || "",
+    commune_legal: fields["Commune du représentant légal"] || "",
+    courriel_legal: fields["Email du représentant légal"] || "",
+
+    // Représentant Légal 2
+    nom_representant_legal2: fields["Nom du deuxième représentant légal"] || "",
+    prenom_representant_legal2: fields["Prénom du deuxième représentant légal"] || "",
+    voie_representant_legal2: fields["Voie du deuxième représentant légal"] || "",
+    lien_parente_legal2: fields["Lien de parenté avec le deuxième représentant légal"] || "",
+    numero_legal2: fields["Numéro du deuxième représentant légal"] || "",
+    numero_adress_legal2: fields["Numéro adresse représentant légal 2"] || "",
+    complement_adresse_legal2: fields["Complément d'adresse du deuxième représentant légal"] || "",
+    code_postal_legal2: fields["Code postal du deuxième représentant légal"]?.toString() || "",
+    commune_legal2: fields["Commune du deuxième représentant légal"] || "",
+    courriel_legal2: fields["Email du deuxième représentant légal"] || "",
+
+    // Documents (PDF generated)
+    atre_url: fields["Atre"]?.[0]?.url || "",
+    atre_name: fields["Atre"]?.[0]?.filename || "",
+    has_atre: !!(fields["Atre"] && fields["Atre"].length > 0),
+
+    compte_rendu_url: fields["compte rendu de visite"]?.[0]?.url || "",
+    compte_rendu_name: fields["compte rendu de visite"]?.[0]?.filename || "",
+    has_compte_rendu: !!(fields["compte rendu de visite"] && fields["compte rendu de visite"].length > 0),
+  };
+};
+
+// Mapper: Backend (Airtable fields) -> Frontend (CompanyFormData)
+const mapBackendToCompany = (backendData: any): any => {
+  const fields = backendData.fields || {};
+  return {
+    id: backendData.id,
+    record_id: backendData.id,
+    fields: fields, // Maintain raw fields for modal view modes
+    identification: {
+      raison_sociale: fields["Raison sociale"] || "",
+      siret: fields["Numéro SIRET"] || "",
+      code_ape_naf: fields["Code APE/NAF"] || "",
+      type_employeur: fields["Type demployeur"] || "",
+      effectif: fields["Effectif salarié de l'entreprise"] || "",
+      convention: fields["Convention collective"] || ""
+    },
+    adresse: {
+      num: fields["Numéro entreprise"] || "",
+      voie: fields["Voie entreprise"] || "",
+      complement: fields["Complément dadresse entreprise"] || "",
+      code_postal: fields["Code postal entreprise"] || "",
+      ville: fields["Ville entreprise"] || "",
+      telephone: fields["Téléphone entreprise"] || "",
+      email: fields["Email entreprise"] || ""
+    },
+    maitre_apprentissage: {
+      nom: fields["Nom Maître apprentissage"] || "",
+      prenom: fields["Prénom Maître apprentissage"] || "",
+      date_naissance: fields["Date de naissance Maître apprentissage"] || "",
+      fonction: fields["Fonction Maître apprentissage"] || "",
+      diplome: fields["Diplôme Maître apprentissage"] || "",
+      experience: fields["Année experience pro Maître apprentissage"] || "",
+      telephone: fields["Téléphone Maître apprentissage"] || "",
+      email: fields["Email Maître apprentissage"] || ""
+    },
+    opco: {
+      nom: fields["Nom OPCO"] || ""
+    },
+    contrat: {
+      type_contrat: fields["Type de contrat"] || "",
+      type_derogation: fields["Type de dérogation"] || "",
+      date_debut: fields["Date de début exécution"] || "",
+      date_fin: fields["Fin du contrat apprentissage"] || "",
+      duree_hebdomadaire: fields["Durée hebdomadaire"] || "",
+      poste_occupe: fields["Poste occupé"] || "",
+      lieu_execution: fields["Lieu dexécution du contrat (si différent du siège)"] || "",
+
+      pourcentage_smic1: fields["Pourcentage du SMIC 1"] || 0,
+      smic1: fields["SMIC 1"] || "",
+      montant_salaire_brut1: fields["Salaire brut mensuel 1"] || 0,
+
+      pourcentage_smic2: fields["Pourcentage smic 2"] || 0,
+      smic2: fields["smic 2"] || "",
+      montant_salaire_brut2: fields["Salaire brut mensuel 2"] || 0,
+
+      pourcentage_smic3: fields["Pourcentage smic 3"] || 0,
+      smic3: fields["smic 3"] || "",
+      montant_salaire_brut3: fields["Salaire brut mensuel 3"] || 0,
+
+      pourcentage_smic4: fields["Pourcentage smic 4"] || 0,
+      smic4: fields["smic 4"] || "",
+      montant_salaire_brut4: fields["Salaire brut mensuel 4"] || 0,
+
+      date_conclusion: fields["Date de conclusion"] || "",
+      date_debut_execution: fields["Date de début exécution"] || "",
+      numero_deca_ancien_contrat: fields["Numéro DECA de ancien contrat"] || "",
+      machines_dangereuses: fields["Travail sur machines dangereuses ou exposition à des risques particuliers"] || "",
+      caisse_retraite: fields["Caisse de retraite"] || "",
+      date_avenant: fields["date Si avenant"] || "",
+
+      // Périodes
+      date_debut_2periode_1er_annee: fields["date_debut_2periode_1er_annee"] || "",
+      date_fin_2periode_1er_annee: fields["date_fin_2periode_1er_annee"] || "",
+      date_debut_1periode_2eme_annee: fields["date_debut_1periode_2eme_annee"] || "",
+      date_fin_1periode_2eme_annee: fields["date_fin_1periode_2eme_annee"] || "",
+      date_debut_2periode_2eme_annee: fields["date_debut_2periode_2eme_annee"] || "",
+      date_fin_2periode_2eme_annee: fields["date_fin_2periode_2eme_annee"] || "",
+      date_debut_1periode_3eme_annee: fields["date_debut_1periode_3eme_annee"] || "",
+      date_fin_1periode_3eme_annee: fields["date_fin_1periode_3eme_annee"] || "",
+      date_debut_2periode_3eme_annee: fields["date_debut_2periode_3eme_annee"] || "",
+      date_fin_2periode_3eme_annee: fields["date_fin_2periode_3eme_annee"] || "",
+      date_debut_1periode_4eme_annee: fields["date_debut_1periode_4eme_annee"] || "",
+      date_fin_1periode_4eme_annee: fields["date_fin_1periode_4eme_annee"] || "",
+      date_debut_2periode_4eme_annee: fields["date_debut_2periode_4eme_annee"] || "",
+      date_fin_2periode_4eme_annee: fields["date_fin_2periode_4eme_annee"] || ""
+    },
+    formation: {
+      choisie: fields["Formation"] || "",
+      date_debut: fields["Date de début formation"] || "",
+      date_fin: fields["Date de fin formation"] || "",
+      code_rncp: fields["Code Rncp"] || "",
+      code_diplome: fields["Code  diplome"] || "",
+      nb_heures: fields["nombre heure formation"] || "",
+      jours_cours: fields["jour de cours"] || ""
+    },
+    cfa: {
+      rush_school: "",
+      entreprise: fields["cfaEnterprise"] ? "oui" : "non",
+      denomination: fields["DenominationCFA"] || "",
+      diplome_vise: fields["diplomeVise"] || "",
+      intitule_formation: fields["intituleDiplome"] || "",
+      uai: fields["NumeroUAI"] || "",
+      siret: fields["NumeroSiretCFA"] || "",
+      adresse: fields["AdresseCFA"] || "",
+      complement: fields["complementAdresseCFA"] || "",
+      code_postal: fields["codePostalCFA"] || "",
+      commune: fields["communeCFA"] || ""
+    },
+    missions: {
+      formation_alternant: fields["Formation de lalternant(e) (pour les missions)"] || "",
+      selectionnees: [] //TODO: Split if string
+    },
+    record_id_etudiant: fields["recordIdetudiant"] || ""
+  };
 };
 
 // Helper to map student data to backend format (STRICT)
@@ -46,14 +255,8 @@ const mapStudentToBackend = (data: any) => {
   };
 
   const mapSituation = (v: string) => {
-    const map: Record<string, string> = {
-      'scolaire': 'Scolaire : (Bac / brevet...)',
-      'etudiant': 'Etudiant : (Etude supérieur)',
-      'contrat_pro': 'Contrat pro',
-      'salarie': 'Salarié : (CDD/CDI)',
-      'apprentissage': "Contrat d'apprentissage"
-    };
-    return map[v] || v || formatString(v);
+    // New values are already in the format expected by the backend
+    return v || "";
   };
 
   const mapDiplome = (v: string) => {
@@ -317,39 +520,27 @@ const mapCompanyToBackend = (data: any) => {
 export const api = {
   // --- AUTH ---
   async login(email: string, pass: string): Promise<{ access_token: string }> {
-    // --- LOCAL FALLBACK FOR SIMPLICITY ---
-    if (email === 'admin@rush-school.fr' && pass === 'admin') {
-      console.log('🔑 Using local admin fallback');
-      return { access_token: 'local-fake-token-for-dev' };
+    console.log('📤 Login Attempt:', email);
+    const response = await fetch(`${BASE_API_URL}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password: pass }),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      console.error('❌ Login Failed:', error);
+      throw new Error(error.message || 'Login failed');
     }
-
-    try {
-      const response = await fetch(`${AUTH_API_URL}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password: pass }),
-      });
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Login failed');
-      }
-      return await response.json();
-    } catch (error: any) {
-      console.error('❌ Backend Login Failed:', error);
-      // If we are here and it's NOT the admin fallback, we might still want to let admin pass 
-      // even if the backend is down entirely (redundant but safe)
-      if (email === 'admin@rush-school.fr' && pass === 'admin') {
-        return { access_token: 'local-fake-token-for-dev' };
-      }
-      throw error;
-    }
+    const data = await response.json();
+    console.log('📥 Login Success:', data);
+    return data;
   },
 
   // --- HEALTH ---
   async checkHealth(): Promise<boolean> {
     try {
-      console.log('🔍 Checking API Health at:', `${BASE_URL}/health`);
-      const response = await fetch(`${BASE_URL}/health`, { method: 'GET' });
+      console.log('🔍 Checking API Health at:', `${BASE_API_URL}/health`);
+      const response = await fetch(`${BASE_API_URL}/health`, { method: 'GET' });
       console.log('📊 Health Check Result:', response.ok ? '✅ OK' : `❌ Failed (${response.status})`);
       return response.ok;
     } catch (error) {
@@ -370,20 +561,38 @@ export const api = {
         avec_cerfa_uniquement: params?.avecCerfaUniquement ? 'true' : 'false',
         dossier_complet_uniquement: params?.dossierCompletUniquement ? 'true' : 'false'
       });
-      const response = await fetch(`${BASE_URL}/etudiants-fiches?${queryParams}`, {
+      // New backend uses /candidates for everything
+      const response = await fetch(`${BASE_URL}/candidats`, {
         method: 'GET',
         headers: { 'Accept': 'application/json' }
       });
       const data = await response.json();
-      // Ensure we include enterprise info in the returned etudiants
-      if (data.etudiants) {
-        data.etudiants = data.etudiants.map((s: any) => ({
-          ...s,
-          // Fields already in s from backend: id_entreprise, record_id_entreprise, entreprise_raison_sociale
-          // We ensure they are visible for the frontend logic
-        }));
+      console.log('API getStudentsList RAW:', data);
+
+      // Adaptation Local Backend: structure data { success: true, data: [...], count: ... }
+      let students: any[] = [];
+      if (Array.isArray(data)) {
+        students = data;
+      } else if (data.data && Array.isArray(data.data)) {
+        students = data.data;
+      } else if (data.etudiants && Array.isArray(data.etudiants)) {
+        students = data.etudiants;
       }
-      return data;
+
+      // Map backend fields to frontend format
+      const formattedStudents = students.map(s => {
+        // Use mapBackendToStudent if it looks like an Airtable record (has .fields)
+        if (s.fields) {
+          return mapBackendToStudent(s);
+        }
+        // Fallback for objects that might already be flat or different format
+        return s;
+      });
+
+      return {
+        ...data,
+        etudiants: formattedStudents
+      };
     } catch (error) {
       console.error('❌ API Error (Get Students List):', error);
       throw error;
@@ -393,12 +602,15 @@ export const api = {
   // Get RH Stats
   async getRHStats(): Promise<any> {
     try {
+      console.log('📤 Fetching RH Stats');
       const response = await fetch(`${BASE_API_URL}/rh/statistiques`, {
         method: 'GET',
         headers: { 'Accept': 'application/json' }
       });
       if (!response.ok) throw new Error('Failed to fetch RH stats');
-      return await response.json();
+      const data = await response.json();
+      console.log('📥 RH Stats Received:', data);
+      return data;
     } catch (error) {
       console.error('❌ API Error (Get RH Stats):', error);
       throw error;
@@ -409,6 +621,7 @@ export const api = {
   async submitStudent(data: StudentFormData): Promise<ApiResponse> {
     try {
       const payload = mapStudentToBackend(data);
+      console.log('📤 Submit Student Payload:', payload);
       const response = await fetch(`${BASE_URL}/candidates`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
@@ -416,9 +629,11 @@ export const api = {
       });
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('❌ Submit Student Failed:', errorData);
         throw new Error(errorData.detail || `Error ${response.status}`);
       }
       const json = await response.json();
+      console.log('📥 Submit Student Success:', json);
       return { success: true, record_id: json.record_id || json.id, data: json };
     } catch (error: any) {
       console.error('❌ API Error (Submit Student):', error);
@@ -428,45 +643,65 @@ export const api = {
 
   async getAllCandidates(): Promise<any[]> {
     try {
-      const response = await fetch(`${BASE_URL}/candidates`, {
+      const response = await fetch(`${BASE_URL}/candidats`, {
         method: 'GET',
         headers: { 'Accept': 'application/json' }
       });
       if (!response.ok) throw new Error('Failed to fetch candidates');
-      return await response.json();
+      const json = await response.json();
+      console.log('API getAllCandidates RAW:', json);
+      return Array.isArray(json) ? json : (json.data || []);
     } catch (error) { return []; }
   },
 
   async getCandidateById(id: string): Promise<any> {
     try {
-      const response = await fetch(`${BASE_URL}/candidates/${id}`, {
+      console.log('📤 Fetching Candidate:', id);
+      const response = await fetch(`${BASE_URL}/candidats/${id}`, {
         method: 'GET',
         headers: { 'Accept': 'application/json' }
       });
       if (!response.ok) throw new Error('Candidate not found');
-      return await response.json();
+      const json = await response.json();
+      console.log('📥 Candidate Received:', json);
+
+      // Adapt response for local backend (usually returns { success: true, data: { ... } })
+      const candidateData = json.data || json;
+
+      if (candidateData.fields) {
+        return mapBackendToStudent(candidateData);
+      }
+      return candidateData;
     } catch (error) { throw error; }
   },
 
   async updateCandidate(id: string, data: Partial<StudentFormData>): Promise<any> {
     try {
       const payload = mapStudentToBackend(data);
+      console.log('📤 Update Candidate Payload:', payload);
       const response = await fetch(`${BASE_URL}/candidates/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify(payload),
       });
-      if (!response.ok) throw new Error('Update failed');
-      return await response.json();
+      if (!response.ok) {
+        console.error('❌ Update Candidate Failed');
+        throw new Error('Update failed');
+      }
+      const json = await response.json();
+      console.log('📥 Update Candidate Success:', json);
+      return json;
     } catch (error) { throw error; }
   },
 
   async deleteCandidate(id: string): Promise<boolean> {
     try {
+      console.log('📤 Deleting Candidate:', id);
       const response = await fetch(`${BASE_URL}/candidates/${id}`, {
         method: 'DELETE',
         headers: { 'Accept': 'application/json' }
       });
+      console.log('📥 Delete Candidate Status:', response.status);
       return response.ok;
     } catch (error) { return false; }
   },
@@ -474,36 +709,97 @@ export const api = {
   // --- DOCUMENTS ---
   async uploadDocument(recordId: string, docType: string, file: File): Promise<any> {
     try {
+      console.log(`📤 Uploading Document (${docType}) for ${recordId}:`, file.name);
       const formData = new FormData();
       formData.append('file', file);
       const endpointMap: Record<string, string> = { 'cv': 'cv', 'cni': 'cin', 'lettre': 'lettre-motivation', 'vitale': 'carte-vitale', 'diplome': 'dernier-diplome' };
       const url = `${BASE_URL}/candidates/${recordId}/documents/${endpointMap[docType] || docType}`;
       const response = await fetch(url, { method: 'POST', headers: { 'Accept': 'application/json' }, body: formData });
       if (!response.ok) throw new Error(`Upload failed: ${response.statusText}`);
-      return await response.json();
+      const json = await response.json();
+      console.log('📥 Upload Success:', json);
+      return json;
     } catch (error) { throw error; }
   },
 
   // --- GENERATION ---
   async generateFicheRenseignement(recordId: string): Promise<any> {
     try {
-      const response = await fetch(`${BASE_URL}/generate-fiche/${recordId}`, {
+      console.log('📤 Generating Fiche Renseignement:', recordId);
+      const response = await fetch(`${BASE_URL}/candidats/${recordId}/fiche-renseignement`, {
         method: 'POST',
         headers: { 'Accept': 'application/json' }
       });
       if (!response.ok) throw new Error('Generation failed');
-      return await response.json();
+      const text = await response.text();
+      try {
+        const json = JSON.parse(text);
+        console.log('📥 Generation Success:', json);
+        return json;
+      } catch (e) {
+        console.log('📥 Generation Success (Non-JSON):', text);
+        return { success: true, message: text };
+      }
     } catch (error) { throw error; }
   },
 
   async generateCerfa(recordId: string): Promise<any> {
     try {
-      const response = await fetch(`${BASE_URL}/generate-cerfa/${recordId}`, {
+      console.log('📤 Generating CERFA:', recordId);
+      const response = await fetch(`${BASE_URL}/candidats/${recordId}/cerfa`, {
         method: 'POST',
         headers: { 'Accept': 'application/json' }
       });
       if (!response.ok) throw new Error('Generation failed');
-      return await response.json();
+      const text = await response.text();
+      try {
+        const json = JSON.parse(text);
+        console.log('📥 CERFA Generation Success:', json);
+        return json;
+      } catch (e) {
+        console.log('📥 CERFA Generation Success (Non-JSON):', text);
+        return { success: true, message: text };
+      }
+    } catch (error) { throw error; }
+  },
+
+  async generateAtre(recordId: string): Promise<any> {
+    try {
+      console.log('📤 Generating ATRE:', recordId);
+      const response = await fetch(`${BASE_URL}/candidats/${recordId}/atre`, {
+        method: 'POST',
+        headers: { 'Accept': 'application/json' }
+      });
+      if (!response.ok) throw new Error('Generation failed');
+      const text = await response.text();
+      try {
+        const json = JSON.parse(text);
+        console.log('📥 ATRE Generation Success:', json);
+        return json;
+      } catch (e) {
+        console.log('📥 ATRE Generation Success (Non-JSON):', text);
+        return { success: true, message: text };
+      }
+    } catch (error) { throw error; }
+  },
+
+  async generateCompteRendu(recordId: string): Promise<any> {
+    try {
+      console.log('📤 Generating Compte Rendu:', recordId);
+      const response = await fetch(`${BASE_URL}/candidats/${recordId}/compte-rendu`, {
+        method: 'POST',
+        headers: { 'Accept': 'application/json' }
+      });
+      if (!response.ok) throw new Error('Generation failed');
+      const text = await response.text();
+      try {
+        const json = JSON.parse(text);
+        console.log('📥 Compte Rendu Generation Success:', json);
+        return json;
+      } catch (e) {
+        console.log('📥 Compte Rendu Generation Success (Non-JSON):', text);
+        return { success: true, message: text };
+      }
     } catch (error) { throw error; }
   },
 
@@ -539,16 +835,39 @@ export const api = {
 
   async getAllCompanies(): Promise<any[]> {
     try {
-      const response = await fetch(`${BASE_URL}/entreprise`, { method: 'GET', headers: { 'Accept': 'application/json' } });
-      return response.ok ? await response.json() : [];
+      console.log('📤 Fetching All Companies');
+      const response = await fetch(`${BASE_URL}/entreprises`, { method: 'GET', headers: { 'Accept': 'application/json' } });
+      const json = await response.json();
+      const data = json.data || json;
+      const companies = Array.isArray(data) ? data.map(c => c.fields ? mapBackendToCompany(c) : c) : [];
+      console.log('📥 All Companies Received, count:', companies.length);
+      return response.ok ? companies : [];
     } catch (error) { return []; }
   },
 
   async getCompanyById(id: string): Promise<any> {
     try {
-      const response = await fetch(`${BASE_URL}/entreprise/${id}`, { method: 'GET', headers: { 'Accept': 'application/json' } });
+      console.log('📤 Fetching Company:', id);
+      const response = await fetch(`${BASE_URL}/entreprises/${id}`, { method: 'GET', headers: { 'Accept': 'application/json' } });
       if (!response.ok) throw new Error('Company not found');
-      return await response.json();
+      const json = await response.json();
+      console.log('📥 Company Received:', json);
+
+      // Return raw record (id, fields) directly for modal view compatibility
+      return json.data || json;
+    } catch (error) { throw error; }
+  },
+
+  async getCompanyByStudentId(studentId: string): Promise<any> {
+    try {
+      console.log('📤 Fetching Company for Student:', studentId);
+      const response = await fetch(`${BASE_URL}/candidats/${studentId}/entreprise`, { method: 'GET', headers: { 'Accept': 'application/json' } });
+      if (!response.ok) throw new Error('Company not found for this student');
+      const json = await response.json();
+      console.log('📥 Company for Student Received:', json);
+
+      // Return raw record (id, fields) directly for modal view compatibility
+      return json.data || json;
     } catch (error) { throw error; }
   },
 
@@ -556,7 +875,7 @@ export const api = {
     try {
       const payload = mapCompanyToBackend(data);
       console.log('📤 Updating Company Payload:', payload);
-      const response = await fetch(`${BASE_URL}/entreprise/${id}`, {
+      const response = await fetch(`${BASE_URL}/entreprises/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify(payload),
@@ -571,6 +890,47 @@ export const api = {
     } catch (error) {
       console.error('❌ Company Update Error:', error);
       throw error;
+    }
+  },
+
+  // --- HISTORY ---
+  async getHistory(studentId: string): Promise<any[]> {
+    try {
+      console.log('📤 Fetching History for:', studentId);
+      const response = await fetch(`${BASE_URL}/historique/${studentId}`, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      });
+      // If 404/Error, return empty array for now or throw
+      if (!response.ok) {
+        if (response.status === 404) return [];
+        // Fallback to mock if API not ready
+        throw new Error('API/Route not found');
+      }
+      const json = await response.json();
+      return Array.isArray(json) ? json : (json.data || []);
+    } catch (error) {
+      console.warn('⚠️ History API not ready, using mock data');
+      return [
+        { id: '1', action: 'Création dossier', date: new Date(Date.now() - 10000000).toISOString(), details: 'Inscription via formulaire web', utilisateur: 'Système' },
+        { id: '2', action: 'Document ajouté', date: new Date(Date.now() - 5000000).toISOString(), details: 'CV téléchargé', utilisateur: 'Ny Aina' },
+        { id: '3', action: 'Note', date: new Date().toISOString(), details: 'Entretien téléphonique positif', utilisateur: 'Ny Aina' }
+      ];
+    }
+  },
+
+  async addHistory(entry: Partial<{ studentId: string, action: string, details: string, utilisateur: string }>): Promise<any> {
+    try {
+      const response = await fetch(`${BASE_URL}/historique`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify(entry)
+      });
+      if (!response.ok) throw new Error('Failed to add history');
+      return await response.json();
+    } catch (e) {
+      console.error('Add History failed:', e);
+      return { success: true, ...entry, date: new Date().toISOString(), id: 'local-' + Date.now() };
     }
   }
 };

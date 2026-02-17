@@ -16,7 +16,9 @@ import {
     ChevronRight,
     MoreHorizontal,
     LayoutGrid,
-    List
+    List,
+    History,
+    ClipboardList
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
@@ -25,6 +27,7 @@ import { useAppStore } from '../store/useAppStore';
 import { AdmissionTab } from '../types';
 import CandidateDetailsModal from './dashboard/CandidateDetailsModal';
 import CompanyDetailsModal from './dashboard/CompanyDetailsModal';
+import HistoryTimeline from './dashboard/HistoryTimeline';
 import { useApi } from '../hooks/useApi';
 import { useCandidates, getC } from '../hooks/useCandidates';
 
@@ -38,7 +41,9 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
-    const [currentTab, setCurrentTab] = useState<'students' | 'stats'>('students');
+    const [currentTab, setCurrentTab] = useState<'students' | 'stats' | 'history'>('students');
+    const [globalHistory, setGlobalHistory] = useState<any[]>([]);
+    const [loadingHistory, setLoadingHistory] = useState(false);
     const [filter, setFilter] = useState<'all' | 'withFiche' | 'withCerfa' | 'complete'>('all');
 
     // Modal State
@@ -108,6 +113,10 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                 caisse_retraite: f["Caisse de retraite"] || "",
                 numero_deca_ancien_contrat: f["Numéro DECA de ancien contrat"] || "",
                 date_avenant: f["date Si avenant"] || "",
+                smic1: "smic",
+                smic2: "smic",
+                smic3: "smic",
+                smic4: "smic",
                 montant_salaire_brut1: f["Salaire brut mensuel 1"] || 0,
                 montant_salaire_brut2: f["Salaire brut mensuel 2"] || 0,
                 montant_salaire_brut3: f["Salaire brut mensuel 3"] || 0,
@@ -255,7 +264,7 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
         let studentsWithAge = 0;
 
         students.forEach(s => {
-            const info = s.informations_personnelles || s.fields || s;
+            const info = getC(s);
 
             // Sexe
             const sexe = (info.sexe || "").toLowerCase();
@@ -311,19 +320,31 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
 
     const handleViewCompanyDetails = async (student: any) => {
         setIsCompanyEditing(false); // Default to view mode
-        if (!student.id_entreprise && !student.record_id_entreprise && !student.entreprise_raison_sociale) {
-            // Redirect to enterprise form if no company linked
-            onSelectStudent(student, AdmissionTab.ENTREPRISE);
-            navigate('/admission');
-            return;
+
+        // Strategy 1: Try fetching by Student ID (Backend Link)
+        try {
+            const studentId = student.record_id || student.id;
+            const company = await api.getCompanyByStudentId(studentId);
+            if (company) {
+                setIsCompanyModalOpen(true);
+                setSelectedCompany(company);
+                initializeCompanyForm(company);
+                return;
+            }
+        } catch (e) {
+            console.log("No company found via student ID link");
         }
 
+        // Strategy 2: Try ID Enterprise if present (Fallback)
         const companyId = student.id_entreprise || student.record_id_entreprise;
         if (companyId) {
             setIsCompanyModalOpen(true);
             await fetchCompanyDetails(companyId);
-        } else if (student.entreprise_raison_sociale) {
-            // Try to find company by name if ID is missing (fallback)
+            return;
+        }
+
+        // Strategy 3: Try to find company by name if ID is missing
+        if (student.entreprise_raison_sociale) {
             showToast("Récupération de l'entreprise...", "info");
             try {
                 const companies = await api.getAllCompanies();
@@ -341,6 +362,7 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                 navigate('/admission');
             }
         } else {
+            // No info at all -> Go to create mode
             onSelectStudent(student, AdmissionTab.ENTREPRISE);
             navigate('/admission');
         }
@@ -500,9 +522,16 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                     Statistiques
                     {currentTab === 'stats' && <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full"></div>}
                 </button>
+                <button
+                    onClick={() => setCurrentTab('history')}
+                    className={`pb-4 px-2 text-sm font-black uppercase tracking-widest transition-all relative ${currentTab === 'history' ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}
+                >
+                    Historique Global
+                    {currentTab === 'history' && <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full"></div>}
+                </button>
             </div>
 
-            {currentTab === 'students' ? (
+            {currentTab === 'students' && (
                 <>
                     {/* Toolbar */}
                     <div className="flex flex-col lg:flex-row gap-6 items-center justify-between">
@@ -638,30 +667,63 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                                                                 <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Fiche</span>
                                                                 {student.has_fiche_renseignement ? (
                                                                     <button
-                                                                        onClick={() => handleDownload(rawStudent.fiche_entreprise?.url, rawStudent.fiche_entreprise?.filename)}
-                                                                        className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center hover:bg-emerald-600 hover:text-white transition-all shadow-sm border border-emerald-100/50"
+                                                                        onClick={() => handleDownload(rawStudent.fiche_entreprise?.url || rawStudent.fields?.["Fiche entreprise"]?.[0]?.url, rawStudent.fiche_entreprise?.filename || rawStudent.fields?.["Fiche entreprise"]?.[0]?.filename)}
+                                                                        className="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center hover:bg-emerald-600 hover:text-white transition-all shadow-sm border border-emerald-100/50"
+                                                                        title="Télécharger Fiche Renseignement"
                                                                     >
-                                                                        <CheckCircle2 size={18} />
+                                                                        <CheckCircle2 size={16} />
                                                                     </button>
                                                                 ) : (
-                                                                    <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-500 flex items-center justify-center border border-amber-100/50">
-                                                                        <AlertCircle size={18} />
+                                                                    <div className="w-9 h-9 rounded-lg bg-slate-50 text-slate-200 flex items-center justify-center border border-slate-100">
+                                                                        <CheckCircle2 size={16} />
                                                                     </div>
                                                                 )}
                                                             </div>
-                                                            <div className="w-px h-8 bg-slate-100"></div>
                                                             <div className="flex flex-col items-center gap-1.5">
                                                                 <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">CERFA</span>
                                                                 {student.has_cerfa ? (
                                                                     <button
-                                                                        onClick={() => handleDownload(rawStudent.cerfa?.url, rawStudent.cerfa?.filename)}
-                                                                        className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center hover:bg-indigo-600 hover:text-white transition-all shadow-sm border border-indigo-100/50"
+                                                                        onClick={() => handleDownload(rawStudent.cerfa?.url || rawStudent.fields?.["cerfa"]?.[0]?.url, rawStudent.cerfa?.filename || rawStudent.fields?.["cerfa"]?.[0]?.filename)}
+                                                                        className="w-9 h-9 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center hover:bg-indigo-600 hover:text-white transition-all shadow-sm border border-indigo-100/50"
+                                                                        title="Télécharger CERFA"
                                                                     >
-                                                                        <ShieldCheck size={18} />
+                                                                        <ShieldCheck size={16} />
                                                                     </button>
                                                                 ) : (
-                                                                    <div className="w-10 h-10 rounded-xl bg-slate-50 text-slate-300 flex items-center justify-center border border-slate-100">
-                                                                        <ShieldCheck size={18} />
+                                                                    <div className="w-9 h-9 rounded-lg bg-slate-50 text-slate-200 flex items-center justify-center border border-slate-100">
+                                                                        <ShieldCheck size={16} />
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                            <div className="flex flex-col items-center gap-1.5">
+                                                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">ATRE</span>
+                                                                {student.has_atre ? (
+                                                                    <button
+                                                                        onClick={() => handleDownload(rawStudent.atre_url || rawStudent.fields?.["Atre"]?.[0]?.url, rawStudent.atre_name || rawStudent.fields?.["Atre"]?.[0]?.filename)}
+                                                                        className="w-9 h-9 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center hover:bg-orange-600 hover:text-white transition-all shadow-sm border border-orange-100/50"
+                                                                        title="Télécharger ATRE"
+                                                                    >
+                                                                        <FileText size={16} />
+                                                                    </button>
+                                                                ) : (
+                                                                    <div className="w-9 h-9 rounded-lg bg-slate-50 text-slate-200 flex items-center justify-center border border-slate-100">
+                                                                        <FileText size={16} />
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                            <div className="flex flex-col items-center gap-1.5">
+                                                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">CR</span>
+                                                                {student.has_compte_rendu ? (
+                                                                    <button
+                                                                        onClick={() => handleDownload(rawStudent.compte_rendu_url || rawStudent.fields?.["compte rendu de visite"]?.[0]?.url, rawStudent.compte_rendu_name || rawStudent.fields?.["compte rendu de visite"]?.[0]?.filename)}
+                                                                        className="w-9 h-9 rounded-lg bg-pink-50 text-pink-600 flex items-center justify-center hover:bg-pink-600 hover:text-white transition-all shadow-sm border border-pink-100/50"
+                                                                        title="Télécharger Compte Rendu"
+                                                                    >
+                                                                        <ClipboardList size={16} />
+                                                                    </button>
+                                                                ) : (
+                                                                    <div className="w-9 h-9 rounded-lg bg-slate-50 text-slate-200 flex items-center justify-center border border-slate-100">
+                                                                        <ClipboardList size={16} />
                                                                     </div>
                                                                 )}
                                                             </div>
@@ -681,7 +743,7 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                                     <div key={i} className="bg-white rounded-[32px] p-8 border border-slate-100 animate-pulse h-64"></div>
                                 ))
                             ) : filteredStudents.map((student) => (
-                                <div key={student.record_id} className="bg-white border border-slate-200 rounded-[32px] p-8 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 group relative overflow-hidden">
+                                <div key={student.record_id || student.id} className="bg-white border border-slate-200 rounded-[32px] p-8 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 group relative overflow-hidden">
                                     <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full -mr-16 -mt-16 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
 
                                     <div className="flex justify-between items-start mb-8 relative z-10">
@@ -735,8 +797,9 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                         </div>
                     )}
                 </>
-            ) : (
-                /* Stats View */
+            )}
+
+            {currentTab === 'stats' && (
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
                     {loading ? (
                         <div className="flex flex-col items-center justify-center py-32 gap-4">
@@ -842,6 +905,21 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                             <p className="text-slate-500 font-bold">Impossible de générer les statistiques. Données insuffisantes.</p>
                         </div>
                     )}
+                </div>
+            )}
+
+            {currentTab === 'history' && (
+                <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-xl shadow-slate-200/50 min-h-[500px]">
+                    <div className="flex items-center gap-4 mb-8">
+                        <div className="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center">
+                            <History size={24} />
+                        </div>
+                        <div>
+                            <h2 className="text-xl font-black text-slate-800">Historique des actions</h2>
+                            <p className="text-slate-400 font-medium text-sm">Toutes les activités récentes de la classe</p>
+                        </div>
+                    </div>
+                    <HistoryTimeline history={globalHistory} loading={loadingHistory} />
                 </div>
             )}
         </div>

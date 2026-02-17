@@ -24,11 +24,19 @@ export const getC = (c: any) => {
         ville: info.ville || d['Commune de naissance'] || d.ville || d.commune_naissance || c.ville || "Non renseigné",
         entreprise: nom_ent || "En recherche",
         telephone: info.telephone || d['Téléphone'] || d.telephone || c.telephone || "",
+        sexe: info.sexe || d['Sexe'] || d.sexe || c.sexe || "",
+        date_naissance: info.date_naissance || d['Date de naissance'] || d.date_naissance || c.date_naissance || "",
         alternance: alt,
         id_entreprise: id_ent,
-        has_cerfa: c.has_cerfa,
-        has_fiche_renseignement: c.has_fiche_renseignement,
-        has_cv: c.has_cv
+        has_cerfa: c.has_cerfa || d.has_cerfa,
+        has_fiche_renseignement: c.has_fiche_renseignement || d.has_fiche_renseignement,
+        has_cv: c.has_cv || d.has_cv,
+        has_atre: c.has_atre || d.has_atre,
+        has_compte_rendu: c.has_compte_rendu || d.has_compte_rendu,
+        atre_url: c.atre_url || d.atre_url,
+        atre_name: c.atre_name || d.atre_name,
+        compte_rendu_url: c.compte_rendu_url || d.compte_rendu_url,
+        compte_rendu_name: c.compte_rendu_name || d.compte_rendu_name
     };
 };
 
@@ -44,35 +52,57 @@ export const useCandidates = () => {
 
     const fetchApi = useCallback(() => Promise.all([
         api.getAllCandidates(),
-        api.getStudentsList()
+        api.getStudentsList(),
+        api.getAllCompanies()
     ]), []);
 
-    const { execute, loading, error } = useApi(fetchApi, {
+    const mergedDataCallback = useCallback((rawData: any) => {
+        const [candidatesData, fichesData, companiesData] = rawData as [any, any, any[]];
+        const fichesList = Array.isArray(fichesData?.etudiants) ? fichesData.etudiants : [];
+        const companiesList = Array.isArray(companiesData) ? companiesData : [];
+
+        // Handle candidatesData being wrapped in { data: [...] } or just [...]
+        const candidatesList = Array.isArray(candidatesData) ? candidatesData : (candidatesData?.data || []);
+
+        const mergedData = Array.isArray(candidatesList) ? candidatesList.map((c: any) => {
+            const d = c.fields || c;
+            const candidateId = c.id || d.id || d.record_id || c.record_id;
+            const fiche = fichesList.find((f: any) => f.record_id === candidateId || f.id === candidateId);
+
+            // Find company where recordIdetudiant matches this candidate
+            const company = companiesList.find((ent: any) => {
+                const entFields = ent.fields || ent;
+                const entStudentId = entFields.recordIdetudiant || entFields.record_id_etudiant;
+                return entStudentId === candidateId || (Array.isArray(entStudentId) && entStudentId.includes(candidateId));
+            });
+
+            return {
+                ...c,
+                // Prioritize fiche info for real-time status, then manual join, then candidate fields
+                id_entreprise: fiche?.id_entreprise || company?.id || c.id_entreprise || d.id_entreprise || d.record_id_entreprise,
+                record_id_entreprise: fiche?.record_id_entreprise || company?.id || c.record_id_entreprise || d.record_id_entreprise,
+                entreprise_raison_sociale: fiche?.entreprise_raison_sociale || (company?.fields || company)?.['Raison sociale'] || c.entreprise_raison_sociale || d.entreprise_raison_sociale || d['Raison sociale (from Entreprise)'],
+                has_cerfa: fiche?.has_cerfa || c.has_cerfa || !!(d['cerfa'] && d['cerfa'].length > 0) || false,
+                has_fiche_renseignement: fiche?.has_fiche_renseignement || c.has_fiche_renseignement || !!(d['Fiche entreprise'] && d['Fiche entreprise'].length > 0) || false,
+                has_cv: fiche?.has_cv || c.has_cv || !!(d['CV'] && d['CV'].length > 0) || false,
+                has_atre: fiche?.has_atre || c.has_atre || !!(d['Atre'] && d['Atre'].length > 0) || false,
+                has_compte_rendu: fiche?.has_compte_rendu || c.has_compte_rendu || !!(d['compte rendu de visite'] && d['compte rendu de visite'].length > 0) || false,
+                atre_url: fiche?.atre_url || c.atre_url || d['Atre']?.[0]?.url || "",
+                atre_name: fiche?.atre_name || c.atre_name || d['Atre']?.[0]?.filename || "",
+                compte_rendu_url: fiche?.compte_rendu_url || c.compte_rendu_url || d['compte rendu de visite']?.[0]?.url || "",
+                compte_rendu_name: fiche?.compte_rendu_name || c.compte_rendu_name || d['compte rendu de visite']?.[0]?.filename || "",
+                dossier_complet: fiche?.dossier_complet || false
+            };
+        }) : [];
+        setCandidates(mergedData);
+    }, [setCandidates]);
+
+    const apiOptions = useMemo(() => ({
         silentLoading: cachedCandidates.length > 0,
-        onSuccess: (rawData: any) => {
-            const [candidatesData, fichesData] = rawData as [any, any];
-            const fichesList = Array.isArray(fichesData?.etudiants) ? fichesData.etudiants : [];
-            
-            const mergedData = Array.isArray(candidatesData) ? candidatesData.map((c: any) => {
-                const d = c.fields || c;
-                const candidateId = c.id || d.id || d.record_id || c.record_id;
-                const fiche = fichesList.find((f: any) => f.record_id === candidateId || f.id === candidateId);
-                
-                return {
-                    ...c,
-                    // Prioritize fiche info for real-time status
-                    id_entreprise: fiche?.id_entreprise || c.id_entreprise || d.id_entreprise || d.record_id_entreprise,
-                    record_id_entreprise: fiche?.record_id_entreprise || c.record_id_entreprise || d.record_id_entreprise,
-                    entreprise_raison_sociale: fiche?.entreprise_raison_sociale || c.entreprise_raison_sociale || d.entreprise_raison_sociale || d['Raison sociale (from Entreprise)'],
-                    has_cerfa: fiche?.has_cerfa || false,
-                    has_fiche_renseignement: fiche?.has_fiche_renseignement || false,
-                    has_cv: fiche?.has_cv || false,
-                    dossier_complet: fiche?.dossier_complet || false
-                };
-            }) : [];
-            setCandidates(mergedData);
-        }
-    });
+        onSuccess: mergedDataCallback
+    }), [cachedCandidates.length, mergedDataCallback]);
+
+    const { execute, loading, error } = useApi(fetchApi, apiOptions);
 
     useEffect(() => {
         // Fetch on mount if empty or if data is "old" (e.g. older than 5 minutes)
