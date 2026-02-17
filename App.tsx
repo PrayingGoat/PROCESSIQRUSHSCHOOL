@@ -13,6 +13,7 @@ import ClassNTCView from './components/ClassNTCView';
 import { AdmissionTab } from './types';
 import AdminLoginPage from './components/AdminLoginPage';
 import AdminDashboard from './components/AdminDashboard';
+import TestPage from './components/TestPage';
 
 
 const RequireAuth = ({ children, allowedRoles }: { children: React.ReactNode, allowedRoles?: string[] }) => {
@@ -48,7 +49,7 @@ const App = () => {
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
   const [selectedTab, setSelectedTab] = useState<AdmissionTab | null>(null);
   const location = useLocation();
-  const isLoginPage = location.pathname === '/login' || location.pathname === '/admin/login' || location.pathname.startsWith('/admin');
+  const isStandalonePage = location.pathname === '/login' || location.pathname === '/admin/login' || location.pathname.startsWith('/admin') || location.pathname === '/test';
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
@@ -67,7 +68,7 @@ const App = () => {
     <div className="min-h-screen bg-slate-50 font-sans text-slate-800">
       <Toast />
 
-      {!isLoginPage && (
+      {!isStandalonePage && (
         <>
           {/* Sidebar Overlay for Mobile */}
           {sidebarOpen && (
@@ -86,15 +87,15 @@ const App = () => {
       )}
 
       {/* Main Content Wrapper */}
-      <div className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${!isLoginPage ? 'md:ml-[260px]' : ''}`}>
-        {!isLoginPage && (
+      <div className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${!isStandalonePage ? 'md:ml-[260px]' : ''}`}>
+        {!isStandalonePage && (
           <Header
             toggleSidebar={toggleSidebar}
             activeModule={activeModule}
           />
         )}
 
-        <main className={`${!isLoginPage ? 'flex-1 p-8 md:p-10 overflow-y-auto' : 'h-screen'}`}>
+        <main className={`${!isStandalonePage ? 'flex-1 p-8 md:p-10 overflow-y-auto' : 'h-screen'}`}>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
 
@@ -144,6 +145,12 @@ const App = () => {
                       setSelectedTab(tab);
                     }}
                   />
+                </RequireAuth>
+              } />
+
+              <Route path="/test" element={
+                <RequireAuth allowedRoles={['admission']}>
+                  <TestPage />
                 </RequireAuth>
               } />
 
