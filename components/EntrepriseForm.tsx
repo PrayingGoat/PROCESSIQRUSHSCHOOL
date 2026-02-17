@@ -284,11 +284,28 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
     };
 
     const toggleMission = (mission: string) => {
-        const current = formData.missions.selectionnees;
-        const next = current.includes(mission)
-            ? current.filter(m => m !== mission)
-            : [...current, mission];
-        setValue('missions.selectionnees', next, { shouldValidate: true });
+        const current = watch('missions.selectionnees') || [];
+        if (current.includes(mission)) {
+            setValue('missions.selectionnees', current.filter(m => m !== mission), { shouldValidate: true });
+        } else {
+            setValue('missions.selectionnees', [...current, mission], { shouldValidate: true });
+        }
+    };
+
+    // Helper to check if any field in a section has an error
+    const hasSectionError = (sectionFields: string[]) => {
+        return sectionFields.some(field => {
+            const parts = field.split('.');
+            let current = errors as any;
+            for (const part of parts) {
+                if (!current || !current[part]) {
+                    current = null;
+                    break;
+                }
+                current = current[part];
+            }
+            return !!current;
+        });
     };
 
     const { execute: submitCompany, loading: isSubmitting } = useApi(api.submitCompany, {
@@ -335,6 +352,7 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
                         collapsible
                         isOpen={activeSection === 'id'}
                         onToggle={() => toggleSection('id')}
+                        hasError={hasSectionError(['identification.raison_sociale', 'identification.siret', 'identification.code_ape_naf', 'identification.type_employeur', 'identification.effectif', 'identification.convention'])}
                     >
                         <div className="grid grid-cols-12 gap-5">
                             <div className="col-span-12">
@@ -375,6 +393,7 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
                         collapsible
                         isOpen={activeSection === 'address'}
                         onToggle={() => toggleSection('address')}
+                        hasError={hasSectionError(['adresse.num', 'adresse.voie', 'adresse.complement', 'adresse.code_postal', 'adresse.ville', 'adresse.telephone', 'adresse.email'])}
                     >
                         <div className="grid grid-cols-12 gap-5">
                             <div className="col-span-12 md:col-span-3">
@@ -411,6 +430,7 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
                         collapsible
                         isOpen={activeSection === 'maitre'}
                         onToggle={() => toggleSection('maitre')}
+                        hasError={hasSectionError(['maitre_apprentissage.nom', 'maitre_apprentissage.prenom', 'maitre_apprentissage.date_naissance', 'maitre_apprentissage.fonction', 'maitre_apprentissage.diplome', 'maitre_apprentissage.experience', 'maitre_apprentissage.telephone', 'maitre_apprentissage.email'])}
                     >
                         <div className="grid grid-cols-12 gap-5">
                             <div className="col-span-12 md:col-span-6">
@@ -457,6 +477,7 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
                         collapsible
                         isOpen={activeSection === 'opco'}
                         onToggle={() => toggleSection('opco')}
+                        hasError={hasSectionError(['opco.nom'])}
                     >
                         <div className="grid grid-cols-12 gap-5">
                             <div className="col-span-12">
@@ -479,6 +500,7 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
                         collapsible
                         isOpen={activeSection === 'training'}
                         onToggle={() => toggleSection('training')}
+                        hasError={hasSectionError(['formation.choisie', 'formation.date_debut', 'formation.date_fin', 'cfa.rush_school', 'cfa.entreprise', 'cfa.denomination', 'cfa.uai', 'cfa.siret', 'cfa.adresse', 'cfa.code_postal', 'cfa.commune'])}
                     >
                         <div className="grid grid-cols-12 gap-5">
                             <div className="col-span-12">
@@ -599,6 +621,7 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
                         collapsible
                         isOpen={activeSection === 'contract'}
                         onToggle={() => toggleSection('contract')}
+                        hasError={hasSectionError(['contrat.type_contrat', 'contrat.type_derogation', 'contrat.duree_hebdomadaire', 'contrat.poste_occupe', 'contrat.lieu_execution', 'contrat.numero_deca_ancien_contrat', 'contrat.date_conclusion', 'contrat.date_debut_execution', 'contrat.date_avenant', 'contrat.caisse_retraite', 'contrat.machines_dangereuses'])}
                     >
                         <div className="grid grid-cols-12 gap-5">
                             <div className="col-span-12 md:col-span-6">
@@ -817,6 +840,7 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
                         collapsible
                         isOpen={activeSection === 'missions'}
                         onToggle={() => toggleSection('missions')}
+                        hasError={hasSectionError(['missions.formation_alternant', 'missions.selectionnees'])}
                     >
                         <div className="space-y-8">
                             <div className="bg-slate-50/50 p-8 rounded-3xl border border-slate-100">

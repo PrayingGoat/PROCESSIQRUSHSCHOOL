@@ -14,6 +14,7 @@ interface CardProps {
   defaultOpen?: boolean;
   isOpen?: boolean;
   onToggle?: () => void;
+  hasError?: boolean;
 }
 
 const Card: React.FC<CardProps> = ({
@@ -28,7 +29,8 @@ const Card: React.FC<CardProps> = ({
   collapsible = false,
   defaultOpen = true,
   isOpen: controlledIsOpen,
-  onToggle
+  onToggle,
+  hasError
 }) => {
   const [internalIsOpen, setInternalIsOpen] = useState(defaultOpen);
 
@@ -50,28 +52,34 @@ const Card: React.FC<CardProps> = ({
   };
 
   return (
-    <div className={`rounded-3xl transition-all duration-300 ${variantStyles[variant]} ${className}`}>
+    <div className={`rounded-3xl transition-all duration-300 ${variantStyles[variant]} ${className} ${hasError ? 'border-rose-200 shadow-rose-100/50' : ''}`}>
       {(title || icon || step) && (
         <div
-          className={`flex items-center gap-4 px-6 md:px-8 py-5 border-b border-slate-50 ${collapsible ? 'cursor-pointer select-none' : ''}`}
+          className={`flex items-center gap-4 px-6 md:px-8 py-5 border-b transition-colors ${hasError ? 'border-rose-50 bg-rose-50/30' : 'border-slate-50'} ${collapsible ? 'cursor-pointer select-none' : ''}`}
           onClick={() => collapsible && handleToggle()}
         >
           {step && (
-            <div className="w-9 h-9 bg-brand/10 text-brand rounded-xl flex items-center justify-center font-black text-sm shadow-sm border border-brand/20">
+            <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-black text-sm shadow-sm border transition-colors ${hasError
+              ? 'bg-rose-500 text-white border-rose-600 shadow-rose-200'
+              : 'bg-brand/10 text-brand border-brand/20'}`}>
               {step}
             </div>
           )}
           {icon && (
-            <div className="w-10 h-10 bg-slate-50 text-slate-500 rounded-xl flex items-center justify-center border border-slate-100">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center border transition-colors ${hasError
+              ? 'bg-rose-100 text-rose-600 border-rose-200'
+              : 'bg-slate-50 text-slate-500 border-slate-100'}`}>
               {icon}
             </div>
           )}
           <div className="flex-1">
-            {title && <h3 className="text-base font-black text-slate-800 tracking-tight leading-none">{title}</h3>}
-            {subtitle && <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mt-1.5">{subtitle}</p>}
+            {title && <h3 className={`text-base font-black tracking-tight leading-none transition-colors ${hasError ? 'text-rose-700' : 'text-slate-800'}`}>{title}</h3>}
+            {subtitle && <p className={`text-[11px] font-bold uppercase tracking-wider mt-1.5 transition-colors ${hasError ? 'text-rose-400' : 'text-slate-400'}`}>{subtitle}</p>}
           </div>
           {collapsible && (
-            <div className={`w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}>
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 ${hasError
+              ? 'bg-rose-100 text-rose-500'
+              : 'bg-slate-50 text-slate-400'} ${isOpen ? 'rotate-180' : ''}`}>
               <ChevronDown size={18} strokeWidth={3} />
             </div>
           )}

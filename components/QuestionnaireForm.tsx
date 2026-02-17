@@ -188,11 +188,18 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext, initialDa
         return () => subscription.unsubscribe();
     }, [watch, setDraftStudent]);
 
+    const { execute: generateCerfaApi } = useApi(api.generateCerfa, {
+        silentLoading: true // Don't block UI with multiple loaders
+    });
+
     const { execute: submitStudent, loading: isSubmitting } = useApi(api.submitStudent, {
         successMessage: "Inscription enregistrée avec succès !",
         onSuccess: (response) => {
-            if (response && response.record_id) {
-                localStorage.setItem('candidateRecordId', response.record_id);
+            const recordId = response?.record_id || response?.id;
+            if (recordId) {
+                localStorage.setItem('candidateRecordId', recordId);
+                // Trigger CERFA generation in background
+                generateCerfaApi(recordId).catch(err => console.error("CERFA pre-generation failed:", err));
             }
             clearDraftStudent();
             onNext(response);
@@ -209,6 +216,14 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext, initialDa
     const declarations = watch();
     const dateNaissance = watch('date_naissance');
     const addSecondRep = watch('add_second_representative');
+
+    // Helper to check if any field in a section has an error
+    const hasSectionError = (sectionFields: string[]) => {
+        return sectionFields.some(field => {
+            const fieldError = (errors as any)[field];
+            return !!fieldError;
+        });
+    };
 
     const isMinor = React.useMemo(() => {
         if (!dateNaissance) return false;
@@ -245,6 +260,7 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext, initialDa
                     collapsible
                     isOpen={activeSection === 'personal'}
                     onToggle={() => toggleSection('personal')}
+                    hasError={hasSectionError(['prenom', 'nom_naissance', 'nom_usage', 'sexe', 'date_naissance', 'nationalite', 'commune_naissance', 'departement'])}
                 >
                     <div className="grid grid-cols-12 gap-5">
                         <div className="col-span-12 md:col-span-6">
@@ -307,6 +323,7 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext, initialDa
                     collapsible
                     isOpen={activeSection === 'contact'}
                     onToggle={() => toggleSection('contact')}
+                    hasError={hasSectionError(['num_residence', 'rue_residence', 'complement_residence', 'code_postal', 'ville', 'email', 'telephone', 'nir'])}
                 >
                     <div className="grid grid-cols-12 gap-5">
                         <div className="col-span-12 md:col-span-3">
@@ -351,6 +368,7 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext, initialDa
                         collapsible
                         isOpen={activeSection === 'legal'}
                         onToggle={() => toggleSection('legal')}
+                        hasError={hasSectionError(['representant_legal_1', 'representant_legal_2'])}
                     >
                         <div className="space-y-8">
                             <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100">
@@ -456,6 +474,7 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext, initialDa
                     collapsible
                     isOpen={activeSection === 'situation'}
                     onToggle={() => toggleSection('situation')}
+                    hasError={hasSectionError(['situation', 'regime_social', 'declare_inscription_sportif_haut_niveau', 'declare_avoir_projet_creation_reprise_entreprise', 'declare_travailleur_handicape', 'alternance'])}
                 >
                     <div className="grid grid-cols-12 gap-5">
                         <div className="col-span-12">
@@ -516,6 +535,7 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext, initialDa
                     collapsible
                     isOpen={activeSection === 'school'}
                     onToggle={() => toggleSection('school')}
+                    hasError={hasSectionError(['dernier_diplome_prepare', 'derniere_classe', 'intitulePrecisDernierDiplome', 'bac'])}
                 >
                     <div className="grid grid-cols-12 gap-5">
                         <div className="col-span-12">
@@ -569,6 +589,7 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext, initialDa
                     collapsible
                     isOpen={activeSection === 'desire'}
                     onToggle={() => toggleSection('desire')}
+                    hasError={hasSectionError(['formation_souhaitee', 'date_de_visite', 'date_de_reglement', 'entreprise_d_accueil'])}
                 >
                     <div className="grid grid-cols-12 gap-5">
                         <div className="col-span-12">
@@ -611,6 +632,7 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext, initialDa
                     collapsible
                     isOpen={activeSection === 'extra'}
                     onToggle={() => toggleSection('extra')}
+                    hasError={hasSectionError(['connaissance_rush_how', 'motivation_projet_professionnel'])}
                 >
                     <div className="grid grid-cols-12 gap-5">
                         <div className="col-span-12">
