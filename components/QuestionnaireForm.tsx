@@ -194,12 +194,14 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext, initialDa
 
     const { execute: submitStudent, loading: isSubmitting } = useApi(api.submitStudent, {
         successMessage: "Inscription enregistrée avec succès !",
-        onSuccess: (response) => {
+        onSuccess: async (response) => {
             const recordId = response?.record_id || response?.id;
             if (recordId) {
                 localStorage.setItem('candidateRecordId', recordId);
-                // Trigger CERFA generation in background
-                generateCerfaApi(recordId).catch(err => console.error("CERFA pre-generation failed:", err));
+                // Trigger CERFA generation in background with a small delay for Airtable sync
+                setTimeout(() => {
+                    generateCerfaApi(recordId).catch(err => console.error("CERFA pre-generation failed:", err));
+                }, 2000);
             }
             clearDraftStudent();
             onNext(response);

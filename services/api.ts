@@ -562,7 +562,7 @@ export const api = {
         dossier_complet_uniquement: params?.dossierCompletUniquement ? 'true' : 'false'
       });
       // New backend uses /candidates for everything
-      const response = await fetch(`${BASE_URL}/candidats`, {
+      const response = await fetch(`${BASE_URL}/candidates`, {
         method: 'GET',
         headers: { 'Accept': 'application/json' }
       });
@@ -643,7 +643,7 @@ export const api = {
 
   async getAllCandidates(): Promise<any[]> {
     try {
-      const response = await fetch(`${BASE_URL}/candidats`, {
+      const response = await fetch(`${BASE_URL}/candidates`, {
         method: 'GET',
         headers: { 'Accept': 'application/json' }
       });
@@ -657,7 +657,7 @@ export const api = {
   async getCandidateById(id: string): Promise<any> {
     try {
       console.log('📤 Fetching Candidate:', id);
-      const response = await fetch(`${BASE_URL}/candidats/${id}`, {
+      const response = await fetch(`${BASE_URL}/candidates/${id}`, {
         method: 'GET',
         headers: { 'Accept': 'application/json' }
       });
@@ -730,7 +730,11 @@ export const api = {
         method: 'POST',
         headers: { 'Accept': 'application/json' }
       });
-      if (!response.ok) throw new Error('Generation failed');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('❌ Fiche Renseignement Generation Failed:', errorData);
+        throw new Error(errorData.detail || errorData.message || 'Generation failed');
+      }
       const text = await response.text();
       try {
         const json = JSON.parse(text);
@@ -746,11 +750,24 @@ export const api = {
   async generateCerfa(recordId: string): Promise<any> {
     try {
       console.log('📤 Generating CERFA:', recordId);
-      const response = await fetch(`${BASE_URL}/candidats/${recordId}/cerfa`, {
+      const url = `${BASE_URL}/candidats/${recordId}/cerfa`;
+      const response = await fetch(url, {
         method: 'POST',
         headers: { 'Accept': 'application/json' }
       });
-      if (!response.ok) throw new Error('Generation failed');
+      if (!response.ok) {
+        let errorDetail = 'Generation failed';
+        try {
+          const errorData = await response.json();
+          errorDetail = errorData.detail || errorData.message || errorDetail;
+          console.error('❌ CERFA Generation Failed (JSON):', errorData);
+        } catch (e) {
+          const errorText = await response.text().catch(() => '');
+          errorDetail = errorText || errorDetail;
+          console.error('❌ CERFA Generation Failed (Text):', errorText);
+        }
+        throw new Error(errorDetail);
+      }
       const text = await response.text();
       try {
         const json = JSON.parse(text);
@@ -770,7 +787,11 @@ export const api = {
         method: 'POST',
         headers: { 'Accept': 'application/json' }
       });
-      if (!response.ok) throw new Error('Generation failed');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('❌ ATRE Generation Failed:', errorData);
+        throw new Error(errorData.detail || errorData.message || 'Generation failed');
+      }
       const text = await response.text();
       try {
         const json = JSON.parse(text);
@@ -790,7 +811,11 @@ export const api = {
         method: 'POST',
         headers: { 'Accept': 'application/json' }
       });
-      if (!response.ok) throw new Error('Generation failed');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('❌ Compte Rendu Generation Failed:', errorData);
+        throw new Error(errorData.detail || errorData.message || 'Generation failed');
+      }
       const text = await response.text();
       try {
         const json = JSON.parse(text);
@@ -861,7 +886,7 @@ export const api = {
   async getCompanyByStudentId(studentId: string): Promise<any> {
     try {
       console.log('📤 Fetching Company for Student:', studentId);
-      const response = await fetch(`${BASE_URL}/candidats/${studentId}/entreprise`, { method: 'GET', headers: { 'Accept': 'application/json' } });
+      const response = await fetch(`${BASE_URL}/candidates/${studentId}/entreprise`, { method: 'GET', headers: { 'Accept': 'application/json' } });
       if (!response.ok) throw new Error('Company not found for this student');
       const json = await response.json();
       console.log('📥 Company for Student Received:', json);
