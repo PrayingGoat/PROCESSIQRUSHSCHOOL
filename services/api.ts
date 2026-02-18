@@ -957,5 +957,33 @@ export const api = {
       console.error('Add History failed:', e);
       return { success: true, ...entry, date: new Date().toISOString(), id: 'local-' + Date.now() };
     }
+  },
+
+  // --- EVALUATIONS ---
+  async saveInterviewEvaluation(data: any): Promise<any> {
+    try {
+      console.log('📤 Saving Interview Evaluation:', data);
+      // Simulate API call as it's not finished on backend
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          console.log('✅ Evaluation Saved (Mock Success)');
+          resolve({ success: true, message: "Évaluation enregistrée avec succès (Simulé)" });
+        }, 1000);
+      });
+
+      /* 
+      // Real implementation would look like this:
+      const response = await fetch(`${BASE_URL}/candidates/${data.studentId}/evaluation`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      if (!response.ok) throw new Error('Failed to save evaluation');
+      return await response.json();
+      */
+    } catch (error) {
+      console.error('❌ Error saving evaluation:', error);
+      throw error;
+    }
   }
 };

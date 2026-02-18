@@ -122,7 +122,6 @@ const StepLine = ({ isCompleted }: { isCompleted: boolean }) => (
 const EvaluationGrid = ({ studentData }: { studentData: any }) => {
     const { showToast } = useAppStore();
     const [evalData, setEvalData] = useState({
-
         candidatNom: '',
         heureEntretien: '',
         chargeAdmission: '',
@@ -134,6 +133,31 @@ const EvaluationGrid = ({ studentData }: { studentData: any }) => {
         critere4: 0,
         commentaires: ''
     });
+
+    const [errors, setErrors] = useState<Record<string, boolean>>({});
+
+    const validateForm = () => {
+        const newErrors: Record<string, boolean> = {};
+        if (!evalData.candidatNom) newErrors.candidatNom = true;
+        if (!evalData.dateEntretien) newErrors.dateEntretien = true;
+        if (!evalData.heureEntretien) newErrors.heureEntretien = true;
+        if (!evalData.chargeAdmission) newErrors.chargeAdmission = true;
+        if (!evalData.formation) newErrors.formation = true;
+
+        // Criterias (must be > 0)
+        if (evalData.critere1 === 0) newErrors.critere1 = true;
+        if (evalData.critere2 === 0) newErrors.critere2 = true;
+        if (evalData.critere3 === 0) newErrors.critere3 = true;
+        if (evalData.critere4 === 0) newErrors.critere4 = true;
+
+        setErrors(newErrors);
+
+        const hasErrors = Object.keys(newErrors).length > 0;
+        if (hasErrors) {
+            showToast("Veuillez remplir tous les champs obligatoires (marqués en rouge).", "error");
+        }
+        return !hasErrors;
+    };
 
     useEffect(() => {
         if (studentData) {
@@ -177,12 +201,43 @@ const EvaluationGrid = ({ studentData }: { studentData: any }) => {
         }
     };
 
-    const saveEvaluation = () => {
-        showToast("Évaluation enregistrée avec succès !", "success");
+    const [isSaving, setIsSaving] = useState(false);
+
+    const saveEvaluation = async () => {
+        if (!validateForm()) return;
+
+        if (!studentData?.id && !studentData?.record_id) {
+            showToast("ID du candidat manquant. Impossible d'enregistrer.", "error");
+            return;
+        }
+
+        try {
+            setIsSaving(true);
+            const payload = {
+                studentId: studentData.id || studentData.record_id,
+                ...evalData,
+                totalScore,
+                appreciation: getAppreciation(totalScore)
+            };
+
+            const response = await api.saveInterviewEvaluation(payload);
+            if (response.success) {
+                showToast(response.message || "Évaluation enregistrée avec succès !", "success");
+            } else {
+                throw new Error("Erreur lors de l'enregistrement");
+            }
+        } catch (error) {
+            console.error('Error saving evaluation:', error);
+            showToast("Erreur lors de l'enregistrement de l'évaluation.", "error");
+        } finally {
+            setIsSaving(false);
+        }
     };
 
 
     const exportEvaluationPDF = () => {
+        if (!validateForm()) return;
+
         const printWindow = window.open('', '_blank');
         if (!printWindow) {
             alert("Veuillez autoriser les pop-ups pour générer le PDF.");
@@ -191,103 +246,333 @@ const EvaluationGrid = ({ studentData }: { studentData: any }) => {
 
         const content = `
             <!DOCTYPE html>
-            <html>
+            <html lang="fr">
             <head>
-                <title>Rapport d'Entretien - ${evalData.candidatNom}</title>
+                <meta charset="UTF-8">
+                <title>Compte Rendu d'Entretien - ${evalData.candidatNom}</title>
+                <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
                 <style>
-                    @page { size: A4; margin: 10mm; }
-                    body { font-family: sans-serif; color: #334155; margin: 0; padding: 15px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-                    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 20px; }
-                    .title { font-size: 20px; font-weight: 800; color: #0f172a; margin: 0; }
-                    .subtitle { font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin: 2px 0 0 0; }
-                    .logo { height: 35px; }
-                    .meta-grid { display: grid; grid-cols: 2; gap: 15px; margin-bottom: 25px; }
-                    .meta-item { margin-bottom: 5px; }
-                    .meta-label { font-size: 9px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1px; }
-                    .meta-value { font-size: 12px; font-weight: 600; color: #1e293b; }
-                    h3 { font-size: 14px; font-weight: 700; color: #0f172a; margin: 20px 0 10px 0; padding-bottom: 5px; border-bottom: 1px solid #e2e8f0; }
-                    .criterion { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f1f5f9; break-inside: avoid; }
-                    .criterion-info { max-width: 80%; }
-                    .criterion-title { font-weight: 700; font-size: 12px; color: #1e293b; margin-bottom: 2px; }
-                    .criterion-desc { font-size: 10px; color: #64748b; }
-                    .score { background: #10b981; color: white; width: 32px; height: 32px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; }
-                    .comments { background: #f8fafc; padding: 15px; border-radius: 12px; font-style: italic; font-size: 12px; line-height: 1.4; color: #475569; border: 1px solid #e2e8f0; min-height: 50px; }
-                    .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
-                    .signature-box { border: 1px dashed #cbd5e1; height: 60px; width: 180px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 10px; background: #f8fafc; }
-                    .total-box { background: #0f172a; color: white; padding: 15px 30px; border-radius: 12px; text-align: center; }
-                    .total-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.8; margin-bottom: 4px; }
-                    .total-value { font-size: 28px; font-weight: 900; line-height: 1; color: #10b981; }
-                    .total-max { font-size: 12px; font-weight: 600; opacity: 0.6; }
-                    .appreciation { margin-top: 5px; font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: #10b981; background: rgba(16,185,129,0.1); padding: 3px 8px; border-radius: 16px; display: inline-block; }
+                    @page { 
+                        size: A4; 
+                        margin: 0; 
+                    }
+                    * { 
+                        box-sizing: border-box; 
+                        -webkit-print-color-adjust: exact; 
+                        print-color-adjust: exact; 
+                    }
+                    body { 
+                        font-family: 'Plus Jakarta Sans', sans-serif; 
+                        color: #1e293b; 
+                        margin: 0; 
+                        padding: 0; 
+                        line-height: 1.5;
+                        background: white;
+                    }
+                    .page {
+                        position: relative;
+                        height: 297mm; /* Full A4 height */
+                        width: 210mm;  /* Full A4 width */
+                        padding: 15mm;
+                        margin: 0 auto;
+                    }
+                    .header { 
+                        display: flex; 
+                        justify-content: space-between; 
+                        align-items: center; 
+                        padding-bottom: 20px; 
+                        margin-bottom: 25px; 
+                        border-bottom: 2px solid #f1f5f9;
+                    }
+                    .brand {
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+                    }
+                    .logo-placeholder {
+                        width: 40px;
+                        height: 40px;
+                        background: #4f46e5;
+                        border-radius: 12px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        color: white;
+                        font-weight: 800;
+                        font-size: 20px;
+                    }
+                    .title-area h1 { 
+                        font-size: 24px; 
+                        font-weight: 800; 
+                        color: #0f172a; 
+                        margin: 0; 
+                        letter-spacing: -0.025em;
+                    }
+                    .title-area p { 
+                        font-size: 11px; 
+                        font-weight: 700; 
+                        color: #6366f1; 
+                        text-transform: uppercase; 
+                        letter-spacing: 0.1em; 
+                        margin: 4px 0 0 0; 
+                    }
+                    
+                    .info-grid { 
+                        display: grid; 
+                        grid-template-columns: repeat(2, 1fr); 
+                        gap: 20px; 
+                        margin-bottom: 30px; 
+                        background: #f8fafc;
+                        padding: 20px;
+                        border-radius: 16px;
+                        border: 1px solid #f1f5f9;
+                    }
+                    .info-item .label { 
+                        font-size: 10px; 
+                        font-weight: 700; 
+                        color: #64748b; 
+                        text-transform: uppercase; 
+                        letter-spacing: 0.05em; 
+                        margin-bottom: 4px; 
+                    }
+                    .info-item .value { 
+                        font-size: 14px; 
+                        font-weight: 700; 
+                        color: #1e293b; 
+                    }
+
+                    h3 { 
+                        font-size: 16px; 
+                        font-weight: 800; 
+                        color: #0f172a; 
+                        margin: 30px 0 15px 0; 
+                        display: flex;
+                        align-items: center;
+                        gap: 10px;
+                    }
+                    h3::after {
+                        content: '';
+                        flex: 1;
+                        height: 1px;
+                        background: #e2e8f0;
+                    }
+
+                    .criteria-list {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 12px;
+                    }
+                    .criterion { 
+                        display: flex; 
+                        justify-content: space-between; 
+                        align-items: center; 
+                        padding: 12px 16px; 
+                        background: white;
+                        border: 1px solid #f1f5f9;
+                        border-radius: 12px;
+                        break-inside: avoid; 
+                    }
+                    .criterion-info { 
+                        max-width: 80%; 
+                    }
+                    .criterion-title { 
+                        font-weight: 700; 
+                        font-size: 13px; 
+                        color: #1e293b; 
+                    }
+                    .criterion-desc { 
+                        font-size: 11px; 
+                        color: #64748b; 
+                        margin-top: 2px;
+                    }
+                    .score-pill { 
+                        background: #0f172a; 
+                        color: white; 
+                        padding: 6px 14px;
+                        border-radius: 10px;
+                        font-weight: 800; 
+                        font-size: 16px; 
+                        min-width: 45px;
+                        text-align: center;
+                    }
+                    .score-pill.low { background: #ef4444; }
+                    .score-pill.medium { background: #f59e0b; }
+                    .score-pill.high { background: #10b981; }
+
+                    .observations { 
+                        background: #fff; 
+                        padding: 20px; 
+                        border-radius: 16px; 
+                        font-size: 13px; 
+                        line-height: 1.6; 
+                        color: #475569; 
+                        border: 1px solid #e2e8f0; 
+                        min-height: 100px; 
+                        white-space: pre-wrap;
+                    }
+
+                    .footer { 
+                        margin-top: 40px; 
+                        padding-top: 25px; 
+                        border-top: 2px solid #f1f5f9; 
+                        display: flex; 
+                        justify-content: space-between; 
+                        align-items: flex-end; 
+                    }
+                    .signature-area {
+                        flex: 1;
+                    }
+                    .signature-box { 
+                        border: 2px dashed #e2e8f0; 
+                        height: 100px; 
+                        width: 280px; 
+                        border-radius: 16px; 
+                        display: flex; 
+                        align-items: center; 
+                        justify-content: center; 
+                        color: #94a3b8; 
+                        font-size: 11px; 
+                        font-weight: 600;
+                        background: #f8fafc; 
+                        margin-top: 10px;
+                    }
+                    
+                    .result-card {
+                        background: #0f172a;
+                        color: white;
+                        padding: 20px 30px;
+                        border-radius: 20px;
+                        text-align: center;
+                        min-width: 200px;
+                        box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.2);
+                    }
+                    .result-label { 
+                        font-size: 10px; 
+                        font-weight: 700;
+                        text-transform: uppercase; 
+                        letter-spacing: 0.15em; 
+                        color: #94a3b8;
+                        margin-bottom: 8px; 
+                    }
+                    .result-value-container {
+                        display: flex;
+                        align-items: baseline;
+                        justify-content: center;
+                        gap: 4px;
+                        margin-bottom: 8px;
+                    }
+                    .result-value { 
+                        font-size: 42px; 
+                        font-weight: 900; 
+                        line-height: 1; 
+                        color: #10b981; 
+                    }
+                    .result-max { 
+                        font-size: 16px; 
+                        font-weight: 700; 
+                        color: #475569; 
+                    }
+                    .result-appreciation { 
+                        font-weight: 800; 
+                        font-size: 11px; 
+                        text-transform: uppercase; 
+                        letter-spacing: 0.05em; 
+                        color: #10b981; 
+                        background: rgba(16,185,129,0.1); 
+                        padding: 5px 12px; 
+                        border-radius: 100px; 
+                        display: inline-block; 
+                    }
                 </style>
             </head>
             <body>
-                <div class="header">
-                    <div>
-                        <h1 class="title">Rapport d'Entretien</h1>
-                        <p class="subtitle">CFA Process IQ - Rush School</p>
-                    </div>
-                </div>
-
-                <div class="meta-grid">
-                    <div class="meta-item">
-                        <div class="meta-label">Candidat</div>
-                        <div class="meta-value">${evalData.candidatNom || 'Non renseigné'}</div>
-                    </div>
-                    <div class="meta-item">
-                        <div class="meta-label">Formation visée</div>
-                        <div class="meta-value">${evalData.formation || 'Non renseignée'}</div>
-                    </div>
-                    <div class="meta-item">
-                        <div class="meta-label">Chargé d'admission</div>
-                        <div class="meta-value">${evalData.chargeAdmission || 'Non renseigné'}</div>
-                    </div>
-                    <div class="meta-item">
-                        <div class="meta-label">Date et Heure</div>
-                        <div class="meta-value">${evalData.dateEntretien} à ${evalData.heureEntretien || '--:--'}</div>
-                    </div>
-                </div>
-
-                <h3>Synthèse de l'évaluation</h3>
-                <div>
-                    ${[
-                { id: 'critere1', title: 'Savoir-être et présentation', desc: 'Points forts, progression, curiosité.' },
-                { id: 'critere2', title: 'Cohérence projet académique', desc: 'Logique, motivation programme.' },
-                { id: 'critere3', title: 'Engagements et expérience', desc: 'Activités, richesse expériences.' },
-                { id: 'critere4', title: 'Expression en Anglais', desc: 'Spontanéité réponses anglais.' }
-            ].map(c => `
-                        <div class="criterion">
-                            <div class="criterion-info">
-                                <div class="criterion-title">${c.title}</div>
-                                <div class="criterion-desc">${c.desc}</div>
+                <div class="page">
+                    <div class="header">
+                        <div class="title-area">
+                            <p>CFA Process IQ • Rush School</p>
+                            <h1>Compte Rendu d'Entretien</h1>
+                        </div>
+                        <div class="brand">
+                            <div class="logo-placeholder">P</div>
+                            <div style="text-align: right">
+                                <div style="font-weight: 800; font-size: 14px; color: #0f172a">PROCESS IQ</div>
+                                <div style="font-weight: 600; font-size: 10px; color: #64748b">ADMISSIONS ${new Date().getFullYear()}</div>
                             </div>
-                            <div class="score">${evalData[c.id as keyof typeof evalData] || '-'}</div>
                         </div>
-                    `).join('')}
-                </div>
-
-                <h3>Commentaires et observations</h3>
-                <div class="comments">
-                    ${evalData.commentaires ? evalData.commentaires.replace(/\n/g, '<br>') : "Aucune observation particulière."}
-                </div>
-
-                <div class="footer">
-                    <div>
-                        <div class="meta-label" style="margin-bottom: 8px;">Signature</div>
-                        <div class="signature-box">Signature du chargé d'admission</div>
                     </div>
-                    <div class="total-box">
-                        <div class="total-label">Note Globale</div>
-                        <div>
-                            <span class="total-value">${totalScore}</span>
-                            <span class="total-max">/ 20</span>
+
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="label">Candidat</div>
+                            <div class="value">${evalData.candidatNom || 'Non renseigné'}</div>
                         </div>
-                        <div class="appreciation">${getAppreciation(totalScore)}</div>
+                        <div class="info-item">
+                            <div class="label">Formation visée</div>
+                            <div class="value">${evalData.formation || 'Non renseignée'}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="label">Chargé d'admission</div>
+                            <div class="value">${evalData.chargeAdmission || 'Non renseigné'}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="label">Date de l'entretien</div>
+                            <div class="value">${evalData.dateEntretien} à ${evalData.heureEntretien || '--:--'}</div>
+                        </div>
+                    </div>
+
+                    <h3>Évaluation des Compétences</h3>
+                    <div class="criteria-list">
+                        ${[
+                { id: 'critere1', title: 'Savoir-être et présentation', desc: 'Points forts, progression, curiosité, maturité.' },
+                { id: 'critere2', title: 'Cohérence du projet', desc: 'Logique du parcours, motivation pour le programme.' },
+                { id: 'critere3', title: 'Expériences et engagements', desc: 'Richesse des expériences, activités extra-scolaires.' },
+                { id: 'critere4', title: 'Expression en Anglais', desc: 'Spontanéité et fluidité des réponses en anglais.' }
+            ].map(c => {
+                const score = Number(evalData[c.id as keyof typeof evalData]) || 0;
+                let scoreClass = '';
+                if (score > 4) scoreClass = 'high';
+                else if (score >= 3) scoreClass = 'medium';
+                else if (score > 0) scoreClass = 'low';
+
+                return `
+                                <div class="criterion">
+                                    <div class="criterion-info">
+                                        <div class="criterion-title">${c.title}</div>
+                                        <div class="criterion-desc">${c.desc}</div>
+                                    </div>
+                                    <div class="score-pill ${scoreClass}">${score || '-'}</div>
+                                </div>
+                            `;
+            }).join('')}
+                    </div>
+
+                    <h3>Observations & Commentaires</h3>
+                    <div class="observations">${evalData.commentaires || "Aucune observation particulière n'a été signalée pour ce candidat."}</div>
+
+                    <div class="footer">
+                        <div class="signature-area">
+                            <div class="label">Validation Session</div>
+                            <div class="signature-box">Signature du chargé d'admission</div>
+                        </div>
+                        
+                        <div class="result-card">
+                            <div class="result-label">Score Final</div>
+                            <div class="result-value-container">
+                                <span class="result-value">${totalScore}</span>
+                                <span class="result-max">/20</span>
+                            </div>
+                            <div class="result-appreciation">${getAppreciation(totalScore)}</div>
+                        </div>
                     </div>
                 </div>
 
                 <script>
-                    window.onload = function() { window.print(); window.onafterprint = function(){ window.close(); } };
+                    window.onload = function() { 
+                        setTimeout(() => {
+                            window.print(); 
+                            window.onafterprint = function(){ window.close(); }
+                        }, 500);
+                    };
                 </script>
             </body>
             </html>
@@ -318,17 +603,17 @@ const EvaluationGrid = ({ studentData }: { studentData: any }) => {
                 <div className="p-8 space-y-8">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-4">
-                            <Input label="Nom et Prénom du candidat" placeholder="Entrez le nom complet" value={evalData.candidatNom} onChange={(e) => setEvalData({ ...evalData, candidatNom: e.target.value })} />
-                            <Input label="Heure d'entretien" type="time" value={evalData.heureEntretien} onChange={(e) => setEvalData({ ...evalData, heureEntretien: e.target.value })} />
+                            <Input label="Nom et Prénom du candidat" required placeholder="Entrez le nom complet" value={evalData.candidatNom} error={errors.candidatNom ? "Le nom est requis" : ""} onChange={(e) => setEvalData({ ...evalData, candidatNom: e.target.value })} />
+                            <Input label="Heure d'entretien" required type="time" value={evalData.heureEntretien} error={errors.heureEntretien ? "L'heure est requise" : ""} onChange={(e) => setEvalData({ ...evalData, heureEntretien: e.target.value })} />
                         </div>
                         <div className="space-y-4">
-                            <Input label="Nom et Prénom chargé(e) d'admission" placeholder="Votre nom" value={evalData.chargeAdmission} onChange={(e) => setEvalData({ ...evalData, chargeAdmission: e.target.value })} />
-                            <Input label="Date d'entretien" type="date" value={evalData.dateEntretien} onChange={(e) => setEvalData({ ...evalData, dateEntretien: e.target.value })} />
+                            <Input label="Nom et Prénom chargé(e) d'admission" required placeholder="Votre nom" value={evalData.chargeAdmission} error={errors.chargeAdmission ? "Le chargé d'admission est requis" : ""} onChange={(e) => setEvalData({ ...evalData, chargeAdmission: e.target.value })} />
+                            <Input label="Date d'entretien" required type="date" value={evalData.dateEntretien} error={errors.dateEntretien ? "La date est requise" : ""} onChange={(e) => setEvalData({ ...evalData, dateEntretien: e.target.value })} />
                         </div>
                     </div>
 
-                    <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-4 ml-1">Formation visée</label>
+                    <div className={`bg-slate-50 p-6 rounded-2xl border transition-all ${errors.formation ? 'border-rose-300 ring-4 ring-rose-500/10' : 'border-slate-100'}`}>
+                        <label className="block text-xs font-bold text-slate-500 uppercase mb-4 ml-1">Formation visée <span className="text-red-500">*</span></label>
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                             {['TP NTC', 'BTS CI', 'BTS COM', 'BTS MCO', 'BTS NDRC', 'BACHELOR RDC'].map((f) => (
                                 <label key={f} className={`relative cursor-pointer group`}>
@@ -346,6 +631,7 @@ const EvaluationGrid = ({ studentData }: { studentData: any }) => {
                                 </label>
                             ))}
                         </div>
+                        {errors.formation && <p className="mt-2 text-rose-500 text-[10px] font-black uppercase tracking-wider animate-slide-in">Veuillez sélectionner une formation</p>}
                     </div>
 
                     <div className="space-y-6">
@@ -366,27 +652,32 @@ const EvaluationGrid = ({ studentData }: { studentData: any }) => {
                             { id: 'critere3', title: 'Engagements et expérience péri ou extra-scolaires', desc: 'Activités extra-scolaires, richesse des expériences, valorisation des compétences développées.' },
                             { id: 'critere4', title: 'Expression en Anglais', desc: 'Savoir répondre spontanément à quelques questions en anglais.' }
                         ].map((c) => (
-                            <div key={c.id} className="grid grid-cols-1 md:grid-cols-12 gap-6 p-4 rounded-2xl border border-slate-100 hover:bg-slate-50 transition-colors">
+                            <div key={c.id} className={`grid grid-cols-1 md:grid-cols-12 gap-6 p-4 rounded-2xl border transition-all ${errors[c.id] ? 'border-rose-300 bg-rose-50/10' : 'border-slate-100 hover:bg-slate-50'}`}>
                                 <div className="md:col-span-7">
-                                    <h4 className="font-bold text-slate-800 text-sm mb-1">{c.title}</h4>
+                                    <h4 className={`font-bold text-sm mb-1 ${errors[c.id] ? 'text-rose-600' : 'text-slate-800'}`}>
+                                        {c.title} <span className="text-red-500">*</span>
+                                    </h4>
                                     <p className="text-xs text-slate-500 leading-relaxed">{c.desc}</p>
                                 </div>
-                                <div className="md:col-span-5 flex items-center justify-between md:grid md:grid-cols-5 gap-2">
-                                    {[1, 2, 3, 4, 5].map((score) => (
-                                        <label key={score} className="cursor-pointer">
-                                            <input
-                                                type="radio"
-                                                name={c.id}
-                                                className="peer sr-only"
-                                                value={score}
-                                                checked={evalData[c.id as keyof typeof evalData] === score}
-                                                onChange={() => handleScoreChange(c.id, score)}
-                                            />
-                                            <div className={`w-10 h-10 rounded-xl border-2 flex items-center justify-center font-bold text-sm transition-all ${evalData[c.id as keyof typeof evalData] === score ? 'bg-emerald-500 border-emerald-500 text-white shadow-md' : 'bg-white border-slate-200 text-slate-400 hover:border-emerald-200'}`}>
-                                                {score}
-                                            </div>
-                                        </label>
-                                    ))}
+                                <div className="md:col-span-5 flex flex-col gap-2">
+                                    <div className="flex items-center justify-between md:grid md:grid-cols-5 gap-2">
+                                        {[1, 2, 3, 4, 5].map((score) => (
+                                            <label key={score} className="cursor-pointer">
+                                                <input
+                                                    type="radio"
+                                                    name={c.id}
+                                                    className="peer sr-only"
+                                                    value={score}
+                                                    checked={evalData[c.id as keyof typeof evalData] === score}
+                                                    onChange={() => handleScoreChange(c.id, score)}
+                                                />
+                                                <div className={`w-10 h-10 rounded-xl border-2 flex items-center justify-center font-bold text-sm transition-all ${evalData[c.id as keyof typeof evalData] === score ? 'bg-emerald-500 border-emerald-500 text-white shadow-md' : errors[c.id] ? 'bg-white border-rose-200 text-rose-300 hover:border-emerald-200' : 'bg-white border-slate-200 text-slate-400 hover:border-emerald-200'}`}>
+                                                    {score}
+                                                </div>
+                                            </label>
+                                        ))}
+                                    </div>
+                                    {errors[c.id] && <p className="text-rose-500 text-[10px] font-black uppercase tracking-wider animate-slide-in ml-1">Veuillez évaluer ce critère</p>}
                                 </div>
                             </div>
                         ))}
@@ -419,8 +710,14 @@ const EvaluationGrid = ({ studentData }: { studentData: any }) => {
                         <Button variant="secondary" className="flex-1" onClick={resetEvaluation} leftIcon={<RotateCcw size={18} />}>
                             Réinitialiser
                         </Button>
-                        <Button variant="success" className="flex-1" onClick={saveEvaluation} leftIcon={<Save size={18} />}>
-                            Enregistrer
+                        <Button
+                            variant="success"
+                            className="flex-1"
+                            onClick={saveEvaluation}
+                            leftIcon={isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+                            disabled={isSaving}
+                        >
+                            {isSaving ? 'Enregistrement...' : 'Enregistrer'}
                         </Button>
                         <Button variant="primary" className="flex-1 !bg-slate-900" onClick={exportEvaluationPDF} leftIcon={<Printer size={18} />}>
                             Exporter PDF

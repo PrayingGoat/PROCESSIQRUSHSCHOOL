@@ -330,8 +330,30 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
         await submitCompany(finalData as any);
     };
 
+    const onError = (errors: any) => {
+        const errorCount = Object.keys(errors).length;
+        showToast(`Veuillez corriger les erreurs dans les ${errorCount} section(s) concernée(s).`, "error");
+
+        const sections = [
+            { id: 'id', fields: ['identification'] },
+            { id: 'address', fields: ['adresse'] },
+            { id: 'maitre', fields: ['maitre_apprentissage'] },
+            { id: 'opco', fields: ['opco'] },
+            { id: 'training', fields: ['formation', 'cfa'] },
+            { id: 'contract', fields: ['contrat', 'salaire', 'missions'] }
+        ];
+
+        for (const section of sections) {
+            const hasError = section.fields.some(field => errors[field]);
+            if (hasError) {
+                setActiveSection(section.id);
+                break;
+            }
+        }
+    };
+
     return (
-        <form onSubmit={handleSubmit(onSubmit)} className="animate-fade-in">
+        <form onSubmit={handleSubmit(onSubmit, onError)} className="animate-fade-in">
             <div className="bg-gradient-to-br from-slate-50 to-white rounded-3xl p-6 md:p-10 shadow-xl border border-slate-100 relative">
                 <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-brand via-primary to-violet-500"></div>
 

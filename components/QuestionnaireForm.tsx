@@ -198,10 +198,11 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext, initialDa
             const recordId = response?.record_id || response?.id;
             if (recordId) {
                 localStorage.setItem('candidateRecordId', recordId);
-                // Trigger CERFA generation in background with a small delay for Airtable sync
+                // Trigger CERFA generation in background with a 5s delay for Airtable/Backend sync
                 setTimeout(() => {
+                    console.log('🕒 Triggering delayed CERFA generation for:', recordId);
                     generateCerfaApi(recordId).catch(err => console.error("CERFA pre-generation failed:", err));
-                }, 2000);
+                }, 5000);
             }
             clearDraftStudent();
             onNext(response);
@@ -211,6 +212,32 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext, initialDa
 
     const onSubmit = async (data: StudentFormValues) => {
         await submitStudent(data as any);
+    };
+
+    const onError = (errors: any) => {
+        const errorCount = Object.keys(errors).length;
+        showToast(`Veuillez corriger les ${errorCount} erreur(s) avant de continuer.`, "error");
+
+        // Auto-expand the first section with errors
+        const sections = [
+            { id: 'personal', fields: ['prenom', 'nom_naissance', 'nom_usage', 'sexe', 'date_naissance', 'nationalite', 'commune_naissance', 'departement'] },
+            { id: 'contact', fields: ['num_residence', 'rue_residence', 'complement_residence', 'code_postal', 'ville', 'email', 'telephone', 'nir'] },
+            { id: 'legal', fields: ['representant_legal_1', 'representant_legal_2'] },
+            { id: 'situation', fields: ['situation', 'regime_social', 'declare_inscription_sportif_haut_niveau', 'declare_avoir_projet_creation_reprise_entreprise', 'declare_travailleur_handicape', 'alternance'] },
+            { id: 'school', fields: ['dernier_diplome_prepare', 'derniere_classe', 'intitulePrecisDernierDiplome', 'bac'] },
+            { id: 'desire', fields: ['formation_souhaitee', 'date_de_visite', 'date_de_reglement', 'entreprise_d_accueil'] },
+            { id: 'extra', fields: ['connaissance_rush_how', 'motivation_projet_professionnel'] }
+        ];
+
+        for (const section of sections) {
+            if (section.id === 'legal' && !isMinor) continue;
+
+            const hasError = section.fields.some(field => errors[field]);
+            if (hasError) {
+                setActiveSection(section.id);
+                break;
+            }
+        }
     };
 
     const selectedSexe = watch('sexe');
@@ -238,7 +265,7 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext, initialDa
     }, [dateNaissance]);
 
     return (
-        <form onSubmit={handleSubmit(onSubmit)} className="bg-gradient-to-br from-slate-50 to-white rounded-3xl p-6 md:p-10 shadow-xl border border-slate-100 relative overflow-hidden animate-slide-in">
+        <form onSubmit={handleSubmit(onSubmit, onError)} className="bg-gradient-to-br from-slate-50 to-white rounded-3xl p-6 md:p-10 shadow-xl border border-slate-100 relative overflow-hidden animate-slide-in">
             <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-brand via-primary to-violet-500"></div>
 
             <div className="flex flex-col md:flex-row md:items-center gap-6 mb-10 pb-8 border-b border-slate-100">
