@@ -562,7 +562,7 @@ export const api = {
         dossier_complet_uniquement: params?.dossierCompletUniquement ? 'true' : 'false'
       });
       // New backend uses /candidates for everything
-      const response = await fetch(`${BASE_URL}/candidates`, {
+      const response = await fetch(`${BASE_URL}/candidats`, {
         method: 'GET',
         headers: { 'Accept': 'application/json' }
       });
@@ -643,7 +643,7 @@ export const api = {
 
   async getAllCandidates(): Promise<any[]> {
     try {
-      const response = await fetch(`${BASE_URL}/candidates`, {
+      const response = await fetch(`${BASE_URL}/candidats`, {
         method: 'GET',
         headers: { 'Accept': 'application/json' }
       });
