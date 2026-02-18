@@ -873,7 +873,7 @@ export const api = {
   async getCompanyById(id: string): Promise<any> {
     try {
       console.log('📤 Fetching Company:', id);
-      const response = await fetch(`${BASE_URL}/entreprises/${id}`, { method: 'GET', headers: { 'Accept': 'application/json' } });
+      const response = await fetch(`${BASE_URL}/candidats/${id}/entreprise`, { method: 'GET', headers: { 'Accept': 'application/json' } });
       if (!response.ok) throw new Error('Company not found');
       const json = await response.json();
       console.log('📥 Company Received:', json);
@@ -886,7 +886,7 @@ export const api = {
   async getCompanyByStudentId(studentId: string): Promise<any> {
     try {
       console.log('📤 Fetching Company for Student:', studentId);
-      const response = await fetch(`${BASE_URL}/candidates/${studentId}/entreprise`, { method: 'GET', headers: { 'Accept': 'application/json' } });
+      const response = await fetch(`${BASE_URL}/candidats/${studentId}/entreprise`, { method: 'GET', headers: { 'Accept': 'application/json' } });
       if (!response.ok) throw new Error('Company not found for this student');
       const json = await response.json();
       console.log('📥 Company for Student Received:', json);
