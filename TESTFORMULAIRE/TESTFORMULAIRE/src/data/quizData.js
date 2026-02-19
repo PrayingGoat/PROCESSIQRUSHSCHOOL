@@ -1,4 +1,55 @@
 export const quizData = {
+    ntc: {
+        title: "Titre Professionnel Négociateur Technico-Commercial",
+        duration: 35 * 60,
+        questions: [
+            // Français (8 pts)
+            { section: "Français", text: "Quel est le synonyme du mot « abondant » ?", options: ["Rare", "Copieux", "Vide", "Insuffisant"], correct: 1, points: 1 },
+            { section: "Français", text: "Quelle est la bonne abréviation pour « etcetera » ?", options: ["Ect", "Etc", "Etct", "Etcc"], correct: 1, points: 1 },
+            { section: "Français", text: "Complétez la phrase : « Si j'avais su, je ____ venu. »", options: ["serais", "étais", "aurais", "suis"], correct: 0, points: 1 },
+            { section: "Français", text: "Quel est le contraire de « magnifier » ?", options: ["Louer", "Déprécier", "Honorer", "Exalter"], correct: 1, points: 1 },
+            { section: "Français", text: "Quelle est la bonne orthographe ?", options: ["Privilège", "Privilége", "Privilege", "Privillège"], correct: 0, points: 1 },
+            { section: "Français", text: "Combien y a-t-il de fautes dans la phrase 'Il mangent des pommes' ?", options: ["Aucune faute", "1 faute", "2 fautes", "3 fautes"], correct: 1, points: 1 },
+            { section: "Français", text: "Identifiez l'erreur dans la phrase : « Ils se sont souvenus du bon vieux temps. »", options: ["Aucune erreur", "\"se sont souvenus\" doit être remplacé par \"se sont rappelés\"", "\"du\" doit être remplacé par \"de\"", "\"bon vieux temps\" doit être remplacé par \"bons vieux temps\""], correct: 0, points: 1 },
+            { section: "Français", text: "Complétez : « Si nous avions plus de ressources, nous ____ développer le projet plus rapidement. »", options: ["pouvons", "devons", "pourrions", "aurions"], correct: 2, points: 1 },
+            // Anglais (8 pts)
+            { section: "Anglais", text: "Choose the correct form: « If I ___ rich, I would travel the world. »", options: ["am", "was", "were", "will be"], correct: 2, points: 1 },
+            { section: "Anglais", text: "What is the plural form of « mouse » ?", options: ["Mouses", "Mousees", "Mice", "Meese"], correct: 2, points: 1 },
+            { section: "Anglais", text: "Find the synonym of « enormous ».", options: ["Tiny", "Small", "Huge", "Slim"], correct: 2, points: 1 },
+            { section: "Anglais", text: "What does the phrase « break a leg » mean in English?", options: ["To literally fracture one's leg", "To stop immediately", "Good luck", "To start a journey"], correct: 2, points: 1 },
+            { section: "Anglais", text: "Choose the correct form: « She has been ___ for the past hour. »", options: ["Sleep", "Sleeping", "Slept", "Sleeps"], correct: 1, points: 1 },
+            { section: "Anglais", text: "Which word is incorrectly spelled?", options: ["Definately", "Separate", "Receive", "Necessary"], correct: 0, points: 1 },
+            { section: "Anglais", text: "What is the antonym of « ancient » ?", options: ["Old", "Modern", "Historical", "Archaic"], correct: 1, points: 1 },
+            { section: "Anglais", text: "We _____ to the joint venture, if we'd known more about our partner's real intentions.", options: ["will not agree", "will not have agreed", "would not have agreed", "would not agree"], correct: 2, points: 1 },
+            // Logique & Raisonnement (8 pts)
+            { section: "Logique & Raisonnement", text: "Si trois chats attrapent 3 souris en 3 min, combien de temps pour 100 chats/100 souris ?", options: ["3 minutes", "100 minutes", "300 minutes", "1 minute"], correct: 0, points: 1 },
+            { section: "Logique & Raisonnement", text: "« La roue est à la voiture ce que la voile est à ? »", options: ["L'avion", "Le bateau", "Le vélo", "La maison"], correct: 1, points: 1 },
+            { section: "Logique & Raisonnement", text: "Prochain nombre dans la suite : 1, 1, 2, 3, 5, 8, ... ?", options: ["11", "12", "13", "15"], correct: 2, points: 1 },
+            { section: "Logique & Raisonnement", text: "Une urne (6 bleues, 4 rouges, 10 vertes). Probabilité tirage bleue ?", options: ["1/5", "1/2", "3/10", "2/5"], correct: 2, points: 1 },
+            { section: "Logique & Raisonnement", text: "Course : vous dépassez la personne en 2ème position. Position ?", options: ["Première", "Deuxième", "Troisième", "Il est impossible de dire"], correct: 1, points: 1 },
+            { section: "Logique & Raisonnement", text: "Puzzle 1000 pièces. 250 pièces/jour. % assemblé après jour 1 ?", options: ["10%", "25%", "50%", "75%"], correct: 1, points: 1 },
+            { section: "Logique & Raisonnement", text: "Combien de mois de l'année comptent 28 jours ?", options: ["1", "4", "6", "12"], correct: 3, points: 1 },
+            { section: "Logique & Raisonnement", text: "Si le carré d'un nombre moins le double de ce nombre égale 35, quel est ce nombre ?", options: ["5", "-5", "-7", "7"], correct: 3, points: 1 },
+            // Culture Générale (8 pts)
+            { section: "Culture Générale", text: "Qui est l'auteur de « La Condition humaine » ?", options: ["André Malraux", "Jean-Paul Sartre", "Albert Camus", "François Mauriac"], correct: 0, points: 1 },
+            { section: "Culture Générale", text: "Dans quel pays les JO modernes ont-ils été réinventés ?", options: ["France", "Grèce", "Royaume-Uni", "États-Unis"], correct: 1, points: 1 },
+            { section: "Culture Générale", text: "Qu'est-ce que la Pietà ?", options: ["Une peinture de Leonardo da Vinci", "Une sculpture de Michel-Ange", "Un poème de Victor Hugo", "Une symphonie de Beethoven"], correct: 1, points: 1 },
+            { section: "Culture Générale", text: "Qui a été élu Président des USA en novembre 2020 ?", options: ["Donald Trump", "Joe Biden", "Barack Obama", "Hillary Clinton"], correct: 1, points: 1 },
+            { section: "Culture Générale", text: "Combien de pays compte l'Union européenne (UE) ?", options: ["27", "25", "28", "30"], correct: 0, points: 1 },
+            { section: "Culture Générale", text: "Quelle théorie scientifique Albert Einstein est-il célèbre pour ?", options: ["La théorie de l'évolution", "La Théorie des quanta", "La théorie de la relativité", "La mécanique newtonienne"], correct: 2, points: 1 },
+            { section: "Culture Générale", text: "Facebook fut le premier vrai réseau social virtuel ?", options: ["Vrai", "Faux"], correct: 1, points: 1 },
+            { section: "Culture Générale", text: "Sont inclus dans la population active ?", options: ["Les chômeurs", "Les étudiants", "Les retraites", "Les personnes au foyer"], correct: 0, points: 1 },
+            // Compétences Spécifiques NTC (8 pts)
+            { section: "Compétences Spécifiques NTC", text: "Lors d'un premier contact client en prospection téléphonique, il est important de :", options: ["Présenter tout le catalogue dès l'appel", "Insister sur les remises", "Parler longuement de l'entreprise", "Susciter l'intérêt avec une accroche courte"], correct: 3, points: 1 },
+            { section: "Compétences Spécifiques NTC", text: "L'étape qui précède la négociation dans le processus de vente est :", options: ["La conclusion", "La reformulation du besoin", "La relance", "La facturation"], correct: 1, points: 1 },
+            { section: "Compétences Spécifiques NTC", text: "Une objection client doit être :", options: ["Ignorée", "Raccourcie", "Écoutée et traitée calmement", "Évitée"], correct: 2, points: 1 },
+            { section: "Compétences Spécifiques NTC", text: "Lors d'un rendez-vous de vente en B2B, quel est l'objectif principal ?", options: ["Faire signer immédiatement", "Identifier les besoins et les enjeux du client", "Proposer tous les produits", "Présenter le site web"], correct: 1, points: 1 },
+            { section: "Compétences Spécifiques NTC", text: "Quel document formel résume l'accord commercial ?", options: ["Une publicité", "Une fiche produit", "Une plaquette", "Un devis"], correct: 3, points: 1 },
+            { section: "Compétences Spécifiques NTC", text: "L'outil utilisé pour noter et suivre des contacts prospects s'appelle :", options: ["Tableur Excel", "ERP", "CRM", "Messagerie instantanée"], correct: 2, points: 1 },
+            { section: "Compétences Spécifiques NTC", text: "En phase de négociation, il est conseillé de :", options: ["Dire oui à toutes les demandes", "Chercher un compromis gagnant-gagnant", "Refuser toute remise", "Imposer son tarif"], correct: 1, points: 1 },
+            { section: "Compétences Spécifiques NTC", text: "Dans la vente en cycle long, un facteur clé de succès est :", options: ["Une prospection massive sans qualification", "Un suivi régulier et personnalisé du client", "Une offre unique imposée", "Des relances automatisées uniquement"], correct: 1, points: 1 }
+        ]
+    },
     mco: {
         title: "Management Commercial Opérationnel",
         duration: 35 * 60,
@@ -137,57 +188,6 @@ export const quizData = {
             { section: "Evaluation des compétences en NDRC", text: "Elle correspond aux entreprises sur le marché et proposant des produits différents.", options: ["La concurrence directe", "La concurrence indirecte"], correct: 1, points: 1 },
             { section: "Evaluation des compétences en NDRC", text: "Qu’est-ce qu’une zone de chalandise ?", options: ["Nombre de magasins identiques", "C’est un bateau", "Zone géographique d’où provient la clientèle", "Zone d’où proviennent les produits"], correct: 2, points: 1 },
             { section: "Evaluation des compétences en NDRC", text: "Le marché... c’est quoi ?", options: ["Offre + demande", "Offre + marché", "Marché + demande"], correct: 0, points: 1 }
-        ]
-    },
-    tpntc: {
-        title: "Titre Professionnel Négociateur Technico-Commercial",
-        duration: 35 * 60,
-        questions: [
-            // Français (8 pts)
-            { section: "Français", text: "Quel est le synonyme du mot « abondant » ?", options: ["Rare", "Copieux", "Vide", "Insuffisant"], correct: 1, points: 1 },
-            { section: "Français", text: "Quelle est la bonne abréviation pour « etcetera » ?", options: ["Ect", "Etc", "Etct", "Etcc"], correct: 1, points: 1 },
-            { section: "Français", text: "Complétez la phrase : « Si j'avais su, je ____ venu. »", options: ["serais", "étais", "aurais", "suis"], correct: 0, points: 1 },
-            { section: "Français", text: "Quel est le contraire de « magnifier » ?", options: ["Louer", "Déprécier", "Honorer", "Exalter"], correct: 1, points: 1 },
-            { section: "Français", text: "Quelle est la bonne orthographe ?", options: ["Privilège", "Privilége", "Privilege", "Privillège"], correct: 0, points: 1 },
-            { section: "Français", text: "Combien y a-t-il de fautes dans la phrase 'Il mangent des pommes' ?", options: ["Aucune faute", "1 faute", "2 fautes", "3 fautes"], correct: 1, points: 1 },
-            { section: "Français", text: "Identifiez l'erreur dans la phrase : « Ils se sont souvenus du bon vieux temps. »", options: ["Aucune erreur", "\"se sont souvenus\" doit être remplacé par \"se sont rappelés\"", "\"du\" doit être remplacé par \"de\"", "\"bon vieux temps\" doit être remplacé par \"bons vieux temps\""], correct: 0, points: 1 },
-            { section: "Français", text: "Complétez : « Si nous avions plus de ressources, nous ____ développer le projet plus rapidement. »", options: ["pouvons", "devons", "pourrions", "aurions"], correct: 2, points: 1 },
-            // Anglais (8 pts)
-            { section: "Anglais", text: "Choose the correct form: « If I ___ rich, I would travel the world. »", options: ["am", "was", "were", "will be"], correct: 2, points: 1 },
-            { section: "Anglais", text: "What is the plural form of « mouse » ?", options: ["Mouses", "Mousees", "Mice", "Meese"], correct: 2, points: 1 },
-            { section: "Anglais", text: "Find the synonym of « enormous ».", options: ["Tiny", "Small", "Huge", "Slim"], correct: 2, points: 1 },
-            { section: "Anglais", text: "What does the phrase « break a leg » mean in English?", options: ["To literally fracture one's leg", "To stop immediately", "Good luck", "To start a journey"], correct: 2, points: 1 },
-            { section: "Anglais", text: "Choose the correct form: « She has been ___ for the past hour. »", options: ["Sleep", "Sleeping", "Slept", "Sleeps"], correct: 1, points: 1 },
-            { section: "Anglais", text: "Which word is incorrectly spelled?", options: ["Definately", "Separate", "Receive", "Necessary"], correct: 0, points: 1 },
-            { section: "Anglais", text: "What is the antonym of « ancient » ?", options: ["Old", "Modern", "Historical", "Archaic"], correct: 1, points: 1 },
-            { section: "Anglais", text: "We _____ to the joint venture, if we'd known more about our partner's real intentions.", options: ["will not agree", "will not have agreed", "would not have agreed", "would not agree"], correct: 2, points: 1 },
-            // Logique & Raisonnement (8 pts)
-            { section: "Logique & Raisonnement", text: "Si trois chats attrapent 3 souris en 3 min, combien de temps pour 100 chats/100 souris ?", options: ["3 minutes", "100 minutes", "300 minutes", "1 minute"], correct: 0, points: 1 },
-            { section: "Logique & Raisonnement", text: "« La roue est à la voiture ce que la voile est à ? »", options: ["L'avion", "Le bateau", "Le vélo", "La maison"], correct: 1, points: 1 },
-            { section: "Logique & Raisonnement", text: "Prochain nombre dans la suite : 1, 1, 2, 3, 5, 8, ... ?", options: ["11", "12", "13", "15"], correct: 2, points: 1 },
-            { section: "Logique & Raisonnement", text: "Une urne (6 bleues, 4 rouges, 10 vertes). Probabilité tirage bleue ?", options: ["1/5", "1/2", "3/10", "2/5"], correct: 2, points: 1 },
-            { section: "Logique & Raisonnement", text: "Course : vous dépassez la personne en 2ème position. Position ?", options: ["Première", "Deuxième", "Troisième", "Il est impossible de dire"], correct: 1, points: 1 },
-            { section: "Logique & Raisonnement", text: "Puzzle 1000 pièces. 250 pièces/jour. % assemblé après jour 1 ?", options: ["10%", "25%", "50%", "75%"], correct: 1, points: 1 },
-            { section: "Logique & Raisonnement", text: "Combien de mois de l'année comptent 28 jours ?", options: ["1", "4", "6", "12"], correct: 3, points: 1 },
-            { section: "Logique & Raisonnement", text: "Si le carré d'un nombre moins le double de ce nombre égale 35, quel est ce nombre ?", options: ["5", "-5", "-7", "7"], correct: 3, points: 1 },
-            // Culture Générale (8 pts)
-            { section: "Culture Générale", text: "Qui est l'auteur de « La Condition humaine » ?", options: ["André Malraux", "Jean-Paul Sartre", "Albert Camus", "François Mauriac"], correct: 0, points: 1 },
-            { section: "Culture Générale", text: "Dans quel pays les JO modernes ont-ils été réinventés ?", options: ["France", "Grèce", "Royaume-Uni", "États-Unis"], correct: 1, points: 1 },
-            { section: "Culture Générale", text: "Qu'est-ce que la Pietà ?", options: ["Une peinture de Leonardo da Vinci", "Une sculpture de Michel-Ange", "Un poème de Victor Hugo", "Une symphonie de Beethoven"], correct: 1, points: 1 },
-            { section: "Culture Générale", text: "Qui a été élu Président des USA en novembre 2020 ?", options: ["Donald Trump", "Joe Biden", "Barack Obama", "Hillary Clinton"], correct: 1, points: 1 },
-            { section: "Culture Générale", text: "Combien de pays compte l'Union européenne (UE) ?", options: ["27", "25", "28", "30"], correct: 0, points: 1 },
-            { section: "Culture Générale", text: "Quelle théorie scientifique Albert Einstein est-il célèbre pour ?", options: ["La théorie de l'évolution", "La Théorie des quanta", "La théorie de la relativité", "La mécanique newtonienne"], correct: 2, points: 1 },
-            { section: "Culture Générale", text: "Facebook fut le premier vrai réseau social virtuel ?", options: ["Vrai", "Faux"], correct: 1, points: 1 },
-            { section: "Culture Générale", text: "Sont inclus dans la population active ?", options: ["Les chômeurs", "Les étudiants", "Les retraites", "Les personnes au foyer"], correct: 0, points: 1 },
-            // Compétences Spécifiques NTC (8 pts)
-            { section: "Compétences Spécifiques NTC", text: "Lors d'un premier contact client en prospection téléphonique, il est important de :", options: ["Présenter tout le catalogue dès l'appel", "Insister sur les remises", "Parler longuement de l'entreprise", "Susciter l'intérêt avec une accroche courte"], correct: 3, points: 1 },
-            { section: "Compétences Spécifiques NTC", text: "L'étape qui précède la négociation dans le processus de vente est :", options: ["La conclusion", "La reformulation du besoin", "La relance", "La facturation"], correct: 1, points: 1 },
-            { section: "Compétences Spécifiques NTC", text: "Une objection client doit être :", options: ["Ignorée", "Raccourcie", "Écoutée et traitée calmement", "Évitée"], correct: 2, points: 1 },
-            { section: "Compétences Spécifiques NTC", text: "Lors d'un rendez-vous de vente en B2B, quel est l'objectif principal ?", options: ["Faire signer immédiatement", "Identifier les besoins et les enjeux du client", "Proposer tous les produits", "Présenter le site web"], correct: 1, points: 1 },
-            { section: "Compétences Spécifiques NTC", text: "Quel document formel résume l'accord commercial ?", options: ["Une publicité", "Une fiche produit", "Une plaquette", "Un devis"], correct: 3, points: 1 },
-            { section: "Compétences Spécifiques NTC", text: "L'outil utilisé pour noter et suivre des contacts prospects s'appelle :", options: ["Tableur Excel", "ERP", "CRM", "Messagerie instantanée"], correct: 2, points: 1 },
-            { section: "Compétences Spécifiques NTC", text: "En phase de négociation, il est conseillé de :", options: ["Dire oui à toutes les demandes", "Chercher un compromis gagnant-gagnant", "Refuser toute remise", "Imposer son tarif"], correct: 1, points: 1 },
-            { section: "Compétences Spécifiques NTC", text: "Dans la vente en cycle long, un facteur clé de succès est :", options: ["Une prospection massive sans qualification", "Un suivi régulier et personnalisé du client", "Une offre unique imposée", "Des relances automatisées uniquement"], correct: 1, points: 1 }
         ]
     }
 };
