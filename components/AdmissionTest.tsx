@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { quizData } from '../data/quizData';
 import { Timer, User, ChevronRight, ChevronLeft, ChevronDown, Send, CheckCircle2, Award, Download, ArrowRight, GraduationCap } from 'lucide-react';
 import Button from './ui/Button';
+import jsPDF from 'jspdf';
 
 interface AdmissionTestProps {
     selectedFormation?: string | null;
@@ -94,6 +95,136 @@ export default function AdmissionTest({ selectedFormation, onFinish, initialUser
         });
         setScore(finalScore);
         setStep('results');
+    };
+
+    const generatePDF = () => {
+        const doc = new jsPDF();
+        const date = new Date().toLocaleDateString('fr-FR');
+
+        const addHeader = (pageNum: number) => {
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(14);
+            doc.setTextColor(0, 0, 0);
+            doc.text('RUSH SCHOOL - PORTAIL D\'ADMISSION', 20, 15);
+
+            doc.setDrawColor(200, 200, 200);
+            doc.setLineWidth(0.5);
+            doc.line(20, 18, 190, 18);
+
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(100, 100, 100);
+            doc.text(`Document généré le ${date}`, 20, 23);
+            doc.text(`Page ${pageNum}`, 190, 23, { align: 'right' });
+        };
+
+        // --- PAGE 1: SYNTHÈSE ---
+        addHeader(1);
+
+        doc.setFontSize(18);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(0, 0, 0);
+        doc.text('COMPTE-RENDU DE TEST D\'ADMISSION', 105, 45, { align: 'center' });
+
+        // Section: Candidat
+        doc.setFontSize(12);
+        doc.text('1. IDENTITÉ DU CANDIDAT', 20, 65);
+        doc.line(20, 67, 80, 67);
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        doc.text(`Nom et Prénom : ${userName.toUpperCase()}`, 25, 75);
+        doc.text(`Formation visée : ${quizData[quizType]?.title || quizType}`, 25, 82);
+
+        // Section: Résultats
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(12);
+        doc.text('2. RÉSULTATS GÉNÉRAUX', 20, 100);
+        doc.line(20, 102, 80, 102);
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        doc.text('Score obtenu :', 25, 110);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(14);
+        doc.text(`${score} / 40`, 60, 110);
+
+        const percentage = Math.round((score / 40) * 100);
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Taux de réussite : ${percentage}%`, 25, 120);
+
+        // Observations
+        doc.setFont('helvetica', 'bold');
+        doc.text('3. OBSERVATIONS', 20, 140);
+        doc.line(20, 142, 80, 142);
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        const obs = "Ce document certifie la participation du candidat au test d'admission en ligne de Rush School. Les résultats détaillés sont fournis en annexe de ce compte-rendu.";
+        const splitObs = doc.splitTextToSize(obs, 165);
+        doc.text(splitObs, 25, 150);
+
+        // Signature area
+        doc.setFontSize(9);
+        doc.text('Fait à Clichy, le ' + date, 130, 180);
+        doc.text('Direction Pédagogique RUSH SCHOOL', 130, 185);
+
+        // --- PAGE 2+: DÉTAIL DES RÉPONSES ---
+        let pageNum = 2;
+        doc.addPage();
+        addHeader(pageNum);
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(12);
+        doc.text('ANNEXE : DÉTAIL DES RÉPONSES', 20, 35);
+        doc.line(20, 37, 90, 37);
+
+        let y = 45;
+        const questions = quizData[quizType]?.questions || [];
+
+        questions.forEach((q, idx) => {
+            const userAnswerIdx = userAnswers[idx];
+            const isCorrect = userAnswerIdx === q.correct;
+
+            if (y > 260) {
+                pageNum++;
+                doc.addPage();
+                addHeader(pageNum);
+                y = 35;
+            }
+
+            // Question text
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(9);
+            doc.setTextColor(0, 0, 0);
+            const qHeader = `Q${idx + 1}. [${q.section}]`;
+            doc.text(qHeader, 20, y);
+
+            doc.setFont('helvetica', 'normal');
+            const qLines = doc.splitTextToSize(q.text, 160);
+            doc.text(qLines, 25, y + 5);
+            y += (qLines.length * 5) + 5;
+
+            // Answers
+            doc.setFontSize(8);
+            if (isCorrect) {
+                doc.setTextColor(0, 128, 0); // Green
+                doc.text(`Réponse donnée : ${q.options[userAnswerIdx]} (Correct)`, 28, y);
+            } else {
+                doc.setTextColor(180, 0, 0); // Red
+                const given = userAnswerIdx !== null ? q.options[userAnswerIdx] : "Aucune";
+                doc.text(`Réponse donnée : ${given} (Incorrect)`, 28, y);
+                y += 4;
+                doc.setTextColor(0, 0, 0);
+                doc.text(`Réponse attendue : ${q.options[q.correct]}`, 28, y);
+            }
+
+            doc.setTextColor(0, 0, 0);
+            y += 10;
+        });
+
+        doc.save(`Compte_Rendu_Test_${userName.replace(/\s+/g, '_')}.pdf`);
     };
 
     const formatTime = (seconds: number) => {
@@ -363,7 +494,7 @@ export default function AdmissionTest({ selectedFormation, onFinish, initialUser
 
                             <div className="space-y-3 pt-6">
                                 <button
-                                    onClick={() => window.print()}
+                                    onClick={generatePDF}
                                     className="w-full py-5 bg-white text-[#1b1121] font-bold rounded-2xl hover:bg-white/90 transition-all flex items-center justify-center gap-3"
                                 >
                                     <Download size={20} /> Télécharger votre Bilan
