@@ -595,15 +595,15 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
                                             </div>
                                             <div className="bg-white/60 p-4 rounded-2xl border border-brand/5">
                                                 <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">N° SIRET</span>
-                                                <span className="font-bold text-slate-700">919 233 135 00014</span>
+                                                <span className="font-bold text-slate-700">918 707 704 00014</span>
                                             </div>
                                             <div className="bg-white/60 p-4 rounded-2xl border border-brand/5">
                                                 <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Code UAI</span>
-                                                <span className="font-bold text-slate-700">0756342X</span>
+                                                <span className="font-bold text-slate-700">0923033X</span>
                                             </div>
                                             <div className="bg-white/60 p-4 rounded-2xl border border-brand/5">
                                                 <span className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Adresse</span>
-                                                <span className="font-bold text-slate-700 text-sm">15 passage de la Main d'Or, 75011 Paris</span>
+                                                <span className="font-bold text-slate-700 text-sm">6 rue des Bateliers</span>
                                             </div>
                                         </div>
                                     </div>
