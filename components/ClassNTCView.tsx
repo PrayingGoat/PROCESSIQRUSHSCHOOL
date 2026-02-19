@@ -188,7 +188,9 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
     });
 
     const handleSaveCompanyEdit = async (id: string, data: any) => {
-        await updateCompany(id, data);
+        // Use student ID instead of enterprise ID for update API
+        const studentId = data.record_id_etudiant || id;
+        await updateCompany(studentId, data, selectedCompany);
     };
 
     useEffect(() => {

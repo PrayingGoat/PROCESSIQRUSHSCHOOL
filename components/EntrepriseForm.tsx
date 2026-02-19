@@ -179,8 +179,8 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
             opco: draftCompany?.opco || { nom: "" },
             formation: draftCompany?.formation || { choisie: "", date_debut: "", date_fin: "", code_rncp: "", code_diplome: "", nb_heures: "", jours_cours: "" },
             cfa: draftCompany?.cfa || {
-                rush_school: "oui", entreprise: "non", denomination: "RUSH SCHOOL", uai: "0932731W",
-                siret: "919 014 163 00018", adresse: "11-13 AVENUE DE LA DIVISION LECLERC", complement: "", code_postal: "93000", commune: "BOBIGNY"
+                rush_school: "oui", entreprise: "non", denomination: "RUSH SCHOOL", uai: "0923033X",
+                siret: "918 707 704 00014", adresse: "6 rue des Bateliers", complement: "", code_postal: "92110", commune: "CLICHY"
             },
             contrat: draftCompany?.contrat || {
                 type_contrat: "", type_derogation: "", date_debut: "", date_fin: "", duree_hebdomadaire: "35h", poste_occupe: "",

@@ -517,6 +517,25 @@ const mapCompanyToBackend = (data: any) => {
   };
 };
 
+// Helper to get only modified fields for PATCH request
+const diffObjects = (original: any, modified: any): any => {
+  const diff: any = {};
+  for (const key in modified) {
+    const valOrig = original[key];
+    const valMod = modified[key];
+
+    if (valMod && typeof valMod === 'object' && !Array.isArray(valMod)) {
+      const nestedDiff = diffObjects(valOrig || {}, valMod);
+      if (Object.keys(nestedDiff).length > 0) {
+        diff[key] = nestedDiff;
+      }
+    } else if (valOrig !== valMod) {
+      diff[key] = valMod;
+    }
+  }
+  return diff;
+};
+
 export const api = {
   // --- AUTH ---
   async login(email: string, pass: string): Promise<{ access_token: string }> {
@@ -895,23 +914,34 @@ export const api = {
       return json.data || json;
     } catch (error) { throw error; }
   },
-
-  async updateCompany(id: string, data: any): Promise<any> {
+  async updateCompany(studentId: string, data: any, originalData?: any): Promise<any> {
     try {
       const payload = mapCompanyToBackend(data);
-      console.log('📤 Updating Company Payload:', payload);
-      const response = await fetch(`${BASE_URL}/entreprises/${id}`, {
-        method: 'PUT',
+      let finalPayload = payload;
+
+      if (originalData) {
+        const originalPayload = mapCompanyToBackend(originalData);
+        finalPayload = diffObjects(originalPayload, payload);
+        console.log('🔄 Diff result:', finalPayload);
+
+        if (Object.keys(finalPayload).length === 0) {
+          console.log('ℹ️ No changes detected, skipping update.');
+          return { success: true, message: "No changes detected" };
+        }
+      }
+
+      console.log('📤 Updating Company for Student ID:', studentId);
+      console.log('📤 Updating Company Payload (Partial):', finalPayload);
+      const response = await fetch(`${BASE_URL}/entreprises/${studentId}`, {
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(finalPayload),
       });
       if (!response.ok) {
         console.error(`❌ Company Update Failed (${response.status}):`, response.statusText);
         throw new Error('Update company failed');
       }
-      const json = await response.json();
-      console.log('✅ Company Update Success:', json);
-      return json;
+      return await response.json();
     } catch (error) {
       console.error('❌ Company Update Error:', error);
       throw error;
@@ -926,16 +956,14 @@ export const api = {
         method: 'GET',
         headers: { 'Accept': 'application/json' }
       });
-      // If 404/Error, return empty array for now or throw
       if (!response.ok) {
         if (response.status === 404) return [];
-        // Fallback to mock if API not ready
-        throw new Error('API/Route not found');
+        throw new Error('History not found');
       }
       const json = await response.json();
       return Array.isArray(json) ? json : (json.data || []);
     } catch (error) {
-      console.warn('⚠️ History API not ready, using mock data');
+      console.warn('⚠️ History API error, using mock data');
       return [
         { id: '1', action: 'Création dossier', date: new Date(Date.now() - 10000000).toISOString(), details: 'Inscription via formulaire web', utilisateur: 'Système' },
         { id: '2', action: 'Document ajouté', date: new Date(Date.now() - 5000000).toISOString(), details: 'CV téléchargé', utilisateur: 'Ny Aina' },
@@ -963,27 +991,17 @@ export const api = {
   async saveInterviewEvaluation(data: any): Promise<any> {
     try {
       console.log('📤 Saving Interview Evaluation:', data);
-      // Simulate API call as it's not finished on backend
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          console.log('✅ Evaluation Saved (Mock Success)');
-          resolve({ success: true, message: "Évaluation enregistrée avec succès (Simulé)" });
-        }, 1000);
-      });
-
-      /* 
-      // Real implementation would look like this:
-      const response = await fetch(`${BASE_URL}/candidates/${data.studentId}/evaluation`, {
+      const response = await fetch(`${BASE_URL}/entretiens/evaluation`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       });
       if (!response.ok) throw new Error('Failed to save evaluation');
       return await response.json();
-      */
     } catch (error) {
       console.error('❌ Error saving evaluation:', error);
       throw error;
     }
   }
 };
+
