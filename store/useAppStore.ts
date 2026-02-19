@@ -44,6 +44,7 @@ export const useAppStore = create<AppState>()(
         }),
         {
             name: 'app-storage',
+            version: 1, // Incremented to clear stale drafts
             partialize: (state) => ({
                 draftStudent: state.draftStudent,
                 draftCompany: state.draftCompany
