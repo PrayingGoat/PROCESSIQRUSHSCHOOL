@@ -128,6 +128,7 @@ const mapBackendToCompany = (backendData: any): any => {
       siret: fields["Numéro SIRET"] || "",
       code_ape_naf: fields["Code APE/NAF"] || "",
       type_employeur: fields["Type demployeur"] || "",
+      employeur_specifique: fields["Employeur spécifique"] || "",
       effectif: fields["Effectif salarié de l'entreprise"] || "",
       convention: fields["Convention collective"] || ""
     },
@@ -347,6 +348,7 @@ const mapCompanyToBackend = (data: any) => {
         siret: ensureString(data.identification?.siret),
         code_ape_naf: ensureString(data.identification?.code_ape_naf),
         type_employeur: ensureString(data.identification?.type_employeur),
+        employeur_specifique: ensureString(data.identification?.employeur_specifique),
         nombre_salaries: data.identification?.effectif ? parseInt(data.identification.effectif.toString()) : (data.identification?.nombre_salaries || null),
         convention_collective: ensureString(data.identification?.convention || data.identification?.convention_collective)
       },
@@ -439,6 +441,7 @@ const mapCompanyToBackend = (data: any) => {
       siret: ensureString(data["Numéro SIRET"]),
       code_ape_naf: ensureString(data["Code APE/NAF"]),
       type_employeur: ensureString(data["Type demployeur"]),
+      employeur_specifique: ensureString(data["Employeur spécifique"]),
       nombre_salaries: parseInt(ensureString(data["Effectif salarié de l'entreprise"])) || null,
       convention_collective: ensureString(data["Convention collective"])
     },

@@ -13,6 +13,7 @@ import Select from './ui/Select';
 import { formatPhone, formatSIRET } from '../utils/formatters';
 import {
     EMPLOYER_TYPE_OPTIONS,
+    EMPLOYER_SPECIFIC_OPTIONS,
     MAITRE_DIPLOMA_OPTIONS,
     OPCO_OPTIONS,
     CONTRAT_TYPE_OPTIONS,
@@ -35,6 +36,7 @@ const companySchema = z.object({
         }, "Le SIRET doit contenir exactement 14 chiffres"),
         code_ape_naf: z.string().regex(/^[0-9]{4}[A-Z]$/, "Code APE invalide (ex: 4711D)"),
         type_employeur: z.string().min(1, "Veuillez sélectionner le type d'employeur"),
+        employeur_specifique: z.string().min(1, "Veuillez sélectionner le type d'employeur spécifique"),
         effectif: z.string().min(1, "L'effectif est requis"),
         convention: z.string().optional().or(z.literal(""))
     }),
@@ -173,7 +175,7 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
     } = useForm<CompanyFormValues>({
         resolver: zodResolver(companySchema),
         defaultValues: {
-            identification: draftCompany?.identification || { raison_sociale: "", siret: "", code_ape_naf: "", type_employeur: "", effectif: "", convention: "" },
+            identification: draftCompany?.identification || { raison_sociale: "", siret: "", code_ape_naf: "", type_employeur: "", employeur_specifique: "Aucun de ces cas", effectif: "", convention: "" },
             adresse: draftCompany?.adresse || { num: "", voie: "", complement: "", code_postal: "", ville: "", telephone: "", email: "" },
             maitre_apprentissage: draftCompany?.maitre_apprentissage || { nom: "", prenom: "", date_naissance: "", fonction: "", diplome: "", experience: "", telephone: "", email: "" },
             opco: draftCompany?.opco || { nom: "" },
@@ -374,7 +376,7 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
                         collapsible
                         isOpen={activeSection === 'id'}
                         onToggle={() => toggleSection('id')}
-                        hasError={hasSectionError(['identification.raison_sociale', 'identification.siret', 'identification.code_ape_naf', 'identification.type_employeur', 'identification.effectif', 'identification.convention'])}
+                        hasError={hasSectionError(['identification.raison_sociale', 'identification.siret', 'identification.code_ape_naf', 'identification.type_employeur', 'identification.employeur_specifique', 'identification.effectif', 'identification.convention'])}
                     >
                         <div className="grid grid-cols-12 gap-5">
                             <div className="col-span-12">
@@ -398,6 +400,16 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
                                     {...register('identification.type_employeur')}
                                     placeholder="Sélectionnez"
                                     options={EMPLOYER_TYPE_OPTIONS}
+                                />
+                            </div>
+                            <div className="col-span-12">
+                                <Select
+                                    label="Employeur spécifique"
+                                    required
+                                    error={errors.identification?.employeur_specifique?.message}
+                                    {...register('identification.employeur_specifique')}
+                                    placeholder="Sélectionnez"
+                                    options={EMPLOYER_SPECIFIC_OPTIONS}
                                 />
                             </div>
                             <div className="col-span-12 md:col-span-6">

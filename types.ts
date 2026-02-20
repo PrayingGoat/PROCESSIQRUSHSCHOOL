@@ -140,6 +140,7 @@ export interface CompanyFormData {
     siret: string;
     code_ape_naf: string;
     type_employeur: string;
+    employeur_specifique: string;
     effectif: string | number;
     convention: string;
   };

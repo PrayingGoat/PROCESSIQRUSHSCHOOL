@@ -144,6 +144,39 @@ export const DIPLOMA_PREPARED_OPTIONS: SelectOption[] = toOptions([
     'Aucun diplôme'
 ]);
 
+export const DETAILED_DIPLOMA_OPTIONS: SelectOption[] = [
+    { value: "header1", label: "Diplôme ou titre de niveau bac +5 et plus", disabled: true },
+    { value: "80 Doctorat", label: "80 Doctorat" },
+    { value: "73 Master", label: "73 Master" },
+    { value: "75 Diplôme d'ingénieur", label: "75 Diplôme d'ingénieur" },
+    { value: "76 Diplôme d'école de commerce", label: "76 Diplôme d'école de commerce" },
+    { value: "79 Autre diplôme ou titre de niveau bac+5 ou plus", label: "79 Autre diplôme ou titre de niveau bac+5 ou plus" },
+    { value: "header2", label: "Diplôme ou titre de niveau bac +3 et 4", disabled: true },
+    { value: "62 Licence professionnelle", label: "62 Licence professionnelle" },
+    { value: "63 Licence générale", label: "63 Licence générale" },
+    { value: "64 Bachelor universitaire de technologie BUT", label: "64 Bachelor universitaire de technologie BUT" },
+    { value: "69 Autre diplôme ou titre de niveau bac +3 ou 4", label: "69 Autre diplôme ou titre de niveau bac +3 ou 4" },
+    { value: "header3", label: "Diplôme ou titre de niveau bac +2", disabled: true },
+    { value: "54 Brevet de Technicien Supérieur", label: "54 Brevet de Technicien Supérieur" },
+    { value: "55 Diplôme Universitaire de technologie", label: "55 Diplôme Universitaire de technologie" },
+    { value: "58 Autre diplôme ou titre de niveau bac+2", label: "58 Autre diplôme ou titre de niveau bac+2" },
+    { value: "header4", label: "Diplôme ou titre de niveau bac", disabled: true },
+    { value: "41 Baccalauréat professionnel", label: "41 Baccalauréat professionnel" },
+    { value: "42 Baccalauréat général", label: "42 Baccalauréat général" },
+    { value: "43 Baccalauréat technologique", label: "43 Baccalauréat technologique" },
+    { value: "44 Diplôme de spécialisation professionnelle", label: "44 Diplôme de spécialisation professionnelle" },
+    { value: "49 Autre diplôme ou titre de niveau bac", label: "49 Autre diplôme ou titre de niveau bac" },
+    { value: "header5", label: "Diplôme ou titre de niveau CAP/BEP", disabled: true },
+    { value: "33 CAP", label: "33 CAP" },
+    { value: "34 BEP", label: "34 BEP" },
+    { value: "35 Certificat de spécialisation (ex-Mention complémentaire)", label: "35 Certificat de spécialisation (ex-Mention complémentaire)" },
+    { value: "38 Autre diplôme ou titre de niveau CAP/BEP", label: "38 Autre diplôme ou titre de niveau CAP/BEP" },
+    { value: "header6", label: "Aucun diplôme ni titre", disabled: true },
+    { value: "25 Diplôme national du Brevet", label: "25 Diplôme national du Brevet" },
+    { value: "26 Certificat de formation générale", label: "26 Certificat de formation générale" },
+    { value: "13 Aucun diplôme ni titre professionnel", label: "13 Aucun diplôme ni titre professionnel" }
+];
+
 export const LAST_CLASS_OPTIONS: SelectOption[] = toOptions([
     'Diplôme obtenu',
     '1ère année suivie et validée',
@@ -239,6 +272,14 @@ export const EMPLOYER_TYPE_OPTIONS: SelectOption[] = [
     { value: "28 Etablissement public administratif local (y compris établissement public de coopération intercommunale EPCI)", label: "28 - Etablissement public administratif local (y compris EPCI)" },
     { value: "29 Autre employeur public", label: "29 - Autre employeur public" },
     { value: "30 Etablissement public industriel et commercial", label: "30 - Etablissement public industriel et commercial" }
+];
+
+export const EMPLOYER_SPECIFIC_OPTIONS: SelectOption[] = [
+    { value: "Entreprise de travail temporaire", label: "Entreprise de travail temporaire" },
+    { value: "Groupement demployeurs", label: "Groupement d'employeurs" },
+    { value: "Employeur saisonnier", label: "Employeur saisonnier" },
+    { value: "Apprentissage familial", label: "Apprentissage familial" },
+    { value: "Aucun de ces cas", label: "Aucun de ces cas" }
 ];
 
 export const MAITRE_DIPLOMA_OPTIONS: SelectOption[] = [

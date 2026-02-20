@@ -18,6 +18,7 @@ import {
     SITUATION_BEFORE_CONTRACT_OPTIONS,
     REGIME_SOCIAL_OPTIONS,
     DIPLOMA_PREPARED_OPTIONS,
+    DETAILED_DIPLOMA_OPTIONS,
     LAST_CLASS_OPTIONS,
     HIGHEST_DIPLOMA_OPTIONS,
     FORMATION_SOUHAITEE_OPTIONS,
@@ -593,7 +594,7 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext, initialDa
                             <Select
                                 label="Intitulé précis du dernier diplôme ou titre préparé"
                                 {...register('intitulePrecisDernierDiplome')}
-                                options={DIPLOMA_PREPARED_OPTIONS}
+                                options={DETAILED_DIPLOMA_OPTIONS}
                                 placeholder="Sélectionnez"
 
                             />
