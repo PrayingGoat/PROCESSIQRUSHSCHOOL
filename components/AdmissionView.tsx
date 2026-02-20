@@ -119,7 +119,7 @@ const StepLine = ({ isCompleted }: { isCompleted: boolean }) => (
     <div className={`w-16 h-1 mx-2 rounded-full transition-colors duration-500 ${isCompleted ? 'bg-emerald-500' : 'bg-slate-100'}`}></div>
 );
 
-const EvaluationGrid = ({ studentData }: { studentData: any }) => {
+const EvaluationGrid = ({ studentData, onNext }: { studentData: any, onNext?: () => void }) => {
     const { showToast } = useAppStore();
     const [evalData, setEvalData] = useState({
         candidatNom: '',
@@ -722,6 +722,11 @@ const EvaluationGrid = ({ studentData }: { studentData: any }) => {
                         <Button variant="primary" className="flex-1 !bg-slate-900" onClick={exportEvaluationPDF} leftIcon={<Printer size={18} />}>
                             Exporter PDF
                         </Button>
+                        {onNext && (
+                            <Button variant="outline" className="flex-1" onClick={onNext} rightIcon={<ArrowRight size={18} />}>
+                                Continuer
+                            </Button>
+                        )}
                     </div>
                 </div>
             </div>
@@ -921,7 +926,7 @@ const AdmissionView = ({ selectedStudent, selectedTab, onClearSelection }: Admis
     const navigate = useNavigate();
     const [mainTab, setMainTab] = useState<'dashboard' | 'interviews'>('dashboard');
 
-    const [activeTab, setActiveTab] = useState<AdmissionTab>(selectedTab || AdmissionTab.QUESTIONNAIRE);
+    const [activeTab, setActiveTab] = useState<AdmissionTab>(selectedTab || AdmissionTab.TESTS);
     const [prefilledStudent, setPrefilledStudent] = useState<any>(null);
 
     // Handle pre-selected student from ClassNTC
@@ -948,6 +953,7 @@ const AdmissionView = ({ selectedStudent, selectedTab, onClearSelection }: Admis
 
     const [entrepriseCompleted, setEntrepriseCompleted] = useState(false);
     const [adminCompleted, setAdminCompleted] = useState(false);
+    const [interviewCompleted, setInterviewCompleted] = useState(false);
 
     const [showSuccessModal, setShowSuccessModal] = useState(false);
 
@@ -978,7 +984,7 @@ const AdmissionView = ({ selectedStudent, selectedTab, onClearSelection }: Admis
 
     const handleFinishTest = () => {
         setTestCompleted(true);
-        setActiveTab(AdmissionTab.QUESTIONNAIRE);
+        setActiveTab(AdmissionTab.ENTRETIEN);
     };
 
     const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>, docId: string) => {
@@ -1075,15 +1081,15 @@ const AdmissionView = ({ selectedStudent, selectedTab, onClearSelection }: Admis
                 <div className="flex items-center min-w-max">
                     <StepItem step={1} label="Tests" isActive={activeTab === AdmissionTab.TESTS} isCompleted={testCompleted} />
                     <StepLine isCompleted={testCompleted} />
-                    <StepItem step={2} label="Étudiant" isActive={activeTab === AdmissionTab.QUESTIONNAIRE} isCompleted={!!studentData} />
+                    <StepItem step={2} label="Entretien" isActive={activeTab === AdmissionTab.ENTRETIEN} isCompleted={interviewCompleted} />
+                    <StepLine isCompleted={interviewCompleted} />
+                    <StepItem step={3} label="Étudiant" isActive={activeTab === AdmissionTab.QUESTIONNAIRE} isCompleted={!!studentData} />
                     <StepLine isCompleted={!!studentData} />
-                    <StepItem step={3} label="Documents" isActive={activeTab === AdmissionTab.DOCUMENTS} isCompleted={uploadedCount >= REQUIRED_DOCUMENTS.length} />
+                    <StepItem step={4} label="Documents" isActive={activeTab === AdmissionTab.DOCUMENTS} isCompleted={uploadedCount >= REQUIRED_DOCUMENTS.length} />
                     <StepLine isCompleted={uploadedCount >= REQUIRED_DOCUMENTS.length} />
-                    <StepItem step={4} label="Entreprise" isActive={activeTab === AdmissionTab.ENTREPRISE} isCompleted={entrepriseCompleted} />
+                    <StepItem step={5} label="Entreprise" isActive={activeTab === AdmissionTab.ENTREPRISE} isCompleted={entrepriseCompleted} />
                     <StepLine isCompleted={entrepriseCompleted} />
-                    <StepItem step={5} label="Admin" isActive={activeTab === AdmissionTab.ADMINISTRATIF} isCompleted={adminCompleted} />
-                    <StepLine isCompleted={adminCompleted} />
-                    <StepItem step={6} label="Entretien" isActive={activeTab === AdmissionTab.ENTRETIEN} isCompleted={false} />
+                    <StepItem step={6} label="Admin" isActive={activeTab === AdmissionTab.ADMINISTRATIF} isCompleted={adminCompleted} />
                 </div>
             </div>
 
@@ -1099,11 +1105,11 @@ const AdmissionView = ({ selectedStudent, selectedTab, onClearSelection }: Admis
             <div className="flex overflow-x-auto gap-2 mb-10 bg-slate-50 p-2 rounded-[24px] border border-slate-200 no-scrollbar shadow-inner">
                 {[
                     { id: AdmissionTab.TESTS, label: 'Tests', icon: PenTool },
+                    { id: AdmissionTab.ENTRETIEN, label: 'Entretien', icon: UserCheck },
                     { id: AdmissionTab.QUESTIONNAIRE, label: 'Fiche Étudiant', icon: Info },
                     { id: AdmissionTab.DOCUMENTS, label: 'Documents', icon: Upload },
                     { id: AdmissionTab.ENTREPRISE, label: 'Fiche Entreprise', icon: Building },
-                    { id: AdmissionTab.ADMINISTRATIF, label: 'Administratif', icon: Printer },
-                    { id: AdmissionTab.ENTRETIEN, label: 'Entretien', icon: UserCheck }
+                    { id: AdmissionTab.ADMINISTRATIF, label: 'Administratif', icon: Printer }
                 ].map((tab) => (
                     <button
                         key={tab.id}
@@ -1311,8 +1317,8 @@ const AdmissionView = ({ selectedStudent, selectedTab, onClearSelection }: Admis
                         </div>
 
                         <div className="flex justify-end mt-10">
-                            <Button size="lg" className="px-12" onClick={() => setActiveTab(AdmissionTab.ENTRETIEN)} rightIcon={<ArrowRight size={20} />}>
-                                Accéder à l'entretien
+                            <Button size="lg" className="px-12" onClick={() => navigate('/admin-dashboard')} rightIcon={<CheckCircle2 size={20} />}>
+                                Terminer le dossier
                             </Button>
                         </div>
                     </div>
@@ -1322,7 +1328,13 @@ const AdmissionView = ({ selectedStudent, selectedTab, onClearSelection }: Admis
             {
                 activeTab === AdmissionTab.ENTRETIEN && (
                     <div className="animate-slide-in">
-                        <EvaluationGrid studentData={studentData} />
+                        <EvaluationGrid
+                            studentData={studentData}
+                            onNext={() => {
+                                setInterviewCompleted(true);
+                                setActiveTab(AdmissionTab.QUESTIONNAIRE);
+                            }}
+                        />
                     </div>
                 )
             }
