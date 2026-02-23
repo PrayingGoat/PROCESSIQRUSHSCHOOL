@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mail, Lock, CheckCircle, ArrowRight, Loader2, User, Eye, EyeOff, Shield, Briefcase, GraduationCap, Users, BookOpen, ShieldCheck } from 'lucide-react';
+import { Mail, Lock, CheckCircle, ArrowRight, Loader2, Eye, EyeOff, Briefcase, GraduationCap, Users, BookOpen } from 'lucide-react';
+import { api } from '../services/api';
+import { decodeJwtPayload, setAuthToken } from '../services/session';
 
 const LoginPage: React.FC = () => {
     const navigate = useNavigate();
@@ -16,24 +18,38 @@ const LoginPage: React.FC = () => {
         { id: 'commercial', label: 'Commercial', icon: Briefcase },
         { id: 'admission', label: 'Admission', icon: GraduationCap },
         { id: 'rh', label: 'RH', icon: Users },
-        { id: 'eleve', label: 'Élève', icon: BookOpen },
+        { id: 'eleve', label: 'Eleve', icon: BookOpen },
     ];
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
 
-        // MOCK AUTHENTICATION (Simulate API call)
-        setTimeout(() => {
-            console.log(`Authenticating as ${activeRole} with`, formData);
+        try {
+            const result = await api.login(formData.email, formData.password);
+            setAuthToken(result.access_token);
 
-            // Store mock token and role
-            localStorage.setItem('authToken', 'mock-token-' + Date.now());
-            localStorage.setItem('userRole', activeRole);
+            const payload = decodeJwtPayload(result.access_token);
+            const isStudentToken = payload?.role === 'student';
 
+            if (activeRole === 'eleve' && !isStudentToken) {
+                throw new Error("Ce compte n'est pas un compte etudiant.");
+            }
+
+            const finalRole = isStudentToken ? 'eleve' : activeRole;
+            localStorage.setItem('userRole', finalRole);
+
+            if (finalRole === 'commercial') navigate('/commercial/dashboard');
+            else if (finalRole === 'admission') navigate('/admission');
+            else if (finalRole === 'rh') navigate('/rh/dashboard');
+            else if (finalRole === 'eleve') navigate('/etudiant/dashboard');
+            else navigate('/');
+        } catch (error: any) {
+            console.error('Login failed', error);
+            alert(error?.message || 'Identifiants invalides');
+        } finally {
             setIsLoading(false);
-            navigate('/');
-        }, 1500);
+        }
     };
 
     const currentRoleLabel = roles.find(r => r.id === activeRole)?.label;
@@ -60,19 +76,19 @@ const LoginPage: React.FC = () => {
                     <h1 className="text-5xl font-black text-slate-900 leading-[1.1] mb-6 tracking-tight stagger-3">
                         Optimisez vos <br />
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 animate-pulse-soft">
-                            processus métiers
+                            processus metiers
                         </span>
                     </h1>
 
                     <p className="text-lg text-slate-500 max-w-md leading-relaxed mb-10 stagger-4">
-                        Accédez à une plateforme centralisée pour gérer les admissions, le suivi commercial et les ressources humaines en toute simplicité.
+                        Accedez a une plateforme centralisee pour gerer les admissions, le suivi commercial et les ressources humaines en toute simplicite.
                     </p>
 
                     <div className="space-y-4 stagger-5">
                         {[
-                            "Suivi des candidats en temps réel",
-                            "Génération automatique des documents",
-                            "Tableaux de bord statistiques avancés",
+                            "Suivi des candidats en temps reel",
+                            "Generation automatique des documents",
+                            "Tableaux de bord statistiques avances",
                             "Gestion collaborative des dossiers"
                         ].map((item, i) => (
                             <div key={i} className="flex items-center gap-3 text-slate-600 font-medium group cursor-default">
@@ -86,7 +102,7 @@ const LoginPage: React.FC = () => {
                 </div>
 
                 <div className="relative z-10 text-xs text-slate-400 font-medium stagger-5" style={{ animationDelay: '0.8s' }}>
-                    © 2026 Process IQ - Rush School. Tous droits réservés.
+                    (c) 2026 Process IQ - Rush School. Tous droits reserves.
                 </div>
             </div>
 
@@ -156,7 +172,7 @@ const LoginPage: React.FC = () => {
 
                                 <div className="space-y-2 group">
                                     <div className="flex justify-between items-center px-2">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] group-focus-within:text-blue-600 transition-colors text-right">Clé d'accès</label>
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] group-focus-within:text-blue-600 transition-colors text-right">Cle d'acces</label>
                                         <a href="#" className="text-[10px] font-black text-blue-500 hover:text-blue-700 uppercase tracking-wider hover:translate-x-1 transition-all">Soutien technique</a>
                                     </div>
                                     <div className="relative">
@@ -165,7 +181,7 @@ const LoginPage: React.FC = () => {
                                         </div>
                                         <input
                                             type={showPassword ? "text" : "password"}
-                                            placeholder="••••••••"
+                                            placeholder="........"
                                             required
                                             className="w-full pl-12 pr-14 py-4 bg-slate-50/50 border border-slate-200/60 rounded-2xl text-slate-900 placeholder:text-slate-300 font-bold outline-none focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all duration-300 shadow-sm"
                                             value={formData.password}
@@ -205,7 +221,7 @@ const LoginPage: React.FC = () => {
 
                     <div className="mt-10 text-center animate-in fade-in duration-1000 delay-500">
                         <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest p-4 rounded-xl hover:bg-slate-50 transition-colors inline-block cursor-pointer">
-                            Version 2.4.0 — <span className="text-slate-500">Infrastructure Cloud Sécurisée</span>
+                            Version 2.4.0 - <span className="text-slate-500">Infrastructure Cloud Securisee</span>
                         </p>
                     </div>
                 </div>

@@ -1,12 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { Routes, Route, Navigate, useLocation, Outlet } from 'react-router-dom';
-import { AppModule, ViewId } from './types';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import DashboardView from './components/DashboardView';
 import AdmissionView from './components/AdmissionView';
 import RHView from './components/RHView';
-import StudentView from './components/StudentView';
 import LoginPage from './components/LoginPage';
 import Toast from './components/ui/Toast';
 import ClassNTCView from './components/ClassNTCView';
@@ -14,23 +12,38 @@ import { AdmissionTab } from './types';
 import AdminLoginPage from './components/AdminLoginPage';
 import AdminDashboard from './components/AdminDashboard';
 import TestPage from './components/TestPage';
+import StudentDashboard from './pages/student/StudentDashboard.tsx';
+import StudentNotes from './pages/student/StudentNotes.tsx';
+import StudentDocuments from './pages/student/StudentDocuments.tsx';
+import StudentPlanning from './pages/student/StudentPlanning.tsx';
+import StudentAppointments from './pages/student/StudentAppointments.tsx';
+import StudentAttendance from './pages/student/StudentAttendance.tsx';
+import StudentQuestionnaires from './pages/student/StudentQuestionnaires.tsx';
+import { decodeJwtPayload, getAuthToken, isAuthenticated } from './services/session';
 
+const getEffectiveRole = (): string | null => {
+  const storedRole = localStorage.getItem('userRole');
+  if (storedRole) return storedRole;
 
-const RequireAuth = ({ children, allowedRoles }: { children: React.ReactNode, allowedRoles?: string[] }) => {
-  const isAuthenticated = localStorage.getItem('authToken');
-  const userRole = localStorage.getItem('userRole');
+  const payload = decodeJwtPayload(getAuthToken());
+  if (payload?.role === 'student') return 'eleve';
+  return null;
+};
+
+const RequireAuth = ({ children, allowedRoles }: { children: React.ReactNode; allowedRoles?: string[] }) => {
   const location = useLocation();
-
-  if (!isAuthenticated) {
+  if (!isAuthenticated()) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (allowedRoles && userRole && !allowedRoles.includes(userRole)) {
-    // Redirect to default home based on role if they try to access forbidden route
-    return <Navigate to="/" replace />;
+  if (allowedRoles) {
+    const role = getEffectiveRole();
+    if (!role || !allowedRoles.includes(role)) {
+      return <Navigate to="/" replace />;
+    }
   }
 
-  return children;
+  return <>{children}</>;
 };
 
 const RequireAdminAuth = ({ children }: { children: React.ReactNode }) => {
@@ -41,7 +54,7 @@ const RequireAdminAuth = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/admin/login" state={{ from: location }} replace />;
   }
 
-  return children;
+  return <>{children}</>;
 };
 
 const App = () => {
@@ -49,20 +62,13 @@ const App = () => {
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
   const [selectedTab, setSelectedTab] = useState<AdmissionTab | null>(null);
   const location = useLocation();
-  const isStandalonePage = location.pathname === '/login' || location.pathname === '/admin/login' || location.pathname.startsWith('/admin') || location.pathname === '/test';
+  const isStandalonePage =
+    location.pathname === '/login' ||
+    location.pathname === '/admin/login' ||
+    location.pathname.startsWith('/admin') ||
+    location.pathname === '/test';
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
-
-  // Derive active module from current path
-  const activeModule = useMemo((): AppModule => {
-    const path = location.pathname;
-    if (path.startsWith('/commercial')) return AppModule.COMMERCIAL;
-    if (path.startsWith('/admission')) return AppModule.ADMISSION;
-    if (path.startsWith('/rh')) return AppModule.RH;
-    if (path.startsWith('/etudiant')) return AppModule.STUDENT;
-    if (path.startsWith('/parametres')) return AppModule.PARAMETRES;
-    return AppModule.COMMERCIAL;
-  }, [location.pathname]);
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-800">
@@ -70,53 +76,41 @@ const App = () => {
 
       {!isStandalonePage && (
         <>
-          {/* Sidebar Overlay for Mobile */}
           {sidebarOpen && (
             <div
               className="fixed inset-0 bg-slate-900/50 z-40 md:hidden backdrop-blur-sm"
               onClick={() => setSidebarOpen(false)}
             />
           )}
-
-          {/* Sidebar */}
-          <Sidebar
-            isOpen={sidebarOpen}
-            onClose={() => setSidebarOpen(false)}
-          />
+          <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
         </>
       )}
 
-      {/* Main Content Wrapper */}
       <div className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${!isStandalonePage ? 'md:ml-[260px]' : ''}`}>
-        {!isStandalonePage && (
-          <Header
-            toggleSidebar={toggleSidebar}
-            activeModule={activeModule}
-          />
-        )}
+        {!isStandalonePage && <Header toggleSidebar={toggleSidebar} />}
 
         <main className={`${!isStandalonePage ? 'flex-1 p-8 md:p-10 overflow-y-auto' : 'h-screen'}`}>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
 
-            {/* Admin Routes */}
             <Route path="/admin/login" element={<AdminLoginPage />} />
             <Route path="/admin" element={<RequireAdminAuth><AdminDashboard /></RequireAdminAuth>} />
 
             <Route element={<RequireAuth><Outlet /></RequireAuth>}>
-              {/* Redirect root based on role */}
-              <Route path="/" element={
-                (() => {
-                  const role = localStorage.getItem('userRole');
-                  if (role === 'commercial') return <Navigate to="/commercial/dashboard" replace />;
-                  if (role === 'admission') return <Navigate to="/admission" replace />;
-                  if (role === 'rh') return <Navigate to="/rh/dashboard" replace />;
-                  if (role === 'eleve') return <Navigate to="/etudiant" replace />;
-                  return <Navigate to="/commercial/dashboard" replace />;
-                })()
-              } />
+              <Route
+                path="/"
+                element={
+                  (() => {
+                    const role = getEffectiveRole();
+                    if (role === 'commercial') return <Navigate to="/commercial/dashboard" replace />;
+                    if (role === 'admission') return <Navigate to="/admission" replace />;
+                    if (role === 'rh') return <Navigate to="/rh/dashboard" replace />;
+                    if (role === 'eleve') return <Navigate to="/etudiant/dashboard" replace />;
+                    return <Navigate to="/commercial/dashboard" replace />;
+                  })()
+                }
+              />
 
-              {/* Commercial Routes */}
               <Route path="/commercial" element={<RequireAuth allowedRoles={['commercial']}><Outlet /></RequireAuth>}>
                 <Route path="dashboard" element={<DashboardView activeSubView="commercial-dashboard" />} />
                 <Route path="placer" element={<DashboardView activeSubView="commercial-placer" />} />
@@ -124,37 +118,43 @@ const App = () => {
                 <Route index element={<Navigate to="dashboard" replace />} />
               </Route>
 
-              {/* Admission Routes */}
-              <Route path="/admission" element={
-                <RequireAuth allowedRoles={['admission']}>
-                  <AdmissionView
-                    selectedStudent={selectedStudent}
-                    selectedTab={selectedTab}
-                    onClearSelection={() => {
-                      setSelectedStudent(null);
-                      setSelectedTab(null);
-                    }}
-                  />
-                </RequireAuth>
-              } />
-              <Route path="/classe-ntc" element={
-                <RequireAuth allowedRoles={['admission']}>
-                  <ClassNTCView
-                    onSelectStudent={(student, tab) => {
-                      setSelectedStudent(student);
-                      setSelectedTab(tab);
-                    }}
-                  />
-                </RequireAuth>
-              } />
+              <Route
+                path="/admission"
+                element={
+                  <RequireAuth allowedRoles={['admission']}>
+                    <AdmissionView
+                      selectedStudent={selectedStudent}
+                      selectedTab={selectedTab}
+                      onClearSelection={() => {
+                        setSelectedStudent(null);
+                        setSelectedTab(null);
+                      }}
+                    />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/classe-ntc"
+                element={
+                  <RequireAuth allowedRoles={['admission']}>
+                    <ClassNTCView
+                      onSelectStudent={(student, tab) => {
+                        setSelectedStudent(student);
+                        setSelectedTab(tab);
+                      }}
+                    />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/test"
+                element={
+                  <RequireAuth allowedRoles={['admission']}>
+                    <TestPage />
+                  </RequireAuth>
+                }
+              />
 
-              <Route path="/test" element={
-                <RequireAuth allowedRoles={['admission']}>
-                  <TestPage />
-                </RequireAuth>
-              } />
-
-              {/* RH Routes */}
               <Route path="/rh" element={<RequireAuth allowedRoles={['rh']}><Outlet /></RequireAuth>}>
                 <Route path="dashboard" element={<RHView activeSubView="rh-dashboard" />} />
                 <Route path="fiche" element={<RHView activeSubView="rh-fiche" />} />
@@ -164,19 +164,30 @@ const App = () => {
                 <Route index element={<Navigate to="dashboard" replace />} />
               </Route>
 
-              {/* Other Routes */}
-              <Route path="/etudiant" element={<RequireAuth allowedRoles={['eleve']}><StudentView /></RequireAuth>} />
-              <Route path="/parametres" element={
-                <div className="p-8">
-                  <div className="bg-white border border-slate-200 rounded-2xl p-6">
-                    <h2 className="text-xl font-bold mb-4">Paramètres</h2>
-                    <p className="text-slate-500">Configuration de l'application (Section en construction)</p>
+              <Route path="/etudiant" element={<RequireAuth allowedRoles={['eleve']}><Outlet /></RequireAuth>}>
+                <Route path="dashboard" element={<StudentDashboard />} />
+                <Route path="notes" element={<StudentNotes />} />
+                <Route path="documents" element={<StudentDocuments />} />
+                <Route path="planning" element={<StudentPlanning />} />
+                <Route path="rdv" element={<StudentAppointments />} />
+                <Route path="presences" element={<StudentAttendance />} />
+                <Route path="questionnaires" element={<StudentQuestionnaires />} />
+                <Route index element={<Navigate to="dashboard" replace />} />
+              </Route>
+
+              <Route
+                path="/parametres"
+                element={
+                  <div className="p-8">
+                    <div className="bg-white border border-slate-200 rounded-2xl p-6">
+                      <h2 className="text-xl font-bold mb-4">Parametres</h2>
+                      <p className="text-slate-500">Configuration de l'application (Section en construction)</p>
+                    </div>
                   </div>
-                </div>
-              } />
+                }
+              />
             </Route>
 
-            {/* Catch-all redirect */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>

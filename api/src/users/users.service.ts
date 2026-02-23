@@ -2,6 +2,7 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User } from './user.schema';
+import { hashPassword } from '../auth/password.util';
 
 @Injectable()
 export class UsersService implements OnModuleInit {
@@ -14,7 +15,7 @@ export class UsersService implements OnModuleInit {
             console.log('[UsersService] Seed: Creating default admin user...');
             await this.userModel.create({
                 email: 'admin@rush-school.fr',
-                password: 'admin', // En production, hacher ce mot de passe !
+                password: hashPassword('admin'),
                 name: 'Admin Rush School',
                 role: 'admin'
             });
@@ -31,12 +32,41 @@ export class UsersService implements OnModuleInit {
                     email: user.email,
                     password: user.password,
                     name: user.name,
-                    role: user.role
+                    role: user.role,
+                    studentId: user.studentId
                 };
             }
         } catch (error) {
             console.error('[UsersService] Error finding user in MongoDB:', error);
         }
         return undefined;
+    }
+
+    async createStudentAccount(payload: {
+        email: string;
+        password: string;
+        name: string;
+        studentId: string;
+    }): Promise<any> {
+        const existing = await this.userModel.findOne({ email: payload.email }).exec();
+        if (existing) {
+            throw new Error('Un utilisateur avec cet email existe deja');
+        }
+
+        const created = await this.userModel.create({
+            email: payload.email,
+            password: hashPassword(payload.password),
+            name: payload.name,
+            role: 'student',
+            studentId: payload.studentId
+        });
+
+        return {
+            userId: created._id,
+            email: created.email,
+            name: created.name,
+            role: created.role,
+            studentId: created.studentId
+        };
     }
 }

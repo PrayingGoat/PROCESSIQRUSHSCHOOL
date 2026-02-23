@@ -21,9 +21,11 @@ export default defineConfig(({ mode }) => {
       'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
     },
     resolve: {
-      alias: {
-        '@': path.resolve(__dirname, '.'),
-      }
+      alias: [
+        { find: '@', replacement: path.resolve(__dirname, '.') },
+        { find: 'framer-motion', replacement: path.resolve(__dirname, 'utils/framer-motion-shim.tsx') },
+        { find: /^core-js\/modules\/.*$/, replacement: path.resolve(__dirname, 'utils/empty-module.ts') }
+      ]
     }
   };
 });
