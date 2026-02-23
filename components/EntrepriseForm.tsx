@@ -116,8 +116,8 @@ const companySchema = z.object({
         nombre_mois: z.number().optional(),
 
         // MAPPINGS DES PÉRIODES DE SALAIRE
-        date_debut_2periode_1er_annee: z.string().optional().or(z.literal("")),
-        date_fin_2periode_1er_annee: z.string().optional().or(z.literal("")),
+        date_debut_2periode_1er_annee: z.string().min(1, "Date de début requise"),
+        date_fin_2periode_1er_annee: z.string().min(1, "Date de fin requise"),
 
         date_debut_1periode_2eme_annee: z.string().optional().or(z.literal("")),
         date_fin_1periode_2eme_annee: z.string().optional().or(z.literal("")),
@@ -135,7 +135,7 @@ const companySchema = z.object({
         date_fin_2periode_4eme_annee: z.string().optional().or(z.literal(""))
     }),
     salaire: z.object({
-        age1: z.string().optional(),
+        age1: z.string().min(1, "L'âge est requis"),
         age2: z.string().optional(),
         age3: z.string().optional(),
         age4: z.string().optional()
@@ -277,12 +277,12 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
         const { pct, montant } = calculateSalary(age, yearIndex);
 
         // Update the specific year in contrat object for API
-        setValue(`contrat.pourcentage_smic${yearIndex}` as any, pct);
-        setValue(`contrat.montant_salaire_brut${yearIndex}` as any, montant);
-        setValue(`contrat.smic${yearIndex}` as any, "smic");
+        setValue(`contrat.pourcentage_smic${yearIndex}` as any, pct, { shouldValidate: true });
+        setValue(`contrat.montant_salaire_brut${yearIndex}` as any, montant, { shouldValidate: true });
+        setValue(`contrat.smic${yearIndex}` as any, "smic", { shouldValidate: true });
 
         // Update the age for this specific year
-        setValue(`salaire.age${yearIndex}` as any, age);
+        setValue(`salaire.age${yearIndex}` as any, age, { shouldValidate: true });
     };
 
     const toggleMission = (mission: string) => {
@@ -655,7 +655,7 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
                         collapsible
                         isOpen={activeSection === 'contract'}
                         onToggle={() => toggleSection('contract')}
-                        hasError={hasSectionError(['contrat.type_contrat', 'contrat.type_derogation', 'contrat.duree_hebdomadaire', 'contrat.poste_occupe', 'contrat.lieu_execution', 'contrat.numero_deca_ancien_contrat', 'contrat.date_conclusion', 'contrat.date_debut_execution', 'contrat.date_avenant', 'contrat.caisse_retraite', 'contrat.machines_dangereuses'])}
+                        hasError={hasSectionError(['contrat.type_contrat', 'contrat.type_derogation', 'contrat.duree_hebdomadaire', 'contrat.poste_occupe', 'contrat.lieu_execution', 'contrat.numero_deca_ancien_contrat', 'contrat.date_conclusion', 'contrat.date_debut_execution', 'contrat.date_avenant', 'contrat.caisse_retraite', 'contrat.machines_dangereuses', 'contrat.date_debut_2periode_1er_annee', 'contrat.date_fin_2periode_1er_annee', 'salaire.age1'])}
                     >
                         <div className="grid grid-cols-12 gap-5">
                             <div className="col-span-12 md:col-span-6">
@@ -751,11 +751,13 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
                                                     <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100/50">
                                                         <Select
                                                             label={`Configuration de l'âge`}
+                                                            required={year === "1"}
                                                             value={yearAge}
                                                             onChange={(e) => updateSalary(year, e.target.value)}
                                                             options={AGE_TRANCHE_OPTIONS}
                                                             className="!bg-white !py-3 !text-sm border-slate-200 focus:border-brand transition-colors"
                                                             placeholder="Choisir l'âge..."
+                                                            error={(errors.salaire as any)?.[`age${year}`]?.message}
                                                         />
                                                     </div>
 
@@ -773,12 +775,16 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
                                                                     <Input
                                                                         type="date"
                                                                         label="Début"
+                                                                        required
+                                                                        error={errors.contrat?.date_debut_2periode_1er_annee?.message}
                                                                         className="!bg-white !shadow-none border-brand/20 focus:border-brand"
                                                                         {...register(`contrat.date_debut_2periode_1er_annee` as any)}
                                                                     />
                                                                     <Input
                                                                         type="date"
                                                                         label="Fin"
+                                                                        required
+                                                                        error={errors.contrat?.date_fin_2periode_1er_annee?.message}
                                                                         className="!bg-white !shadow-none border-brand/20 focus:border-brand"
                                                                         {...register(`contrat.date_fin_2periode_1er_annee` as any)}
                                                                     />
