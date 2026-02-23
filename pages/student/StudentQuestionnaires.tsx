@@ -21,6 +21,7 @@ interface QuestionnaireItem {
   title: string;
   description: string;
   status: QuestionnaireStatus;
+  backendStatus: 'pending' | 'in_progress' | 'completed' | 'expired';
   category: QuestionnaireCategory;
   completionDate?: string;
   deadline?: string;
@@ -59,6 +60,7 @@ const StudentQuestionnaires: React.FC = () => {
   const [activeFilter, setActiveFilter] = useState<'all' | QuestionnaireStatus>('all');
   const [showQuestionnaire, setShowQuestionnaire] = useState<string | null>(null);
   const [questionnaires, setQuestionnaires] = useState<QuestionnaireItem[]>([]);
+  const [savingId, setSavingId] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -74,6 +76,7 @@ const StudentQuestionnaires: React.FC = () => {
             title: `Questionnaire ${formationLabel(q.formation)}`,
             description: 'Questionnaire de suivi et d evaluation',
             status,
+            backendStatus: (q.statut || 'pending') as 'pending' | 'in_progress' | 'completed' | 'expired',
             category: q.formation === 'tp_ntc' ? 'skills' : 'academic',
             completionDate,
             deadline,
@@ -88,6 +91,53 @@ const StudentQuestionnaires: React.FC = () => {
       }
     })();
   }, []);
+
+  const updateLocalQuestionnaire = (id: string, patch: Partial<QuestionnaireItem>) => {
+    setQuestionnaires((prev) => prev.map((q) => (q.id === id ? { ...q, ...patch } : q)));
+  };
+
+  const startQuestionnaire = async (id: string): Promise<void> => {
+    try {
+      setSavingId(id);
+      await api.updateQuestionnaireStatus(id, 'in_progress');
+      updateLocalQuestionnaire(id, { status: 'pending', backendStatus: 'in_progress' });
+      setShowQuestionnaire(id);
+    } catch (error: any) {
+      alert(error.message || 'Unable to start questionnaire');
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  const completeQuestionnaire = async (id: string): Promise<void> => {
+    const current = questionnaires.find((q) => q.id === id);
+    if (!current) return;
+
+    try {
+      setSavingId(id);
+      const score = current.score ?? 80;
+      await api.updateQuestionnaire(id, {
+        statut: 'completed',
+        completedAt: new Date().toISOString(),
+        score: Math.round(score / 5),
+        percentage: score,
+        responses: [
+          { questionId: 'auto-q1', answer: 'Completed from student portal', isCorrect: true }
+        ]
+      });
+      updateLocalQuestionnaire(id, {
+        status: 'completed',
+        backendStatus: 'completed',
+        completionDate: new Date().toLocaleDateString('fr-FR'),
+        score
+      });
+      setShowQuestionnaire(id);
+    } catch (error: any) {
+      alert(error.message || 'Unable to complete questionnaire');
+    } finally {
+      setSavingId(null);
+    }
+  };
 
   const stats = useMemo(() => {
     const completed = questionnaires.filter((q) => q.status === 'completed').length;
@@ -166,11 +216,11 @@ const StudentQuestionnaires: React.FC = () => {
             </div>
 
             <button
-              onClick={() => setShowQuestionnaire(urgentItem.id)}
+              onClick={() => startQuestionnaire(urgentItem.id)}
               className="px-6 py-3 bg-yellow-500 text-white rounded-xl font-semibold flex items-center gap-3 hover:bg-yellow-600 transition-colors whitespace-nowrap"
             >
               <PlayCircle size={20} />
-              Start
+              {savingId === urgentItem.id ? 'Starting...' : 'Start'}
             </button>
           </div>
         </div>
@@ -254,7 +304,10 @@ const StudentQuestionnaires: React.FC = () => {
                 </div>
 
                 {questionnaire.status === 'completed' ? (
-                  <button className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors flex items-center gap-2">
+                  <button
+                    onClick={() => setShowQuestionnaire(questionnaire.id)}
+                    className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors flex items-center gap-2"
+                  >
                     <Eye size={16} />
                     View
                   </button>
@@ -264,11 +317,11 @@ const StudentQuestionnaires: React.FC = () => {
                   </button>
                 ) : (
                   <button
-                    onClick={() => setShowQuestionnaire(questionnaire.id)}
+                    onClick={() => startQuestionnaire(questionnaire.id)}
                     className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors flex items-center gap-2"
                   >
                     <PlayCircle size={16} />
-                    Start
+                    {savingId === questionnaire.id ? 'Starting...' : 'Start'}
                   </button>
                 )}
               </div>
@@ -306,11 +359,25 @@ const StudentQuestionnaires: React.FC = () => {
               </button>
             </div>
             <p className="text-gray-600 mb-6">
-              Questionnaire detail view is ready. You can connect this modal to question-by-question flow.
+              {questionnaires.find((q) => q.id === showQuestionnaire)?.description}
             </p>
-            <button onClick={() => setShowQuestionnaire(null)} className="w-full py-3 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors">
-              Close
-            </button>
+            <div className="flex gap-3">
+              <button onClick={() => setShowQuestionnaire(null)} className="w-full py-3 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition-colors">
+                Close
+              </button>
+              {(() => {
+                const current = questionnaires.find((q) => q.id === showQuestionnaire);
+                if (!current || current.backendStatus === 'completed' || current.backendStatus === 'expired') return null;
+                return (
+                  <button
+                    onClick={() => completeQuestionnaire(current.id)}
+                    className="w-full py-3 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors"
+                  >
+                    {savingId === current.id ? 'Saving...' : 'Mark completed'}
+                  </button>
+                );
+              })()}
+            </div>
           </div>
         </div>
       )}

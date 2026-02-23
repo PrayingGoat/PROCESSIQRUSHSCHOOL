@@ -1,5 +1,5 @@
 import { StudentFormData, CompanyFormData, ApiResponse } from '../types';
-import { getAuthEmail, getAuthStudentId, getCurrentStudentId as getStoredStudentId, setCurrentStudentId } from './session';
+import { getAuthEmail, getAuthStudentId, getAuthToken, getCurrentStudentId as getStoredStudentId, setCurrentStudentId } from './session';
 
 const BASE_API_URL = import.meta.env.VITE_BASE_API_URL || '';
 const AUTH_API_URL = '/api'; // Local backend for Auth
@@ -18,6 +18,15 @@ const parseApiList = (json: any): any[] => {
   if (Array.isArray(json)) return json;
   if (json && Array.isArray(json.data)) return json.data;
   return [];
+};
+
+const withAuthHeaders = (headers: HeadersInit = {}): HeadersInit => {
+  const token = getAuthToken();
+  if (!token) return headers;
+  return {
+    ...headers,
+    Authorization: `Bearer ${token}`
+  };
 };
 
 // Helper to format string (remove underscores, capitalize)
@@ -331,8 +340,29 @@ const mapCompanyToBackend = (data: any) => {
 };
 
 export const api = {
+  async getAuthMe(): Promise<{ user: any; student: any | null } | null> {
+    try {
+      const response = await fetch(`${AUTH_API_URL}/auth/me`, {
+        method: 'GET',
+        headers: withAuthHeaders({ 'Accept': 'application/json' })
+      });
+      if (!response.ok) return null;
+      return await response.json();
+    } catch {
+      return null;
+    }
+  },
+
   async getCurrentStudent(): Promise<any | null> {
     try {
+      const me = await this.getAuthMe();
+      const directStudent = me?.student || null;
+      if (directStudent) {
+        const directId = String(directStudent._id || directStudent.id || '');
+        if (directId) setCurrentStudentId(directId);
+        return directStudent;
+      }
+
       const students = await this.getAllStudents();
       if (!Array.isArray(students) || students.length === 0) return null;
 
@@ -449,7 +479,7 @@ export const api = {
     try {
       const response = await fetch(`${STUDENTS_URL}`, {
         method: 'GET',
-        headers: { 'Accept': 'application/json' }
+        headers: withAuthHeaders({ 'Accept': 'application/json' })
       });
       if (!response.ok) throw new Error('Failed to fetch students');
       const json = await response.json();
@@ -462,7 +492,7 @@ export const api = {
       const query = studentId ? `?studentId=${encodeURIComponent(studentId)}` : '';
       const response = await fetch(`${ATTENDANCES_URL}${query}`, {
         method: 'GET',
-        headers: { 'Accept': 'application/json' }
+        headers: withAuthHeaders({ 'Accept': 'application/json' })
       });
       if (!response.ok) throw new Error('Failed to fetch attendances');
       const json = await response.json();
@@ -475,7 +505,7 @@ export const api = {
       const query = studentId ? `?studentId=${encodeURIComponent(studentId)}` : '';
       const response = await fetch(`${GRADES_URL}${query}`, {
         method: 'GET',
-        headers: { 'Accept': 'application/json' }
+        headers: withAuthHeaders({ 'Accept': 'application/json' })
       });
       if (!response.ok) throw new Error('Failed to fetch grades');
       const json = await response.json();
@@ -488,7 +518,7 @@ export const api = {
       const query = studentId ? `?studentId=${encodeURIComponent(studentId)}` : '';
       const response = await fetch(`${EVENTS_URL}${query}`, {
         method: 'GET',
-        headers: { 'Accept': 'application/json' }
+        headers: withAuthHeaders({ 'Accept': 'application/json' })
       });
       if (!response.ok) throw new Error('Failed to fetch events');
       const json = await response.json();
@@ -501,7 +531,7 @@ export const api = {
       const query = studentId ? `?studentId=${encodeURIComponent(studentId)}` : '';
       const response = await fetch(`${APPOINTMENTS_URL}${query}`, {
         method: 'GET',
-        headers: { 'Accept': 'application/json' }
+        headers: withAuthHeaders({ 'Accept': 'application/json' })
       });
       if (!response.ok) throw new Error('Failed to fetch appointments');
       const json = await response.json();
@@ -514,7 +544,7 @@ export const api = {
       const query = studentId ? `?studentId=${encodeURIComponent(studentId)}` : '';
       const response = await fetch(`${DOCUMENTS_URL}${query}`, {
         method: 'GET',
-        headers: { 'Accept': 'application/json' }
+        headers: withAuthHeaders({ 'Accept': 'application/json' })
       });
       if (!response.ok) throw new Error('Failed to fetch documents');
       const json = await response.json();
@@ -522,12 +552,12 @@ export const api = {
     } catch (error) { return []; }
   },
 
-  async getQuestionnaires(candidateId?: string): Promise<any[]> {
+  async getQuestionnaires(studentId?: string): Promise<any[]> {
     try {
-      const query = candidateId ? `?candidateId=${encodeURIComponent(candidateId)}` : '';
+      const query = studentId ? `?studentId=${encodeURIComponent(studentId)}` : '';
       const response = await fetch(`${QUESTIONNAIRES_URL}${query}`, {
         method: 'GET',
-        headers: { 'Accept': 'application/json' }
+        headers: withAuthHeaders({ 'Accept': 'application/json' })
       });
       if (!response.ok) throw new Error('Failed to fetch questionnaires');
       const json = await response.json();
@@ -538,7 +568,7 @@ export const api = {
   async createEvent(payload: any): Promise<any> {
     const response = await fetch(`${EVENTS_URL}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      headers: withAuthHeaders({ 'Content-Type': 'application/json', 'Accept': 'application/json' }),
       body: JSON.stringify(payload)
     });
     if (!response.ok) {
@@ -552,7 +582,7 @@ export const api = {
   async createAppointment(payload: any): Promise<any> {
     const response = await fetch(`${APPOINTMENTS_URL}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      headers: withAuthHeaders({ 'Content-Type': 'application/json', 'Accept': 'application/json' }),
       body: JSON.stringify(payload)
     });
     if (!response.ok) {
@@ -566,7 +596,7 @@ export const api = {
   async createDocument(payload: any): Promise<any> {
     const response = await fetch(`${DOCUMENTS_URL}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      headers: withAuthHeaders({ 'Content-Type': 'application/json', 'Accept': 'application/json' }),
       body: JSON.stringify(payload)
     });
     if (!response.ok) {
@@ -577,12 +607,109 @@ export const api = {
     return json?.data || json;
   },
 
+  async uploadStudentDocument(payload: {
+    studentId: string;
+    file: File;
+    title?: string;
+    description?: string;
+    category?: string;
+    status?: string;
+  }): Promise<any> {
+    const formData = new FormData();
+    formData.append('file', payload.file);
+    formData.append('studentId', payload.studentId);
+    if (payload.title) formData.append('title', payload.title);
+    if (payload.description) formData.append('description', payload.description);
+    if (payload.category) formData.append('category', payload.category);
+    if (payload.status) formData.append('status', payload.status);
+
+    const response = await fetch(`${DOCUMENTS_URL}/upload`, {
+      method: 'POST',
+      headers: withAuthHeaders({ 'Accept': 'application/json' }),
+      body: formData
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || error.message || 'Failed to upload document');
+    }
+    const json = await response.json();
+    return json?.data || json;
+  },
+
+  async downloadStudentDocument(documentId: string): Promise<Response> {
+    const response = await fetch(`${DOCUMENTS_URL}/${documentId}/download`, {
+      method: 'GET',
+      headers: withAuthHeaders({ 'Accept': 'application/octet-stream,application/json' })
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || error.message || 'Failed to download document');
+    }
+    return response;
+  },
+
+  async updateAttendance(id: string, payload: any): Promise<any> {
+    const response = await fetch(`${ATTENDANCES_URL}/${id}`, {
+      method: 'PUT',
+      headers: withAuthHeaders({ 'Content-Type': 'application/json', 'Accept': 'application/json' }),
+      body: JSON.stringify(payload)
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || error.message || 'Failed to update attendance');
+    }
+    const json = await response.json();
+    return json?.data || json;
+  },
+
+  async updateAppointment(id: string, payload: any): Promise<any> {
+    const response = await fetch(`${APPOINTMENTS_URL}/${id}`, {
+      method: 'PUT',
+      headers: withAuthHeaders({ 'Content-Type': 'application/json', 'Accept': 'application/json' }),
+      body: JSON.stringify(payload)
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || error.message || 'Failed to update appointment');
+    }
+    const json = await response.json();
+    return json?.data || json;
+  },
+
+  async updateQuestionnaire(id: string, payload: any): Promise<any> {
+    const response = await fetch(`${QUESTIONNAIRES_URL}/${id}`, {
+      method: 'PUT',
+      headers: withAuthHeaders({ 'Content-Type': 'application/json', 'Accept': 'application/json' }),
+      body: JSON.stringify(payload)
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || error.message || 'Failed to update questionnaire');
+    }
+    const json = await response.json();
+    return json?.data || json;
+  },
+
+  async updateQuestionnaireStatus(id: string, statut: 'pending' | 'in_progress' | 'completed' | 'expired'): Promise<any> {
+    const response = await fetch(`${QUESTIONNAIRES_URL}/${id}/status`, {
+      method: 'PATCH',
+      headers: withAuthHeaders({ 'Content-Type': 'application/json', 'Accept': 'application/json' }),
+      body: JSON.stringify({ statut })
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || error.message || 'Failed to update questionnaire status');
+    }
+    const json = await response.json();
+    return json?.data || json;
+  },
+
   async submitStudent(data: StudentFormData): Promise<ApiResponse> {
     try {
       const payload = mapStudentToBackend(data);
       const response = await fetch(`${CANDIDATES_URL}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        headers: withAuthHeaders({ 'Content-Type': 'application/json', 'Accept': 'application/json' }),
         body: JSON.stringify(payload),
       });
       if (!response.ok) {
@@ -601,7 +728,7 @@ export const api = {
     try {
       const response = await fetch(`${CANDIDATES_URL}`, {
         method: 'GET',
-        headers: { 'Accept': 'application/json' }
+        headers: withAuthHeaders({ 'Accept': 'application/json' })
       });
       if (!response.ok) throw new Error('Failed to fetch candidates');
       const json = await response.json();
@@ -616,7 +743,7 @@ export const api = {
     try {
       const response = await fetch(`${CANDIDATES_URL}/${id}`, {
         method: 'GET',
-        headers: { 'Accept': 'application/json' }
+        headers: withAuthHeaders({ 'Accept': 'application/json' })
       });
       if (!response.ok) throw new Error('Candidate not found');
       const json = await response.json();
@@ -629,7 +756,7 @@ export const api = {
       const payload = mapStudentToBackend(data);
       const response = await fetch(`${CANDIDATES_URL}/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        headers: withAuthHeaders({ 'Content-Type': 'application/json', 'Accept': 'application/json' }),
         body: JSON.stringify(payload),
       });
       if (!response.ok) throw new Error('Update failed');
@@ -642,7 +769,7 @@ export const api = {
     try {
       const response = await fetch(`${CANDIDATES_URL}/${id}`, {
         method: 'DELETE',
-        headers: { 'Accept': 'application/json' }
+        headers: withAuthHeaders({ 'Accept': 'application/json' })
       });
       return response.ok;
     } catch (error) { return false; }
@@ -655,7 +782,7 @@ export const api = {
       formData.append('file', file);
       const endpointMap: Record<string, string> = { 'cv': 'cv', 'cni': 'cin', 'lettre': 'lettre-motivation', 'vitale': 'carte-vitale', 'diplome': 'dernier-diplome' };
       const url = `${CANDIDATES_URL}/${recordId}/documents/${endpointMap[docType] || docType}`;
-      const response = await fetch(url, { method: 'POST', headers: { 'Accept': 'application/json' }, body: formData });
+      const response = await fetch(url, { method: 'POST', headers: withAuthHeaders({ 'Accept': 'application/json' }), body: formData });
       if (!response.ok) throw new Error(`Upload failed: ${response.statusText}`);
       return await response.json();
     } catch (error) { throw error; }

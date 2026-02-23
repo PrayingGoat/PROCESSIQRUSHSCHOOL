@@ -21,6 +21,7 @@ type AppointmentType = 'orientation' | 'suivi' | 'discipline' | 'family' | 'care
 
 interface AppointmentItem {
   id: string;
+  advisorId: string;
   title: string;
   description: string;
   type: AppointmentType;
@@ -64,13 +65,14 @@ const daysUntilLabel = (start: Date, status: AppointmentStatus): string => {
 };
 
 const StudentAppointments: React.FC = () => {
-  const defaultAdvisorId = getAuthUserId() || '507f1f77bcf86cd799439011';
+  const defaultAdvisorId = getAuthUserId() || '';
   const [selectedType, setSelectedType] = useState<AppointmentType>('suivi');
   const [selectedAdvisor, setSelectedAdvisor] = useState<string>(defaultAdvisorId);
   const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [reason, setReason] = useState<string>('');
   const [showHistory, setShowHistory] = useState<boolean>(false);
   const [appointments, setAppointments] = useState<AppointmentItem[]>([]);
+  const [selectedNoteAppointment, setSelectedNoteAppointment] = useState<AppointmentItem | null>(null);
 
   const loadAppointments = async (): Promise<void> => {
     try {
@@ -80,6 +82,7 @@ const StudentAppointments: React.FC = () => {
       const mapped: AppointmentItem[] = (Array.isArray(items) ? items : [])
         .map((a: any, idx: number) => ({
           id: String(a._id || a.id || `appt-${idx}`),
+          advisorId: String(a.advisorId || ''),
           title: typeLabel((a.type || 'suivi') as AppointmentType),
           description: a.reason || 'No reason',
           type: (a.type || 'suivi') as AppointmentType,
@@ -94,6 +97,9 @@ const StudentAppointments: React.FC = () => {
         .sort((a, b) => a.dateStart.getTime() - b.dateStart.getTime());
 
       setAppointments(mapped);
+      if (!selectedAdvisor && mapped[0]?.advisorId) {
+        setSelectedAdvisor(mapped[0].advisorId);
+      }
     } catch (error) {
       console.error('Failed to fetch appointments', error);
     }
@@ -126,11 +132,16 @@ const StudentAppointments: React.FC = () => {
     { id: 'administratif', label: 'Administrative', icon: 'FILE', description: 'Documents and admin tasks' }
   ];
 
-  const advisors = [
-    { id: defaultAdvisorId, name: 'Default Advisor' },
-    { id: '507f1f77bcf86cd799439011', name: 'Career Advisor' },
-    { id: '507f1f77bcf86cd799439011', name: 'Administrative Office' }
-  ];
+  const advisors = useMemo(() => {
+    const map = new Map<string, string>();
+    if (defaultAdvisorId) map.set(defaultAdvisorId, 'Current advisor');
+    appointments.forEach((appointment) => {
+      if (appointment.advisorId) {
+        map.set(appointment.advisorId, appointment.person || 'Advisor');
+      }
+    });
+    return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
+  }, [appointments, defaultAdvisorId]);
 
   const timeSlots: Array<{ id: number; date: string; time: string; available: boolean }> = [
     { id: 1, date: 'Monday', time: '10:00 - 10:30', available: true },
@@ -156,7 +167,11 @@ const StudentAppointments: React.FC = () => {
       }
       const start = selectedSlot ? slotStartFromId(selectedSlot) : slotStartFromId(1);
       const end = new Date(start.getTime() + 30 * 60 * 1000);
-      const advisorId = selectedAdvisor || getAuthUserId() || '507f1f77bcf86cd799439011';
+      const advisorId = selectedAdvisor || getAuthUserId();
+      if (!advisorId) {
+        alert('No advisor available for this account.');
+        return;
+      }
       const reasonText = customRequest
         ? `[Custom slot request] ${reason || 'Custom slot requested by student'}`
         : (reason || 'Student appointment request');
@@ -179,6 +194,27 @@ const StudentAppointments: React.FC = () => {
       await loadAppointments();
     } catch (error: any) {
       alert(error.message || 'Unable to create appointment');
+    }
+  };
+
+  const openAppointmentMeeting = (appointment: AppointmentItem): void => {
+    const urlMatch = String(appointment.notes || '').match(/https?:\/\/\S+/i);
+    const url = urlMatch?.[0] || `https://meet.jit.si/processiq-${appointment.id}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  const rescheduleAppointment = async (appointment: AppointmentItem): Promise<void> => {
+    try {
+      const nextStart = new Date(appointment.dateStart.getTime() + 24 * 60 * 60 * 1000);
+      const nextEnd = new Date(appointment.dateEnd.getTime() + 24 * 60 * 60 * 1000);
+      await api.updateAppointment(appointment.id, {
+        dateStart: nextStart.toISOString(),
+        dateEnd: nextEnd.toISOString(),
+        status: 'upcoming'
+      });
+      await loadAppointments();
+    } catch (error: any) {
+      alert(error.message || 'Unable to reschedule appointment');
     }
   };
 
@@ -245,11 +281,17 @@ const StudentAppointments: React.FC = () => {
                     </div>
 
                     <div className="flex gap-3">
-                      <button className="flex-1 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors">
+                      <button
+                        onClick={() => rescheduleAppointment(appointment)}
+                        className="flex-1 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                      >
                         <Clock size={16} className="inline mr-2" />
                         Reschedule
                       </button>
-                      <button className="flex-1 py-2.5 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors flex items-center justify-center gap-2">
+                      <button
+                        onClick={() => openAppointmentMeeting(appointment)}
+                        className="flex-1 py-2.5 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors flex items-center justify-center gap-2"
+                      >
                         <ExternalLink size={16} />
                         Join
                       </button>
@@ -286,7 +328,10 @@ const StudentAppointments: React.FC = () => {
                             {appointment.dateStart.toLocaleDateString('fr-FR')} - {appointment.status}
                           </p>
                         </div>
-                        <button className="px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition-colors">
+                        <button
+                          onClick={() => setSelectedNoteAppointment(appointment)}
+                          className="px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition-colors"
+                        >
                           Notes
                         </button>
                       </div>
@@ -335,6 +380,7 @@ const StudentAppointments: React.FC = () => {
               onChange={(e) => setSelectedAdvisor(e.target.value)}
               className="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
+              {advisors.length === 0 ? <option value="">No advisor found</option> : null}
               {advisors.map((advisor) => (
                 <option key={advisor.id} value={advisor.id}>{advisor.name}</option>
               ))}
@@ -443,6 +489,24 @@ const StudentAppointments: React.FC = () => {
           <p className="text-sm text-red-600">Track no-shows and cancellations</p>
         </div>
       </div>
+
+      {selectedNoteAppointment && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full">
+            <h3 className="text-xl font-bold mb-3">Appointment notes</h3>
+            <p className="text-sm text-gray-600 mb-4">{selectedNoteAppointment.title}</p>
+            <div className="rounded-lg bg-gray-50 border border-gray-200 p-4 text-sm text-gray-700 min-h-[120px]">
+              {selectedNoteAppointment.notes || 'No notes available for this appointment.'}
+            </div>
+            <button
+              onClick={() => setSelectedNoteAppointment(null)}
+              className="w-full mt-4 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

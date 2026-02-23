@@ -224,9 +224,13 @@ const StudentPlanning: React.FC = () => {
   const createMeeting = async (): Promise<void> => {
     try {
       const studentId = await api.getCurrentStudentId();
-      const ownerId = getAuthUserId() || '507f1f77bcf86cd799439011';
+      const ownerId = getAuthUserId();
       if (!studentId) {
         alert('No student linked to this session.');
+        return;
+      }
+      if (!ownerId) {
+        alert('No authenticated user found. Please sign in again.');
         return;
       }
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   TrendingUp, Download, Calculator, BarChart3, 
   Trophy, Activity, Eye, Filter
@@ -31,7 +31,6 @@ const StudentNotes: React.FC = () => {
   const [remoteGrades, setRemoteGrades] = useState<Grade[]>([]);
   const [studentResolved, setStudentResolved] = useState<boolean>(false);
 
-  // DEBUG: verify backend data arrival
   useEffect(() => {
     (async () => {
       try {
@@ -53,14 +52,22 @@ const StudentNotes: React.FC = () => {
           color: Number(g.grade ?? 0) >= 15 ? 'text-green-600' : Number(g.grade ?? 0) >= 12 ? 'text-blue-600' : 'text-yellow-600'
         }));
         setRemoteGrades(mapped);
-        console.log('🔔 StudentNotes - getGrades:', grades);
       } catch (err) {
-        console.error('🔔 StudentNotes - error fetching grades:', err);
+        console.error('StudentNotes - error fetching grades:', err);
         setRemoteGrades([]);
       }
     })();
   }, []);
-  const displayedGrades = remoteGrades;
+
+  const subjectOptions = useMemo(() => {
+    const unique = Array.from(new Set(remoteGrades.map((g) => g.subject).filter(Boolean)));
+    return ['all', ...unique];
+  }, [remoteGrades]);
+
+  const displayedGrades = useMemo(() => {
+    if (selectedSubject === 'all') return remoteGrades;
+    return remoteGrades.filter((grade) => grade.subject === selectedSubject);
+  }, [remoteGrades, selectedSubject]);
   const weightedTotal = displayedGrades.reduce((acc, g) => acc + (g.grade * g.coefficient), 0);
   const totalCoef = displayedGrades.reduce((acc, g) => acc + g.coefficient, 0);
   const overallAverage = totalCoef > 0 ? weightedTotal / totalCoef : 0;
@@ -122,14 +129,6 @@ const StudentNotes: React.FC = () => {
       };
     });
   })();
-
-  const subjects = [
-    'All materials',
-    'Business negotiation',
-    'Digital marketing',
-    'Customer relations',
-    'English'
-  ];
 
   // Fonction pour simuler la moyenne
   const simulateAverage = () => {
@@ -352,9 +351,9 @@ const StudentNotes: React.FC = () => {
               onChange={(e) => setSelectedSubject(e.target.value)}
               className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              {subjects.map((subject) => (
-                <option key={subject} value={subject.toLowerCase().replace(' ', '-')}>
-                  {subject}
+              {subjectOptions.map((subject) => (
+                <option key={subject} value={subject}>
+                  {subject === 'all' ? 'All subjects' : subject}
                 </option>
               ))}
             </select>
@@ -390,14 +389,15 @@ const StudentNotes: React.FC = () => {
                     <span className="font-medium">{grade.subject}</span>
                   </td>
                   <td className="p-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      grade.type === 'Exam' ? 'bg-red-100 text-red-800' :
-                      grade.type === 'Oral' ? 'bg-blue-100 text-blue-800' :
-                      grade.type === 'CC' ? 'bg-green-100 text-green-800' :
-                      'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {grade.type}
-                    </span>
+                    {(() => {
+                      const type = String(grade.type || '').toLowerCase();
+                      const badgeClass =
+                        type === 'exam' ? 'bg-red-100 text-red-800' :
+                        type === 'oral' ? 'bg-blue-100 text-blue-800' :
+                        type === 'quiz' ? 'bg-green-100 text-green-800' :
+                        'bg-yellow-100 text-yellow-800';
+                      return <span className={`px-3 py-1 rounded-full text-xs font-medium ${badgeClass}`}>{type || 'exam'}</span>;
+                    })()}
                   </td>
                   <td className="p-4 text-center">
                     <span className={`text-xl font-bold ${grade.color}`}>

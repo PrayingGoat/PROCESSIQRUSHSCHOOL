@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import StudentNavbar from '../../components/StudentNavbar';
 import { api } from '../../services/api';
+import { getAuthUserId } from '../../services/session';
 
 type DocumentCategory = 'all' | 'administrative' | 'educational' | 'company' | 'certificate';
 type DocumentStatus = 'available' | 'pending' | 'signed' | 'in-progress';
@@ -111,25 +112,58 @@ const StudentDocuments: React.FC = () => {
     return 'bg-gray-500';
   };
 
-  const previewDoc = (doc: StudentDoc): void => {
-    alert(`${doc.title}\n${doc.description}\nDate: ${doc.date}`);
+  const previewDoc = async (doc: StudentDoc): Promise<void> => {
+    try {
+      const response = await api.downloadStudentDocument(doc.id);
+      const contentType = response.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        const payload = await response.json();
+        if (payload?.url) {
+          window.open(payload.url, '_blank', 'noopener,noreferrer');
+          return;
+        }
+      }
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank', 'noopener,noreferrer');
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+    } catch (error: any) {
+      alert(error.message || 'Preview failed');
+    }
   };
 
-  const downloadDoc = (doc: StudentDoc): void => {
-    const content = `Document: ${doc.title}\nDescription: ${doc.description}\nDate: ${doc.date}\nStatus: ${doc.status}`;
-    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${doc.title.replace(/\s+/g, '_')}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
+  const downloadDoc = async (doc: StudentDoc): Promise<void> => {
+    try {
+      const response = await api.downloadStudentDocument(doc.id);
+      const contentType = response.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        const payload = await response.json();
+        if (payload?.url) {
+          window.open(payload.url, '_blank', 'noopener,noreferrer');
+          return;
+        }
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${doc.title.replace(/\s+/g, '_')}`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (error: any) {
+      alert(error.message || 'Download failed');
+    }
   };
 
   const createRequestedDocument = async (): Promise<void> => {
     try {
       const studentId = await api.getCurrentStudentId();
-      if (!studentId) return;
+      const authUserId = getAuthUserId();
+      if (!studentId || !authUserId) {
+        alert('Session invalide, reconnecte-toi.');
+        return;
+      }
       await api.createDocument({
         studentId,
         title: requestTitle,
@@ -139,7 +173,7 @@ const StudentDocuments: React.FC = () => {
         size: 0,
         mimeType: 'text/plain',
         storageRef: `docs/${studentId}/request-${Date.now()}.txt`,
-        createdBy: '507f1f77bcf86cd799439011'
+        createdBy: authUserId
       });
       setShowRequestModal(false);
       await fetchDocuments();
@@ -153,17 +187,17 @@ const StudentDocuments: React.FC = () => {
       const file = event.target.files?.[0];
       if (!file) return;
       const studentId = await api.getCurrentStudentId();
-      if (!studentId) return;
-      await api.createDocument({
+      if (!studentId) {
+        alert('Session invalide, reconnecte-toi.');
+        return;
+      }
+      await api.uploadStudentDocument({
         studentId,
+        file,
         title: file.name,
         description: 'Uploaded from student portal',
         category: 'other',
-        status: 'pending',
-        size: file.size,
-        mimeType: file.type || 'application/octet-stream',
-        storageRef: `docs/${studentId}/${Date.now()}-${file.name}`,
-        createdBy: '507f1f77bcf86cd799439011'
+        status: 'pending'
       });
       await fetchDocuments();
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -308,4 +342,3 @@ const StudentDocuments: React.FC = () => {
 };
 
 export default StudentDocuments;
-

@@ -54,30 +54,35 @@ const StudentAttendance: React.FC = () => {
   const [selectedPeriod, setSelectedPeriod] = useState<PeriodFilter>('this-semester');
   const [showJustificationModal, setShowJustificationModal] = useState<boolean>(false);
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
+  const [selectedAttendanceId, setSelectedAttendanceId] = useState<string>('');
+  const [justificationReason, setJustificationReason] = useState<string>('Medical appointment');
+  const [justificationFile, setJustificationFile] = useState<File | null>(null);
+
+  const loadAttendances = async (): Promise<void> => {
+    try {
+      const studentId = await api.getCurrentStudentId();
+      const attendances = await api.getAttendances(studentId ? String(studentId) : undefined);
+
+      const mapped: AttendanceRecord[] = (Array.isArray(attendances) ? attendances : [])
+        .map((a: any, idx: number) => ({
+          id: String(a._id || a.id || `att-${idx}`),
+          date: a.date ? new Date(a.date) : new Date(),
+          type: (a.type || 'present') as AttendanceType,
+          course: a.course || 'Course',
+          duration: Number(a.duration || 0),
+          reason: a.reason || '-',
+          status: (a.status || 'pending') as AttendanceStatus
+        }))
+        .sort((a, b) => b.date.getTime() - a.date.getTime());
+
+      setRecords(mapped);
+    } catch (err) {
+      console.error('Failed to fetch attendance records', err);
+    }
+  };
 
   useEffect(() => {
-    (async () => {
-      try {
-        const studentId = await api.getCurrentStudentId();
-        const attendances = await api.getAttendances(studentId ? String(studentId) : undefined);
-
-        const mapped: AttendanceRecord[] = (Array.isArray(attendances) ? attendances : [])
-          .map((a: any, idx: number) => ({
-            id: String(a._id || a.id || `att-${idx}`),
-            date: a.date ? new Date(a.date) : new Date(),
-            type: (a.type || 'present') as AttendanceType,
-            course: a.course || 'Course',
-            duration: Number(a.duration || 0),
-            reason: a.reason || '-',
-            status: (a.status || 'pending') as AttendanceStatus
-          }))
-          .sort((a, b) => b.date.getTime() - a.date.getTime());
-
-        setRecords(mapped);
-      } catch (err) {
-        console.error('Failed to fetch attendance records', err);
-      }
-    })();
+    loadAttendances();
   }, []);
 
   const filteredRecords = useMemo(
@@ -98,6 +103,45 @@ const StudentAttendance: React.FC = () => {
   }, [filteredRecords]);
 
   const allRecordsCount = records.length;
+  const pendingRecords = useMemo(
+    () => records.filter((r) => r.status === 'pending' && r.type !== 'present'),
+    [records]
+  );
+
+  const submitJustification = async (): Promise<void> => {
+    try {
+      if (!selectedAttendanceId) {
+        alert('Select an attendance record first.');
+        return;
+      }
+
+      await api.updateAttendance(selectedAttendanceId, {
+        status: 'justified',
+        reason: justificationReason
+      });
+
+      if (justificationFile) {
+        const studentId = await api.getCurrentStudentId();
+        if (studentId) {
+          await api.uploadStudentDocument({
+            studentId,
+            file: justificationFile,
+            title: `Justification-${new Date().toISOString().slice(0, 10)}-${justificationFile.name}`,
+            description: `Supporting document for attendance record ${selectedAttendanceId}`,
+            category: 'medical',
+            status: 'valid'
+          });
+        }
+      }
+
+      setShowJustificationModal(false);
+      setSelectedAttendanceId('');
+      setJustificationFile(null);
+      await loadAttendances();
+    } catch (error: any) {
+      alert(error.message || 'Unable to submit supporting document');
+    }
+  };
 
   const periods: Array<{ id: PeriodFilter; label: string }> = [
     { id: 'this-month', label: 'This month' },
@@ -222,7 +266,10 @@ const StudentAttendance: React.FC = () => {
           </div>
 
           <button
-            onClick={() => setShowJustificationModal(true)}
+            onClick={() => {
+              setSelectedAttendanceId(stats.pendingItems[0]?.id || '');
+              setShowJustificationModal(true);
+            }}
             className="px-6 py-3 bg-yellow-500 text-white rounded-xl font-semibold flex items-center gap-3 hover:bg-yellow-600 transition-colors"
           >
             <Upload size={20} />
@@ -334,17 +381,32 @@ const StudentAttendance: React.FC = () => {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Date</label>
-                <input type="date" className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+                <label className="block text-sm font-medium text-gray-700 mb-2">Attendance record</label>
+                <select
+                  value={selectedAttendanceId}
+                  onChange={(e) => setSelectedAttendanceId(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">Select a pending item</option>
+                  {pendingRecords.map((record) => (
+                    <option key={record.id} value={record.id}>
+                      {record.date.toLocaleDateString('fr-FR')} - {record.course}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Reason</label>
-                <select className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                  <option value="medical">Medical appointment</option>
-                  <option value="transport">Transportation issue</option>
-                  <option value="family">Family emergency</option>
-                  <option value="other">Other reason</option>
+                <select
+                  value={justificationReason}
+                  onChange={(e) => setJustificationReason(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="Medical appointment">Medical appointment</option>
+                  <option value="Transportation issue">Transportation issue</option>
+                  <option value="Family emergency">Family emergency</option>
+                  <option value="Other reason">Other reason</option>
                 </select>
               </div>
 
@@ -352,7 +414,8 @@ const StudentAttendance: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Supporting document</label>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
                   <Upload className="mx-auto text-gray-400 mb-2" size={24} />
-                  <p className="text-sm text-gray-600">Upload your file</p>
+                  <p className="text-sm text-gray-600 mb-2">Upload your file</p>
+                  <input type="file" onChange={(e) => setJustificationFile(e.target.files?.[0] || null)} className="mx-auto text-sm" />
                 </div>
               </div>
 
@@ -360,7 +423,7 @@ const StudentAttendance: React.FC = () => {
                 <button onClick={() => setShowJustificationModal(false)} className="flex-1 py-3 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition-colors">
                   Cancel
                 </button>
-                <button onClick={() => setShowJustificationModal(false)} className="flex-1 py-3 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors">
+                <button onClick={submitJustification} className="flex-1 py-3 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors">
                   Send
                 </button>
               </div>

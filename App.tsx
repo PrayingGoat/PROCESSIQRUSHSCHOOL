@@ -126,16 +126,16 @@ const App = () => {
               </Route>
 
               {/* Other Routes */}
-           <Route path="/etudiant" element={<Outlet />}>
-  <Route path="/etudiant/dashboard" element={<StudentDashboard />} />
-  <Route path="notes" element={<StudentNotes />} />
-  <Route path="documents" element={<StudentDocuments />} />
-  <Route path="planning" element={<StudentPlanning />} />
-  <Route path="rdv" element={<StudentAppointments />} />
-  <Route path="presences" element={<StudentAttendance />} />
-  <Route path="questionnaires" element={<StudentQuestionnaires />} />
-  <Route index element={<Navigate to="dashboard" replace />} />
-</Route>
+              <Route path="/etudiant" element={<Outlet />}>
+                <Route path="dashboard" element={<StudentDashboard />} />
+                <Route path="notes" element={<StudentNotes />} />
+                <Route path="documents" element={<StudentDocuments />} />
+                <Route path="planning" element={<StudentPlanning />} />
+                <Route path="rdv" element={<StudentAppointments />} />
+                <Route path="presences" element={<StudentAttendance />} />
+                <Route path="questionnaires" element={<StudentQuestionnaires />} />
+                <Route index element={<Navigate to="dashboard" replace />} />
+              </Route>
               <Route path="/parametres" element={
                 <div className="p-8">
                   <div className="bg-white border border-slate-200 rounded-2xl p-6">
