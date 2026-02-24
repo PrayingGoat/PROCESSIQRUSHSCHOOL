@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ProcessIQ — Créer un compte</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════
+   DESIGN TOKENS
+═══════════════════════════════════════════ */
+:root {
+  --primary:       rgb(107, 60, 210);
+  --primary-deep:  rgb(58, 28, 138);
+  --primary-light: rgb(140, 92, 240);
+  --beige:         #F5E6C8;
+  --beige-light:   #FDF8F0;
+  --beige-mid:     #EDD9B0;
+  --gold:          #E8C97A;
+  --gold-deep:     #C9A84C;
+  --dark:          #0D0D1C;
+  --dark-mid:      rgb(32, 22, 80);
+  --text:          #18162A;
+  --text-muted:    #6E6880;
+
+  --font-display: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-body:    'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-ui:      'Plus Jakarta Sans', system-ui, sans-serif;
+
+  --ease-smooth:  cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --ease-bounce:  cubic-bezier(0.34, 1.56, 0.64, 1);
+  --radius:       4px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; }
+
+body {
+  min-height: 100vh;
+  background: var(--beige-light);
+  color: var(--text);
+  font-family: var(--font-ui);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 3rem 1.5rem 4rem;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Grain */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+  opacity: 0.025;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* ── Fond ambiance ── */
+.page-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 60% 55% at 90% 10%, rgba(232,201,122,0.13) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 60% at 5%  80%, rgba(107,60,210,0.06) 0%, transparent 50%),
+    radial-gradient(ellipse 80% 80% at 50% 50%, rgba(245,230,200,0.95) 0%, var(--beige-light) 100%);
+}
+
+/* Shapes */
+.shape { position: fixed; pointer-events: none; z-index: 0; }
+.s1 {
+  top: 5%; left: 3%;
+  width: 80px; height: 80px;
+  border: 1px solid rgba(232,201,122,0.28);
+  border-radius: 3px;
+  animation: flt 9s ease-in-out infinite;
+}
+.s2 {
+  top: 50%; left: 8%;
+  width: 28px; height: 28px;
+  border: 1.5px solid rgba(107,60,210,0.14);
+  transform: rotate(45deg);
+  animation: flt 7s ease-in-out infinite reverse;
+}
+.s3 {
+  top: 12%; right: 5%;
+  width: 160px; height: 200px;
+  border: 1px solid rgba(232,201,122,0.18);
+  border-radius: 2px;
+  animation: flt 11s ease-in-out infinite;
+}
+.s4 {
+  bottom: 10%; right: 8%;
+  width: 55px; height: 55px;
+  background: radial-gradient(circle, rgba(107,60,210,0.07) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: flt 6s ease-in-out infinite reverse;
+}
+.s5 {
+  bottom: 30%; left: 15%;
+  width: 18px; height: 18px;
+  background: var(--gold);
+  opacity: 0.13;
+  border-radius: 50%;
+  animation: flt 5s ease-in-out infinite;
+}
+.vline {
+  position: fixed;
+  top: 0; right: 16%;
+  width: 1px; height: 100%;
+  background: linear-gradient(to bottom, transparent, var(--gold) 35%, var(--gold) 65%, transparent);
+  opacity: 0.18;
+  pointer-events: none;
+  z-index: 0;
+}
+@keyframes flt {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-14px); }
+}
+
+/* ═══════════════════════════════════════════
+   CARD
+═══════════════════════════════════════════ */
+.auth-wrapper {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 560px;
+  animation: cardIn 0.7s var(--ease-smooth) both;
+}
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.auth-card {
+  background: rgba(253,248,240,0.76);
+  backdrop-filter: blur(24px) saturate(1.5);
+  -webkit-backdrop-filter: blur(24px) saturate(1.5);
+  border: 1px solid rgba(232,201,122,0.22);
+  border-top: 3px solid var(--primary);
+  border-radius: 12px;
+  padding: 3rem 2.8rem 2.8rem;
+  box-shadow:
+    0 4px 32px rgba(107,60,210,0.08),
+    0 1px 0 rgba(255,255,255,0.55) inset,
+    0 28px 64px rgba(24,22,42,0.06);
+}
+
+/* Brand */
+.auth-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-bottom: 1.6rem;
+}
+.auth-logo {
+  height: 34px;
+  width: auto;
+  mix-blend-mode: multiply;
+}
+.auth-brand-name {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.auth-divider {
+  width: 40px; height: 1.5px;
+  background: linear-gradient(to right, transparent, var(--gold), transparent);
+  margin: 0 auto 1.6rem;
+}
+
+.auth-heading {
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--dark);
+  text-align: center;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.4rem;
+}
+.auth-sub {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  text-align: center;
+  font-weight: 300;
+  line-height: 1.65;
+  margin-bottom: 2rem;
+}
+
+/* Étapes */
+.steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 2.4rem;
+}
+.step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  position: relative;
+}
+.step-num {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(107,60,210,0.25);
+  background: var(--beige-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  transition: all 0.3s;
+}
+.step.active .step-num {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--beige);
+  box-shadow: 0 0 0 4px rgba(107,60,210,0.12);
+}
+.step.done .step-num {
+  background: rgba(107,60,210,0.1);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+.step-label {
+  font-family: var(--font-ui);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.step.active .step-label { color: var(--primary); font-weight: 500; }
+.step-connector {
+  width: 48px; height: 1px;
+  background: rgba(107,60,210,0.15);
+  margin: 0 4px;
+  margin-bottom: 1.4rem;
+  flex-shrink: 0;
+}
+.step-connector.done { background: var(--primary); opacity: 0.4; }
+
+/* ═══════════════════════════════════════════
+   FORM
+═══════════════════════════════════════════ */
+.reg-form { display: flex; flex-direction: column; gap: 1.1rem; }
+
+.form-step { display: none; flex-direction: column; gap: 1.1rem; }
+.form-step.active { display: flex; }
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.field-label {
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.field-label .req { color: var(--primary); margin-left: 2px; }
+
+.field-input,
+.field-select {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  font-family: var(--font-ui);
+  font-size: 0.88rem;
+  color: var(--text);
+  background: rgba(253,248,240,0.85);
+  border: 1.5px solid rgba(107,60,210,0.14);
+  border-radius: var(--radius);
+  outline: none;
+  transition: border-color 0.25s, box-shadow 0.25s, background 0.25s;
+  -webkit-appearance: none;
+}
+.field-input::placeholder { color: rgba(110,104,128,0.45); }
+.field-input:focus,
+.field-select:focus {
+  border-color: var(--primary);
+  background: rgba(255,255,255,0.95);
+  box-shadow: 0 0 0 3px rgba(107,60,210,0.09);
+}
+.field-select {
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236E6880' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  padding-right: 2.5rem;
+}
+.field-select option { background: #FDF8F0; color: var(--text); }
+
+/* Password avec toggle */
+.field-wrap { position: relative; }
+.field-wrap .field-input { padding-right: 2.8rem; }
+.field-toggle {
+  position: absolute;
+  right: 0.9rem; top: 50%;
+  transform: translateY(-50%);
+  background: none; border: none;
+  cursor: pointer; padding: 4px;
+  color: var(--text-muted);
+  display: flex; align-items: center;
+  transition: color 0.2s;
+}
+.field-toggle:hover { color: var(--primary); }
+
+/* Indicateur de force du mot de passe */
+.pwd-strength {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: -0.3rem;
+}
+.pwd-bars {
+  display: flex;
+  gap: 4px;
+}
+.pwd-bar {
+  height: 3px;
+  flex: 1;
+  border-radius: 2px;
+  background: rgba(107,60,210,0.1);
+  transition: background 0.3s;
+}
+.pwd-bar.weak   { background: #E05050; }
+.pwd-bar.medium { background: var(--gold-deep); }
+.pwd-bar.strong { background: #4CAF74; }
+.pwd-strength-label {
+  font-family: var(--font-ui);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  transition: color 0.3s;
+}
+
+/* Checkbox CGU */
+.checkbox-group {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  cursor: pointer;
+}
+.checkbox-input {
+  width: 17px; height: 17px;
+  flex-shrink: 0;
+  margin-top: 1px;
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1.5px solid rgba(107,60,210,0.3);
+  border-radius: 3px;
+  background: rgba(253,248,240,0.85);
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+.checkbox-input:checked {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+.checkbox-input:checked::after {
+  content: '';
+  position: absolute;
+  left: 4px; top: 1px;
+  width: 5px; height: 9px;
+  border: 2px solid var(--beige);
+  border-top: none; border-left: none;
+  transform: rotate(45deg);
+}
+.checkbox-input:focus { box-shadow: 0 0 0 3px rgba(107,60,210,0.1); }
+.checkbox-label {
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+.checkbox-label a {
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 500;
+  transition: opacity 0.2s;
+}
+.checkbox-label a:hover { opacity: 0.7; }
+
+/* Erreurs */
+.field-input.error,
+.field-select.error { border-color: #C94040; box-shadow: 0 0 0 3px rgba(201,64,64,0.1); }
+.field-error {
+  font-family: var(--font-ui);
+  font-size: 0.68rem;
+  color: #C94040;
+  letter-spacing: 0.04em;
+  display: none;
+}
+.field-error.visible { display: block; }
+
+/* Boutons navigation */
+.form-nav {
+  display: flex;
+  gap: 0.8rem;
+  margin-top: 0.4rem;
+}
+.btn-next, .btn-submit {
+  flex: 1;
+  padding: 0.95rem 1.5rem;
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--beige);
+  background: var(--primary);
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.25s var(--ease-smooth), box-shadow 0.25s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+.btn-next::before, .btn-submit::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: var(--primary-light);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.btn-next:hover, .btn-submit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(107,60,210,0.3);
+}
+.btn-next:hover::before, .btn-submit:hover::before { opacity: 1; }
+.btn-next span, .btn-submit span { position: relative; z-index: 1; }
+.btn-next svg, .btn-submit svg { position: relative; z-index: 1; transition: transform 0.22s var(--ease-bounce); }
+.btn-next:hover svg { transform: translateX(4px); }
+
+.btn-prev {
+  padding: 0.95rem 1.2rem;
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1.5px solid rgba(107,60,210,0.2);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.22s;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.btn-prev:hover { border-color: var(--primary); color: var(--primary); background: rgba(107,60,210,0.04); }
+.btn-prev svg { transition: transform 0.22s; }
+.btn-prev:hover svg { transform: translateX(-3px); }
+
+/* Succès */
+.form-success {
+  display: none;
+  text-align: center;
+  padding: 1rem 1rem 0.5rem;
+  animation: cardIn 0.5s var(--ease-smooth) both;
+}
+.form-success.visible { display: block; }
+.success-icon {
+  width: 60px; height: 60px;
+  background: rgba(107,60,210,0.08);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 1.5rem;
+  color: var(--primary);
+}
+.success-title {
+  font-family: var(--font-display);
+  font-size: 1.55rem;
+  font-weight: 700;
+  color: var(--dark);
+  margin-bottom: 0.6rem;
+  letter-spacing: -0.02em;
+}
+.success-text {
+  font-family: var(--font-body);
+  font-size: 0.98rem;
+  color: var(--text-muted);
+  font-weight: 300;
+  line-height: 1.75;
+  margin-bottom: 2rem;
+}
+.btn-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.85rem 2rem;
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--beige);
+  background: var(--primary);
+  border-radius: var(--radius);
+  text-decoration: none;
+  transition: transform 0.22s, box-shadow 0.22s;
+}
+.btn-go:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(107,60,210,0.28); }
+
+/* ── Pied de carte ── */
+.auth-footer {
+  margin-top: 1.8rem;
+  text-align: center;
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+.auth-footer a {
+  color: var(--primary);
+  font-weight: 500;
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+.auth-footer a:hover { opacity: 0.72; }
+
+.back-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-top: 1.6rem;
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.back-link:hover { color: var(--primary); }
+.back-link:hover svg { transform: translateX(-3px); }
+.back-link svg { transition: transform 0.2s; }
+
+/* Responsive */
+@media (max-width: 600px) {
+  body { padding: 2rem 1rem 3rem; align-items: flex-start; }
+  .auth-card { padding: 2rem 1.5rem 2rem; }
+  .form-row { grid-template-columns: 1fr; }
+  .step-connector { width: 28px; }
+  .s3 { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="page-bg" aria-hidden="true"></div>
+<div class="vline" aria-hidden="true"></div>
+<div class="shape s1" aria-hidden="true"></div>
+<div class="shape s2" aria-hidden="true"></div>
+<div class="shape s3" aria-hidden="true"></div>
+<div class="shape s4" aria-hidden="true"></div>
+<div class="shape s5" aria-hidden="true"></div>
+
+<div class="auth-wrapper">
+  <div class="auth-card" role="main">
+
+    <!-- Logo -->
+    <div class="auth-brand">
+      <img src="logo (2).png" alt="ProcessIQ" class="auth-logo">
+      <span class="auth-brand-name">ProcessIQ</span>
+    </div>
+
+    <div class="auth-divider" aria-hidden="true"></div>
+
+    <h1 class="auth-heading">Créer un compte</h1>
+    <p class="auth-sub">Rejoignez ProcessIQ en quelques étapes</p>
+
+    <!-- Indicateur d'étapes -->
+    <div class="steps" role="list" aria-label="Étapes d'inscription">
+      <div class="step active" id="step-ind-1" role="listitem">
+        <div class="step-num" aria-hidden="true">1</div>
+        <span class="step-label">Identité</span>
+      </div>
+      <div class="step-connector" id="conn-1" aria-hidden="true"></div>
+      <div class="step" id="step-ind-2" role="listitem">
+        <div class="step-num" aria-hidden="true">2</div>
+        <span class="step-label">Organisation</span>
+      </div>
+      <div class="step-connector" id="conn-2" aria-hidden="true"></div>
+      <div class="step" id="step-ind-3" role="listitem">
+        <div class="step-num" aria-hidden="true">3</div>
+        <span class="step-label">Sécurité</span>
+      </div>
+    </div>
+
+    <!-- Formulaire -->
+    <form class="reg-form" id="regForm" novalidate>
+
+      <!-- ── Étape 1 : Identité ── -->
+      <div class="form-step active" id="step-1" role="group" aria-labelledby="step-1-title">
+        <h2 id="step-1-title" style="font-family:var(--font-display);font-size:1rem;font-weight:600;color:var(--text);letter-spacing:0.01em;margin-bottom:-0.2rem;">Vos informations personnelles</h2>
+
+        <div class="form-row">
+          <div class="field-group">
+            <label class="field-label" for="prenom">Prénom <span class="req">*</span></label>
+            <input class="field-input" type="text" id="prenom" name="prenom"
+              placeholder="Votre prénom" autocomplete="given-name" required>
+            <span class="field-error" id="prenom-error">Prénom requis.</span>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="nom">Nom <span class="req">*</span></label>
+            <input class="field-input" type="text" id="nom" name="nom"
+              placeholder="Votre nom" autocomplete="family-name" required>
+            <span class="field-error" id="nom-error">Nom requis.</span>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="email">Adresse email <span class="req">*</span></label>
+          <input class="field-input" type="email" id="email" name="email"
+            placeholder="votre.email@exemple.com" autocomplete="email" required>
+          <span class="field-error" id="email-error">Email invalide.</span>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="telephone">Téléphone <span class="req">*</span></label>
+          <input class="field-input" type="tel" id="telephone" name="telephone"
+            placeholder="+33 6 12 34 56 78" autocomplete="tel" required>
+          <span class="field-error" id="telephone-error">Téléphone requis.</span>
+        </div>
+
+        <div class="form-nav">
+          <button type="button" class="btn-next" id="next-1">
+            <span>Suivant</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- ── Étape 2 : Organisation ── -->
+      <div class="form-step" id="step-2" role="group" aria-labelledby="step-2-title">
+        <h2 id="step-2-title" style="font-family:var(--font-display);font-size:1rem;font-weight:600;color:var(--text);letter-spacing:0.01em;margin-bottom:-0.2rem;">Votre établissement</h2>
+
+        <div class="field-group">
+          <label class="field-label" for="organisation">Organisation <span class="req">*</span></label>
+          <input class="field-input" type="text" id="organisation" name="organisation"
+            placeholder="Nom de votre établissement / entreprise" autocomplete="organization" required>
+          <span class="field-error" id="organisation-error">Organisation requise.</span>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="role">Votre rôle <span class="req">*</span></label>
+          <select class="field-select" id="role" name="role" required>
+            <option value="" disabled selected>Sélectionnez votre rôle</option>
+            <option value="etudiant">Étudiant / Alternant</option>
+            <option value="tuteur">Tuteur entreprise</option>
+            <option value="formateur">Formateur / Enseignant</option>
+            <option value="administration">Administration / CFA</option>
+            <option value="direction">Direction d'établissement</option>
+            <option value="rh">Responsable RH</option>
+            <option value="opco">Financeur / OPCO</option>
+            <option value="autre">Autre</option>
+          </select>
+          <span class="field-error" id="role-error">Rôle requis.</span>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="taille">Taille de l'établissement</label>
+          <select class="field-select" id="taille" name="taille">
+            <option value="" disabled selected>Nombre d'alternants</option>
+            <option value="moins50">Moins de 50</option>
+            <option value="50-200">50 à 200</option>
+            <option value="200-500">200 à 500</option>
+            <option value="plus500">Plus de 500</option>
+          </select>
+        </div>
+
+        <div class="form-nav">
+          <button type="button" class="btn-prev" id="prev-2">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+            Retour
+          </button>
+          <button type="button" class="btn-next" id="next-2">
+            <span>Suivant</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- ── Étape 3 : Sécurité ── -->
+      <div class="form-step" id="step-3" role="group" aria-labelledby="step-3-title">
+        <h2 id="step-3-title" style="font-family:var(--font-display);font-size:1rem;font-weight:600;color:var(--text);letter-spacing:0.01em;margin-bottom:-0.2rem;">Sécurisez votre compte</h2>
+
+        <div class="field-group">
+          <label class="field-label" for="password">Mot de passe <span class="req">*</span></label>
+          <div class="field-wrap">
+            <input class="field-input" type="password" id="password" name="password"
+              placeholder="Minimum 8 caractères" autocomplete="new-password" required>
+            <button class="field-toggle" type="button" id="togglePwd" aria-label="Afficher le mot de passe">
+              <svg id="eyeIcon1" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          </div>
+          <div class="pwd-strength" id="pwdStrength" aria-live="polite">
+            <div class="pwd-bars">
+              <div class="pwd-bar" id="bar1"></div>
+              <div class="pwd-bar" id="bar2"></div>
+              <div class="pwd-bar" id="bar3"></div>
+              <div class="pwd-bar" id="bar4"></div>
+            </div>
+            <span class="pwd-strength-label" id="pwdLabel">Entrez un mot de passe</span>
+          </div>
+          <span class="field-error" id="password-error">Mot de passe trop court (8 caractères min).</span>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label" for="confirm">Confirmer le mot de passe <span class="req">*</span></label>
+          <div class="field-wrap">
+            <input class="field-input" type="password" id="confirm" name="confirm"
+              placeholder="Répétez votre mot de passe" autocomplete="new-password" required>
+            <button class="field-toggle" type="button" id="toggleConfirm" aria-label="Afficher le mot de passe">
+              <svg id="eyeIcon2" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+          </div>
+          <span class="field-error" id="confirm-error">Les mots de passe ne correspondent pas.</span>
+        </div>
+
+        <label class="checkbox-group" for="cgu">
+          <input class="checkbox-input" type="checkbox" id="cgu" name="cgu" required>
+          <span class="checkbox-label">
+            J'accepte les <a href="#">Conditions Générales d'Utilisation</a>
+            et la <a href="#">Politique de confidentialité</a> de ProcessIQ.
+          </span>
+        </label>
+        <span class="field-error" id="cgu-error">Vous devez accepter les CGU.</span>
+
+        <div class="form-nav">
+          <button type="button" class="btn-prev" id="prev-3">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+            Retour
+          </button>
+          <button type="submit" class="btn-submit" id="btnSubmit">
+            <span>Créer mon compte</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          </button>
+        </div>
+      </div>
+
+    </form>
+
+    <!-- Succès -->
+    <div class="form-success" id="formSuccess" role="status" aria-live="polite">
+      <div class="success-icon">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+          <polyline points="22 4 12 14.01 9 11.01"/>
+        </svg>
+      </div>
+      <h3 class="success-title">Compte créé !</h3>
+      <p class="success-text">
+        Votre espace ProcessIQ est prêt.<br>
+        Vérifiez votre boîte mail pour activer votre compte.
+      </p>
+      <a href="connexion.html" class="btn-go">
+        Se connecter
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+      </a>
+    </div>
+
+    <div class="auth-footer">
+      Déjà un compte&nbsp;?
+      <a href="connexion.html">Se connecter</a>
+    </div>
+
+  </div>
+
+  <a href="processiq.html" class="back-link">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+    Retour à l'accueil
+  </a>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  let currentStep = 1;
+  const totalSteps = 3;
+
+  // ── Navigation entre étapes ──
+  const goTo = (n) => {
+    // Masquer étape courante
+    document.getElementById('step-' + currentStep).classList.remove('active');
+    document.getElementById('step-ind-' + currentStep).classList.remove('active');
+    if (currentStep < totalSteps) {
+      document.getElementById('step-ind-' + currentStep).classList.add('done');
+      document.getElementById('conn-' + currentStep).classList.add('done');
+    }
+
+    currentStep = n;
+
+    // Afficher nouvelle étape
+    document.getElementById('step-' + currentStep).classList.add('active');
+    document.getElementById('step-ind-' + currentStep).classList.add('active');
+    document.getElementById('step-ind-' + currentStep).classList.remove('done');
+
+    // Scroll haut de la carte
+    document.querySelector('.auth-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  // ── Validation par étape ──
+  const validateStep = (n) => {
+    let ok = true;
+    const show = (id, errId, msg) => {
+      const el = document.getElementById(id);
+      const er = document.getElementById(errId);
+      er.textContent = msg;
+      er.classList.add('visible');
+      el.classList.add('error');
+      ok = false;
+    };
+    const clear = (id, errId) => {
+      document.getElementById(id).classList.remove('error');
+      document.getElementById(errId).classList.remove('visible');
+    };
+
+    if (n === 1) {
+      const p = document.getElementById('prenom').value.trim();
+      const nm = document.getElementById('nom').value.trim();
+      const em = document.getElementById('email').value.trim();
+      const tel = document.getElementById('telephone').value.trim();
+      p  ? clear('prenom', 'prenom-error')       : show('prenom', 'prenom-error', 'Prénom requis.');
+      nm ? clear('nom', 'nom-error')             : show('nom', 'nom-error', 'Nom requis.');
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em) ? clear('email', 'email-error') : show('email', 'email-error', 'Email invalide.');
+      tel ? clear('telephone', 'telephone-error') : show('telephone', 'telephone-error', 'Téléphone requis.');
+    }
+
+    if (n === 2) {
+      const org = document.getElementById('organisation').value.trim();
+      const rol = document.getElementById('role').value;
+      org ? clear('organisation', 'organisation-error') : show('organisation', 'organisation-error', 'Organisation requise.');
+      rol ? clear('role', 'role-error')                 : show('role', 'role-error', 'Rôle requis.');
+    }
+
+    if (n === 3) {
+      const pwd = document.getElementById('password').value;
+      const cfm = document.getElementById('confirm').value;
+      const cgu = document.getElementById('cgu').checked;
+      pwd.length >= 8 ? clear('password', 'password-error') : show('password', 'password-error', 'Minimum 8 caractères.');
+      pwd === cfm && cfm ? clear('confirm', 'confirm-error') : show('confirm', 'confirm-error', 'Les mots de passe ne correspondent pas.');
+      if (cgu) { document.getElementById('cgu-error').classList.remove('visible'); }
+      else { document.getElementById('cgu-error').classList.add('visible'); ok = false; }
+    }
+
+    return ok;
+  };
+
+  // Effacer erreur à la saisie
+  ['prenom','nom','email','telephone','organisation','password','confirm'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', () => {
+      el.classList.remove('error');
+      const err = document.getElementById(id + '-error');
+      if (err) err.classList.remove('visible');
+    });
+  });
+  document.getElementById('role').addEventListener('change', () => {
+    document.getElementById('role').classList.remove('error');
+    document.getElementById('role-error').classList.remove('visible');
+  });
+
+  // Boutons suivant/précédent
+  document.getElementById('next-1').addEventListener('click', () => { if (validateStep(1)) goTo(2); });
+  document.getElementById('next-2').addEventListener('click', () => { if (validateStep(2)) goTo(3); });
+  document.getElementById('prev-2').addEventListener('click', () => goTo(1));
+  document.getElementById('prev-3').addEventListener('click', () => goTo(2));
+
+  // ── Indicateur force mot de passe ──
+  const bars = [document.getElementById('bar1'), document.getElementById('bar2'), document.getElementById('bar3'), document.getElementById('bar4')];
+  const pwdLabel = document.getElementById('pwdLabel');
+
+  const getPwdStrength = (pwd) => {
+    if (!pwd) return 0;
+    let score = 0;
+    if (pwd.length >= 8)  score++;
+    if (pwd.length >= 12) score++;
+    if (/[A-Z]/.test(pwd) && /[a-z]/.test(pwd)) score++;
+    if (/[0-9]/.test(pwd)) score++;
+    if (/[^A-Za-z0-9]/.test(pwd)) score++;
+    return Math.min(4, Math.ceil(score * 4 / 5));
+  };
+
+  document.getElementById('password').addEventListener('input', (e) => {
+    const strength = getPwdStrength(e.target.value);
+    const cls = strength <= 1 ? 'weak' : strength <= 2 ? 'medium' : 'strong';
+    const labels = ['', 'Faible', 'Faible', 'Correct', 'Fort', 'Très fort'];
+    bars.forEach((b, i) => {
+      b.className = 'pwd-bar';
+      if (i < strength) b.classList.add(cls);
+    });
+    pwdLabel.textContent = e.target.value ? (labels[strength] || 'Très fort') : 'Entrez un mot de passe';
+    pwdLabel.style.color = cls === 'weak' ? '#E05050' : cls === 'medium' ? 'var(--gold-deep)' : '#4CAF74';
+  });
+
+  // ── Toggle visibilité mots de passe ──
+  const eyeOpen  = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+  const eyeClosed = '<path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>';
+
+  const makeToggle = (btnId, inputId, iconId) => {
+    document.getElementById(btnId).addEventListener('click', () => {
+      const inp = document.getElementById(inputId);
+      const ico = document.getElementById(iconId);
+      const show = inp.type === 'password';
+      inp.type = show ? 'text' : 'password';
+      ico.innerHTML = show ? eyeClosed : eyeOpen;
+    });
+  };
+  makeToggle('togglePwd',     'password', 'eyeIcon1');
+  makeToggle('toggleConfirm', 'confirm',  'eyeIcon2');
+
+  // ── Soumission ──
+  document.getElementById('regForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (!validateStep(3)) return;
+
+    const btn = document.getElementById('btnSubmit');
+    btn.querySelector('span').textContent = 'Création…';
+    btn.disabled = true;
+
+    setTimeout(() => {
+      document.getElementById('regForm').style.display = 'none';
+      document.querySelector('.steps').style.display = 'none';
+      document.querySelector('.auth-heading').style.display = 'none';
+      document.querySelector('.auth-sub').style.display = 'none';
+      document.getElementById('formSuccess').classList.add('visible');
+    }, 900);
+  });
+
+})();
+</script>
+</body>
+</html>

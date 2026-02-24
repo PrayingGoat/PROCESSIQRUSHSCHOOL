@@ -541,21 +541,53 @@ const diffObjects = (original: any, modified: any): any => {
 
 export const api = {
   // --- AUTH ---
-  async login(email: string, pass: string): Promise<{ access_token: string }> {
-    console.log('📤 Login Attempt:', email);
-    const response = await fetch(`${BASE_API_URL}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password: pass }),
-    });
-    if (!response.ok) {
-      const error = await response.json();
-      console.error('❌ Login Failed:', error);
-      throw new Error(error.message || 'Login failed');
+  async login(email: string, pass: string): Promise<{ access_token: string, role: string, email: string, name: string }> {
+    console.log('📤 Mock Login Attempt:', email);
+
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 800));
+
+    let role = 'admission';
+    let name = 'Admin User';
+
+    const emailLower = email.toLowerCase();
+    if (emailLower.includes('rh')) {
+      role = 'rh';
+      name = 'Responsable RH';
+    } else if (emailLower.includes('commercial')) {
+      role = 'commercial';
+      name = 'Conseiller Commercial';
+    } else if (emailLower.includes('etudiant') || emailLower.includes('eleve')) {
+      role = 'eleve';
+      name = 'Étudiant Démo';
+    } else if (emailLower.includes('admission')) {
+      role = 'admission';
+      name = 'Chargé d\'Admission';
     }
-    const data = await response.json();
-    console.log('📥 Login Success:', data);
-    return data;
+
+    const mockData = {
+      access_token: 'mock-jwt-token-' + Date.now(),
+      role: role,
+      email: email,
+      name: name
+    };
+
+    console.log('📥 Mock Login Success:', mockData);
+    return mockData;
+  },
+
+  async register(userData: any): Promise<{ access_token: string }> {
+    console.log('📤 Mock Register Attempt:', userData.email);
+
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    const mockData = {
+      access_token: 'mock-jwt-token-reg-' + Date.now()
+    };
+
+    console.log('📥 Mock Register Success:', mockData);
+    return mockData;
   },
 
   // --- HEALTH ---

@@ -5,38 +5,48 @@ import { User } from './user.schema';
 
 @Injectable()
 export class UsersService implements OnModuleInit {
-    constructor(@InjectModel(User.name) private userModel: Model<User>) {}
+    constructor(@InjectModel(User.name) private userModel: Model<User>) { }
 
-    // Initialisation optionnelle pour créer un admin si la base est vide
     async onModuleInit() {
-        const count = await this.userModel.countDocuments();
-        if (count === 0) {
-            console.log('[UsersService] Seed: Creating default admin user...');
-            await this.userModel.create({
-                email: 'admin@rush-school.fr',
-                password: 'admin', // En production, hacher ce mot de passe !
-                name: 'Admin Rush School',
-                role: 'admin'
-            });
+        console.log('[UsersService] Checking for users in MongoDB...');
+        try {
+            const count = await this.userModel.countDocuments();
+            if (count === 0) {
+                console.log('[UsersService] No users found. Seeding default admin...');
+                await this.create({
+                    email: 'admin@rush-school.fr',
+                    password: 'admin',
+                    name: 'Administrateur',
+                    role: 'admission'
+                });
+                console.log('[UsersService] Default admin seeded successfully.');
+            } else {
+                console.log(`[UsersService] Found ${count} users in database.`);
+            }
+        } catch (error) {
+            console.error('[UsersService] Error during database seeding:', error);
         }
     }
 
-    async findOne(email: string): Promise<any | undefined> {
+    async findOne(email: string): Promise<User | undefined> {
         console.log(`[UsersService] Searching MongoDB for user: ${email}`);
+        return this.userModel.findOne({ email }).exec();
+    }
+
+    async create(userData: any): Promise<any> {
+        console.log(`[UsersService] Creating new MongoDB user: ${userData.email}`);
         try {
-            const user = await this.userModel.findOne({ email }).exec();
-            if (user) {
-                return {
-                    userId: user._id,
-                    email: user.email,
-                    password: user.password,
-                    name: user.name,
-                    role: user.role
-                };
-            }
+            const newUser = new this.userModel(userData);
+            const savedUser = await newUser.save();
+            return {
+                userId: savedUser._id,
+                email: savedUser.email,
+                name: savedUser.name,
+                role: savedUser.role
+            };
         } catch (error) {
-            console.error('[UsersService] Error finding user in MongoDB:', error);
+            console.error('[UsersService] Error creating user in MongoDB:', error);
+            throw error;
         }
-        return undefined;
     }
 }

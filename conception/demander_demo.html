@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ProcessIQ — Contactez-nous</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════
+   DESIGN TOKENS
+═══════════════════════════════════════════ */
+:root {
+  --primary:       rgb(107, 60, 210);
+  --primary-deep:  rgb(58, 28, 138);
+  --primary-light: rgb(140, 92, 240);
+  --beige:         #F5E6C8;
+  --beige-light:   #FDF8F0;
+  --beige-mid:     #EDD9B0;
+  --gold:          #E8C97A;
+  --gold-deep:     #C9A84C;
+  --dark:          #0D0D1C;
+  --dark-mid:      rgb(32, 22, 80);
+  --text:          #18162A;
+  --text-muted:    #6E6880;
+
+  --font-display: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-body:    'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-ui:      'Plus Jakarta Sans', system-ui, sans-serif;
+
+  --ease-smooth:  cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --ease-bounce:  cubic-bezier(0.34, 1.56, 0.64, 1);
+  --radius:       4px;
+  --container:    1280px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; font-size: 16px; }
+
+body {
+  background: var(--beige-light);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 1.1rem;
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+/* Grain texture */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+  opacity: 0.025;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+img { display: block; max-width: 100%; }
+a { color: inherit; text-decoration: none; }
+ul { list-style: none; }
+button { cursor: pointer; border: none; background: none; font-family: inherit; }
+
+.container {
+  width: 100%;
+  max-width: var(--container);
+  margin: 0 auto;
+  padding: 0 clamp(1.5rem, 5vw, 4rem);
+}
+
+/* ═══════════════════════════════════════════
+   SCROLL ANIMATIONS
+═══════════════════════════════════════════ */
+.reveal {
+  opacity: 0;
+  transform: translateY(36px);
+  transition: opacity 0.8s var(--ease-smooth), transform 0.8s var(--ease-smooth);
+}
+.reveal.visible { opacity: 1; transform: translateY(0); }
+.reveal-left {
+  opacity: 0;
+  transform: translateX(-40px);
+  transition: opacity 0.9s var(--ease-smooth), transform 0.9s var(--ease-smooth);
+}
+.reveal-left.visible { opacity: 1; transform: translateX(0); }
+.reveal-right {
+  opacity: 0;
+  transform: translateX(40px);
+  transition: opacity 0.9s var(--ease-smooth), transform 0.9s var(--ease-smooth);
+}
+.reveal-right.visible { opacity: 1; transform: translateX(0); }
+.delay-1 { transition-delay: 0.1s; }
+.delay-2 { transition-delay: 0.2s; }
+.delay-3 { transition-delay: 0.3s; }
+.delay-4 { transition-delay: 0.4s; }
+.delay-5 { transition-delay: 0.5s; }
+
+/* ═══════════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════════ */
+#nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 1000;
+  transition: background 0.4s var(--ease-smooth), box-shadow 0.4s, padding 0.3s;
+  padding: 1.4rem 0;
+}
+#nav.scrolled {
+  background: rgba(253,248,240,0.88);
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  box-shadow: 0 1px 0 rgba(107,60,210,0.12), 0 4px 24px rgba(13,13,28,0.06);
+  padding: 0.9rem 0;
+}
+.nav-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+.nav-crest img {
+  height: 44px;
+  width: auto;
+  display: block;
+  mix-blend-mode: multiply;
+}
+.nav-brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+.nav-brand-text strong {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--primary);
+  letter-spacing: 0.01em;
+}
+.nav-brand-text span {
+  font-family: var(--font-ui);
+  font-size: 0.62rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 2.2rem;
+}
+.nav-links a {
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: var(--text);
+  position: relative;
+  transition: color 0.25s;
+}
+.nav-links a::after {
+  content: '';
+  position: absolute;
+  bottom: -3px; left: 0;
+  width: 0; height: 1.5px;
+  background: var(--gold);
+  transition: width 0.3s var(--ease-smooth);
+}
+.nav-links a:hover { color: var(--primary); }
+.nav-links a:hover::after { width: 100%; }
+.nav-links a.active { color: var(--primary); }
+.nav-links a.active::after { width: 100%; background: var(--primary); }
+
+.nav-lang {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+}
+.nav-lang span {
+  padding: 0.25rem 0.4rem;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.nav-lang span.active { color: var(--primary); }
+.nav-lang span:not(.active):hover { color: var(--text); }
+.nav-separator { opacity: 0.3; }
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+.nav-cta {
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  padding: 0.55rem 1.4rem;
+  background: var(--primary);
+  color: var(--beige) !important;
+  border-radius: var(--radius);
+  transition: background 0.25s, transform 0.2s;
+}
+.nav-cta:hover { background: var(--primary-light); transform: translateY(-1px); }
+.nav-connexion {
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  padding: 0.45rem 1.1rem;
+  border: 1.5px solid rgba(107,60,210,0.3);
+  border-radius: var(--radius);
+  color: var(--primary);
+  transition: background 0.2s, border-color 0.2s;
+}
+.nav-connexion:hover { background: rgba(107,60,210,0.06); border-color: var(--primary); }
+
+.hamburger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  padding: 6px;
+  z-index: 100;
+}
+.hamburger span {
+  display: block;
+  width: 24px; height: 1.5px;
+  background: var(--primary);
+  transition: transform 0.3s, opacity 0.3s;
+  transform-origin: center;
+}
+.hamburger.open span:nth-child(1) { transform: translateY(6.5px) rotate(45deg); }
+.hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+.hamburger.open span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
+
+.mobile-menu {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: var(--beige-light);
+  z-index: 999;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2.5rem;
+  opacity: 0;
+  transition: opacity 0.35s;
+}
+.mobile-menu.open { display: flex; opacity: 1; }
+.mobile-menu a {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 500;
+  color: var(--primary);
+  transition: color 0.2s;
+}
+.mobile-menu a:hover { color: var(--gold-deep); }
+
+/* ═══════════════════════════════════════════
+   PAGE HERO
+═══════════════════════════════════════════ */
+#page-hero {
+  padding: 9rem 0 5rem;
+  position: relative;
+  overflow: hidden;
+}
+.page-hero-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 70% 60% at 85% 30%, rgba(232,201,122,0.14) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 70% at 10% 70%, rgba(107,60,210,0.06) 0%, transparent 50%),
+    var(--beige-light);
+  pointer-events: none;
+}
+.hero-line-v {
+  position: absolute;
+  top: 0; right: 18%;
+  width: 1px; height: 100%;
+  background: linear-gradient(to bottom, transparent, var(--gold) 40%, var(--gold) 60%, transparent);
+  opacity: 0.22;
+}
+.hero-shape-rect {
+  position: absolute;
+  top: 15%; right: 6%;
+  width: 220px; height: 280px;
+  border: 1px solid rgba(232,201,122,0.22);
+  border-radius: 2px;
+  transform: rotate(6deg);
+  animation: floatShape 9s ease-in-out infinite;
+}
+.hero-shape-dot {
+  position: absolute;
+  bottom: 15%; right: 14%;
+  width: 60px; height: 60px;
+  background: radial-gradient(circle, rgba(107,60,210,0.07) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: floatShape 6s ease-in-out infinite reverse;
+}
+@keyframes floatShape {
+  0%, 100% { transform: rotate(6deg) translateY(0); }
+  50%       { transform: rotate(6deg) translateY(-14px); }
+}
+
+.page-hero-inner {
+  position: relative;
+  z-index: 2;
+}
+.page-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.6rem;
+}
+.page-eyebrow-line {
+  width: 36px; height: 1px;
+  background: var(--gold-deep);
+}
+.page-eyebrow span {
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--primary);
+  font-weight: 500;
+}
+.page-title {
+  font-family: var(--font-display);
+  font-size: clamp(2.8rem, 6vw, 5.5rem);
+  font-weight: 700;
+  line-height: 1.0;
+  letter-spacing: -0.03em;
+  color: var(--dark);
+  margin-bottom: 1.4rem;
+}
+.page-title em {
+  font-style: normal;
+  font-weight: 800;
+  color: var(--primary);
+}
+.page-subtitle {
+  font-family: var(--font-body);
+  font-size: clamp(1.05rem, 2vw, 1.25rem);
+  color: var(--text-muted);
+  max-width: 480px;
+  font-weight: 300;
+  line-height: 1.85;
+}
+
+/* Back link */
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  transition: color 0.2s;
+  margin-bottom: 2.4rem;
+}
+.back-link svg { transition: transform 0.22s; }
+.back-link:hover { color: var(--primary); }
+.back-link:hover svg { transform: translateX(-4px); }
+
+/* ═══════════════════════════════════════════
+   CONTACT SECTION
+═══════════════════════════════════════════ */
+#contact {
+  padding: 0 0 8rem;
+}
+.contact-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.55fr;
+  gap: 5rem;
+  align-items: start;
+}
+
+/* ── Left panel ── */
+.contact-info {
+  position: sticky;
+  top: 8rem;
+}
+.info-label {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 1.6rem;
+}
+.info-label::before {
+  content: '';
+  width: 28px; height: 1.5px;
+  background: var(--gold);
+}
+.info-heading {
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 2.5vw, 2rem);
+  font-weight: 600;
+  color: var(--dark);
+  line-height: 1.25;
+  margin-bottom: 1.2rem;
+  letter-spacing: -0.015em;
+}
+.info-heading em { font-style: normal; font-weight: 800; color: var(--primary); }
+.info-text {
+  font-family: var(--font-body);
+  font-size: 1.05rem;
+  color: var(--text-muted);
+  line-height: 1.85;
+  font-weight: 300;
+  margin-bottom: 2.5rem;
+}
+
+/* Contact detail items */
+.info-items {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  margin-bottom: 2.8rem;
+}
+.info-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+.info-item-icon {
+  width: 38px; height: 38px;
+  background: rgba(107,60,210,0.07);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--primary);
+  margin-top: 1px;
+}
+.info-item-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.info-item-label {
+  font-family: var(--font-ui);
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.info-item-value {
+  font-family: var(--font-ui);
+  font-size: 0.88rem;
+  color: var(--text);
+  font-weight: 400;
+}
+
+/* Decorative quote */
+.info-quote {
+  border-left: 3px solid var(--gold);
+  padding: 1.1rem 1.6rem;
+  background: rgba(232,201,122,0.06);
+  border-radius: 0 4px 4px 0;
+}
+.info-quote p {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-style: italic;
+  font-weight: 400;
+  color: var(--primary);
+  line-height: 1.6;
+}
+
+/* ── Right panel — Form card ── */
+.form-card {
+  background: rgba(253,248,240,0.75);
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  border: 1px solid rgba(232,201,122,0.2);
+  border-top: 3px solid var(--primary);
+  border-radius: var(--radius);
+  padding: 3rem 2.8rem;
+  box-shadow:
+    0 4px 32px rgba(107,60,210,0.08),
+    0 24px 64px rgba(24,22,42,0.05);
+}
+.form-card-title {
+  font-family: var(--font-display);
+  font-size: 1.55rem;
+  font-weight: 600;
+  color: var(--dark);
+  letter-spacing: -0.015em;
+  margin-bottom: 0.4rem;
+}
+.form-card-sub {
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  margin-bottom: 2.2rem;
+}
+.form-accent {
+  width: 36px; height: 1.5px;
+  background: linear-gradient(to right, var(--gold), transparent);
+  margin-bottom: 2rem;
+}
+
+/* Form grid */
+.contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.field-label {
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.field-label .req {
+  color: var(--primary);
+  margin-left: 2px;
+}
+.field-input,
+.field-textarea {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  font-family: var(--font-ui);
+  font-size: 0.88rem;
+  color: var(--text);
+  background: rgba(253,248,240,0.8);
+  border: 1.5px solid rgba(107,60,210,0.14);
+  border-radius: var(--radius);
+  outline: none;
+  transition: border-color 0.25s, box-shadow 0.25s, background 0.25s;
+  -webkit-appearance: none;
+}
+.field-input::placeholder,
+.field-textarea::placeholder {
+  color: rgba(110,104,128,0.45);
+}
+.field-input:focus,
+.field-textarea:focus {
+  border-color: var(--primary);
+  background: rgba(255,255,255,0.95);
+  box-shadow: 0 0 0 3px rgba(107,60,210,0.09);
+}
+.field-textarea {
+  min-height: 130px;
+  resize: vertical;
+  line-height: 1.65;
+}
+
+/* Error state */
+.field-input.error,
+.field-textarea.error {
+  border-color: #C94040;
+  box-shadow: 0 0 0 3px rgba(201,64,64,0.1);
+}
+.field-error {
+  font-family: var(--font-ui);
+  font-size: 0.68rem;
+  color: #C94040;
+  letter-spacing: 0.04em;
+  display: none;
+}
+.field-error.visible { display: block; }
+
+/* Submit */
+.btn-submit {
+  width: 100%;
+  padding: 1rem 1.5rem;
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--beige);
+  background: var(--primary);
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.25s var(--ease-smooth), box-shadow 0.25s;
+  margin-top: 0.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+}
+.btn-submit::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--primary-light);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.btn-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(107,60,210,0.32); }
+.btn-submit:hover::before { opacity: 1; }
+.btn-submit:active { transform: translateY(0); }
+.btn-submit span { position: relative; z-index: 1; }
+.btn-submit svg { position: relative; z-index: 1; transition: transform 0.25s var(--ease-bounce); }
+.btn-submit:hover svg { transform: translateX(4px); }
+
+/* Success state */
+.form-success {
+  display: none;
+  text-align: center;
+  padding: 2.5rem 1.5rem;
+}
+.form-success.visible { display: block; }
+.success-icon {
+  width: 56px; height: 56px;
+  background: rgba(107,60,210,0.08);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+  color: var(--primary);
+}
+.success-title {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--dark);
+  margin-bottom: 0.6rem;
+}
+.success-text {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  color: var(--text-muted);
+  font-weight: 300;
+  line-height: 1.75;
+}
+
+/* ═══════════════════════════════════════════
+   FOOTER
+═══════════════════════════════════════════ */
+#footer {
+  background: var(--dark);
+  color: rgba(245,230,200,0.5);
+  padding: 5rem 0 0;
+  position: relative;
+}
+#footer::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--gold), transparent);
+  opacity: 0.28;
+}
+.footer-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1.5fr;
+  gap: 4rem;
+  padding-bottom: 4rem;
+  border-bottom: 1px solid rgba(245,230,200,0.05);
+}
+.footer-brand .nav-brand-text strong {
+  font-size: 1.15rem;
+  color: var(--beige);
+}
+.footer-brand .nav-brand-text span { color: rgba(245,230,200,0.3); }
+.footer-tagline {
+  font-size: 0.88rem;
+  line-height: 1.7;
+  margin-top: 1.2rem;
+  font-weight: 300;
+  max-width: 260px;
+  font-style: normal;
+  font-family: var(--font-body);
+  color: rgba(245,230,200,0.3);
+}
+.footer-social {
+  display: flex;
+  gap: 0.7rem;
+  margin-top: 1.8rem;
+}
+.footer-social-btn {
+  width: 36px; height: 36px;
+  border: 1px solid rgba(245,230,200,0.1);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(245,230,200,0.3);
+  transition: all 0.25s;
+}
+.footer-social-btn:hover { border-color: var(--gold); color: var(--gold); background: rgba(232,201,122,0.05); }
+.footer-col-title {
+  font-family: var(--font-ui);
+  font-size: 0.68rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--beige);
+  margin-bottom: 1.5rem;
+  opacity: 0.65;
+}
+.footer-links li { margin-bottom: 0.65rem; }
+.footer-links a {
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  color: rgba(245,230,200,0.38);
+  transition: color 0.2s;
+  display: inline-block;
+}
+.footer-links a:hover { color: var(--gold); }
+.footer-contact-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  margin-bottom: 1.2rem;
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  color: rgba(245,230,200,0.38);
+  line-height: 1.5;
+}
+.footer-contact-icon {
+  width: 20px; height: 20px;
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--gold);
+  opacity: 0.45;
+}
+.footer-bottom {
+  padding: 1.8rem 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.footer-copy {
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  color: rgba(245,230,200,0.18);
+}
+.footer-bottom-links {
+  display: flex;
+  gap: 1.5rem;
+}
+.footer-bottom-links a {
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  color: rgba(245,230,200,0.18);
+  transition: color 0.2s;
+}
+.footer-bottom-links a:hover { color: rgba(245,230,200,0.5); }
+#footer .nav-crest img {
+  mix-blend-mode: screen;
+  opacity: 0.9;
+}
+
+/* ═══════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════ */
+@media (max-width: 1024px) {
+  .contact-grid { grid-template-columns: 1fr; gap: 3rem; }
+  .contact-info { position: static; }
+  .footer-grid { grid-template-columns: 1fr 1fr; gap: 2.5rem; }
+}
+@media (max-width: 768px) {
+  .nav-links, .nav-right { display: none; }
+  .hamburger { display: flex; }
+  .form-row { grid-template-columns: 1fr; }
+  .page-title { font-size: clamp(2.2rem, 8vw, 3.5rem); }
+  .form-card { padding: 2rem 1.6rem; }
+  .footer-grid { grid-template-columns: 1fr; gap: 2rem; }
+  .footer-bottom { flex-direction: column; align-items: flex-start; }
+  .hero-shape-rect { display: none; }
+}
+@media (max-width: 480px) {
+  .back-link { margin-bottom: 1.6rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════
+     NAVIGATION
+═══════════════════════════════════════════ -->
+<nav id="nav" role="navigation" aria-label="Navigation principale">
+  <div class="container">
+    <div class="nav-inner">
+      <a href="processiq.html" class="nav-brand" aria-label="ProcessIQ — Accueil">
+        <div class="nav-crest">
+          <img src="logo (2).png" alt="ProcessIQ">
+        </div>
+        <div class="nav-brand-text">
+          <strong>ProcessIQ</strong>
+          <span>Gestion de l'alternance</span>
+        </div>
+      </a>
+
+      <div class="nav-links" role="list">
+        <a href="processiq.html#solution" role="listitem">Solution</a>
+        <a href="processiq.html#segments" role="listitem">Segments</a>
+        <a href="processiq.html#advantages" role="listitem">Avantages</a>
+        <a href="#footer" class="active" role="listitem">Contact</a>
+      </div>
+
+      <div class="nav-right">
+        <div class="nav-lang">
+          <span class="active">FR</span>
+          <span class="nav-separator">/</span>
+          <span>EN</span>
+        </div>
+        <a href="connexion.html" class="nav-connexion">Connexion</a>
+        <a href="#" class="nav-cta">Demander une démo</a>
+      </div>
+
+      <button class="hamburger" aria-label="Menu" aria-expanded="false" id="hamburger">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- Mobile menu -->
+<div class="mobile-menu" id="mobileMenu" aria-hidden="true" role="dialog">
+  <a href="processiq.html#solution" class="mobile-link">Solution</a>
+  <a href="processiq.html#segments" class="mobile-link">Segments</a>
+  <a href="processiq.html#advantages" class="mobile-link">Avantages</a>
+  <a href="#footer" class="mobile-link">Contact</a>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     PAGE HERO
+═══════════════════════════════════════════ -->
+<section id="page-hero" aria-label="Contactez-nous">
+  <div class="page-hero-bg" aria-hidden="true"></div>
+  <div class="hero-line-v" aria-hidden="true"></div>
+  <div class="hero-shape-rect" aria-hidden="true"></div>
+  <div class="hero-shape-dot" aria-hidden="true"></div>
+
+  <div class="container">
+    <div class="page-hero-inner">
+      <a href="processiq.html" class="back-link reveal">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M15 18l-6-6 6-6"/>
+        </svg>
+        Retour
+      </a>
+
+      <div class="page-eyebrow reveal delay-1">
+        <span class="page-eyebrow-line"></span>
+        <span>Prise de contact</span>
+      </div>
+
+      <h1 class="page-title reveal delay-2">
+        Contactez-<em>nous</em>
+      </h1>
+
+      <p class="page-subtitle reveal delay-3">
+        Une question&nbsp;? Besoin d'une démo&nbsp;? Notre équipe est à votre
+        disposition pour vous accompagner dans votre projet.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     CONTACT
+═══════════════════════════════════════════ -->
+<section id="contact" aria-label="Formulaire de contact">
+  <div class="container">
+    <div class="contact-grid">
+
+      <!-- ── Colonne gauche — informations ── -->
+      <div class="contact-info">
+        <div class="info-label reveal">
+          <span style="font-family:var(--font-ui);font-size:0.7rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--primary);font-weight:500;">Nous écrire</span>
+        </div>
+        <h2 class="info-heading reveal delay-1">
+          Envoyez-nous<br>un <em>message</em>
+        </h2>
+        <p class="info-text reveal delay-2">
+          Remplissez le formulaire et notre équipe vous répondra
+          sous 24&nbsp;h ouvrées. Pour une démo personnalisée,
+          précisez le nombre d'alternants de votre établissement.
+        </p>
+
+        <div class="info-items reveal delay-3">
+          <div class="info-item">
+            <div class="info-item-icon" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+              </svg>
+            </div>
+            <div class="info-item-body">
+              <span class="info-item-label">Email</span>
+              <span class="info-item-value">contact@processiq.fr</span>
+            </div>
+          </div>
+          <div class="info-item">
+            <div class="info-item-icon" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+              </svg>
+            </div>
+            <div class="info-item-body">
+              <span class="info-item-label">Téléphone</span>
+              <span class="info-item-value">+33 1 23 45 67 89</span>
+            </div>
+          </div>
+        </div>
+
+        <blockquote class="info-quote reveal delay-4">
+          <p>"Notre équipe répond sous 24&nbsp;h et vous accompagne de la démo
+          jusqu'au déploiement complet."</p>
+        </blockquote>
+      </div>
+
+      <!-- ── Colonne droite — formulaire ── -->
+      <div class="reveal-right">
+        <div class="form-card">
+          <h3 class="form-card-title">Envoyez-nous un message</h3>
+          <p class="form-card-sub">Tous les champs marqués d'un * sont obligatoires</p>
+          <div class="form-accent" aria-hidden="true"></div>
+
+          <form class="contact-form" id="contactForm" novalidate>
+
+            <!-- Prénom / Nom -->
+            <div class="form-row">
+              <div class="field-group">
+                <label class="field-label" for="prenom">Prénom <span class="req">*</span></label>
+                <input class="field-input" type="text" id="prenom" name="prenom"
+                  placeholder="Votre prénom" autocomplete="given-name" required>
+                <span class="field-error" id="prenom-error">Prénom requis.</span>
+              </div>
+              <div class="field-group">
+                <label class="field-label" for="nom">Nom <span class="req">*</span></label>
+                <input class="field-input" type="text" id="nom" name="nom"
+                  placeholder="Votre nom" autocomplete="family-name" required>
+                <span class="field-error" id="nom-error">Nom requis.</span>
+              </div>
+            </div>
+
+            <!-- Email / Téléphone -->
+            <div class="form-row">
+              <div class="field-group">
+                <label class="field-label" for="email">Email <span class="req">*</span></label>
+                <input class="field-input" type="email" id="email" name="email"
+                  placeholder="votre.email@exemple.com" autocomplete="email" required>
+                <span class="field-error" id="email-error">Email invalide.</span>
+              </div>
+              <div class="field-group">
+                <label class="field-label" for="telephone">Téléphone <span class="req">*</span></label>
+                <input class="field-input" type="tel" id="telephone" name="telephone"
+                  placeholder="+33 6 12 34 56 78" autocomplete="tel" required>
+                <span class="field-error" id="telephone-error">Téléphone requis.</span>
+              </div>
+            </div>
+
+            <!-- Organisation -->
+            <div class="field-group">
+              <label class="field-label" for="organisation">Organisation <span class="req">*</span></label>
+              <input class="field-input" type="text" id="organisation" name="organisation"
+                placeholder="Nom de votre établissement/entreprise" autocomplete="organization" required>
+              <span class="field-error" id="organisation-error">Organisation requise.</span>
+            </div>
+
+            <!-- Sujet -->
+            <div class="field-group">
+              <label class="field-label" for="sujet">Sujet <span class="req">*</span></label>
+              <input class="field-input" type="text" id="sujet" name="sujet"
+                placeholder="Objet de votre message" required>
+              <span class="field-error" id="sujet-error">Sujet requis.</span>
+            </div>
+
+            <!-- Message -->
+            <div class="field-group">
+              <label class="field-label" for="message">Message <span class="req">*</span></label>
+              <textarea class="field-textarea" id="message" name="message"
+                placeholder="Décrivez votre demande…" required></textarea>
+              <span class="field-error" id="message-error">Message requis.</span>
+            </div>
+
+            <button type="submit" class="btn-submit">
+              <span>Envoyer le message</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+              </svg>
+            </button>
+
+          </form>
+
+          <!-- Message de succès -->
+          <div class="form-success" id="formSuccess" role="status" aria-live="polite">
+            <div class="success-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+                <polyline points="22 4 12 14.01 9 11.01"/>
+              </svg>
+            </div>
+            <h3 class="success-title">Message envoyé !</h3>
+            <p class="success-text">
+              Merci pour votre message. Notre équipe vous contactera
+              sous 24&nbsp;h ouvrées.
+            </p>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     FOOTER
+═══════════════════════════════════════════ -->
+<footer id="footer" role="contentinfo">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="nav-brand" style="margin-bottom:0.5rem;">
+          <div class="nav-crest">
+            <img src="logo (2).png" alt="ProcessIQ">
+          </div>
+          <div class="nav-brand-text">
+            <strong>ProcessIQ</strong>
+            <span>Gestion de l'alternance</span>
+          </div>
+        </div>
+        <p class="footer-tagline">
+          "La plateforme intégrée qui libère l'alternance et le stage de la paperasse et des silos."
+        </p>
+        <div class="footer-social" aria-label="Réseaux sociaux">
+          <a href="#" class="footer-social-btn" aria-label="LinkedIn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+          </a>
+          <a href="#" class="footer-social-btn" aria-label="X (Twitter)">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          </a>
+        </div>
+      </div>
+
+      <div>
+        <h3 class="footer-col-title">Liens rapides</h3>
+        <ul class="footer-links">
+          <li><a href="processiq.html">Accueil</a></li>
+          <li><a href="processiq.html#solution">Solution</a></li>
+          <li><a href="processiq.html#segments">Segments</a></li>
+          <li><a href="processiq.html#advantages">Avantages</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h3 class="footer-col-title">Légal</h3>
+        <ul class="footer-links">
+          <li><a href="#">Mentions légales</a></li>
+          <li><a href="#">Politique de confidentialité</a></li>
+          <li><a href="#">RGPD &amp; données</a></li>
+          <li><a href="#">Conditions générales</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h3 class="footer-col-title">Contact</h3>
+        <div class="footer-contact-item">
+          <svg class="footer-contact-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+          <span>contact@processiq.fr</span>
+        </div>
+        <div class="footer-contact-item">
+          <svg class="footer-contact-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+          <span>+33 1 23 45 67 89</span>
+        </div>
+        <a href="#contact" class="nav-cta" style="margin-top:1.2rem;font-size:0.75rem;padding:0.75rem 1.4rem;display:inline-block;border-radius:4px;">
+          Demander une démo →
+        </a>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <p class="footer-copy">© 2025 ProcessIQ. Tous droits réservés.</p>
+      <div class="footer-bottom-links">
+        <a href="#">Mentions légales</a>
+        <a href="#">Politique de confidentialité</a>
+        <a href="#">Contact</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- ═══════════════════════════════════════════
+     JAVASCRIPT
+═══════════════════════════════════════════ -->
+<script>
+(function() {
+  'use strict';
+
+  // ── Nav scroll ──
+  const nav = document.getElementById('nav');
+  const onScroll = () => nav.classList.toggle('scrolled', window.scrollY > 60);
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  // ── Hamburger ──
+  const hamburger = document.getElementById('hamburger');
+  const mobileMenu = document.getElementById('mobileMenu');
+  const toggleMenu = (open) => {
+    hamburger.classList.toggle('open', open);
+    hamburger.setAttribute('aria-expanded', String(open));
+    mobileMenu.classList.toggle('open', open);
+    mobileMenu.setAttribute('aria-hidden', String(!open));
+    document.body.style.overflow = open ? 'hidden' : '';
+  };
+  hamburger.addEventListener('click', () => toggleMenu(!hamburger.classList.contains('open')));
+  mobileMenu.querySelectorAll('.mobile-link').forEach(l => l.addEventListener('click', () => toggleMenu(false)));
+
+  // ── Scroll reveal ──
+  const revealEls = document.querySelectorAll('.reveal, .reveal-left, .reveal-right');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -30px 0px' });
+  revealEls.forEach(el => observer.observe(el));
+
+  // ── Form validation & submit ──
+  const form = document.getElementById('contactForm');
+  const successPanel = document.getElementById('formSuccess');
+
+  const fields = [
+    { id: 'prenom',       errorId: 'prenom-error',       msg: 'Prénom requis.',       validate: v => v.trim().length > 0 },
+    { id: 'nom',          errorId: 'nom-error',           msg: 'Nom requis.',          validate: v => v.trim().length > 0 },
+    { id: 'email',        errorId: 'email-error',         msg: 'Email invalide.',      validate: v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) },
+    { id: 'telephone',    errorId: 'telephone-error',     msg: 'Téléphone requis.',    validate: v => v.trim().length > 0 },
+    { id: 'organisation', errorId: 'organisation-error',  msg: 'Organisation requise.', validate: v => v.trim().length > 0 },
+    { id: 'sujet',        errorId: 'sujet-error',         msg: 'Sujet requis.',        validate: v => v.trim().length > 0 },
+    { id: 'message',      errorId: 'message-error',       msg: 'Message requis.',      validate: v => v.trim().length > 0 },
+  ];
+
+  fields.forEach(({ id, errorId }) => {
+    document.getElementById(id).addEventListener('input', () => {
+      document.getElementById(id).classList.remove('error');
+      document.getElementById(errorId).classList.remove('visible');
+    });
+  });
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    let valid = true;
+
+    fields.forEach(({ id, errorId, msg, validate }) => {
+      const input = document.getElementById(id);
+      const error = document.getElementById(errorId);
+      if (!validate(input.value)) {
+        input.classList.add('error');
+        error.textContent = msg;
+        error.classList.add('visible');
+        valid = false;
+      }
+    });
+
+    if (valid) {
+      const btn = form.querySelector('.btn-submit');
+      btn.querySelector('span').textContent = 'Envoi en cours…';
+      btn.disabled = true;
+
+      // Simule un envoi (à remplacer par un vrai appel API)
+      setTimeout(() => {
+        form.style.display = 'none';
+        successPanel.classList.add('visible');
+      }, 900);
+    }
+  });
+
+})();
+</script>
+</body>
+</html>

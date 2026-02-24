@@ -14,19 +14,19 @@ import { AdmissionTab } from './types';
 import AdminLoginPage from './components/AdminLoginPage';
 import AdminDashboard from './components/AdminDashboard';
 import TestPage from './components/TestPage';
-
+import LandingPage from './components/LandingPage';
+import RegisterPage from './components/RegisterPage';
 
 const RequireAuth = ({ children, allowedRoles }: { children: React.ReactNode, allowedRoles?: string[] }) => {
-  const isAuthenticated = localStorage.getItem('authToken');
+  const isAuthenticated = localStorage.getItem('token'); // Changed from authToken to token
   const userRole = localStorage.getItem('userRole');
   const location = useLocation();
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to="/landing" state={{ from: location }} replace />;
   }
 
   if (allowedRoles && userRole && !allowedRoles.includes(userRole)) {
-    // Redirect to default home based on role if they try to access forbidden route
     return <Navigate to="/" replace />;
   }
 
@@ -49,7 +49,13 @@ const App = () => {
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
   const [selectedTab, setSelectedTab] = useState<AdmissionTab | null>(null);
   const location = useLocation();
-  const isStandalonePage = location.pathname === '/login' || location.pathname === '/admin/login' || location.pathname.startsWith('/admin') || location.pathname === '/test';
+  const isStandalonePage = [
+    '/login',
+    '/register',
+    '/landing',
+    '/admin/login',
+    '/test'
+  ].includes(location.pathname) || location.pathname.startsWith('/admin');
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
@@ -91,13 +97,14 @@ const App = () => {
         {!isStandalonePage && (
           <Header
             toggleSidebar={toggleSidebar}
-            activeModule={activeModule}
           />
         )}
 
         <main className={`${!isStandalonePage ? 'flex-1 p-8 md:p-10 overflow-y-auto' : 'h-screen'}`}>
           <Routes>
+            <Route path="/landing" element={<LandingPage />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
 
             {/* Admin Routes */}
             <Route path="/admin/login" element={<AdminLoginPage />} />
@@ -112,7 +119,7 @@ const App = () => {
                   if (role === 'admission') return <Navigate to="/admission" replace />;
                   if (role === 'rh') return <Navigate to="/rh/dashboard" replace />;
                   if (role === 'eleve') return <Navigate to="/etudiant" replace />;
-                  return <Navigate to="/commercial/dashboard" replace />;
+                  return <Navigate to="/admission" replace />;
                 })()
               } />
 
