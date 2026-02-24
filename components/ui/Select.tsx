@@ -6,6 +6,7 @@ interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   error?: string;
   required?: boolean;
   options: { value: string; label: string; disabled?: boolean }[];
+  placeholder?: string;
 }
 
 const Select = forwardRef<HTMLSelectElement, SelectProps>(
@@ -23,8 +24,8 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
             className={`
               w-full px-4 py-3 bg-white border rounded-xl text-base text-slate-800 appearance-none
               transition-all focus:ring-4 focus:outline-none cursor-pointer
-              ${error 
-                ? 'border-rose-300 focus:border-rose-500 focus:ring-rose-500/10' 
+              ${error
+                ? 'border-rose-300 focus:border-rose-500 focus:ring-rose-500/10'
                 : 'border-slate-200 focus:border-blue-500 focus:ring-blue-500/10'
               }
             `}

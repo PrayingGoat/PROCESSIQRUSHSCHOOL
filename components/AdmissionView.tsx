@@ -1035,17 +1035,64 @@ const AdmissionView = ({ selectedStudent, selectedTab, onClearSelection }: Admis
 
     // --- RENDER LOGIC ---
 
-    if (mainTab === 'interviews') {
-        return (
-            <div className="space-y-8 animate-fade-in">
-                <div className="flex gap-2 bg-slate-100 p-1.5 rounded-2xl border border-slate-200 w-fit">
-                    <button onClick={() => setMainTab('dashboard')} className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-slate-500 hover:text-slate-700 transition-all">
-                        Tableau de bord
-                    </button>
-                    <button className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold bg-white text-brand shadow-sm border border-slate-200 transition-all">
-                        Suivi Entretiens
-                    </button>
-                </div>
+    // --- RENDER LOGIC ---
+
+    return (
+        <div className="animate-fade-in max-w-6xl mx-auto pb-20 relative">
+            <SuccessModal isOpen={showSuccessModal} onClose={() => setShowSuccessModal(false)} />
+
+            {mainTab === 'dashboard' && (
+                <>
+                    <div className="admission-hero">
+                        <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 w-full max-w-[60%]">
+                            <div className="flex-1">
+                                <div className="flex flex-col md:flex-row md:items-center gap-4 mb-4">
+                                    <img src="/images/logo-process-iq.png" alt="Process IQ" className="h-10 w-fit brightness-0 invert" />
+                                    <div className="hidden md:block w-px h-8 bg-white/20"></div>
+                                    <div className="inline-flex items-center gap-2 bg-white/20 px-4 py-1.5 rounded-full text-sm font-medium backdrop-blur-sm border border-white/10">
+                                        <Briefcase size={14} /> Processus d'admission
+                                    </div>
+                                </div>
+                                <h1 className="text-3xl md:text-4xl font-extrabold mb-3 tracking-tight text-white">Admission Rush School</h1>
+                                <p className="text-indigo-100 text-lg leading-relaxed opacity-90 font-medium">Complétez votre dossier d'admission : tests, documents et formalités administratives.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-white border border-slate-200 rounded-[32px] p-8 mb-8 flex items-center justify-center overflow-x-auto shadow-premium">
+                        <div className="flex items-center min-w-max">
+                            <StepItem step={1} label="Tests" isActive={activeTab === AdmissionTab.TESTS} isCompleted={testCompleted} />
+                            <StepLine isCompleted={testCompleted} />
+                            <StepItem step={2} label="Entretien" isActive={activeTab === AdmissionTab.ENTRETIEN} isCompleted={interviewCompleted} />
+                            <StepLine isCompleted={interviewCompleted} />
+                            <StepItem step={3} label="Étudiant" isActive={activeTab === AdmissionTab.QUESTIONNAIRE} isCompleted={!!studentData} />
+                            <StepLine isCompleted={!!studentData} />
+                            <StepItem step={4} label="Documents" isActive={activeTab === AdmissionTab.DOCUMENTS} isCompleted={uploadedCount >= REQUIRED_DOCUMENTS.length} />
+                            <StepLine isCompleted={uploadedCount >= REQUIRED_DOCUMENTS.length} />
+                            <StepItem step={5} label="Entreprise" isActive={activeTab === AdmissionTab.ENTREPRISE} isCompleted={entrepriseCompleted} />
+                            <StepLine isCompleted={entrepriseCompleted} />
+                            <StepItem step={6} label="Admin" isActive={activeTab === AdmissionTab.ADMINISTRATIF} isCompleted={adminCompleted} />
+                        </div>
+                    </div>
+                </>
+            )}
+
+            <div className="flex gap-2 mb-8 bg-slate-50 p-1.5 rounded-2xl border border-slate-200 w-fit shadow-inner">
+                <button
+                    onClick={() => setMainTab('dashboard')}
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${mainTab === 'dashboard' ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-slate-200' : 'text-slate-500 hover:text-slate-700'}`}
+                >
+                    Tableau de bord
+                </button>
+                <button
+                    onClick={() => setMainTab('interviews')}
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${mainTab === 'interviews' ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-slate-200' : 'text-slate-500 hover:text-slate-700'}`}
+                >
+                    Suivi Entretiens
+                </button>
+            </div>
+
+            {mainTab === 'interviews' ? (
                 <InterviewsTrackingView
                     onLaunchInterview={(c) => {
                         setStudentData(c);
@@ -1053,293 +1100,237 @@ const AdmissionView = ({ selectedStudent, selectedTab, onClearSelection }: Admis
                         setActiveTab(AdmissionTab.ENTRETIEN);
                     }}
                 />
-            </div>
-        );
-    }
-
-    return (
-        <div className="animate-fade-in max-w-6xl mx-auto pb-20 relative">
-            <SuccessModal isOpen={showSuccessModal} onClose={() => setShowSuccessModal(false)} />
-
-            <div className="admission-hero">
-                <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 w-full max-w-[60%]">
-                    <div className="flex-1">
-                        <div className="flex flex-col md:flex-row md:items-center gap-4 mb-4">
-                            <img src="/images/logo-process-iq.png" alt="Process IQ" className="h-10 w-fit brightness-0 invert" />
-                            <div className="hidden md:block w-px h-8 bg-white/20"></div>
-                            <div className="inline-flex items-center gap-2 bg-white/20 px-4 py-1.5 rounded-full text-sm font-medium backdrop-blur-sm border border-white/10">
-                                <Briefcase size={14} /> Processus d'admission
-                            </div>
-                        </div>
-                        <h1 className="text-3xl md:text-4xl font-extrabold mb-3 tracking-tight text-white">Admission Rush School</h1>
-                        <p className="text-indigo-100 text-lg leading-relaxed opacity-90 font-medium">Complétez votre dossier d'admission : tests, documents et formalités administratives.</p>
-                    </div>
-                </div>
-            </div>
-
-            <div className="bg-white border border-slate-200 rounded-[32px] p-8 mb-8 flex items-center justify-center overflow-x-auto shadow-premium">
-                <div className="flex items-center min-w-max">
-                    <StepItem step={1} label="Tests" isActive={activeTab === AdmissionTab.TESTS} isCompleted={testCompleted} />
-                    <StepLine isCompleted={testCompleted} />
-                    <StepItem step={2} label="Entretien" isActive={activeTab === AdmissionTab.ENTRETIEN} isCompleted={interviewCompleted} />
-                    <StepLine isCompleted={interviewCompleted} />
-                    <StepItem step={3} label="Étudiant" isActive={activeTab === AdmissionTab.QUESTIONNAIRE} isCompleted={!!studentData} />
-                    <StepLine isCompleted={!!studentData} />
-                    <StepItem step={4} label="Documents" isActive={activeTab === AdmissionTab.DOCUMENTS} isCompleted={uploadedCount >= REQUIRED_DOCUMENTS.length} />
-                    <StepLine isCompleted={uploadedCount >= REQUIRED_DOCUMENTS.length} />
-                    <StepItem step={5} label="Entreprise" isActive={activeTab === AdmissionTab.ENTREPRISE} isCompleted={entrepriseCompleted} />
-                    <StepLine isCompleted={entrepriseCompleted} />
-                    <StepItem step={6} label="Admin" isActive={activeTab === AdmissionTab.ADMINISTRATIF} isCompleted={adminCompleted} />
-                </div>
-            </div>
-
-            <div className="flex gap-2 mb-8 bg-slate-50 p-1.5 rounded-2xl border border-slate-200 w-fit shadow-inner">
-                <button onClick={() => setMainTab('dashboard')} className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${mainTab === 'dashboard' ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-slate-200' : 'text-slate-500'}`}>
-                    Tableau de bord
-                </button>
-                <button onClick={() => setMainTab('interviews')} className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${mainTab === 'interviews' ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-slate-200' : 'text-slate-500 hover:text-slate-700'}`}>
-                    Suivi Entretiens
-                </button>
-            </div>
-
-            <div className="flex overflow-x-auto gap-2 mb-10 bg-slate-50 p-2 rounded-[24px] border border-slate-200 no-scrollbar shadow-inner">
-                {[
-                    { id: AdmissionTab.TESTS, label: 'Tests', icon: PenTool },
-                    { id: AdmissionTab.ENTRETIEN, label: 'Entretien', icon: UserCheck },
-                    { id: AdmissionTab.QUESTIONNAIRE, label: 'Fiche Étudiant', icon: Info },
-                    { id: AdmissionTab.DOCUMENTS, label: 'Documents', icon: Upload },
-                    { id: AdmissionTab.ENTREPRISE, label: 'Fiche Entreprise', icon: Building },
-                    { id: AdmissionTab.ADMINISTRATIF, label: 'Administratif', icon: Printer }
-                ].map((tab) => (
-                    <button
-                        key={tab.id}
-                        onClick={() => setActiveTab(tab.id as AdmissionTab)}
-                        className={`flex items-center gap-3 px-6 py-4 rounded-[18px] text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-white text-blue-600 shadow-premium' : 'text-slate-400 hover:text-slate-600 hover:bg-white/50'}`}
-                    >
-                        <tab.icon size={18} strokeWidth={activeTab === tab.id ? 3 : 2} /> {tab.label}
-                    </button>
-                ))}
-            </div>
-
-            {activeTab === AdmissionTab.TESTS && (
-                <div className="space-y-6 animate-slide-in">
-                    <div className="bg-white border border-slate-200 rounded-[32px] p-10 shadow-premium">
-                        <h3 className="text-xl font-black text-slate-800 mb-2 flex items-center gap-3">
-                            <GraduationCap className="text-blue-500" /> Sélectionnez votre formation
-                        </h3>
-                        <p className="text-slate-500 mb-8 ml-9 font-medium">Choisissez la formation pour accéder au test.</p>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                            {FORMATION_CARDS.map(f => (
-                                <div key={f.id} onClick={() => navigate(`/test?formation=${f.id}`)} className="bg-white border-2 border-slate-100 rounded-[32px] p-8 text-center cursor-pointer hover:border-blue-500 hover:-translate-y-2 hover:shadow-2xl transition-all duration-300 group relative overflow-hidden">
-                                    <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-br ${f.gradient} opacity-0 group-hover:opacity-5 rounded-full -mr-8 -mt-8 blur-2xl transition-opacity`}></div>
-
-                                    <div className={`w-20 h-20 rounded-3xl mx-auto mb-8 flex items-center justify-center text-white bg-gradient-to-br ${f.gradient} shadow-lg group-hover:scale-110 transition-transform duration-500`}>
-                                        <Briefcase size={32} />
-                                    </div>
-                                    <h4 className="font-black text-slate-900 text-xl mb-2 tracking-tight">{f.title}</h4>
-                                    <p className="text-[10px] text-slate-400 font-black mb-8 h-10 leading-relaxed uppercase tracking-[0.2em]">{f.subtitle}</p>
-
-                                    <div className="flex items-center justify-center gap-2">
-                                        <span className="px-4 py-2 bg-slate-50 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-blue-600 group-hover:bg-blue-50 transition-colors border border-slate-100">~20 min</span>
-                                        <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0 transition-all">
-                                            <ArrowRight size={16} />
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {
-                activeTab === AdmissionTab.QUESTIONNAIRE && (
-                    <div className="animate-slide-in">
-                        <QuestionnaireForm
-                            initialData={studentData}
-                            onNext={(data) => {
-                                setStudentData(data);
-                                setActiveTab(AdmissionTab.DOCUMENTS);
-                            }} />
-                    </div>
-                )
-            }
-
-            {
-                activeTab === AdmissionTab.DOCUMENTS && (
-                    <div className="animate-slide-in">
-                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-3xl p-8 mb-8 flex items-center gap-6 relative overflow-hidden">
-                            <div className="w-16 h-16 bg-white text-blue-600 rounded-2xl flex items-center justify-center shrink-0 shadow-xl shadow-blue-500/10 relative z-10">
-                                <Upload size={32} />
-                            </div>
-                            <div className="relative z-10">
-                                <h3 className="text-xl font-black text-slate-800 tracking-tight">Documents à téléverser</h3>
-                                <p className="text-slate-500 font-medium">Complétez votre dossier avec les pièces justificatives officielles.</p>
-                            </div>
-                            {!studentData && (
-                                <div className="absolute right-8 top-1/2 -translate-y-1/2 flex items-center gap-3 text-amber-600 bg-white px-5 py-2.5 rounded-2xl border-2 border-amber-100 shadow-sm">
-                                    <AlertCircle size={20} />
-                                    <span className="text-xs font-black uppercase tracking-widest">Dossier requis</span>
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {REQUIRED_DOCUMENTS.map((doc) => {
-                                const isUploaded = uploadedFiles[doc.id];
-                                const isUploading = uploadingFiles[doc.id];
-
-                                return (
-                                    <div key={doc.id} className={`border-2 rounded-3xl p-8 flex flex-col items-center justify-center text-center transition-all cursor-pointer group relative overflow-hidden ${isUploaded
-                                        ? 'border-emerald-400 bg-emerald-50'
-                                        : 'border-slate-100 bg-white hover:border-brand hover:bg-slate-50 hover:shadow-xl'}
-                                    `}>
-                                        <input
-                                            type="file"
-                                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
-                                            disabled={isUploading || !studentData}
-                                            onChange={(e) => handleFileChange(e, doc.id)}
-                                            accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                                        />
-
-                                        {isUploading ? (
-                                            <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/90 backdrop-blur-sm z-20">
-                                                <Loader2 size={40} className="animate-spin text-brand mb-3" />
-                                                <span className="text-[10px] font-black uppercase tracking-widest text-brand">Envoi en cours</span>
-                                            </div>
-                                        ) : null}
-
-                                        <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-6 transition-all ${isUploaded
-                                            ? 'bg-emerald-100 text-emerald-600 scale-110 shadow-lg shadow-emerald-500/10'
-                                            : 'bg-slate-50 text-slate-300 group-hover:bg-brand/10 group-hover:text-brand group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-brand/10'}
-                                        `}>
-                                            {isUploaded ? <CheckCircle2 size={32} strokeWidth={2.5} /> : <Upload size={32} />}
-                                        </div>
-                                        <h4 className={`font-black text-lg mb-2 tracking-tight ${isUploaded ? 'text-emerald-800' : 'text-slate-800'}`}>{doc.title}</h4>
-                                        <p className={`text-xs font-medium mb-8 leading-relaxed px-4 ${isUploaded ? 'text-emerald-600' : 'text-slate-400'}`}>{doc.desc}</p>
-
-                                        <button className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all pointer-events-none ${isUploaded
-                                            ? 'bg-emerald-200 text-emerald-800 shadow-sm'
-                                            : 'bg-slate-900 text-white shadow-lg shadow-slate-900/20 group-hover:bg-brand group-hover:shadow-brand/20'}`}>
-                                            {isUploaded ? 'Document reçu' : 'Téléverser'}
-                                        </button>
-                                    </div>
-                                )
-                            })}
-                        </div>
-
-                        <div className="mt-10 bg-white border border-slate-200 rounded-[32px] p-10 flex flex-col md:flex-row items-center justify-between gap-10 shadow-premium">
-                            <div className="w-full md:w-1/2">
-                                <div className="flex justify-between text-[11px] font-black uppercase tracking-widest mb-4">
-                                    <span className="text-slate-400">{uploadedCount} / {REQUIRED_DOCUMENTS.length} documents déposés</span>
-                                    <span className="text-brand">{Math.round(progressPercent)}%</span>
-                                </div>
-                                <div className="h-3 bg-slate-50 rounded-full overflow-hidden border border-slate-100 p-0.5">
-                                    <div
-                                        className="h-full rounded-full transition-all duration-700 ease-out bg-gradient-to-r from-brand to-primary"
-                                        style={{ width: `${progressPercent}%` }}
-                                    ></div>
-                                </div>
-                            </div>
-                            <Button
-                                size="lg"
-                                disabled={!studentData}
-                                onClick={() => setActiveTab(AdmissionTab.ENTREPRISE)}
-                                className="w-full md:w-auto px-12"
-                                rightIcon={<ArrowRight size={20} />}
+            ) : (
+                <>
+                    <div className="flex overflow-x-auto gap-2 mb-10 bg-slate-50 p-2 rounded-[24px] border border-slate-200 no-scrollbar shadow-inner">
+                        {[
+                            { id: AdmissionTab.TESTS, label: 'Tests', icon: PenTool },
+                            { id: AdmissionTab.ENTRETIEN, label: 'Entretien', icon: UserCheck },
+                            { id: AdmissionTab.QUESTIONNAIRE, label: 'Fiche Étudiant', icon: Info },
+                            { id: AdmissionTab.DOCUMENTS, label: 'Documents', icon: Upload },
+                            { id: AdmissionTab.ENTREPRISE, label: 'Fiche Entreprise', icon: Building },
+                            { id: AdmissionTab.ADMINISTRATIF, label: 'Administratif', icon: Printer }
+                        ].map((tab) => (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id as AdmissionTab)}
+                                className={`flex items-center gap-3 px-6 py-4 rounded-[18px] text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-white text-blue-600 shadow-premium' : 'text-slate-400 hover:text-slate-600 hover:bg-white/50'}`}
                             >
-                                Continuer
-                            </Button>
-                        </div>
+                                <tab.icon size={18} strokeWidth={activeTab === tab.id ? 3 : 2} /> {tab.label}
+                            </button>
+                        ))}
                     </div>
-                )
-            }
 
-            {
-                activeTab === AdmissionTab.ENTREPRISE && (
-                    <div className="animate-slide-in">
-                        <EntrepriseForm
-                            onNext={(response?: any) => {
-                                if (response?.entreprise_info) {
-                                    setStudentData((prev: any) => ({
-                                        ...prev,
-                                        id_entreprise: response.entreprise_info.id,
-                                        entreprise_raison_sociale: response.entreprise_info.raison_sociale
-                                    }));
-                                }
-                                setEntrepriseCompleted(true);
-                                setActiveTab(AdmissionTab.ADMINISTRATIF);
-                            }}
-                            studentRecordId={studentData?.record_id || studentData?.id || localStorage.getItem('candidateRecordId')}
-                        />
-                    </div>
-                )
-            }
+                    {activeTab === AdmissionTab.TESTS && (
+                        <div className="space-y-6 animate-slide-in">
+                            <div className="bg-white border border-slate-200 rounded-[32px] p-10 shadow-premium">
+                                <h3 className="text-xl font-black text-slate-800 mb-2 flex items-center gap-3">
+                                    <GraduationCap className="text-blue-500" /> Sélectionnez votre formation
+                                </h3>
+                                <p className="text-slate-500 mb-8 ml-9 font-medium">Choisissez la formation pour accéder au test.</p>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                    {FORMATION_CARDS.map(f => (
+                                        <div key={f.id} onClick={() => navigate(`/test?formation=${f.id}`)} className="bg-white border-2 border-slate-100 rounded-[32px] p-8 text-center cursor-pointer hover:border-blue-500 hover:-translate-y-2 hover:shadow-2xl transition-all duration-300 group relative overflow-hidden">
+                                            <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-br ${f.gradient} opacity-0 group-hover:opacity-5 rounded-full -mr-8 -mt-8 blur-2xl transition-opacity`}></div>
 
-            {
-                activeTab === AdmissionTab.ADMINISTRATIF && (
-                    <div className="animate-slide-in">
-                        <div className="bg-white border border-slate-200 rounded-3xl p-8 mb-8 flex items-center gap-6 shadow-sm">
-                            <div className="w-16 h-16 bg-gradient-to-br from-violet-500 to-indigo-600 text-white rounded-2xl flex items-center justify-center shrink-0 shadow-xl shadow-violet-500/20">
-                                <Printer size={32} />
-                            </div>
-                            <div>
-                                <h3 className="text-xl font-black text-slate-800 tracking-tight">Dossier administratif</h3>
-                                <p className="text-slate-500 font-medium">Documents officiels à compléter avec votre chargé d'admission.</p>
-                            </div>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            {ADMIN_DOCS.map(doc => (
-                                <div key={doc.id} className="bg-white border border-slate-200 rounded-3xl p-8 hover:shadow-2xl hover:-translate-y-1 transition-all group">
-                                    <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${doc.gradient} flex items-center justify-center text-white mb-6 shadow-lg ${doc.shadow} group-hover:scale-110 transition-transform`}>
-                                        <FileText size={32} />
-                                    </div>
-                                    <h4 className="font-black text-slate-800 text-lg mb-1 tracking-tight">{doc.title}</h4>
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">{doc.subtitle}</p>
-                                    <p className="text-sm text-slate-500 font-medium mb-8 leading-relaxed h-12 overflow-hidden">{doc.desc}</p>
-                                    {(() => {
-                                        const isGenerating = (doc.id === 'renseignements' && isGeneratingFiche) ||
-                                            (doc.id === 'cerfa' && isGeneratingCerfa) ||
-                                            (doc.id === 'atre' && isGeneratingAtre) ||
-                                            (doc.id === 'compte-rendu' && isGeneratingCompteRendu);
-                                        return (
-                                            <button
-                                                disabled={isGenerating}
-                                                onClick={() => handleDocAction(doc)}
-                                                className={`w-full py-3.5 rounded-xl border-2 border-slate-100 font-black text-[11px] uppercase tracking-widest text-slate-600 hover:border-brand hover:text-brand transition-all flex items-center justify-center gap-2 ${isGenerating ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                            >
-                                                {isGenerating ? 'Génération...' : doc.btnText} <ArrowRight size={14} className={isGenerating ? 'animate-spin' : ''} />
-                                            </button>
-                                        );
-                                    })()}
+                                            <div className={`w-20 h-20 rounded-3xl mx-auto mb-8 flex items-center justify-center text-white bg-gradient-to-br ${f.gradient} shadow-lg group-hover:scale-110 transition-transform duration-500`}>
+                                                <Briefcase size={32} />
+                                            </div>
+                                            <h4 className="font-black text-slate-900 text-xl mb-2 tracking-tight">{f.title}</h4>
+                                            <p className="text-[10px] text-slate-400 font-black mb-8 h-10 leading-relaxed uppercase tracking-[0.2em]">{f.subtitle}</p>
+
+                                            <div className="flex items-center justify-center gap-2">
+                                                <span className="px-4 py-2 bg-slate-50 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-blue-600 group-hover:bg-blue-50 transition-colors border border-slate-100">~20 min</span>
+                                                <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center opacity-0 group-hover:opacity-100 translate-x-2 group-hover:translate-x-0 transition-all">
+                                                    <ArrowRight size={16} />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
-                            ))}
+                            </div>
                         </div>
+                    )}
 
-                        <div className="flex justify-end mt-10">
-                            <Button size="lg" className="px-12" onClick={() => navigate('/admin-dashboard')} rightIcon={<CheckCircle2 size={20} />}>
-                                Terminer le dossier
-                            </Button>
+                    {activeTab === AdmissionTab.QUESTIONNAIRE && (
+                        <div className="animate-slide-in">
+                            <QuestionnaireForm
+                                initialData={studentData}
+                                onNext={(data) => {
+                                    setStudentData(data);
+                                    setActiveTab(AdmissionTab.DOCUMENTS);
+                                }} />
                         </div>
-                    </div>
-                )
-            }
+                    )}
 
-            {
-                activeTab === AdmissionTab.ENTRETIEN && (
-                    <div className="animate-slide-in">
-                        <EvaluationGrid
-                            studentData={studentData}
-                            onNext={() => {
-                                setInterviewCompleted(true);
-                                setActiveTab(AdmissionTab.QUESTIONNAIRE);
-                            }}
-                        />
-                    </div>
-                )
-            }
+                    {activeTab === AdmissionTab.DOCUMENTS && (
+                        <div className="animate-slide-in">
+                            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-3xl p-8 mb-8 flex items-center gap-6 relative overflow-hidden">
+                                <div className="w-16 h-16 bg-white text-blue-600 rounded-2xl flex items-center justify-center shrink-0 shadow-xl shadow-blue-500/10 relative z-10">
+                                    <Upload size={32} />
+                                </div>
+                                <div className="relative z-10">
+                                    <h3 className="text-xl font-black text-slate-800 tracking-tight">Documents à téléverser</h3>
+                                    <p className="text-slate-500 font-medium">Complétez votre dossier avec les pièces justificatives officielles.</p>
+                                </div>
+                                {!studentData && (
+                                    <div className="absolute right-8 top-1/2 -translate-y-1/2 flex items-center gap-3 text-amber-600 bg-white px-5 py-2.5 rounded-2xl border-2 border-amber-100 shadow-sm">
+                                        <AlertCircle size={20} />
+                                        <span className="text-xs font-black uppercase tracking-widest">Dossier requis</span>
+                                    </div>
+                                )}
+                            </div>
 
-        </div >
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {REQUIRED_DOCUMENTS.map((doc) => {
+                                    const isUploaded = uploadedFiles[doc.id];
+                                    const isUploadingDoc = uploadingFiles[doc.id];
+
+                                    return (
+                                        <div key={doc.id} className={`border-2 rounded-3xl p-8 flex flex-col items-center justify-center text-center transition-all cursor-pointer group relative overflow-hidden ${isUploaded
+                                            ? 'border-emerald-400 bg-emerald-50'
+                                            : 'border-slate-100 bg-white hover:border-brand hover:bg-slate-50 hover:shadow-xl'}
+                                        `}>
+                                            <input
+                                                type="file"
+                                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+                                                disabled={isUploadingDoc || !studentData}
+                                                onChange={(e) => handleFileChange(e, doc.id)}
+                                                accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                                            />
+
+                                            {isUploadingDoc ? (
+                                                <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/90 backdrop-blur-sm z-20">
+                                                    <Loader2 size={40} className="animate-spin text-brand mb-3" />
+                                                    <span className="text-[10px] font-black uppercase tracking-widest text-brand">Envoi en cours</span>
+                                                </div>
+                                            ) : null}
+
+                                            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-6 transition-all ${isUploaded
+                                                ? 'bg-emerald-100 text-emerald-600 scale-110 shadow-lg shadow-emerald-500/10'
+                                                : 'bg-slate-50 text-slate-300 group-hover:bg-brand/10 group-hover:text-brand group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-brand/10'}
+                                            `}>
+                                                {isUploaded ? <CheckCircle2 size={32} strokeWidth={2.5} /> : <Upload size={32} />}
+                                            </div>
+                                            <h4 className={`font-black text-lg mb-2 tracking-tight ${isUploaded ? 'text-emerald-800' : 'text-slate-800'}`}>{doc.title}</h4>
+                                            <p className={`text-xs font-medium mb-8 leading-relaxed px-4 ${isUploaded ? 'text-emerald-600' : 'text-slate-400'}`}>{doc.desc}</p>
+
+                                            <button className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all pointer-events-none ${isUploaded
+                                                ? 'bg-emerald-200 text-emerald-800 shadow-sm'
+                                                : 'bg-slate-900 text-white shadow-lg shadow-slate-900/20 group-hover:bg-brand group-hover:shadow-brand/20'}`}>
+                                                {isUploaded ? 'Document reçu' : 'Téléverser'}
+                                            </button>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+
+                            <div className="mt-10 bg-white border border-slate-200 rounded-[32px] p-10 flex flex-col md:flex-row items-center justify-between gap-10 shadow-premium">
+                                <div className="w-full md:w-1/2">
+                                    <div className="flex justify-between text-[11px] font-black uppercase tracking-widest mb-4">
+                                        <span className="text-slate-400">{uploadedCount} / {REQUIRED_DOCUMENTS.length} documents déposés</span>
+                                        <span className="text-brand">{Math.round(progressPercent)}%</span>
+                                    </div>
+                                    <div className="h-3 bg-slate-50 rounded-full overflow-hidden border border-slate-100 p-0.5">
+                                        <div
+                                            className="h-full rounded-full transition-all duration-700 ease-out bg-gradient-to-r from-brand to-primary"
+                                            style={{ width: `${progressPercent}%` }}
+                                        ></div>
+                                    </div>
+                                </div>
+                                <Button
+                                    size="lg"
+                                    disabled={!studentData}
+                                    onClick={() => setActiveTab(AdmissionTab.ENTREPRISE)}
+                                    className="w-full md:w-auto px-12"
+                                    rightIcon={<ArrowRight size={20} />}
+                                >
+                                    Continuer
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === AdmissionTab.ENTREPRISE && (
+                        <div className="animate-slide-in">
+                            <EntrepriseForm
+                                onNext={(response?: any) => {
+                                    if (response?.entreprise_info) {
+                                        setStudentData((prev: any) => ({
+                                            ...prev,
+                                            id_entreprise: response.entreprise_info.id,
+                                            entreprise_raison_sociale: response.entreprise_info.raison_sociale
+                                        }));
+                                    }
+                                    setEntrepriseCompleted(true);
+                                    setActiveTab(AdmissionTab.ADMINISTRATIF);
+                                }}
+                                studentRecordId={studentData?.record_id || studentData?.id || localStorage.getItem('candidateRecordId')}
+                            />
+                        </div>
+                    )}
+
+                    {activeTab === AdmissionTab.ADMINISTRATIF && (
+                        <div className="animate-slide-in">
+                            <div className="bg-white border border-slate-200 rounded-3xl p-8 mb-8 flex items-center gap-6 shadow-sm">
+                                <div className="w-16 h-16 bg-gradient-to-br from-violet-500 to-indigo-600 text-white rounded-2xl flex items-center justify-center shrink-0 shadow-xl shadow-violet-500/20">
+                                    <Printer size={32} />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-black text-slate-800 tracking-tight">Dossier administratif</h3>
+                                    <p className="text-slate-500 font-medium">Documents officiels à compléter avec votre chargé d'admission.</p>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                {ADMIN_DOCS.map(doc => (
+                                    <div key={doc.id} className="bg-white border border-slate-200 rounded-3xl p-8 hover:shadow-2xl hover:-translate-y-1 transition-all group">
+                                        <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${doc.gradient} flex items-center justify-center text-white mb-6 shadow-lg ${doc.shadow} group-hover:scale-110 transition-transform`}>
+                                            <FileText size={32} />
+                                        </div>
+                                        <h4 className="font-black text-slate-800 text-lg mb-1 tracking-tight">{doc.title}</h4>
+                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">{doc.subtitle}</p>
+                                        <p className="text-sm text-slate-500 font-medium mb-8 leading-relaxed h-12 overflow-hidden">{doc.desc}</p>
+                                        {(() => {
+                                            const isGenerating = (doc.id === 'renseignements' && isGeneratingFiche) ||
+                                                (doc.id === 'cerfa' && isGeneratingCerfa) ||
+                                                (doc.id === 'atre' && isGeneratingAtre) ||
+                                                (doc.id === 'compte-rendu' && isGeneratingCompteRendu);
+                                            return (
+                                                <button
+                                                    disabled={isGenerating}
+                                                    onClick={() => handleDocAction(doc)}
+                                                    className={`w-full py-3.5 rounded-xl border-2 border-slate-100 font-black text-[11px] uppercase tracking-widest text-slate-600 hover:border-brand hover:text-brand transition-all flex items-center justify-center gap-2 ${isGenerating ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                                >
+                                                    {isGenerating ? 'Génération...' : doc.btnText} <ArrowRight size={14} className={isGenerating ? 'animate-spin' : ''} />
+                                                </button>
+                                            );
+                                        })()}
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="flex justify-end mt-10">
+                                <Button size="lg" className="px-12" onClick={() => navigate('/admin-dashboard')} rightIcon={<CheckCircle2 size={20} />}>
+                                    Terminer le dossier
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === AdmissionTab.ENTRETIEN && (
+                        <div className="animate-slide-in">
+                            <EvaluationGrid
+                                studentData={studentData}
+                                onNext={() => {
+                                    setInterviewCompleted(true);
+                                    setActiveTab(AdmissionTab.QUESTIONNAIRE);
+                                }}
+                            />
+                        </div>
+                    )}
+                </>
+            )}
+        </div>
     );
 };
 
