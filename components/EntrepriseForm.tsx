@@ -133,6 +133,55 @@ const companySchema = z.object({
         date_fin_1periode_4eme_annee: z.string().optional().or(z.literal("")),
         date_debut_2periode_4eme_annee: z.string().optional().or(z.literal("")),
         date_fin_2periode_4eme_annee: z.string().optional().or(z.literal(""))
+    }).superRefine((data, ctx) => {
+        const conclusion = data.date_conclusion ? new Date(data.date_conclusion) : null;
+        const execution = data.date_debut_execution ? new Date(data.date_debut_execution) : null;
+
+        // Date debut execution doit etre avant date de conclusion
+        if (conclusion && execution && execution >= conclusion) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "La date de début d'exécution doit être avant la date de conclusion",
+                path: ["date_debut_execution"]
+            });
+        }
+
+        // Vérification des périodes
+        const checkPeriod = (startKey: string, endKey: string, label: string, checkConclusion: boolean = true) => {
+            const startStr = (data as any)[startKey];
+            const endStr = (data as any)[endKey];
+
+            if (startStr && endStr) {
+                const start = new Date(startStr);
+                const end = new Date(endStr);
+
+                if (start >= end) {
+                    ctx.addIssue({
+                        code: z.ZodIssueCode.custom,
+                        message: `La date de début doit être avant la date de fin`,
+                        path: [startKey]
+                    });
+                }
+
+                if (checkConclusion && conclusion && start <= conclusion) {
+                    ctx.addIssue({
+                        code: z.ZodIssueCode.custom,
+                        message: `La date de début doit être après la date de conclusion`,
+                        path: [startKey]
+                    });
+                }
+            }
+        };
+
+        // 1ère année - 2ème période
+        checkPeriod('date_debut_2periode_1er_annee', 'date_fin_2periode_1er_annee', '2ème période 1ère année');
+
+        // Autres années
+        for (let year = 2; year <= 4; year++) {
+            const suffix = `${year === 2 ? '2eme' : year === 3 ? '3eme' : '4eme'}_annee`;
+            checkPeriod(`date_debut_1periode_${suffix}`, `date_fin_1periode_${suffix}`, `1ère période ${year}ème année`);
+            checkPeriod(`date_debut_2periode_${suffix}`, `date_fin_2periode_${suffix}`, `2ème période ${year}ème année`);
+        }
     }),
     salaire: z.object({
         age1: z.string().min(1, "L'âge est requis"),
@@ -146,6 +195,7 @@ const companySchema = z.object({
     }),
     record_id_etudiant: z.string()
 });
+
 
 type CompanyFormValues = z.infer<typeof companySchema>;
 
@@ -690,10 +740,10 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
                                 <Input label="N° DECA ancien contrat" placeholder="Si applicable" {...register('contrat.numero_deca_ancien_contrat')} />
                             </div>
                             <div className="col-span-12 md:col-span-6">
-                                <Input label="Date de conclusion" type="date" {...register('contrat.date_conclusion')} />
+                                <Input label="Date de conclusion" type="date" error={errors.contrat?.date_conclusion?.message} {...register('contrat.date_conclusion')} />
                             </div>
                             <div className="col-span-12 md:col-span-6">
-                                <Input label="Date début exécution" type="date" {...register('contrat.date_debut_execution')} />
+                                <Input label="Date début exécution" type="date" error={errors.contrat?.date_debut_execution?.message} {...register('contrat.date_debut_execution')} />
                             </div>
                             <div className="col-span-12 md:col-span-6">
                                 <Input label="Date avenant" type="date" {...register('contrat.date_avenant')} />
@@ -802,12 +852,14 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
                                                                         <Input
                                                                             type="date"
                                                                             label="Début"
+                                                                            error={(errors.contrat as any)?.[`date_debut_1periode_${year === "2" ? "2eme" : year === "3" ? "3eme" : "4eme"}_annee`]?.message}
                                                                             className="!bg-white !shadow-none"
                                                                             {...register(`contrat.date_debut_1periode_${year === "2" ? "2eme" : year === "3" ? "3eme" : "4eme"}_annee` as any)}
                                                                         />
                                                                         <Input
                                                                             type="date"
                                                                             label="Fin"
+                                                                            error={(errors.contrat as any)?.[`date_fin_1periode_${year === "2" ? "2eme" : year === "3" ? "3eme" : "4eme"}_annee`]?.message}
                                                                             className="!bg-white !shadow-none"
                                                                             {...register(`contrat.date_fin_1periode_${year === "2" ? "2eme" : year === "3" ? "3eme" : "4eme"}_annee` as any)}
                                                                         />
@@ -824,12 +876,14 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
                                                                         <Input
                                                                             type="date"
                                                                             label="Début"
+                                                                            error={(errors.contrat as any)?.[`date_debut_2periode_${year === "2" ? "2eme" : year === "3" ? "3eme" : "4eme"}_annee`]?.message}
                                                                             className="!bg-white !shadow-none border-brand/20 focus:border-brand"
                                                                             {...register(`contrat.date_debut_2periode_${year === "2" ? "2eme" : year === "3" ? "3eme" : "4eme"}_annee` as any)}
                                                                         />
                                                                         <Input
                                                                             type="date"
                                                                             label="Fin"
+                                                                            error={(errors.contrat as any)?.[`date_fin_2periode_${year === "2" ? "2eme" : year === "3" ? "3eme" : "4eme"}_annee`]?.message}
                                                                             className="!bg-white !shadow-none border-brand/20 focus:border-brand"
                                                                             {...register(`contrat.date_fin_2periode_${year === "2" ? "2eme" : year === "3" ? "3eme" : "4eme"}_annee` as any)}
                                                                         />
