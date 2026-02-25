@@ -113,6 +113,15 @@ const mapBackendToStudent = (backendData: any): any => {
     compte_rendu_url: fields["compte rendu de visite"]?.[0]?.url || "",
     compte_rendu_name: fields["compte rendu de visite"]?.[0]?.filename || "",
     has_compte_rendu: !!(fields["compte rendu de visite"] && fields["compte rendu de visite"].length > 0),
+
+    convention_url: fields["Convention Apprentissage"]?.[0]?.url || fields["Convention"]?.[0]?.url || "",
+    convention_name: fields["Convention Apprentissage"]?.[0]?.filename || fields["Convention"]?.[0]?.filename || "",
+    has_convention: !!((fields["Convention Apprentissage"] || fields["Convention"]) && (fields["Convention Apprentissage"] || fields["Convention"]).length > 0),
+    convention: (fields["Convention Apprentissage"] || fields["Convention"])?.[0] || null,
+    cerfa: fields["cerfa"]?.[0] || null,
+    has_cerfa: !!(fields["cerfa"] && fields["cerfa"].length > 0),
+    fiche_entreprise: fields["Fiche entreprise"]?.[0] || null,
+    has_fiche_renseignement: !!(fields["Fiche entreprise"] && fields["Fiche entreprise"].length > 0),
   };
 };
 
@@ -877,6 +886,30 @@ export const api = {
         return json;
       } catch (e) {
         console.log('📥 Compte Rendu Generation Success (Non-JSON):', text);
+        return { success: true, message: text };
+      }
+    } catch (error) { throw error; }
+  },
+
+  async generateConventionApprentissage(recordId: string): Promise<any> {
+    try {
+      console.log('📤 Generating Convention Apprentissage:', recordId);
+      const response = await fetch(`${BASE_URL}/candidats/${recordId}/convention-apprentissage`, {
+        method: 'POST',
+        headers: { 'Accept': 'application/json' }
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('❌ Convention Apprentissage Generation Failed:', errorData);
+        throw new Error(errorData.detail || errorData.message || 'Generation failed');
+      }
+      const text = await response.text();
+      try {
+        const json = JSON.parse(text);
+        console.log('📥 Convention Apprentissage Generation Success:', json);
+        return json;
+      } catch (e) {
+        console.log('📥 Convention Apprentissage Generation Success (Non-JSON):', text);
         return { success: true, message: text };
       }
     } catch (error) { throw error; }

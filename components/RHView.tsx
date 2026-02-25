@@ -434,10 +434,7 @@ const RHView: React.FC<{ activeSubView: ViewId }> = ({ activeSubView }) => {
                         <table className="w-full border-collapse">
                             <thead className="bg-gradient-to-r from-brand to-indigo-600 text-white sticky top-0 z-10">
                                 <tr>
-                                    {[
-                                        "Formation", "Apprenti", "Entreprise",
-                                        "Fiche Renseign.", "Statut CERFA", "CERFA PDF", "Dossier", "Actions"
-                                    ].map((header) => (
+                                    {["Formation", "Apprenti", "Entreprise", "Fiche Renseign.", "Statut CERFA", "CERFA PDF", "Convention", "Dossier", "Actions"].map((header) => (
                                         <th key={header} className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider whitespace-nowrap">
                                             {header}
                                         </th>
@@ -506,6 +503,23 @@ const RHView: React.FC<{ activeSubView: ViewId }> = ({ activeSubView }) => {
                                                     <span className="text-[10px] text-slate-300 font-bold italic">Indisponible</span>
                                                 )}
                                             </td>
+                                             <td className="px-6 py-4">
+                                                 {c.convention ? (
+                                                     <a
+                                                         href={c.convention.url}
+                                                         target="_blank"
+                                                         rel="noopener noreferrer"
+                                                         className="flex items-center gap-2 px-3 py-1.5 bg-white text-indigo-600 rounded-xl border border-indigo-200 hover:bg-indigo-50 hover:border-indigo-300 transition-all shadow-sm group/btn"
+                                                     >
+                                                         <Download size={14} className="group-hover/btn:scale-110 transition-transform" />
+                                                         <span className="text-[10px] font-black truncate max-w-[100px] text-left">{c.convention.filename}</span>
+                                                     </a>
+                                                 ) : (
+                                                     <div className="flex justify-center">
+                                                         <span className="text-[10px] text-slate-300 font-bold italic">Indisponible</span>
+                                                     </div>
+                                                 )}
+                                             </td>
                                             <td className="px-6 py-4 text-center">
                                                 {c.dossier_complet ? (
                                                     <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto shadow-inner">

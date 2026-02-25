@@ -65,6 +65,7 @@ const ADMIN_DOCS = [
     { id: 'renseignements', title: "Fiche de renseignements", subtitle: "Informations personnelles", desc: "Coordonnées et état civil", color: 'blue', btnText: 'Générer', gradient: 'from-blue-400 to-blue-600', shadow: 'shadow-blue-500/20' },
     { id: 'cerfa', title: "Fiche CERFA", subtitle: "Contrat d'apprentissage", desc: "Génération du contrat officiel FA13", color: 'emerald', btnText: 'Générer', gradient: 'from-emerald-400 to-emerald-600', shadow: 'shadow-emerald-500/20' },
     { id: 'compte-rendu', title: "Compte Rendu", subtitle: "Visite Entretien", desc: "Génération du Compte Rendu de Visite", color: 'pink', btnText: 'Générer', gradient: 'from-pink-400 to-pink-600', shadow: 'shadow-pink-500/20' },
+    { id: 'convention-apprentissage', title: "Convention", subtitle: "Formation Apprentissage", desc: "Convention de formation apprentissage complète", color: 'indigo', btnText: 'Générer', gradient: 'from-indigo-400 to-indigo-600', shadow: 'shadow-indigo-500/20' },
     { id: 'reglement', title: "Règlement intérieur", subtitle: "Engagement étudiant", desc: "Document à lire et signer", color: 'green', btnText: 'Signer', gradient: 'from-green-400 to-green-600', shadow: 'shadow-green-500/20' },
     { id: 'connaissance', title: "Prise de connaissance", subtitle: "Attestation documents", desc: "Charte informatique, Livret d'accueil...", color: 'purple', btnText: 'Signer', gradient: 'from-purple-400 to-purple-600', shadow: 'shadow-purple-500/20' },
     { id: 'livret', title: "Livret d'apprentissage", subtitle: "Suivi pédagogique", desc: "Document de liaison CFA/Entreprise", color: 'cyan', btnText: 'Générer', gradient: 'from-cyan-400 to-cyan-600', shadow: 'shadow-cyan-500/20' },
@@ -979,6 +980,11 @@ const AdmissionView = ({ selectedStudent, selectedTab, onClearSelection }: Admis
         errorMessage: "Erreur lors de la génération du compte rendu."
     });
 
+    const { execute: generateConventionApprentissageApi, loading: isGeneratingConventionApprentissage } = useApi(api.generateConventionApprentissage, {
+        onSuccess: () => setShowSuccessModal(true),
+        errorMessage: "Erreur lors de la génération de la convention."
+    });
+
     const handleFinishTest = () => {
         setTestCompleted(true);
         setActiveTab(AdmissionTab.ENTRETIEN);
@@ -1022,6 +1028,8 @@ const AdmissionView = ({ selectedStudent, selectedTab, onClearSelection }: Admis
             await generateAtreApi(recordId);
         } else if (doc.id === 'compte-rendu') {
             await generateCompteRenduApi(recordId);
+        } else if (doc.id === 'convention-apprentissage') {
+            await generateConventionApprentissageApi(recordId);
         } else {
             console.log("Action pour le document:", doc.title);
         }
@@ -1291,7 +1299,8 @@ const AdmissionView = ({ selectedStudent, selectedTab, onClearSelection }: Admis
                                             const isGenerating = (doc.id === 'renseignements' && isGeneratingFiche) ||
                                                 (doc.id === 'cerfa' && isGeneratingCerfa) ||
                                                 (doc.id === 'atre' && isGeneratingAtre) ||
-                                                (doc.id === 'compte-rendu' && isGeneratingCompteRendu);
+                                                (doc.id === 'compte-rendu' && isGeneratingCompteRendu) ||
+                                                (doc.id === 'convention-apprentissage' && isGeneratingConventionApprentissage);
                                             return (
                                                 <button
                                                     disabled={isGenerating}

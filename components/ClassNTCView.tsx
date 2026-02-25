@@ -18,7 +18,8 @@ import {
     LayoutGrid,
     List,
     History,
-    ClipboardList
+    ClipboardList,
+    FileSignature
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
@@ -726,6 +727,22 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                                                                 ) : (
                                                                     <div className="w-9 h-9 rounded-lg bg-slate-50 text-slate-200 flex items-center justify-center border border-slate-100">
                                                                         <ClipboardList size={16} />
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                            <div className="flex flex-col items-center gap-1.5">
+                                                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Conv.</span>
+                                                                {student.has_convention ? (
+                                                                    <button
+                                                                        onClick={() => handleDownload(student.convention_url || (rawStudent.fields || rawStudent)?.["Convention Apprentissage"]?.[0]?.url, student.convention_name || (rawStudent.fields || rawStudent)?.["Convention Apprentissage"]?.[0]?.filename)}
+                                                                        className="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center hover:bg-emerald-600 hover:text-white transition-all shadow-sm border border-emerald-100/50"
+                                                                        title="Télécharger Convention"
+                                                                    >
+                                                                        <FileSignature size={16} />
+                                                                    </button>
+                                                                ) : (
+                                                                    <div className="w-9 h-9 rounded-lg bg-slate-50 text-slate-200 flex items-center justify-center border border-slate-100">
+                                                                        <FileSignature size={16} />
                                                                     </div>
                                                                 )}
                                                             </div>

@@ -33,10 +33,15 @@ export const getC = (c: any) => {
         has_cv: c.has_cv || d.has_cv,
         has_atre: c.has_atre || d.has_atre,
         has_compte_rendu: c.has_compte_rendu || d.has_compte_rendu,
+        has_convention: c.has_convention || d.has_convention || !!((d['Convention Apprentissage'] || d['Convention']) && (d['Convention Apprentissage'] || d['Convention']).length > 0),
         atre_url: c.atre_url || d.atre_url,
         atre_name: c.atre_name || d.atre_name,
         compte_rendu_url: c.compte_rendu_url || d.compte_rendu_url,
-        compte_rendu_name: c.compte_rendu_name || d.compte_rendu_name
+        compte_rendu_name: c.compte_rendu_name || d.compte_rendu_name,
+        convention_url: c.convention_url || d.convention_url || (d['Convention Apprentissage'] || d['Convention'])?.[0]?.url || "",
+        convention_name: c.convention_name || d.convention_name || (d['Convention Apprentissage'] || d['Convention'])?.[0]?.filename || "",
+        convention: c.convention || d.convention || (d['Convention Apprentissage'] || d['Convention'])?.[0] || null,
+        cerfa: c.cerfa || d.cerfa || d['cerfa']?.[0] || null
     };
 };
 
@@ -87,10 +92,15 @@ export const useCandidates = () => {
                 has_cv: fiche?.has_cv || c.has_cv || !!(d['CV'] && d['CV'].length > 0) || false,
                 has_atre: fiche?.has_atre || c.has_atre || !!(d['Atre'] && d['Atre'].length > 0) || false,
                 has_compte_rendu: fiche?.has_compte_rendu || c.has_compte_rendu || !!(d['compte rendu de visite'] && d['compte rendu de visite'].length > 0) || false,
+                has_convention: fiche?.has_convention || c.has_convention || !!((d['Convention Apprentissage'] || d['Convention']) && (d['Convention Apprentissage'] || d['Convention']).length > 0) || false,
                 atre_url: fiche?.atre_url || c.atre_url || d['Atre']?.[0]?.url || "",
                 atre_name: fiche?.atre_name || c.atre_name || d['Atre']?.[0]?.filename || "",
                 compte_rendu_url: fiche?.compte_rendu_url || c.compte_rendu_url || d['compte rendu de visite']?.[0]?.url || "",
                 compte_rendu_name: fiche?.compte_rendu_name || c.compte_rendu_name || d['compte rendu de visite']?.[0]?.filename || "",
+                convention_url: fiche?.convention_url || c.convention_url || (d['Convention Apprentissage'] || d['Convention'])?.[0]?.url || "",
+                convention_name: fiche?.convention_name || c.convention_name || (d['Convention Apprentissage'] || d['Convention'])?.[0]?.filename || "",
+                convention: fiche?.convention || c.convention || (d['Convention Apprentissage'] || d['Convention'])?.[0] || null,
+                cerfa: fiche?.cerfa || c.cerfa || d['cerfa']?.[0] || null,
                 dossier_complet: fiche?.dossier_complet || false
             };
         }) : [];
