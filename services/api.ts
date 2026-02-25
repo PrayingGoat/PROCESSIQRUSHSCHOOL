@@ -1016,6 +1016,21 @@ export const api = {
     }
   },
 
+  async deleteCompany(studentId: string): Promise<boolean> {
+    try {
+      console.log('📤 Deleting Company for Student:', studentId);
+      const response = await fetch(`${BASE_URL}/entreprises/${studentId}`, {
+        method: 'DELETE',
+        headers: { 'Accept': 'application/json' }
+      });
+      console.log('📥 Delete Company Status:', response.status);
+      return response.ok;
+    } catch (error) {
+      console.error('❌ Delete Company Error:', error);
+      return false;
+    }
+  },
+
   // --- HISTORY ---
   async getHistory(studentId: string): Promise<any[]> {
     try {
