@@ -206,15 +206,12 @@ const EvaluationGrid = ({ studentData, onNext }: { studentData: any, onNext?: ()
     const saveEvaluation = async () => {
         if (!validateForm()) return;
 
-        if (!studentData?.id && !studentData?.record_id) {
-            showToast("ID du candidat manquant. Impossible d'enregistrer.", "error");
-            return;
-        }
+        // No restriction on studentId for interview evaluation anymore
 
         try {
             setIsSaving(true);
             const payload = {
-                studentId: studentData.id || studentData.record_id,
+                studentId: studentData?.id || studentData?.record_id,
                 ...evalData,
                 totalScore,
                 appreciation: getAppreciation(totalScore)
@@ -1012,7 +1009,7 @@ const AdmissionView = ({ selectedStudent, selectedTab, onClearSelection }: Admis
     const handleDocAction = async (doc: any) => {
         const recordId = studentData?.record_id || studentData?.id || localStorage.getItem('candidateRecordId');
 
-        if (!recordId && (['renseignements', 'cerfa', 'atre', 'compte-rendu'].includes(doc.id))) {
+        if (!recordId && (['renseignements', 'cerfa', 'atre'].includes(doc.id))) {
             showToast("Veuillez d'abord compléter la Fiche Étudiant.", "info");
             return;
         }

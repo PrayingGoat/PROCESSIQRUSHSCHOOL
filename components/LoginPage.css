@@ -493,29 +493,33 @@
 }
 
 .field-icon {
-    position: absolute;
-    left: 1rem;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 15px;
-    height: 15px;
-    color: var(--text-muted);
-    pointer-events: none;
-    transition: color 0.2s;
+    position: absolute !important;
+    left: 1.25rem !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    width: 20px !important;
+    /* Slightly larger for better visibility */
+    height: 20px !important;
+    color: var(--text-muted) !important;
+    pointer-events: none !important;
+    z-index: 5 !important;
+    transition: color 0.2s !important;
 }
 
-.field-input {
-    width: 100%;
-    padding: 0.88rem 1rem 0.88rem 2.8rem;
-    font-family: var(--font-ui);
-    font-size: 0.88rem;
-    color: var(--text);
-    background: rgba(255, 255, 255, 0.7);
-    border: 1.5px solid rgba(107, 60, 210, 0.14);
-    border-radius: var(--radius);
-    outline: none;
-    transition: border-color 0.25s, box-shadow 0.25s, background 0.25s;
-    -webkit-appearance: none;
+.login-page .panel-form .form-inner .auth-form .field-group .field-wrap .field-input {
+    width: 100% !important;
+    padding: 0.95rem 3.5rem 0.95rem 3.8rem !important;
+    font-family: var(--font-ui) !important;
+    font-size: 0.92rem !important;
+    color: var(--text) !important;
+    background: rgba(255, 255, 255, 0.9) !important;
+    border: 1.5px solid rgba(107, 60, 210, 0.15) !important;
+    border-radius: var(--radius) !important;
+    outline: none !important;
+    transition: all 0.2s !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    box-sizing: border-box !important;
 }
 
 .field-input::placeholder {
@@ -534,19 +538,19 @@
 
 /* Password toggle */
 .field-toggle {
-    position: absolute;
-    right: 0.9rem;
-    top: 50%;
-    transform: translateY(-50%);
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 4px;
-    color: var(--text-muted);
-    display: flex;
-    align-items: center;
-    transition: color 0.2s;
-    z-index: 3;
+    position: absolute !important;
+    right: 1.2rem !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    background: none !important;
+    border: none !important;
+    cursor: pointer !important;
+    padding: 6px !important;
+    color: var(--text-muted) !important;
+    display: flex !important;
+    align-items: center !important;
+    transition: color 0.2s !important;
+    z-index: 10 !important;
 }
 
 .field-toggle:hover {
