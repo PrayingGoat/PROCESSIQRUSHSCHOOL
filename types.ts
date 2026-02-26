@@ -51,6 +51,7 @@ export interface StudentFormData {
   prenom: string;
   nom_naissance: string;
   nom_usage?: string;
+  numero_inscription?: string | number;
   sexe: string;
   date_naissance: string;
   nationalite: string;

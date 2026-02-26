@@ -41,6 +41,7 @@ const mapBackendToStudent = (backendData: any): any => {
     prenom: fields["Prénom"] || "",
     nom_naissance: fields["NOM de naissance"] || "",
     nom_usage: fields["Nom d'usage"] || "",
+    numero_inscription: fields["Numero Inscription"] || "",
     sexe: fields["Sexe"] || "",
     date_naissance: fields["Date de naissance"] || "",
     nationalite: fields["Nationalité"] || "Française",

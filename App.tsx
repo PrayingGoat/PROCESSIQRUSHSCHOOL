@@ -16,6 +16,7 @@ import AdminDashboard from './components/AdminDashboard';
 import TestPage from './components/TestPage';
 import LandingPage from './components/LandingPage';
 import RegisterPage from './components/RegisterPage';
+import ContactPage from './components/ContactPage';
 
 const RequireAuth = ({ children, allowedRoles }: { children: React.ReactNode, allowedRoles?: string[] }) => {
   const isAuthenticated = localStorage.getItem('token'); // Changed from authToken to token
@@ -50,8 +51,10 @@ const App = () => {
   const [selectedTab, setSelectedTab] = useState<AdmissionTab | null>(null);
   const location = useLocation();
   const isStandalonePage = [
+    '/',
     '/login',
     '/register',
+    '/contact',
     '/landing',
     '/admin/login',
     '/test'
@@ -102,26 +105,18 @@ const App = () => {
 
         <main className={`${!isStandalonePage ? 'flex-1 p-8 md:p-10 overflow-y-auto' : 'h-screen'}`}>
           <Routes>
-            <Route path="/landing" element={<LandingPage />} />
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/landing" element={<Navigate to="/" replace />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/contact" element={<ContactPage />} />
 
             {/* Admin Routes */}
             <Route path="/admin/login" element={<AdminLoginPage />} />
             <Route path="/admin" element={<RequireAdminAuth><AdminDashboard /></RequireAdminAuth>} />
 
             <Route element={<RequireAuth><Outlet /></RequireAuth>}>
-              {/* Redirect root based on role */}
-              <Route path="/" element={
-                (() => {
-                  const role = localStorage.getItem('userRole');
-                  if (role === 'commercial') return <Navigate to="/commercial/dashboard" replace />;
-                  if (role === 'admission') return <Navigate to="/admission" replace />;
-                  if (role === 'rh') return <Navigate to="/rh/dashboard" replace />;
-                  if (role === 'eleve') return <Navigate to="/etudiant" replace />;
-                  return <Navigate to="/admission" replace />;
-                })()
-              } />
+              {/* Role-based dashboard access now handled via LandingPage or specific /login post-auth logic */}
 
               {/* Commercial Routes */}
               <Route path="/commercial" element={<RequireAuth allowedRoles={['commercial']}><Outlet /></RequireAuth>}>

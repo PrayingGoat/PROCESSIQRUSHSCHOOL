@@ -26,6 +26,7 @@ export const getC = (c: any) => {
         telephone: info.telephone || d['Téléphone'] || d.telephone || c.telephone || "",
         sexe: info.sexe || d['Sexe'] || d.sexe || c.sexe || "",
         date_naissance: info.date_naissance || d['Date de naissance'] || d.date_naissance || c.date_naissance || "",
+        numero_inscription: info.numero_inscription || d['Numero Inscription'] || d.numero_inscription || c.numero_inscription || "",
         alternance: alt,
         id_entreprise: id_ent,
         has_cerfa: c.has_cerfa || d.has_cerfa,

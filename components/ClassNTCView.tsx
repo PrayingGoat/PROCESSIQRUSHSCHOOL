@@ -821,9 +821,9 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                                                 <tr key={student.id} className="hover:bg-slate-50/50 transition-colors group">
                                                     <td className="px-8 py-6">
                                                         <div className="flex items-center gap-5">
-                                                            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center text-slate-500 font-black text-sm group-hover:from-blue-600 group-hover:to-indigo-600 group-hover:text-white transition-all duration-300 shadow-sm relative overflow-hidden">
+                                                            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center text-slate-400 font-black group-hover:from-blue-600 group-hover:to-indigo-600 group-hover:text-white transition-all duration-300 shadow-sm relative overflow-hidden">
                                                                 <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                                                                <span className="relative z-10">{student.prenom?.[0]}{student.nom?.[0]}</span>
+                                                                <span className="relative z-10 text-xl">{student.numero_inscription || `${student.prenom?.[0]}${student.nom?.[0]}`}</span>
                                                             </div>
                                                             <div>
                                                                 <div className="font-black text-slate-900 text-lg group-hover:text-blue-600 transition-colors tracking-tight">{student.nom} {student.prenom}</div>
@@ -963,8 +963,8 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                                     <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full -mr-16 -mt-16 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
 
                                     <div className="flex justify-between items-start mb-8 relative z-10">
-                                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center text-slate-500 font-black text-lg group-hover:from-blue-600 group-hover:to-indigo-600 group-hover:text-white transition-all duration-300 shadow-inner">
-                                            {student.prenom?.[0]}{student.nom?.[0]}
+                                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center text-slate-400 font-black text-2xl group-hover:from-blue-600 group-hover:to-indigo-600 group-hover:text-white transition-all duration-300 shadow-inner">
+                                            {student.numero_inscription || `${student.prenom?.[0]}${student.nom?.[0]}`}
                                         </div>
                                         <div className="flex gap-2 items-center">
                                             <div className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border ${student.dossier_complet ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'

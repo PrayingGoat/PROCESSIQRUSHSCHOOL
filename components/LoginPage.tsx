@@ -54,8 +54,12 @@ const LoginPage: React.FC = () => {
             localStorage.setItem('userEmail', data.email);
             localStorage.setItem('userName', data.name);
 
-            // Redirect to root, App.tsx will handle the role-based navigation
-            navigate('/');
+            // Redirect to appropriate dashboard based on role
+            if (data.role === 'commercial') navigate('/commercial/dashboard');
+            else if (data.role === 'admission') navigate('/admission');
+            else if (data.role === 'rh') navigate('/rh/dashboard');
+            else if (data.role === 'eleve') navigate('/etudiant');
+            else navigate('/admission');
         } catch (err: any) {
             setError(err.message || "Identifiants invalides");
         } finally {
