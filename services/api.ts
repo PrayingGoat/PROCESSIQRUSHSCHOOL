@@ -333,7 +333,7 @@ const mapStudentToBackend = (data: any) => {
     declare_avoir_projet_creation_reprise_entreprise: data.declare_avoir_projet_creation_reprise_entreprise || false,
     declare_travailleur_handicape: data.declare_travailleur_handicape || false,
     alternance: data.alternance || false,
-    dernier_diplome_prepare: mapDiplome(data.dernier_diplome_prepare),
+    dernier_diplome_prepare: mapDiplome(data.intitulePrecisDernierDiplome || ""),
     derniere_classe: data.derniere_classe || "",
     bac: mapNiveau(data.bac) || "",
     intitulePrecisDernierDiplome: data.intitulePrecisDernierDiplome || "",
@@ -743,7 +743,7 @@ export const api = {
     try {
       const payload = mapStudentToBackend(data);
       console.log('📤 Update Candidate Payload:', payload);
-      const response = await fetch(`${BASE_URL}/candidates/${id}`, {
+      const response = await fetch(`${BASE_API_URL}/candidates/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify(payload),

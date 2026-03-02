@@ -72,7 +72,7 @@ export interface StudentFormData {
   declare_avoir_projet_creation_reprise_entreprise: boolean;
   declare_travailleur_handicape: boolean;
   alternance: boolean;
-  dernier_diplome_prepare: string;
+  dernier_diplome_prepare?: string;
   derniere_classe?: string;
   intitulePrecisDernierDiplome?: string;
   bac: string;
