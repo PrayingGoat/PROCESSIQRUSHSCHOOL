@@ -112,7 +112,7 @@ export const DEPARTMENT_OPTIONS: SelectOption[] = [
     { value: "05 Hautes-Alpes", label: "05 Hautes-Alpes" },
     { value: "04 Alpes-de-Haute-Provence", label: "04 Alpes-de-Haute-Provence" },
     { value: "03 Allier", label: "03 Allier" },
-    { value: "99 personne née à l'étranger", label: "99 personne née à l'étranger" }
+    { value: "099 personne née à l'étranger", label: "099 personne née à l'étranger" }
 ];
 
 export const SITUATION_BEFORE_CONTRACT_OPTIONS: SelectOption[] = [
@@ -352,13 +352,13 @@ export const YES_NO_OPTIONS: SelectOption[] = [
 ];
 
 export const FORMATION_DETAILS: Record<string, { debut: string; fin: string; rncp: string; diplome: string; heures: string; jours: string }> = {
-    "BTS MCO A": { debut: "2024-09-02", fin: "2026-08-31", rncp: "RNCP38368", diplome: "32031310", heures: "1350", jours: "Lundi/Mardi" },
-    "BTS MCO 2": { debut: "2024-09-02", fin: "2025-08-31", rncp: "RNCP38368", diplome: "32031310", heures: "675", jours: "Lundi/Mardi" },
-    "BTS NDRC 1": { debut: "2024-09-02", fin: "2026-08-31", rncp: "RNCP38368", diplome: "32031310", heures: "1350", jours: "Mercredi/Jeudi" },
-    "BTS COM": { debut: "2024-09-02", fin: "2026-08-31", rncp: "RNCP38368", diplome: "32031302", heures: "1350", jours: "Lundi/Mardi" },
-    "Titre Pro NTC": { debut: "2024-09-02", fin: "2025-08-31", rncp: "RNCP34059", diplome: "46T31201", heures: "600", jours: "Lundi/Mardi" },
-    "Titre Pro NTC B (rentrée decalée)": { debut: "2025-01-06", fin: "2025-12-31", rncp: "RNCP34059", diplome: "46T31201", heures: "600", jours: "Mercredi/Jeudi" },
-    "Bachelor RDC": { debut: "2024-09-16", fin: "2025-09-12", rncp: "RNCP36504", diplome: "26X31204", heures: "525", jours: "Vendredi" }
+    "BTS MCO A": { debut: "2025-09-04", fin: "2027-06-30", rncp: "RNCP38362", diplome: "32031213", heures: "1680", jours: "Lundi & Mardi" },
+    "BTS MCO 2": { debut: "2025-09-02", fin: "2026-06-30", rncp: "RNCP38362", diplome: "32031213", heures: "840", jours: "Jeudi & Vendredi" },
+    "BTS NDRC 1": { debut: "2025-09-09", fin: "2027-06-30", rncp: "RNCP38368", diplome: "32031212", heures: "1740", jours: "Lundi & Mardi" },
+    "BTS COM": { debut: "2025-09-03", fin: "2027-06-30", rncp: "RNCP37198", diplome: "32032002", heures: "1665", jours: "Lundi & Mardi" },
+    "Titre Pro NTC": { debut: "2025-10-01", fin: "2026-07-11", rncp: "RNCP39063", diplome: "36T31203", heures: "450", jours: "Mercredi" },
+    "Titre Pro NTC B (rentrée decalée)": { debut: "2026-01-07", fin: "2026-09-11", rncp: "RNCP39063", diplome: "36T31203", heures: "450", jours: "Mercredi" },
+    "Bachelor RDC": { debut: "2025-09-17", fin: "2026-07-17", rncp: "RNCP37849", diplome: "26X31015", heures: "500", jours: "Mercredi" }
 };
 
 export const FORMATION_FILTER_OPTIONS: SelectOption[] = [
