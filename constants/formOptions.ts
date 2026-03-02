@@ -119,14 +119,14 @@ export const SITUATION_BEFORE_CONTRACT_OPTIONS: SelectOption[] = [
     { value: '1 Scolaire', label: '1 Scolaire' },
     { value: '2 Prépa apprentissage', label: '2 Prépa apprentissage' },
     { value: '3 Etudiant', label: '3 Etudiant' },
-    { value: '4 Contrat d’apprentissage', label: '4 Contrat d’apprentissage' },
+    { value: '4 Contrat dapprentissage', label: '4 Contrat dapprentissage' },
     { value: '5 Contrat de professionnalisation', label: '5 Contrat de professionnalisation' },
     { value: '6 Contrat aidé', label: '6 Contrat aidé' },
-    { value: '7 En formation au CFA sous statut de stagiaire de la formation professionnelle, avant conclusion d’un contrat d’apprentissage (L6222-12-1 du code du travail)', label: '7 En formation au CFA sous statut de stagiaire de la formation professionnelle, avant conclusion d’un contrat d’apprentissage (L6222-12-1 du code du travail)' },
-    { value: '8 En formation, au CFA sans contrat sous statut de stagiaire de la formation professionnelle, à la suite d’une rupture d’un précédent contrat (5° de L6231-2 du code du travail)', label: '8 En formation, au CFA sans contrat sous statut de stagiaire de la formation professionnelle, à la suite d’une rupture d’un précédent contrat (5° de L6231-2 du code du travail)' },
+    { value: '7 En formation au CFA sous statut de stagiaire de la formation professionnelle, avant conclusion dun contrat dapprentissage (L6222-12-1 du code du travail)', label: '7 En formation au CFA sous statut de stagiaire de la formation professionnelle, avant conclusion d’un contrat d’apprentissage (L6222-12-1 du code du travail)' },
+    { value: '8 En formation, au CFA sans contrat sous statut de stagiaire de la formation professionnelle, à la suite dune rupture dun précédent contrat (5° de L6231-2 du code du travail)', label: '8 En formation, au CFA sans contrat sous statut de stagiaire de la formation professionnelle, à la suite d’une rupture d’un précédent contrat (5° de L6231-2 du code du travail)' },
     { value: '9 Autres situations sous statut de stagiaire de la formation professionnelle', label: '9 Autres situations sous statut de stagiaire de la formation professionnelle' },
     { value: '10 Salarié', label: '10 Salarié' },
-    { value: '11 Personne à la recherche d’un emploi (inscrite ou non à Pôle Emploi)', label: '11 Personne à la recherche d’un emploi (inscrite ou non à Pôle Emploi)' },
+    { value: '11 Personne à la recherche dun emploi (inscrite ou non à Pôle Emploi)', label: '11 Personne à la recherche d’un emploi (inscrite ou non à Pôle Emploi)' },
     { value: '12 Inactif', label: '12 Inactif' }
 ];
 
