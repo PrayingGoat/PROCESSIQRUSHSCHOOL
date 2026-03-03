@@ -55,7 +55,8 @@ const LoginPage: React.FC = () => {
             localStorage.setItem('userName', data.name);
 
             // Redirect to appropriate dashboard based on role
-            if (data.role === 'commercial') navigate('/commercial/dashboard');
+            if (data.role === 'super_admin') navigate('/admission');
+            else if (data.role === 'commercial') navigate('/commercial/dashboard');
             else if (data.role === 'admission') navigate('/admission');
             else if (data.role === 'rh') navigate('/rh/dashboard');
             else if (data.role === 'eleve') navigate('/etudiant');

@@ -10,16 +10,32 @@ export class UsersService implements OnModuleInit {
     async onModuleInit() {
         console.log('[UsersService] Checking for users in MongoDB...');
         try {
-            const count = await this.userModel.countDocuments();
-            if (count === 0) {
-                console.log('[UsersService] No users found. Seeding default admin...');
+            // Check for Super Admin specifically
+            const superAdmin = await this.userModel.findOne({ role: 'super_admin' });
+            if (!superAdmin) {
+                console.log('[UsersService] No super_admin found. Seeding super_admin...');
                 await this.create({
-                    email: 'admin@rush-school.fr',
-                    password: 'admin',
-                    name: 'Administrateur',
-                    role: 'admission'
+                    email: 'superadmin@rush-school.fr',
+                    password: 'superadmin',
+                    name: 'Super Administrateur',
+                    role: 'super_admin'
                 });
-                console.log('[UsersService] Default admin seeded successfully.');
+            }
+
+            const count = await this.userModel.countDocuments();
+            if (count <= 1) { // Only if we only have the super_admin we just created or nothing
+                console.log('[UsersService] Seeding default admission admin...');
+                
+                const admin = await this.userModel.findOne({ role: 'admission' });
+                if (!admin) {
+                    await this.create({
+                        email: 'admin@rush-school.fr',
+                        password: 'admin',
+                        name: 'Administrateur Admission',
+                        role: 'admission'
+                    });
+                }
+                console.log('[UsersService] Default users seeded successfully.');
             } else {
                 console.log(`[UsersService] Found ${count} users in database.`);
             }

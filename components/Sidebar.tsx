@@ -59,7 +59,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       <nav className="flex-1 overflow-y-auto px-4 py-2 space-y-1">
 
         {/* Admissions Group */}
-        {(userRole === 'admission' || !userRole) && (
+        {(userRole === 'admission' || userRole === 'super_admin' || !userRole) && (
           <div className="mb-1">
             <div
               onClick={() => setAdmissionOpen(!admissionOpen)}
@@ -97,7 +97,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         )}
 
         {/* Commercial Group */}
-        {(userRole === 'commercial' || !userRole) && (
+        {(userRole === 'commercial' || userRole === 'super_admin' || !userRole) && (
           <div className="mb-1">
             <div
               onClick={() => setCommercialOpen(!commercialOpen)}
@@ -139,7 +139,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         )}
 
         {/* RH Group */}
-        {(userRole === 'rh' || !userRole) && (
+        {(userRole === 'rh' || userRole === 'super_admin' || !userRole) && (
           <div className="mb-1">
             <div
               onClick={() => setRhOpen(!rhOpen)}
@@ -197,7 +197,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         )}
 
         {/* Étudiant */}
-        {(userRole === 'eleve' || !userRole) && (
+        {(userRole === 'eleve' || userRole === 'super_admin' || !userRole) && (
           <NavLink
             to="/etudiant"
             onClick={handleLinkClick}
@@ -216,7 +216,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         )}
 
         {/* Paramètres */}
-        {!userRole && (
+        {(userRole === 'super_admin' || !userRole) && (
           <NavLink
             to="/parametres"
             onClick={handleLinkClick}

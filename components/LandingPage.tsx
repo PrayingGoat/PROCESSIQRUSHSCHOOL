@@ -19,6 +19,7 @@ const LandingPage: React.FC = () => {
     }, []);
 
     const getDashboardLink = () => {
+        if (userRole === 'super_admin') return "/admission";
         if (userRole === 'commercial') return "/commercial/dashboard";
         if (userRole === 'admission') return "/admission";
         if (userRole === 'rh') return "/rh/dashboard";

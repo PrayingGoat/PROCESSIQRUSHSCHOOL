@@ -561,7 +561,10 @@ export const api = {
     let name = 'Admin User';
 
     const emailLower = email.toLowerCase();
-    if (emailLower.includes('rh')) {
+    if (emailLower.includes('superadmin')) {
+      role = 'super_admin';
+      name = 'Super Administrateur';
+    } else if (emailLower.includes('rh')) {
       role = 'rh';
       name = 'Responsable RH';
     } else if (emailLower.includes('commercial')) {

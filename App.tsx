@@ -27,7 +27,7 @@ const RequireAuth = ({ children, allowedRoles }: { children: React.ReactNode, al
     return <Navigate to="/landing" state={{ from: location }} replace />;
   }
 
-  if (allowedRoles && userRole && !allowedRoles.includes(userRole)) {
+  if (allowedRoles && userRole && userRole !== 'super_admin' && !allowedRoles.includes(userRole)) {
     return <Navigate to="/" replace />;
   }
 
