@@ -36,7 +36,7 @@ import CandidateDetailsModal from './dashboard/CandidateDetailsModal';
 import CompanyDetailsModal from './dashboard/CompanyDetailsModal';
 import HistoryTimeline from './dashboard/HistoryTimeline';
 import { useApi } from '../hooks/useApi';
-import { useCandidates, getC } from '../hooks/useCandidates';
+import { useCandidates, getC, isPlaced } from '../hooks/useCandidates';
 
 interface ClassNTCViewProps {
     onSelectStudent: (student: any, tab: AdmissionTab) => void;
@@ -478,14 +478,18 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
     };
 
     const handleFillForm = (student: any) => {
-        if (!student.entreprise_raison_sociale && student.alternance === 'Oui') {
-            onSelectStudent(student, AdmissionTab.ENTREPRISE);
-            navigate('/admission');
-        } else if (student.alternance === 'Non') {
-            showToast('Étudiant non en alternance', 'info');
-        } else {
+        const studentInfo = getC(student);
+        if (isPlaced(student)) {
             showToast('Fiche entreprise déjà complétée', 'info');
+            return;
         }
+
+        if (studentInfo.alternance === 'Non') {
+            showToast('Attention: Cet étudiant est marqué comme "Non" alternance.', 'warning');
+        }
+        
+        onSelectStudent(student, AdmissionTab.ENTREPRISE);
+        navigate('/admission');
     };
 
     const ActionsMenu = ({ student }: { student: any }) => {
@@ -884,13 +888,13 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                                                     </td>
                                                     <td className="px-8 py-6 text-center">
                                                         <button
-                                                            onClick={() => handleViewCompanyDetails(rawStudent)}
-                                                            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all shadow-sm ${(student.id_entreprise || rawStudent.record_id_entreprise || student.entreprise !== 'En recherche')
+                                                            onClick={() => isPlaced(rawStudent) ? handleViewCompanyDetails(rawStudent) : handleFillForm(rawStudent)}
+                                                            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all shadow-sm ${isPlaced(rawStudent)
                                                                 ? 'bg-blue-50 text-blue-600 border-blue-100 hover:bg-blue-600 hover:text-white'
                                                                 : 'bg-amber-50 text-amber-600 border-amber-100 hover:bg-amber-600 hover:text-white'
                                                                 }`}
                                                         >
-                                                            {(student.id_entreprise || rawStudent.record_id_entreprise || student.entreprise !== 'En recherche')
+                                                            {isPlaced(rawStudent)
                                                                 ? 'Voir Entreprise'
                                                                 : 'Lier Entreprise'}
                                                         </button>
@@ -1048,10 +1052,10 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                                         <Button
                                             variant="primary"
                                             size="sm"
-                                            className="w-full text-[10px] font-black"
-                                            onClick={() => handleViewCompanyDetails(student)}
+                                            className={`w-full text-[10px] font-black ${!isPlaced(student) ? '!bg-amber-600 !border-amber-600' : ''}`}
+                                            onClick={() => isPlaced(student) ? handleViewCompanyDetails(student) : handleFillForm(student)}
                                         >
-                                            Fiche Entreprise
+                                            {isPlaced(student) ? 'Voir Entreprise' : 'Lier Entreprise'}
                                         </Button>
                                     </div>
                                 </div>
