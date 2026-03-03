@@ -916,6 +916,39 @@ export const api = {
     } catch (error) { throw error; }
   },
 
+  async generateSigningLink(documentId: string): Promise<any> {
+    try {
+      const url = `${BASE_API_URL}/documents/${documentId}/signature/signing-link`;
+      console.log('🚀 [API] Requesting Signing Link:', {
+        url: url,
+        method: 'POST',
+        documentId: documentId
+      });
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Accept': 'application/json' }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('❌ [API] Signing Link Generation Failed:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData
+        });
+        throw new Error(errorData.detail || errorData.message || 'Generation failed');
+      }
+
+      const json = await response.json();
+      console.log('✅ [API] Signing Link Received:', json);
+      return json;
+    } catch (error) { 
+      console.error('💥 [API] Signing Link Error:', error);
+      throw error; 
+    }
+  },
+
   // --- ENTREPRISE (CRUD) ---
   async submitCompany(data: CompanyFormData): Promise<ApiResponse> {
     try {

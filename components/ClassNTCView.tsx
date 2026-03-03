@@ -412,6 +412,25 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
         }
     };
 
+    const handleGenerateSigningLink = async (documentId: string) => {
+        console.log(`🌀 Initializing signing link generation for document ID: ${documentId}`);
+        try {
+            const result = await api.generateSigningLink(documentId);
+            
+            if (result && result.signing_link) {
+                console.log('✨ [SUCCESS] Signing link generated. Opening link in a new tab:', result.signing_link);
+                window.open(result.signing_link, '_blank');
+                showToast("Lien de signature généré", "success");
+            } else {
+                console.warn('⚠️ [WARNING] No signing link found in the API response:', result);
+                showToast("Erreur lors de la génération du lien", "error");
+            }
+        } catch (error: any) {
+            console.error('🛑 [CRITICAL] Exception caught during signing link generation:', error);
+            showToast(error.message || "Erreur lors de la génération du lien", "error");
+        }
+    };
+
     const handleCopyEmail = (email: string) => {
         navigator.clipboard.writeText(email);
         showToast("Email copié dans le presse-papier", "success");
@@ -576,6 +595,30 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                                 <RefreshCw size={15} className={`text-pink-400 ${isRegenerating === `${student.id}-cr` ? 'animate-spin' : ''}`} />
                                 <span>Régénérer Compte Rendu</span>
                             </button>
+
+                            <div className="h-px bg-slate-50 my-1 mx-2" />
+
+                            <span className="text-[10px] font-bold text-slate-300 uppercase tracking-tighter pl-3 py-1 block">Signatures</span>
+
+                            {studentInfo.cerfa?.id && (
+                                <button
+                                    onClick={() => handleGenerateSigningLink(studentInfo.cerfa.id)}
+                                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                                >
+                                    <FileSignature size={15} className="text-indigo-400" />
+                                    <span>Signer CERFA</span>
+                                </button>
+                            )}
+
+                            {studentInfo.convention?.id && (
+                                <button
+                                    onClick={() => handleGenerateSigningLink(studentInfo.convention.id)}
+                                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                                >
+                                    <FileSignature size={15} className="text-emerald-400" />
+                                    <span>Signer Convention</span>
+                                </button>
+                            )}
 
                             <div className="h-px bg-slate-50 my-1 mx-2" />
 
