@@ -20,29 +20,14 @@ export class AuthService {
     }
 
     async login(user: any) {
-
-        const payload = {
-            username: user.email,
-            sub: user.userId,
-            role: user.role,
-            studentId: user.studentId ? String(user.studentId) : null
-        };
-    
-
+        const payload = { username: user.email, sub: user.userId };
         return {
             access_token: this.jwtService.sign(payload),
-            role: user.role,
-            email: user.email,
-            name: user.name
         };
     }
 
-    async registerStudentAccount(data: {
-        email: string;
-        password: string;
-        name: string;
-        studentId: string;
-    }) {
-        return this.usersService.createStudentAccount(data);
+    async register(userData: any) {
+        const user = await this.usersService.create(userData);
+        return this.login(user);
     }
 }

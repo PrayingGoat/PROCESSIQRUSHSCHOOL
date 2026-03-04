@@ -25,6 +25,7 @@ import Input from './ui/Input';
 import Select from './ui/Select';
 import { useAppStore } from '../store/useAppStore';
 import Card from './ui/Card';
+import CompanyDetailsModal from './dashboard/CompanyDetailsModal';
 
 
 const RHView: React.FC<{ activeSubView: ViewId }> = ({ activeSubView }) => {
@@ -42,6 +43,9 @@ const RHView: React.FC<{ activeSubView: ViewId }> = ({ activeSubView }) => {
 
     const [selectedCompany, setSelectedCompany] = useState<any>(null);
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+    const [isCompanyEditing, setIsCompanyEditing] = useState(false);
+    const [companyEditForm, setCompanyEditForm] = useState<any>(null);
+    const [isSavingCompany, setIsSavingCompany] = useState(false);
 
     useEffect(() => {
         if (activeSubView === 'rh-cerfa') {
@@ -53,196 +57,152 @@ const RHView: React.FC<{ activeSubView: ViewId }> = ({ activeSubView }) => {
         }
     }, [activeSubView]);
 
+    const initializeCompanyForm = (data: any) => {
+        if (!data || !data.fields) return;
+        const f = data.fields;
+        setCompanyEditForm({
+            identification: {
+                raison_sociale: f["Raison sociale"] || "",
+                siret: f["Numéro SIRET"] || "",
+                code_ape_naf: f["Code APE/NAF"] || "",
+                type_employeur: f["Type demployeur"] || "",
+                effectif: f["Effectif salarié de l'entreprise"] || "",
+                convention: f["Convention collective"] || ""
+            },
+            adresse: {
+                num: f["Numéro entreprise"] || "",
+                voie: f["Voie entreprise"] || "",
+                complement: f["Complément dadresse entreprise"] || "",
+                code_postal: f["Code postal entreprise"] || "",
+                ville: f["Ville entreprise"] || "",
+                telephone: f["Téléphone entreprise"] || "",
+                email: f["Email entreprise"] || ""
+            },
+            maitre_apprentissage: {
+                nom: f["Nom Maître apprentissage"] || "",
+                prenom: f["Prénom Maître apprentissage"] || "",
+                date_naissance: f["Date de naissance Maître apprentissage"] || "",
+                fonction: f["Fonction Maître apprentissage"] || "",
+                diplome: f["Diplôme Maître apprentissage"] || "",
+                experience: f["Année experience pro Maître apprentissage"] || "",
+                telephone: f["Téléphone Maître apprentissage"] || "",
+                email: f["Email Maître apprentissage"] || ""
+            },
+            opco: { nom: f["Nom OPCO"] || "" },
+            contrat: {
+                type_contrat: f["Type de contrat"] || "",
+                type_derogation: f["Type de dérogation"] || "",
+                date_conclusion: f["Date de conclusion"] || "",
+                date_debut_execution: f["Date de début exécution"] || "",
+                duree_hebdomadaire: f["Durée hebdomadaire"] || "",
+                poste_occupe: f["Poste occupé"] || "",
+                lieu_execution: f["Lieu dexécution du contrat (si différent du siège)"] || "",
+                machines_dangereuses: f["Travail sur machines dangereuses ou exposition à des risques particuliers"] || "",
+                caisse_retraite: f["Caisse de retraite"] || "",
+                numero_deca_ancien_contrat: f["Numéro DECA de ancien contrat"] || "",
+                date_avenant: f["date Si avenant"] || "",
+                montant_salaire_brut1: f["Salaire brut mensuel 1"] || 0,
+                montant_salaire_brut2: f["Salaire brut mensuel 2"] || 0,
+                montant_salaire_brut3: f["Salaire brut mensuel 3"] || 0,
+                montant_salaire_brut4: f["Salaire brut mensuel 4"] || 0
+            },
+            formation: {
+                choisie: f["Formation"] || "",
+                code_rncp: f["Code Rncp"] || "",
+                code_diplome: f["Code  diplome"] || "",
+                nb_heures: f["nombre heure formation"] || "",
+                jours_cours: f["jour de cours"] || "",
+                date_debut: f["Date de début exécution"] || "",
+                date_fin: f["Fin du contrat apprentissage"] || ""
+            },
+            cfa: {
+                rush_school: "oui",
+                entreprise: "non",
+                denomination: "RUSH SCHOOL",
+                uai: "0932731W",
+                siret: "91901416300018",
+                adresse: "11-13 AVENUE DE LA DIVISION LECLERC",
+                complement: "",
+                code_postal: "93000",
+                commune: "BOBIGNY"
+            },
+            missions: {
+                formation_alternant: f["Formation de lalternant(e) (pour les missions)"] || "",
+                selectionnees: []
+            },
+            record_id_etudiant: f["recordIdetudiant"] || ""
+        });
+    };
+
     const handleViewCompany = async (companyId: string) => {
         setLoading(true);
         try {
+            // Find in current list first to avoid extra API call if possible, 
+            // but we fetch to be sure we have latest fields
             const data = await api.getCompanyById(companyId);
             setSelectedCompany(data);
+            initializeCompanyForm(data);
             setIsViewModalOpen(true);
+            setIsCompanyEditing(false);
         } catch (error) {
             console.error("Failed to fetch company details", error);
-            showToast("Erreur lors de la récupération des détails de l'entreprise.", "error");
+            // Fallback: use what we have in state if API fails
+            const fallback = companies.find(c => c.id === companyId);
+            if (fallback) {
+                setSelectedCompany(fallback);
+                initializeCompanyForm(fallback);
+                setIsViewModalOpen(true);
+                setIsCompanyEditing(false);
+            } else {
+                showToast("Erreur lors de la récupération des détails de l'entreprise.", "error");
+            }
         } finally {
-
             setLoading(false);
         }
     };
 
-    const CompanyDetailModal = ({ company, isOpen, onClose }: { company: any, isOpen: boolean, onClose: () => void }) => {
-        if (!isOpen || !company) return null;
-        const f = company.fields || {};
+    const handleDownload = async (url: string, filename: string) => {
+        if (!url) {
+            showToast("Document non disponible pour cette entreprise.", "info");
+            return;
+        }
+        try {
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename || 'fiche-entreprise.pdf';
+            link.target = '_blank';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast('Téléchargement démarré', 'success');
+        } catch (error) {
+            showToast('Erreur lors du téléchargement', 'error');
+        }
+    };
 
-        return (
-            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-                <div className="bg-white rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl animate-slide-up">
-                    {/* Header */}
-                    <div className="sticky top-0 bg-white px-8 py-6 border-b border-slate-100 flex justify-between items-center z-10">
-                        <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-brand/10 text-brand rounded-2xl flex items-center justify-center">
-                                <Building size={24} />
-                            </div>
-                            <div>
-                                <h3 className="text-xl font-black text-slate-800">{f['Raison sociale']}</h3>
-                                <p className="text-sm text-slate-500 font-medium tracking-tight">SIRET: {f['Numéro SIRET']}</p>
-                            </div>
-                        </div>
-                        <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
-                            <Trash2 size={24} className="text-slate-400" /> {/* Using Trash2 as a close icon replacement or better use X if available */}
-                        </button>
-                    </div>
+    const handleEnterCompanyEditMode = () => {
+        setIsCompanyEditing(true);
+    };
 
-                    <div className="p-8 space-y-8">
-                        {/* Section Identification */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div className="space-y-6">
-                                <h4 className="text-xs font-black uppercase tracking-widest text-brand border-b border-brand/10 pb-2">Identification</h4>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase">Code APE/NAF</p>
-                                        <p className="text-sm font-semibold text-slate-700">{f['Code APE/NAF']}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase">Type Employeur</p>
-                                        <p className="text-sm font-semibold text-slate-700">{f['Type demployeur']}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase">Effectif</p>
-                                        <p className="text-sm font-semibold text-slate-700">{f['Effectif salarié de l\'entreprise']} salariés</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase">Convention</p>
-                                        <p className="text-sm font-semibold text-slate-700">{f['Convention collective']}</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="space-y-6">
-                                <h4 className="text-xs font-black uppercase tracking-widest text-brand border-b border-brand/10 pb-2">Adresse & Contact</h4>
-                                <div className="space-y-3">
-                                    <div>
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase">Adresse</p>
-                                        <p className="text-sm font-semibold text-slate-700">
-                                            {f['Numéro entreprise']} {f['Voie entreprise']}<br />
-                                            {f['Complément dadresse entreprise'] && <>{f['Complément dadresse entreprise']}<br /></>}
-                                            {f['Code postal entreprise']} {f['Ville entreprise']}
-                                        </p>
-                                    </div>
-                                    <div className="flex gap-6">
-                                        <div>
-                                            <p className="text-[10px] font-bold text-slate-400 uppercase">Téléphone</p>
-                                            <p className="text-sm font-semibold text-slate-700">{f['Téléphone entreprise']}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-[10px] font-bold text-slate-400 uppercase">Email</p>
-                                            <p className="text-sm font-semibold text-slate-700">{f['Email entreprise']}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Section Maître Apprentissage */}
-                        <div className="bg-slate-50 rounded-2xl p-6">
-                            <h4 className="text-xs font-black uppercase tracking-widest text-indigo-600 border-b border-indigo-100 pb-2 mb-4">Maître d'Apprentissage</h4>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <div>
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase">Identité</p>
-                                    <p className="text-sm font-bold text-slate-800">{f['Prénom Maître apprentissage']} {f['Nom Maître apprentissage']}</p>
-                                    <p className="text-xs font-medium text-slate-500">{f['Fonction Maître apprentissage']}</p>
-                                </div>
-                                <div>
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase">Coordonnées</p>
-                                    <p className="text-sm font-semibold text-slate-700">{f['Téléphone Maître apprentissage']}</p>
-                                    <p className="text-sm font-semibold text-slate-700">{f['Email Maître apprentissage']}</p>
-                                </div>
-                                <div>
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase">Expérience & Diplôme</p>
-                                    <p className="text-sm font-semibold text-slate-700">{f['Année experience pro Maître apprentissage']} ans d'expérience</p>
-                                    <p className="text-xs text-slate-500">{f['Diplôme Maître apprentissage']}</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Section Contrat & Formation */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div className="space-y-6">
-                                <h4 className="text-xs font-black uppercase tracking-widest text-emerald-600 border-b border-emerald-100 pb-2">Contrat</h4>
-                                <div className="space-y-4">
-                                    <div className="bg-emerald-50/50 p-4 rounded-xl border border-emerald-100">
-                                        <p className="text-[10px] font-bold text-emerald-600 uppercase mb-1">Type de Contrat</p>
-                                        <p className="text-sm font-bold text-slate-800 leading-tight">{f['Type de contrat']}</p>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <p className="text-[10px] font-bold text-slate-400 uppercase">Date Début</p>
-                                            <p className="text-sm font-semibold text-slate-700">{f['Date de début exécution']}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-[10px] font-bold text-slate-400 uppercase">Date Fin</p>
-                                            <p className="text-sm font-semibold text-slate-700">{f['Fin du contrat apprentissage']}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-[10px] font-bold text-slate-400 uppercase">Durée Hebdo</p>
-                                            <p className="text-sm font-semibold text-slate-700">{f['Durée hebdomadaire']}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-[10px] font-bold text-slate-400 uppercase">Poste</p>
-                                            <p className="text-sm font-semibold text-slate-700">{f['Poste occupé']}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="space-y-6">
-                                <h4 className="text-xs font-black uppercase tracking-widest text-blue-600 border-b border-blue-100 pb-2">Formation & Salaire</h4>
-                                <div className="space-y-4">
-                                    <div>
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase">Formation Suivie</p>
-                                        <p className="text-sm font-bold text-blue-600">{f['Formation']}</p>
-                                        <p className="text-[10px] font-medium text-slate-400">RNCP: {f['Code Rncp']} • Diplôme: {f['Code  diplome']}</p>
-                                    </div>
-                                    <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100 flex justify-between items-center">
-                                        <div>
-                                            <p className="text-[10px] font-bold text-blue-600 uppercase">Salaire Brut</p>
-                                            <p className="text-xl font-black text-slate-800">{f['Salaire brut mensuel']?.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}</p>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="text-[10px] font-bold text-slate-400 uppercase">% SMIC</p>
-                                            <p className="text-lg font-bold text-slate-700">{f['Pourcentage du SMIC']}%</p>
-                                        </div>
-                                    </div>
-                                    <div className="flex justify-between items-center">
-                                        <div>
-                                            <p className="text-[10px] font-bold text-slate-400 uppercase">OPCO</p>
-                                            <p className="text-xs font-bold text-slate-700">{f['Nom OPCO']}</p>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="text-[10px] font-bold text-slate-400 uppercase">Caisse Retraite</p>
-                                            <p className="text-xs font-bold text-slate-700">{f['Caisse de retraite']}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Missions */}
-                        <div className="space-y-4">
-                            <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 border-b border-slate-100 pb-2">Missions de l'alternant</h4>
-                            <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100">
-                                <p className="text-sm font-medium text-slate-600 leading-relaxed italic">
-                                    "{f['Formation de lalternant(e) (pour les missions)']}"
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="sticky bottom-0 bg-white border-t border-slate-100 p-6 flex justify-end gap-3 rounded-b-3xl">
-                        <Button variant="ghost" onClick={onClose}>Fermer</Button>
-                        <Button variant="primary" leftIcon={<Download size={18} />}>Exporter PDF</Button>
-                    </div>
-                </div>
-            </div>
-        );
+    const handleSaveCompanyEdit = async (id: string, data: any) => {
+        setIsSavingCompany(true);
+        try {
+            // studentId is required for updateCompany API
+            const studentId = data.record_id_etudiant || selectedCompany?.fields?.recordIdetudiant;
+            if (!studentId) {
+                showToast("Impossible d'identifier l'étudiant lié pour la mise à jour", "error");
+                return;
+            }
+            await api.updateCompany(studentId, data, selectedCompany);
+            showToast("Entreprise mise à jour avec succès", "success");
+            fetchCompanies();
+            setIsViewModalOpen(false);
+        } catch (error) {
+            console.error("Failed to update company", error);
+            showToast("Erreur lors de la mise à jour de l'entreprise", "error");
+        } finally {
+            setIsSavingCompany(false);
+        }
     };
 
     const fetchFichesData = async () => {
@@ -686,11 +646,18 @@ const RHView: React.FC<{ activeSubView: ViewId }> = ({ activeSubView }) => {
                                                     <div className="flex gap-2">
                                                         <button
                                                             onClick={() => handleViewCompany(c.id)}
-                                                            className="w-8 h-8 rounded-xl border border-slate-200 bg-white hover:border-teal-500 text-slate-400 flex items-center justify-center transition-all shadow-sm"
+                                                            title="Voir les détails"
+                                                            className="w-8 h-8 rounded-xl border border-slate-200 bg-white hover:border-teal-500 text-teal-500 flex items-center justify-center transition-all shadow-sm"
                                                         >
                                                             <Eye size={16} />
                                                         </button>
-                                                        <button className="w-8 h-8 rounded-xl border border-slate-200 bg-white hover:border-teal-500 text-slate-400 flex items-center justify-center transition-all shadow-sm"><FileText size={16} /></button>
+                                                        <button 
+                                                            onClick={() => handleDownload(f['Fiche entreprise']?.[0]?.url, f['Fiche entreprise']?.[0]?.filename)}
+                                                            title="Télécharger la fiche"
+                                                            className="w-8 h-8 rounded-xl border border-slate-200 bg-white hover:border-teal-500 text-teal-500 flex items-center justify-center transition-all shadow-sm"
+                                                        >
+                                                            <FileText size={16} />
+                                                        </button>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -702,10 +669,18 @@ const RHView: React.FC<{ activeSubView: ViewId }> = ({ activeSubView }) => {
                     </div>
                 </div>
 
-                <CompanyDetailModal
-                    company={selectedCompany}
+                <CompanyDetailsModal
                     isOpen={isViewModalOpen}
                     onClose={() => setIsViewModalOpen(false)}
+                    company={selectedCompany}
+                    loading={loading}
+                    isEditing={isCompanyEditing}
+                    setIsEditing={setIsCompanyEditing}
+                    onEdit={handleEnterCompanyEditMode}
+                    editForm={companyEditForm}
+                    setEditForm={setCompanyEditForm}
+                    onSave={handleSaveCompanyEdit}
+                    isSaving={isSavingCompany}
                 />
             </div>
         );

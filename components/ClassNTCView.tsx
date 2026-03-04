@@ -37,7 +37,9 @@ import CandidateDetailsModal from './dashboard/CandidateDetailsModal';
 import CompanyDetailsModal from './dashboard/CompanyDetailsModal';
 import HistoryTimeline from './dashboard/HistoryTimeline';
 import { useApi } from '../hooks/useApi';
-import { useCandidates, getC } from '../hooks/useCandidates';
+import { useCandidates, getC, isPlaced } from '../hooks/useCandidates';
+import { usePagination } from '../hooks/usePagination';
+import Pagination from './ui/Pagination';
 
 interface ClassNTCViewProps {
     onSelectStudent: (student: any, tab: AdmissionTab) => void;
@@ -84,6 +86,18 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
     const [globalHistory, setGlobalHistory] = useState<any[]>([]);
     const [loadingHistory, setLoadingHistory] = useState(false);
     const [filter, setFilter] = useState<'all' | 'withFiche' | 'withCerfa' | 'complete'>('all');
+    const [formationFilter, setFormationFilter] = useState<string>('all');
+
+    // Available formations
+    const availableFormations = [
+        'BTS MCO A',
+        'BTS MCO 2',
+        'BTS NDRC 1',
+        'BTS COM',
+        'Titre Pro NTC',
+        'Titre Pro NTC B (rentrée decalée)',
+        'Bachelor RDC'
+    ];
 
     // Modal State
     const [selectedCandidate, setSelectedCandidate] = useState<any>(null);
@@ -98,9 +112,12 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
     const [companyEditForm, setCompanyEditForm] = useState<any>(null);
     const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
     const [isRegenerating, setIsRegenerating] = useState<string | null>(null);
+<<<<<<< HEAD
     const [admissionSignatureDocs, setAdmissionSignatureDocs] = useState<AdmissionSignatureDoc[]>([]);
     const [loadingAdmissionSignatureDocs, setLoadingAdmissionSignatureDocs] = useState(false);
     const [signingAdmissionDocId, setSigningAdmissionDocId] = useState<string | null>(null);
+=======
+>>>>>>> b28a87303c60b11d4a67eb9b85007063f750ee43
 
     const { showToast } = useAppStore();
     const navigate = useNavigate();
@@ -525,6 +542,28 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
         }
     };
 
+<<<<<<< HEAD
+=======
+    const handleGenerateSigningLink = async (documentId: string) => {
+        console.log(`🌀 Initializing signing link generation for document ID: ${documentId}`);
+        try {
+            const result = await api.generateSigningLink(documentId);
+
+            if (result && result.signing_link) {
+                console.log('✨ [SUCCESS] Signing link generated. Opening link in a new tab:', result.signing_link);
+                window.open(result.signing_link, '_blank');
+                showToast("Lien de signature généré", "success");
+            } else {
+                console.warn('⚠️ [WARNING] No signing link found in the API response:', result);
+                showToast("Erreur lors de la génération du lien", "error");
+            }
+        } catch (error: any) {
+            console.error('🛑 [CRITICAL] Exception caught during signing link generation:', error);
+            showToast(error.message || "Erreur lors de la génération du lien", "error");
+        }
+    };
+
+>>>>>>> b28a87303c60b11d4a67eb9b85007063f750ee43
     const handleCopyEmail = (email: string) => {
         navigator.clipboard.writeText(email);
         showToast("Email copié dans le presse-papier", "success");
@@ -537,12 +576,15 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
         return () => document.removeEventListener('click', handleClickOutside);
     }, []);
 
+<<<<<<< HEAD
     useEffect(() => {
         if (currentTab === 'students') {
             fetchAdmissionSignatureDocs();
         }
     }, [currentTab]);
 
+=======
+>>>>>>> b28a87303c60b11d4a67eb9b85007063f750ee43
     const toggleMenu = (e: React.MouseEvent, id: string) => {
         e.stopPropagation();
         setActiveMenuId(activeMenuId === id ? null : id);
@@ -578,20 +620,25 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
     };
 
     const handleFillForm = (student: any) => {
-        if (!student.entreprise_raison_sociale && student.alternance === 'Oui') {
-            onSelectStudent(student, AdmissionTab.ENTREPRISE);
-            navigate('/admission');
-        } else if (student.alternance === 'Non') {
-            showToast('Étudiant non en alternance', 'info');
-        } else {
+        const studentInfo = getC(student);
+        if (isPlaced(student)) {
             showToast('Fiche entreprise déjà complétée', 'info');
+            return;
         }
+
+        if (studentInfo.alternance === 'Non') {
+            showToast('Attention: Cet étudiant est marqué comme "Non" alternance.', 'warning');
+        }
+
+        onSelectStudent(student, AdmissionTab.ENTREPRISE);
+        navigate('/admission');
     };
 
     const ActionsMenu = ({ student }: { student: any }) => {
         const isOpen = activeMenuId === student.id;
         const studentInfo = getC(student);
         const fullName = `${studentInfo.nom} ${studentInfo.prenom}`;
+<<<<<<< HEAD
 
         return (
             <div className="relative">
@@ -728,21 +775,247 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
         const fullName = `${student.nom} ${student.prenom}`.toLowerCase();
         const email = (student.email || '').toLowerCase();
         const formation = (student.formation || '').toLowerCase();
+=======
+>>>>>>> b28a87303c60b11d4a67eb9b85007063f750ee43
 
-        return fullName.includes(searchLower) ||
+        return (
+            <div className="relative">
+                <button
+                    onClick={(e) => toggleMenu(e, student.id)}
+                    className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
+                >
+                    <MoreVertical size={18} />
+                </button>
+
+                {isOpen && (
+                    <div className="absolute right-0 mt-2 w-56 rounded-xl bg-white shadow-2xl border border-slate-100 z-[100] overflow-hidden animate-in fade-in zoom-in duration-200 origin-top-right">
+                        <div className="p-1 px-2 border-b border-slate-50 bg-slate-50/50">
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1 py-1 block">Actions pour {studentInfo.prenom}</span>
+                        </div>
+
+                        <div className="p-1">
+                            <button
+                                onClick={() => handleCopyEmail(studentInfo.email)}
+                                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
+                            >
+                                <Copy size={15} className="text-slate-400" />
+                                <span>Copier l'email</span>
+                            </button>
+
+                            <button
+                                onClick={() => handleViewDetails(student.id)}
+                                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
+                            >
+                                <FileText size={15} className="text-blue-400" />
+                                <span>Voir les détails</span>
+                            </button>
+
+                            <button
+                                onClick={() => {
+                                    handleViewDetails(student.id);
+                                    setTimeout(() => setIsEditing(true), 100);
+                                }}
+                                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
+                            >
+                                <RefreshCw size={15} className="text-indigo-400" />
+                                <span>Modifier l'étudiant</span>
+                            </button>
+
+                            <button
+                                onClick={() => {
+                                    onSelectStudent(student, AdmissionTab.ADMINISTRATIF);
+                                    navigate('/admission');
+                                }}
+                                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
+                            >
+                                <HistoryIcon size={15} className="text-rose-400" />
+                                <span>Voir l'historique</span>
+                            </button>
+
+                            <div className="h-px bg-slate-50 my-1 mx-2" />
+
+                            <span className="text-[10px] font-bold text-slate-300 uppercase tracking-tighter pl-3 py-1 block">Documents</span>
+
+                            <button
+                                onClick={() => handleRegenerateDoc(student.id, 'fiche')}
+                                disabled={isRegenerating === `${student.id}-fiche`}
+                                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg transition-colors disabled:opacity-50"
+                            >
+                                <RefreshCw size={15} className={`text-slate-400 ${isRegenerating === `${student.id}-fiche` ? 'animate-spin' : ''}`} />
+                                <span>Régénérer Fiche Rens.</span>
+                            </button>
+
+                            <button
+                                onClick={() => handleRegenerateDoc(student.id, 'cerfa')}
+                                disabled={isRegenerating === `${student.id}-cerfa`}
+                                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg transition-colors disabled:opacity-50"
+                            >
+                                <RefreshCw size={15} className={`text-blue-400 ${isRegenerating === `${student.id}-cerfa` ? 'animate-spin' : ''}`} />
+                                <span>Régénérer CERFA</span>
+                            </button>
+
+                            <button
+                                onClick={() => handleRegenerateDoc(student.id, 'convention')}
+                                disabled={isRegenerating === `${student.id}-convention`}
+                                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg transition-colors disabled:opacity-50"
+                            >
+                                <RefreshCw size={15} className={`text-emerald-400 ${isRegenerating === `${student.id}-convention` ? 'animate-spin' : ''}`} />
+                                <span>Régénérer Convention</span>
+                            </button>
+
+                            <button
+                                onClick={() => handleRegenerateDoc(student.id, 'atre')}
+                                disabled={isRegenerating === `${student.id}-atre`}
+                                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg transition-colors disabled:opacity-50"
+                            >
+                                <RefreshCw size={15} className={`text-orange-400 ${isRegenerating === `${student.id}-atre` ? 'animate-spin' : ''}`} />
+                                <span>Régénérer ATRE</span>
+                            </button>
+
+                            <button
+                                onClick={() => handleRegenerateDoc(student.id, 'cr')}
+                                disabled={isRegenerating === `${student.id}-cr`}
+                                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg transition-colors disabled:opacity-50"
+                            >
+                                <RefreshCw size={15} className={`text-pink-400 ${isRegenerating === `${student.id}-cr` ? 'animate-spin' : ''}`} />
+                                <span>Régénérer Compte Rendu</span>
+                            </button>
+
+                            <div className="h-px bg-slate-50 my-1 mx-2" />
+
+                            <span className="text-[10px] font-bold text-slate-300 uppercase tracking-tighter pl-3 py-1 block">Signatures</span>
+
+                            {studentInfo.cerfa?.id && (
+                                <button
+                                    onClick={() => handleGenerateSigningLink(studentInfo.cerfa.id)}
+                                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                                >
+                                    <FileSignature size={15} className="text-indigo-400" />
+                                    <span>Signer CERFA</span>
+                                </button>
+                            )}
+
+                            {studentInfo.convention?.id && (
+                                <button
+                                    onClick={() => handleGenerateSigningLink(studentInfo.convention.id)}
+                                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                                >
+                                    <FileSignature size={15} className="text-emerald-400" />
+                                    <span>Signer Convention</span>
+                                </button>
+                            )}
+
+                            <div className="h-px bg-slate-50 my-1 mx-2" />
+
+                            <span className="text-[10px] font-bold text-slate-300 uppercase tracking-tighter pl-3 py-1 block">Administration</span>
+
+                            <button
+                                onClick={() => handleDeleteCompany(student.id, student.entreprise_raison_sociale || 'Entreprise')}
+                                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                            >
+                                <Building2 size={15} className="text-rose-400" />
+                                <span>Supprimer entreprise</span>
+                            </button>
+
+                            <button
+                                onClick={() => handleDeleteStudent(student.id, fullName)}
+                                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                            >
+                                <UserX size={15} className="text-rose-400" />
+                                <span className="font-semibold">Supprimer l'étudiant</span>
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+
+    const filteredStudents = students.filter(student => {
+        const studentInfo = getC(student);
+        const searchLower = searchQuery.toLowerCase();
+        const fullName = `${studentInfo.nom} ${studentInfo.prenom}`.toLowerCase();
+        const email = (studentInfo.email || '').toLowerCase();
+        const formation = (studentInfo.formation || '').toLowerCase();
+
+        // Search match
+        const matchesSearch = fullName.includes(searchLower) ||
             email.includes(searchLower) ||
             formation.includes(searchLower);
+
+        if (!matchesSearch) return false;
+
+        // Formation filter match
+        if (formationFilter !== 'all' && studentInfo.formation !== formationFilter) {
+            return false;
+        }
+
+        // Status filter match
+        if (filter === 'all') return true;
+        if (filter === 'withFiche') return studentInfo.has_fiche_renseignement;
+        if (filter === 'withCerfa') return studentInfo.has_cerfa;
+        if (filter === 'complete') return student.dossier_complet;
+
+        return true;
     });
 
+    const {
+        currentPage,
+        setCurrentPage,
+        totalPages,
+        paginatedItems
+    } = usePagination(filteredStudents, 10);
+
+    // Reset pagination when filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery, filter, formationFilter, setCurrentPage]);
+
     const stats = {
-        total: students.length,
-        complete: students.filter(s => s.dossier_complet).length,
-        withCerfa: students.filter(s => s.has_cerfa).length,
-        withFiche: students.filter(s => s.has_fiche_renseignement).length
+        total: filteredStudents.length,
+        complete: filteredStudents.filter(s => s.dossier_complet).length,
+        withCerfa: filteredStudents.filter(s => {
+            const si = getC(s);
+            return si.has_cerfa;
+        }).length,
+        withFiche: filteredStudents.filter(s => {
+            const si = getC(s);
+            return si.has_fiche_renseignement;
+        }).length
+    };
+
+    const calculateDocCompletion = (c: any) => {
+        const docs = [
+            c.has_cv,
+            c.has_cni,
+            c.has_lettre_motivation,
+            c.has_vitale,
+            c.has_diplome,
+            c.has_fiche_renseignement,
+            c.has_cerfa,
+            c.has_convention,
+            c.has_atre,
+            c.has_compte_rendu
+        ];
+        const completed = docs.filter(Boolean).length;
+        return Math.round((completed / docs.length) * 100);
+    };
+
+    const getCompletionColor = (percent: number) => {
+        if (percent === 100) return 'text-emerald-500 bg-emerald-50 border-emerald-100';
+        if (percent >= 50) return 'text-amber-500 bg-amber-50 border-amber-100';
+        return 'text-rose-500 bg-rose-50 border-rose-100';
+    };
+
+    const getCompletionGradient = (percent: number) => {
+        if (percent === 100) return 'from-emerald-400 to-emerald-600';
+        if (percent >= 50) return 'from-amber-400 to-amber-600';
+        return 'from-rose-400 to-rose-600';
     };
 
     return (
-        <div className="animate-fade-in space-y-10 pb-20">
+        <div className="animate-fade-in space-y-8 pb-20">
             {/* Company Modal */}
             <CompanyDetailsModal
                 isOpen={isCompanyModalOpen}
@@ -861,7 +1134,20 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                             />
                         </div>
 
-                        <div className="flex items-center gap-2 bg-white p-2 rounded-2xl border border-slate-200 shadow-sm overflow-x-auto no-scrollbar max-w-full">
+                        <div className="flex flex-wrap items-center gap-2 bg-white p-2 rounded-2xl border border-slate-200 shadow-sm overflow-x-auto no-scrollbar max-w-full">
+                            <div className="flex items-center gap-2">
+                                <select
+                                    value={formationFilter}
+                                    onChange={(e) => setFormationFilter(e.target.value)}
+                                    className="px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500/20 transition-all cursor-pointer min-w-[150px]"
+                                >
+                                    <option value="all">Toutes Formations</option>
+                                    {availableFormations.map(f => (
+                                        <option key={f} value={f}>{f}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="w-px h-6 bg-slate-200 mx-2 hidden sm:block"></div>
                             {[
                                 { id: 'all', label: 'Tous' },
                                 { id: 'withFiche', label: 'Avec Fiche' },
@@ -958,6 +1244,7 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                                             <th className="px-8 py-6 text-center text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Formulaire Étudiant</th>
                                             <th className="px-8 py-6 text-center text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Formulaire Entreprise</th>
                                             <th className="px-8 py-6 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Formation</th>
+                                            <th className="px-8 py-6 text-center text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Complétion</th>
                                             <th className="px-8 py-6 text-center text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Documents</th>
                                             <th className="px-8 py-6 text-center text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Actions</th>
                                         </tr>
@@ -975,9 +1262,9 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                                                     </div>
                                                 </td>
                                             </tr>
-                                        ) : filteredStudents.length === 0 ? (
+                                        ) : paginatedItems.length === 0 ? (
                                             <tr>
-                                                <td colSpan={5} className="px-8 py-32 text-center">
+                                                <td colSpan={6} className="px-8 py-32 text-center">
                                                     <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
                                                         <Search size={32} className="text-slate-200" />
                                                     </div>
@@ -991,9 +1278,9 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                                                 <tr key={student.id} className="hover:bg-slate-50/50 transition-colors group">
                                                     <td className="px-8 py-6">
                                                         <div className="flex items-center gap-5">
-                                                            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center text-slate-500 font-black text-sm group-hover:from-blue-600 group-hover:to-indigo-600 group-hover:text-white transition-all duration-300 shadow-sm relative overflow-hidden">
+                                                            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center text-slate-400 font-black group-hover:from-blue-600 group-hover:to-indigo-600 group-hover:text-white transition-all duration-300 shadow-sm relative overflow-hidden">
                                                                 <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                                                                <span className="relative z-10">{student.prenom?.[0]}{student.nom?.[0]}</span>
+                                                                <span className="relative z-10 text-xl">{student.numero_inscription || `${student.prenom?.[0]}${student.nom?.[0]}`}</span>
                                                             </div>
                                                             <div>
                                                                 <div className="font-black text-slate-900 text-lg group-hover:text-blue-600 transition-colors tracking-tight">{student.nom} {student.prenom}</div>
@@ -1011,13 +1298,13 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                                                     </td>
                                                     <td className="px-8 py-6 text-center">
                                                         <button
-                                                            onClick={() => handleViewCompanyDetails(rawStudent)}
-                                                            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all shadow-sm ${(student.id_entreprise || rawStudent.record_id_entreprise || student.entreprise !== 'En recherche')
+                                                            onClick={() => isPlaced(rawStudent) ? handleViewCompanyDetails(rawStudent) : handleFillForm(rawStudent)}
+                                                            className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all shadow-sm ${isPlaced(rawStudent)
                                                                 ? 'bg-blue-50 text-blue-600 border-blue-100 hover:bg-blue-600 hover:text-white'
                                                                 : 'bg-amber-50 text-amber-600 border-amber-100 hover:bg-amber-600 hover:text-white'
                                                                 }`}
                                                         >
-                                                            {(student.id_entreprise || rawStudent.record_id_entreprise || student.entreprise !== 'En recherche')
+                                                            {isPlaced(rawStudent)
                                                                 ? 'Voir Entreprise'
                                                                 : 'Lier Entreprise'}
                                                         </button>
@@ -1026,6 +1313,26 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                                                         <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-xl bg-slate-50 text-slate-600 border border-slate-100 font-black text-[10px] uppercase tracking-widest shadow-sm">
                                                             <Briefcase size={12} />
                                                             {student.formation}
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-8 py-6">
+                                                        <div className="flex flex-col gap-1.5 min-w-[120px]">
+                                                            <div className="flex justify-between items-center px-0.5">
+                                                                <span className={`text-[10px] font-black uppercase tracking-widest ${calculateDocCompletion(student) === 100 ? 'text-emerald-500' : calculateDocCompletion(student) >= 50 ? 'text-amber-500' : 'text-rose-500'}`}>
+                                                                    {calculateDocCompletion(student)}%
+                                                                </span>
+                                                                <div className="flex gap-0.5">
+                                                                    {[1, 2, 3, 4, 5].map((s) => (
+                                                                        <div key={s} className={`w-1 h-1 rounded-full ${s <= Math.round(calculateDocCompletion(student) / 20) ? (calculateDocCompletion(student) === 100 ? 'bg-emerald-400' : calculateDocCompletion(student) >= 50 ? 'bg-amber-400' : 'bg-rose-400') : 'bg-slate-200'}`} />
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                            <div className="h-2 bg-slate-100 rounded-full overflow-hidden p-0.5 border border-slate-200/50 shadow-inner">
+                                                                <div
+                                                                    className={`h-full rounded-full transition-all duration-1000 ease-out bg-gradient-to-r ${getCompletionGradient(calculateDocCompletion(student))}`}
+                                                                    style={{ width: `${calculateDocCompletion(student)}%` }}
+                                                                ></div>
+                                                            </div>
                                                         </div>
                                                     </td>
                                                     <td className="px-8 py-6">
@@ -1121,17 +1428,28 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                                     </tbody>
                                 </table>
                             </div>
+                            <div className="px-8 border-t border-slate-100 bg-slate-50/30">
+                                <Pagination
+                                    currentPage={currentPage}
+                                    totalPages={totalPages}
+                                    onPageChange={setCurrentPage}
+                                />
+                            </div>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-                            {loading ? (
-                                Array(6).fill(0).map((_, i) => (
-                                    <div key={i} className="bg-white rounded-[32px] p-8 border border-slate-100 animate-pulse h-64"></div>
-                                ))
-                            ) : filteredStudents.map((student) => (
-                                <div key={student.record_id || student.id} className="bg-white border border-slate-200 rounded-[32px] p-8 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 group relative overflow-hidden">
-                                    <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full -mr-16 -mt-16 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        <div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+                                {loading ? (
+                                    Array(6).fill(0).map((_, i) => (
+                                        <div key={i} className="bg-white rounded-[32px] p-8 border border-slate-100 animate-pulse h-64"></div>
+                                    ))
+                                ) : paginatedItems.map((rawStudent) => {
+                                    const student = getC(rawStudent);
+                                    return (
+                                        <div key={rawStudent.record_id || rawStudent.id} className="bg-white border border-slate-200 rounded-[32px] p-8 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 group relative overflow-hidden">
+                                            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full -mr-16 -mt-16 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
 
+<<<<<<< HEAD
                                     <div className="flex justify-between items-start mb-8 relative z-10">
                                         <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center text-slate-500 font-black text-lg group-hover:from-blue-600 group-hover:to-indigo-600 group-hover:text-white transition-all duration-300 shadow-inner">
                                             {student.prenom?.[0]}{student.nom?.[0]}
@@ -1159,30 +1477,83 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                                             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900 text-white font-black text-[9px] uppercase tracking-widest">
                                                 <Building size={12} />
                                                 {student.entreprise_raison_sociale}
+=======
+                                            <div className="flex justify-between items-start mb-8 relative z-10">
+                                                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center text-slate-400 font-black text-2xl group-hover:from-blue-600 group-hover:to-indigo-600 group-hover:text-white transition-all duration-300 shadow-inner">
+                                                    {student.numero_inscription || `${student.prenom?.[0]}${student.nom?.[0]}`}
+                                                </div>
+                                                <div className="flex gap-2 items-center">
+                                                    <div className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border ${rawStudent.dossier_complet ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'
+                                                        }`}>
+                                                        {rawStudent.dossier_complet ? 'Dossier Complet' : 'Dossier Incomplet'}
+                                                    </div>
+                                                    <ActionsMenu student={rawStudent} />
+                                                </div>
+>>>>>>> b28a87303c60b11d4a67eb9b85007063f750ee43
                                             </div>
-                                        )}
-                                    </div>
 
-                                    <div className="grid grid-cols-2 gap-3 pt-6 border-t border-slate-100 relative z-10">
-                                        <Button
-                                            variant="secondary"
-                                            size="sm"
-                                            className="w-full text-[10px] font-black"
-                                            onClick={() => handleViewDetails(student.record_id || student.id)}
-                                        >
-                                            Fiche Étudiant
-                                        </Button>
-                                        <Button
-                                            variant="primary"
-                                            size="sm"
-                                            className="w-full text-[10px] font-black"
-                                            onClick={() => handleViewCompanyDetails(student)}
-                                        >
-                                            Fiche Entreprise
-                                        </Button>
-                                    </div>
-                                </div>
-                            ))}
+                                            <div className="mb-8 relative z-10">
+                                                <h3 className="text-2xl font-black text-slate-900 tracking-tight group-hover:text-blue-600 transition-colors">{student.nom} {student.prenom}</h3>
+                                                <p className="text-sm font-bold text-slate-400 truncate mt-1">{student.email}</p>
+                                            </div>
+
+                                            <div className="flex items-center gap-3 mb-4 relative z-10">
+                                                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 font-black text-[9px] uppercase tracking-widest">
+                                                    <Briefcase size={12} />
+                                                    {student.formation}
+                                                </div>
+                                                {student.alternance === 'Oui' && student.entreprise && student.entreprise !== 'En recherche' && (
+                                                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900 text-white font-black text-[9px] uppercase tracking-widest">
+                                                        <Building size={12} />
+                                                        {student.entreprise}
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <div className="mb-8 relative z-10">
+                                                <div className="flex justify-between items-center mb-2 px-1">
+                                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Dossier</span>
+                                                    <span className={`text-[10px] font-black uppercase tracking-widest ${calculateDocCompletion(student) === 100 ? 'text-emerald-500' : calculateDocCompletion(student) >= 50 ? 'text-amber-500' : 'text-rose-500'}`}>
+                                                        {calculateDocCompletion(student)}%
+                                                    </span>
+                                                </div>
+                                                <div className="h-2.5 bg-slate-50 rounded-full overflow-hidden p-0.5 border border-slate-100 shadow-inner">
+                                                    <div
+                                                        className={`h-full rounded-full transition-all duration-1000 ease-out bg-gradient-to-r ${getCompletionGradient(calculateDocCompletion(student))}`}
+                                                        style={{ width: `${calculateDocCompletion(student)}%` }}
+                                                    ></div>
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-3 pt-6 border-t border-slate-100 relative z-10">
+                                                <Button
+                                                    variant="secondary"
+                                                    size="sm"
+                                                    className="w-full text-[10px] font-black"
+                                                    onClick={() => handleViewDetails(rawStudent.record_id || rawStudent.id)}
+                                                >
+                                                    Fiche Étudiant
+                                                </Button>
+                                                <Button
+                                                    variant="primary"
+                                                    size="sm"
+                                                    className={`w-full text-[10px] font-black ${!isPlaced(rawStudent) ? '!bg-amber-600 !border-amber-600' : ''}`}
+                                                    onClick={() => isPlaced(rawStudent) ? handleViewCompanyDetails(rawStudent) : handleFillForm(rawStudent)}
+                                                >
+                                                    {isPlaced(rawStudent) ? 'Voir Entreprise' : 'Lier Entreprise'}
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                            <div className="mt-12">
+                                <Pagination
+                                    currentPage={currentPage}
+                                    totalPages={totalPages}
+                                    onPageChange={setCurrentPage}
+                                />
+                            </div>
                         </div>
                     )}
                 </>

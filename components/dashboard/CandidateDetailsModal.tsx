@@ -342,6 +342,7 @@ const CandidateDetailsModal: React.FC<CandidateDetailsModalProps> = ({
                                     {renderInfoRow("Email", info.email, Mail)}
                                     {renderInfoRow("Téléphone", info.telephone, Phone)}
                                     {renderInfoRow("Sexe", info.sexe, User)}
+                                    {renderInfoRow("Numéro Inscription", info.numero_inscription, Clock)}
                                     {renderInfoRow("Date de naissance", info.date_naissance, Clock)}
                                     {renderInfoRow("Nationalité", info.nationalite, ShieldCheck)}
                                     {renderInfoRow("Commune de naissance", info.commune_naissance, MapPin)}

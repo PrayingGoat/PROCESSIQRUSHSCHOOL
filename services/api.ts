@@ -46,6 +46,7 @@ const formatString = (str: string) => {
   return str.replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase());
 };
 
+<<<<<<< HEAD
 const mapToBackendFormat = (data: any): any => {
   if (typeof data !== 'object' || data === null) return data;
   if (Array.isArray(data)) return data.map(mapToBackendFormat);
@@ -55,6 +56,237 @@ const mapToBackendFormat = (data: any): any => {
     acc[snakeKey] = mapToBackendFormat(data[key]);
     return acc;
   }, {} as any);
+=======
+// Helper to safely access nested fields from Airtable-style response
+const getField = (data: any, fieldName: string, defaultValue: any = "") => {
+  if (!data || !data.fields) return defaultValue;
+  return data.fields[fieldName] ?? defaultValue;
+};
+
+// Mapper: Backend (Airtable fields) -> Frontend (StudentFormData)
+const mapBackendToStudent = (backendData: any): any => {
+  const fields = backendData.fields || {};
+
+  // DEBUG: Inspect Dupont to find the missing company link
+  if (fields["NOM de naissance"]?.toLowerCase().includes("dupont")) {
+    console.log("🔍 DEBUG DUPONT FIELDS:", JSON.stringify(fields, null, 2));
+  }
+
+  return {
+    // Meta
+    id: backendData.id,
+    record_id: backendData.id,
+    fields: fields, // Maintain raw fields for modal view modes
+
+    // Enterprise Link (Critical for Dashboard)
+    id_entreprise: Array.isArray(fields["Entreprise"]) ? fields["Entreprise"][0] : (fields["Entreprise"] || fields["ID Entreprise"] || fields["record_id_entreprise"] || ""),
+    entreprise_raison_sociale: fields["Entreprise d'accueil"] || fields["Raison sociale (from Entreprise)"] || fields["Nom Entreprise"] || fields["Entreprise"] || "",
+
+
+    // Identité
+    prenom: fields["Prénom"] || "",
+    nom_naissance: fields["NOM de naissance"] || "",
+    nom_usage: fields["Nom d'usage"] || "",
+    numero_inscription: fields["Numero Inscription"] || "",
+    sexe: fields["Sexe"] || "",
+    date_naissance: fields["Date de naissance"] || "",
+    nationalite: fields["Nationalité"] || "Française",
+    commune_naissance: fields["Commune de naissance"] || "",
+    departement: fields["Département de naissance"] || fields["Département"] || "",
+
+    // Coordonnées
+    // Coordonnées
+    email: fields["E-mail"] || "",
+    telephone: fields["Téléphone"] || "",
+    adresse_residence: fields["Adresse de résidence"] || "",
+    num_residence: "", // Souvent concaténé dans l'adresse
+    rue_residence: "",
+    complement_residence: fields["Complément d'adresse"] || "",
+    code_postal: fields["Code postal"]?.toString() || fields["Code postal "]?.toString() || "",
+    ville: fields["Ville de résidence"] || fields["ville"] || "",
+
+    // Social / Admin
+    nir: fields["NIR"] || "",
+    situation: fields["Situation avant le contrat"] || "",
+    regime_social: fields["Régime social"] || "",
+    declare_inscription_sportif_haut_niveau: fields["Sportif de haut niveau"] || false,
+    declare_avoir_projet_creation_reprise_entreprise: fields["Projet de création/reprise d'entreprise"] || false,
+    declare_travailleur_handicape: fields["Reconnaissance travailleur handicapé"] || false,
+    alternance: fields["En alternance"] || false,
+
+    // Scolarité
+    dernier_diplome_prepare: fields["Dernier diplôme ou titre préparé"] || "",
+    derniere_classe: fields["Dernière classe suivie"] || fields["Dernière classe / année suivie"] || "",
+    bac: fields["Diplôme ou titre le plus élevé obtenu"] || fields["BAC"] || "",
+    intitulePrecisDernierDiplome: fields["Intitulé précis du dernier diplôme"] || fields["Intitulé précis du dernier diplôme ou titre préparé"] || "",
+    formation_souhaitee: fields["Formation souhaitée"] || fields["Formation"] || "",
+
+    // Autres
+    date_de_visite: fields["Date de visite"] || "",
+    date_de_reglement: fields["Date de règlement"] || "",
+    entreprise_d_accueil: fields["Entreprise d'accueil"] || "",
+    connaissance_rush_how: fields["Comment avez-vous connu Rush School?"] || "",
+    motivation_projet_professionnel: fields["Motivation et projet professionnel"] || "",
+
+    // Représentant Légal 1
+    nom_representant_legal: fields["Nom du représentant légal"] || "",
+    prenom_representant_legal: fields["Prénom du représentant légal"] || "",
+    voie_representant_legal: fields["Voie du représentant légal"] || "",
+    lien_parente_legal: fields["Lien de parenté"] || "",
+    numero_legal: fields["Numéro du représentant légal"] || "", // Téléphone
+    numero_adress_legal: fields["Numéro adresse représentant légal"] || "",
+    complement_adresse_legal: fields["Complément d'adresse du représentant légal"] || "",
+    code_postal_legal: fields["Code postal du représentant légal"]?.toString() || "",
+    commune_legal: fields["Commune du représentant légal"] || "",
+    courriel_legal: fields["Email du représentant légal"] || "",
+
+    // Représentant Légal 2
+    nom_representant_legal2: fields["Nom du deuxième représentant légal"] || "",
+    prenom_representant_legal2: fields["Prénom du deuxième représentant légal"] || "",
+    voie_representant_legal2: fields["Voie du deuxième représentant légal"] || "",
+    lien_parente_legal2: fields["Lien de parenté avec le deuxième représentant légal"] || "",
+    numero_legal2: fields["Numéro du deuxième représentant légal"] || "",
+    numero_adress_legal2: fields["Numéro adresse représentant légal 2"] || "",
+    complement_adresse_legal2: fields["Complément d'adresse du deuxième représentant légal"] || "",
+    code_postal_legal2: fields["Code postal du deuxième représentant légal"]?.toString() || "",
+    commune_legal2: fields["Commune du deuxième représentant légal"] || "",
+    courriel_legal2: fields["Email du deuxième représentant légal"] || "",
+
+    // Documents (PDF generated)
+    atre_url: fields["Atre"]?.[0]?.url || "",
+    atre_name: fields["Atre"]?.[0]?.filename || "",
+    has_atre: !!(fields["Atre"] && fields["Atre"].length > 0),
+
+    compte_rendu_url: fields["compte rendu de visite"]?.[0]?.url || "",
+    compte_rendu_name: fields["compte rendu de visite"]?.[0]?.filename || "",
+    has_compte_rendu: !!(fields["compte rendu de visite"] && fields["compte rendu de visite"].length > 0),
+
+    convention_url: fields["Convention Apprentissage"]?.[0]?.url || fields["Convention"]?.[0]?.url || "",
+    convention_name: fields["Convention Apprentissage"]?.[0]?.filename || fields["Convention"]?.[0]?.filename || "",
+    has_convention: !!((fields["Convention Apprentissage"] || fields["Convention"]) && (fields["Convention Apprentissage"] || fields["Convention"]).length > 0),
+    convention: (fields["Convention Apprentissage"] || fields["Convention"])?.[0] || null,
+    cerfa: fields["cerfa"]?.[0] || null,
+    has_cerfa: !!(fields["cerfa"] && fields["cerfa"].length > 0),
+    fiche_entreprise: fields["Fiche entreprise"]?.[0] || null,
+    has_fiche_renseignement: !!(fields["Fiche entreprise"] && fields["Fiche entreprise"].length > 0),
+  };
+};
+
+// Mapper: Backend (Airtable fields) -> Frontend (CompanyFormData)
+const mapBackendToCompany = (backendData: any): any => {
+  const fields = backendData.fields || {};
+  return {
+    id: backendData.id,
+    record_id: backendData.id,
+    fields: fields, // Maintain raw fields for modal view modes
+    identification: {
+      raison_sociale: fields["Raison sociale"] || "",
+      siret: fields["Numéro SIRET"] || "",
+      code_ape_naf: fields["Code APE/NAF"] || "",
+      type_employeur: fields["Type demployeur"] || "",
+      employeur_specifique: fields["Employeur spécifique"] || "",
+      effectif: fields["Effectif salarié de l'entreprise"] || "",
+      convention: fields["Convention collective"] || ""
+    },
+    adresse: {
+      num: fields["Numéro entreprise"] || "",
+      voie: fields["Voie entreprise"] || "",
+      complement: fields["Complément dadresse entreprise"] || "",
+      code_postal: fields["Code postal entreprise"] || "",
+      ville: fields["Ville entreprise"] || "",
+      telephone: fields["Téléphone entreprise"] || "",
+      email: fields["Email entreprise"] || ""
+    },
+    maitre_apprentissage: {
+      nom: fields["Nom Maître apprentissage"] || "",
+      prenom: fields["Prénom Maître apprentissage"] || "",
+      date_naissance: fields["Date de naissance Maître apprentissage"] || "",
+      fonction: fields["Fonction Maître apprentissage"] || "",
+      diplome: fields["Diplôme Maître apprentissage"] || "",
+      experience: fields["Année experience pro Maître apprentissage"] || "",
+      telephone: fields["Téléphone Maître apprentissage"] || "",
+      email: fields["Email Maître apprentissage"] || ""
+    },
+    opco: {
+      nom: fields["Nom OPCO"] || ""
+    },
+    contrat: {
+      type_contrat: fields["Type de contrat"] || "",
+      type_derogation: fields["Type de dérogation"] || "",
+      date_debut: fields["Date de début exécution"] || "",
+      date_fin: fields["Fin du contrat apprentissage"] || "",
+      duree_hebdomadaire: fields["Durée hebdomadaire"] || "",
+      poste_occupe: fields["Poste occupé"] || "",
+      lieu_execution: fields["Lieu dexécution du contrat (si différent du siège)"] || "",
+
+      pourcentage_smic1: fields["Pourcentage du SMIC 1"] || 0,
+      smic1: fields["SMIC 1"] || "",
+      montant_salaire_brut1: fields["Salaire brut mensuel 1"] || 0,
+
+      pourcentage_smic2: fields["Pourcentage smic 2"] || 0,
+      smic2: fields["smic 2"] || "",
+      montant_salaire_brut2: fields["Salaire brut mensuel 2"] || 0,
+
+      pourcentage_smic3: fields["Pourcentage smic 3"] || 0,
+      smic3: fields["smic 3"] || "",
+      montant_salaire_brut3: fields["Salaire brut mensuel 3"] || 0,
+
+      pourcentage_smic4: fields["Pourcentage smic 4"] || 0,
+      smic4: fields["smic 4"] || "",
+      montant_salaire_brut4: fields["Salaire brut mensuel 4"] || 0,
+
+      date_conclusion: fields["Date de conclusion"] || "",
+      date_debut_execution: fields["Date de début exécution"] || "",
+      numero_deca_ancien_contrat: fields["Numéro DECA de ancien contrat"] || "",
+      machines_dangereuses: fields["Travail sur machines dangereuses ou exposition à des risques particuliers"] || "",
+      caisse_retraite: fields["Caisse de retraite"] || "",
+      date_avenant: fields["date Si avenant"] || "",
+
+      // Périodes
+      date_debut_2periode_1er_annee: fields["date_debut_2periode_1er_annee"] || "",
+      date_fin_2periode_1er_annee: fields["date_fin_2periode_1er_annee"] || "",
+      date_debut_1periode_2eme_annee: fields["date_debut_1periode_2eme_annee"] || "",
+      date_fin_1periode_2eme_annee: fields["date_fin_1periode_2eme_annee"] || "",
+      date_debut_2periode_2eme_annee: fields["date_debut_2periode_2eme_annee"] || "",
+      date_fin_2periode_2eme_annee: fields["date_fin_2periode_2eme_annee"] || "",
+      date_debut_1periode_3eme_annee: fields["date_debut_1periode_3eme_annee"] || "",
+      date_fin_1periode_3eme_annee: fields["date_fin_1periode_3eme_annee"] || "",
+      date_debut_2periode_3eme_annee: fields["date_debut_2periode_3eme_annee"] || "",
+      date_fin_2periode_3eme_annee: fields["date_fin_2periode_3eme_annee"] || "",
+      date_debut_1periode_4eme_annee: fields["date_debut_1periode_4eme_annee"] || "",
+      date_fin_1periode_4eme_annee: fields["date_fin_1periode_4eme_annee"] || "",
+      date_debut_2periode_4eme_annee: fields["date_debut_2periode_4eme_annee"] || "",
+      date_fin_2periode_4eme_annee: fields["date_fin_2periode_4eme_annee"] || ""
+    },
+    formation: {
+      choisie: fields["Formation"] || "",
+      date_debut: fields["Date de début formation"] || "",
+      date_fin: fields["Date de fin formation"] || "",
+      code_rncp: fields["Code Rncp"] || "",
+      code_diplome: fields["Code  diplome"] || "",
+      nb_heures: fields["nombre heure formation"] || "",
+      jours_cours: fields["jour de cours"] || ""
+    },
+    cfa: {
+      rush_school: "",
+      entreprise: fields["cfaEnterprise"] ? "oui" : "non",
+      denomination: fields["DenominationCFA"] || "",
+      diplome_vise: fields["diplomeVise"] || "",
+      intitule_formation: fields["intituleDiplome"] || "",
+      uai: fields["NumeroUAI"] || "",
+      siret: fields["NumeroSiretCFA"] || "",
+      adresse: fields["AdresseCFA"] || "",
+      complement: fields["complementAdresseCFA"] || "",
+      code_postal: fields["codePostalCFA"] || "",
+      commune: fields["communeCFA"] || ""
+    },
+    missions: {
+      formation_alternant: fields["Formation de lalternant(e) (pour les missions)"] || "",
+      selectionnees: [] //TODO: Split if string
+    },
+    record_id_etudiant: fields["recordIdetudiant"] || ""
+  };
+>>>>>>> b28a87303c60b11d4a67eb9b85007063f750ee43
 };
 
 // Helper to map student data to backend format (STRICT)
@@ -154,7 +386,7 @@ const mapStudentToBackend = (data: any) => {
     declare_avoir_projet_creation_reprise_entreprise: data.declare_avoir_projet_creation_reprise_entreprise || false,
     declare_travailleur_handicape: data.declare_travailleur_handicape || false,
     alternance: data.alternance || false,
-    dernier_diplome_prepare: mapDiplome(data.dernier_diplome_prepare),
+    dernier_diplome_prepare: mapDiplome(data.intitulePrecisDernierDiplome || ""),
     derniere_classe: data.derniere_classe || "",
     bac: mapNiveau(data.bac) || "",
     intitulePrecisDernierDiplome: data.intitulePrecisDernierDiplome || "",
@@ -411,6 +643,7 @@ export const api = {
   },
 
   // --- AUTH ---
+<<<<<<< HEAD
   async login(email: string, pass: string): Promise<{ access_token: string; role?: string; email?: string; name?: string }> {
     const response = await fetch(`${AUTH_API_URL}/auth/login`, {
       method: 'POST',
@@ -435,6 +668,58 @@ export const api = {
       throw new Error(error.message || 'Register failed');
     }
     return await response.json();
+=======
+  async login(email: string, pass: string): Promise<{ access_token: string, role: string, email: string, name: string }> {
+    console.log('📤 Mock Login Attempt:', email);
+
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 800));
+
+    let role = 'admission';
+    let name = 'Admin User';
+
+    const emailLower = email.toLowerCase();
+    if (emailLower.includes('superadmin')) {
+      role = 'super_admin';
+      name = 'Super Administrateur';
+    } else if (emailLower.includes('rh')) {
+      role = 'rh';
+      name = 'Responsable RH';
+    } else if (emailLower.includes('commercial')) {
+      role = 'commercial';
+      name = 'Conseiller Commercial';
+    } else if (emailLower.includes('etudiant') || emailLower.includes('eleve')) {
+      role = 'eleve';
+      name = 'Étudiant Démo';
+    } else if (emailLower.includes('admission')) {
+      role = 'admission';
+      name = 'Chargé d\'Admission';
+    }
+
+    const mockData = {
+      access_token: 'mock-jwt-token-' + Date.now(),
+      role: role,
+      email: email,
+      name: name
+    };
+
+    console.log('📥 Mock Login Success:', mockData);
+    return mockData;
+  },
+
+  async register(userData: any): Promise<{ access_token: string }> {
+    console.log('📤 Mock Register Attempt:', userData.email);
+
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    const mockData = {
+      access_token: 'mock-jwt-token-reg-' + Date.now()
+    };
+
+    console.log('📥 Mock Register Success:', mockData);
+    return mockData;
+>>>>>>> b28a87303c60b11d4a67eb9b85007063f750ee43
   },
 
   // --- HEALTH ---
@@ -840,7 +1125,12 @@ export const api = {
   async updateCandidate(id: string, data: Partial<StudentFormData>): Promise<any> {
     try {
       const payload = mapStudentToBackend(data);
+<<<<<<< HEAD
       const request: RequestInit = {
+=======
+      console.log('📤 Update Candidate Payload:', payload);
+      const response = await fetch(`${BASE_API_URL}/candidates/${id}`, {
+>>>>>>> b28a87303c60b11d4a67eb9b85007063f750ee43
         method: 'PUT',
         headers: withAuthHeaders({ 'Content-Type': 'application/json', 'Accept': 'application/json' }),
         body: JSON.stringify(payload),
@@ -982,6 +1272,63 @@ export const api = {
     } catch (error) { throw error; }
   },
 
+  async generateConventionApprentissage(recordId: string): Promise<any> {
+    try {
+      console.log('📤 Generating Convention Apprentissage:', recordId);
+      const response = await fetch(`${BASE_URL}/candidats/${recordId}/convention-apprentissage`, {
+        method: 'POST',
+        headers: { 'Accept': 'application/json' }
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('❌ Convention Apprentissage Generation Failed:', errorData);
+        throw new Error(errorData.detail || errorData.message || 'Generation failed');
+      }
+      const text = await response.text();
+      try {
+        const json = JSON.parse(text);
+        console.log('📥 Convention Apprentissage Generation Success:', json);
+        return json;
+      } catch (e) {
+        console.log('📥 Convention Apprentissage Generation Success (Non-JSON):', text);
+        return { success: true, message: text };
+      }
+    } catch (error) { throw error; }
+  },
+
+  async generateSigningLink(documentId: string): Promise<any> {
+    try {
+      const url = `${BASE_API_URL}/documents/${documentId}/signature/signing-link`;
+      console.log('🚀 [API] Requesting Signing Link:', {
+        url: url,
+        method: 'POST',
+        documentId: documentId
+      });
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Accept': 'application/json' }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('❌ [API] Signing Link Generation Failed:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData
+        });
+        throw new Error(errorData.detail || errorData.message || 'Generation failed');
+      }
+
+      const json = await response.json();
+      console.log('✅ [API] Signing Link Received:', json);
+      return json;
+    } catch (error) { 
+      console.error('💥 [API] Signing Link Error:', error);
+      throw error; 
+    }
+  },
+
   // --- ENTREPRISE (CRUD) ---
   async submitCompany(data: CompanyFormData): Promise<ApiResponse> {
     try {
@@ -1085,6 +1432,21 @@ export const api = {
     }
   },
 
+  async deleteCompany(studentId: string): Promise<boolean> {
+    try {
+      console.log('📤 Deleting Company for Student:', studentId);
+      const response = await fetch(`${BASE_URL}/entreprises/${studentId}`, {
+        method: 'DELETE',
+        headers: { 'Accept': 'application/json' }
+      });
+      console.log('📥 Delete Company Status:', response.status);
+      return response.ok;
+    } catch (error) {
+      console.error('❌ Delete Company Error:', error);
+      return false;
+    }
+  },
+
   // --- HISTORY ---
   async getHistory(studentId: string): Promise<any[]> {
     try {
@@ -1128,6 +1490,30 @@ export const api = {
       if (!response.ok) throw new Error('Failed to save evaluation');
       return await response.json();
     } catch (error) {
+      throw error;
+    }
+  },
+
+  async submitAdmissionResult(email: string, file: Blob): Promise<any> {
+    try {
+      console.log('📤 Submitting Admission Result PDF for:', email);
+      const formData = new FormData();
+      formData.append('email', email);
+      formData.append('file', file, `Admission_Result_${email.replace(/@/g, '_at_')}.pdf`);
+
+      const response = await fetch(`${BASE_API_URL}/admission/resultats-pdf`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || errorData.message || `Upload failed: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('❌ Error submitting admission result:', error);
       throw error;
     }
   }

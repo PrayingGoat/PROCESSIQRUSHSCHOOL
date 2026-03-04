@@ -55,10 +55,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   };
 
   const handleLogout = () => {
+<<<<<<< HEAD
     clearSession();
     localStorage.removeItem('userRole');
     localStorage.removeItem('adminAuthToken');
     navigate('/login');
+=======
+    localStorage.removeItem('token');
+    localStorage.removeItem('userRole'); // Also clear userRole for consistency
+    navigate('/');
+>>>>>>> b28a87303c60b11d4a67eb9b85007063f750ee43
     if (onClose) onClose();
   };
 
@@ -72,7 +78,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
       <nav className="flex-1 overflow-y-auto px-4 py-2 space-y-1">
 
+<<<<<<< HEAD
         {canAccessRole('admission') && (
+=======
+        {/* Admissions Group */}
+        {(userRole === 'admission' || userRole === 'super_admin' || !userRole) && (
+>>>>>>> b28a87303c60b11d4a67eb9b85007063f750ee43
           <div className="mb-1">
             <div
               onClick={() => setAdmissionOpen(!admissionOpen)}
@@ -100,7 +111,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           </div>
         )}
 
+<<<<<<< HEAD
         {canAccessRole('commercial') && (
+=======
+        {/* Commercial Group */}
+        {(userRole === 'commercial' || userRole === 'super_admin' || !userRole) && (
+>>>>>>> b28a87303c60b11d4a67eb9b85007063f750ee43
           <div className="mb-1">
             <div
               onClick={() => setCommercialOpen(!commercialOpen)}
@@ -128,7 +144,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           </div>
         )}
 
+<<<<<<< HEAD
         {canAccessRole('rh') && (
+=======
+        {/* RH Group */}
+        {(userRole === 'rh' || userRole === 'super_admin' || !userRole) && (
+>>>>>>> b28a87303c60b11d4a67eb9b85007063f750ee43
           <div className="mb-1">
             <div
               onClick={() => setRhOpen(!rhOpen)}
@@ -164,6 +185,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
           </div>
         )}
 
+<<<<<<< HEAD
         {canAccessRole('eleve') && (
           <div className="mb-1">
             <div
@@ -209,6 +231,29 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         )}
 
         {!isStudentSession && !userRole && (
+=======
+        {/* Étudiant */}
+        {(userRole === 'eleve' || userRole === 'super_admin' || !userRole) && (
+          <NavLink
+            to="/etudiant"
+            onClick={handleLinkClick}
+            className={({ isActive }) => `flex items-center gap-[14px] px-[18px] py-[14px] rounded-xl cursor-pointer transition-all duration-200 font-medium text-[0.95rem] mb-1 ${isActive
+              ? 'bg-brand text-white'
+              : 'text-slate-400 hover:bg-white/10 hover:text-white'
+              }`}
+          >
+            {({ isActive }) => (
+              <>
+                <BookOpen size={22} className={isActive ? 'text-white' : 'text-slate-400'} />
+                <span>Étudiant</span>
+              </>
+            )}
+          </NavLink>
+        )}
+
+        {/* Paramètres */}
+        {(userRole === 'super_admin' || !userRole) && (
+>>>>>>> b28a87303c60b11d4a67eb9b85007063f750ee43
           <NavLink
             to="/parametres"
             onClick={handleLinkClick}

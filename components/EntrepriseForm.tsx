@@ -53,10 +53,10 @@ const companySchema = z.object({
         nom: z.string().min(2, "Le nom est requis"),
         prenom: z.string().min(2, "Le prénom est requis"),
         date_naissance: z.string().min(1, "La date de naissance est requise"),
-        fonction: z.string().min(2, "La fonction est requise"),
+        fonction: z.string().optional().or(z.literal("")),
         diplome: z.string().min(1, "Veuillez sélectionner le diplôme"),
         experience: z.string().optional().or(z.literal("")),
-        telephone: z.string().regex(/^(?:(?:\+|00)33|0)\s*[1-9](?:[\s.-]*\d{2}){4}$/, "Téléphone invalide"),
+        telephone: z.string().regex(/^(?:(?:\+|00)33|0)\s*[1-9](?:[\s.-]*\d{2}){4}$/, "Téléphone invalide").optional().or(z.literal("")),
         email: z.string().email("L'adresse e-mail est invalide")
     }),
     opco: z.object({
@@ -88,7 +88,7 @@ const companySchema = z.object({
         date_debut: z.string().optional().or(z.literal("")),
         date_fin: z.string().optional().or(z.literal("")),
         duree_hebdomadaire: z.string().min(1, "Durée requise"),
-        poste_occupe: z.string().min(2, "Poste occupé requis"),
+        poste_occupe: z.string().optional().or(z.literal("")),
         lieu_execution: z.string().optional().or(z.literal("")),
 
         pourcentage_smic1: z.number().optional(),
@@ -527,7 +527,7 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
                                 <Input label="Date de naissance" required type="date" error={errors.maitre_apprentissage?.date_naissance?.message} {...register('maitre_apprentissage.date_naissance')} />
                             </div>
                             <div className="col-span-12 md:col-span-6">
-                                <Input label="Fonction" required placeholder="Poste occupé" error={errors.maitre_apprentissage?.fonction?.message} {...register('maitre_apprentissage.fonction')} />
+                                <Input label="Fonction" placeholder="Poste occupé" error={errors.maitre_apprentissage?.fonction?.message} {...register('maitre_apprentissage.fonction')} />
                             </div>
                             <div className="col-span-12 md:col-span-6">
                                 <Select
@@ -543,7 +543,7 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
                                 <Input label="Années d'expérience" type="number" placeholder="Années" {...register('maitre_apprentissage.experience')} />
                             </div>
                             <div className="col-span-12 md:col-span-4">
-                                <Input label="Téléphone" required type="tel" placeholder="Téléphone" error={errors.maitre_apprentissage?.telephone?.message} {...register('maitre_apprentissage.telephone', {
+                                <Input label="Téléphone" type="tel" placeholder="Téléphone" error={errors.maitre_apprentissage?.telephone?.message} {...register('maitre_apprentissage.telephone', {
                                     onChange: (e) => {
                                         e.target.value = formatPhone(e.target.value);
                                     }
@@ -731,7 +731,7 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
                                 <Input label="Durée hebdomadaire" required placeholder="Ex: 35h" error={errors.contrat?.duree_hebdomadaire?.message} {...register('contrat.duree_hebdomadaire')} />
                             </div>
                             <div className="col-span-12">
-                                <Input label="Poste occupé" required placeholder="Intitulé exact du poste" error={errors.contrat?.poste_occupe?.message} {...register('contrat.poste_occupe')} />
+                                <Input label="Poste occupé" placeholder="Intitulé exact du poste" error={errors.contrat?.poste_occupe?.message} {...register('contrat.poste_occupe')} />
                             </div>
                             <div className="col-span-12">
                                 <Input label="Lieu d'exécution" placeholder="Adresse si différente" {...register('contrat.lieu_execution')} />

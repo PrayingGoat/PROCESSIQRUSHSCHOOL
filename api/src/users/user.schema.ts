@@ -12,7 +12,7 @@ export class User extends Document {
   @Prop({ required: true })
   name: string;
 
-  @Prop({ default: 'student' })
+  @Prop({ default: 'eleve' })
   role: string;
 
   @Prop({ type: Types.ObjectId, ref: 'Student', default: null, index: true })

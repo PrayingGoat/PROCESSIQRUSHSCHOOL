@@ -64,7 +64,7 @@ const studentSchema = z.object({
     declare_avoir_projet_creation_reprise_entreprise: z.boolean(),
     declare_travailleur_handicape: z.boolean(),
     alternance: z.boolean(),
-    dernier_diplome_prepare: z.string().min(1, "Veuillez sélectionner votre dernier diplôme"),
+    dernier_diplome_prepare: z.string().optional().or(z.literal("")),
     derniere_classe: z.string().min(1, "Veuillez sélectionner votre dernière classe"),
     intitulePrecisDernierDiplome: z.string().optional().or(z.literal("")),
     bac: z.string().min(1, "Veuillez sélectionner votre niveau d'études"),
@@ -568,17 +568,7 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext, initialDa
                     hasError={hasSectionError(['dernier_diplome_prepare', 'derniere_classe', 'intitulePrecisDernierDiplome', 'bac'])}
                 >
                     <div className="grid grid-cols-12 gap-5">
-                        <div className="col-span-12">
-                            <Select
-                                label="Dernier diplôme ou titre préparé"
-                                required
-                                error={errors.dernier_diplome_prepare?.message}
-                                {...register('dernier_diplome_prepare')}
-                                options={DIPLOMA_PREPARED_OPTIONS}
-                                placeholder="Sélectionnez"
 
-                            />
-                        </div>
                         <div className="col-span-12">
                             <Select
                                 label="Dernière année ou classe suivie"

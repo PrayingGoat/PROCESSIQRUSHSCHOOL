@@ -51,6 +51,7 @@ export interface StudentFormData {
   prenom: string;
   nom_naissance: string;
   nom_usage?: string;
+  numero_inscription?: string | number;
   sexe: string;
   date_naissance: string;
   nationalite: string;
@@ -71,7 +72,7 @@ export interface StudentFormData {
   declare_avoir_projet_creation_reprise_entreprise: boolean;
   declare_travailleur_handicape: boolean;
   alternance: boolean;
-  dernier_diplome_prepare: string;
+  dernier_diplome_prepare?: string;
   derniere_classe?: string;
   intitulePrecisDernierDiplome?: string;
   bac: string;
@@ -157,10 +158,10 @@ export interface CompanyFormData {
     nom: string;
     prenom: string;
     date_naissance: string;
-    fonction: string;
+    fonction?: string;
     diplome?: string;
     experience?: string | number;
-    telephone: string;
+    telephone?: string;
     email: string;
   };
   opco: {
@@ -173,7 +174,7 @@ export interface CompanyFormData {
     date_debut?: string;
     date_fin?: string;
     duree_hebdomadaire?: string;
-    poste_occupe: string;
+    poste_occupe?: string;
     lieu_execution?: string;
 
     pourcentage_smic1?: number;
@@ -285,11 +286,11 @@ export interface CompanyBackendPayload {
     prenom: string;
     date_naissance: string; // date as string
     numero_securite_sociale: string;
-    fonction: string;
+    fonction?: string;
     diplome_plus_eleve: string;
     niveau_diplome: string;
     annees_experience: number | null;
-    telephone: string;
+    telephone?: string;
     email: string;
     deja_maitre_apprentissage: string;
   };
@@ -312,7 +313,7 @@ export interface CompanyBackendPayload {
     date_fin: string; // date as string
     nombre_mois: number | null;
     duree_hebdomadaire: string;
-    poste_occupe: string;
+    poste_occupe?: string;
     lieu_execution: string;
     base_calcul_salaire: string;
 
