@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { quizData } from '../data/quizData';
-import { Timer, User, ChevronRight, ChevronLeft, ChevronDown, Send, CheckCircle2, Award, Download, ArrowRight, GraduationCap } from 'lucide-react';
+import { Timer, User, ChevronRight, ChevronLeft, ChevronDown, Send, CheckCircle2, Award, Download, ArrowRight, GraduationCap, Loader2 } from 'lucide-react';
 import Button from './ui/Button';
 import jsPDF from 'jspdf';
+import { api } from '../services/api';
 
 interface AdmissionTestProps {
     selectedFormation?: string | null;
@@ -24,6 +25,8 @@ export default function AdmissionTest({ selectedFormation, onFinish, initialUser
     const [userAnswers, setUserAnswers] = useState<(number | null)[]>([]);
     const [timeLeft, setTimeLeft] = useState(35 * 60);
     const [score, setScore] = useState(0);
+    const [isUploading, setIsUploading] = useState(false);
+    const [uploadError, setUploadError] = useState<string | null>(null);
 
     // Sync quizType if selectedFormation changes
     useEffect(() => {
@@ -85,21 +88,10 @@ export default function AdmissionTest({ selectedFormation, onFinish, initialUser
         }
     };
 
-    const finishQuiz = () => {
-        if (!quizData[quizType]) return;
-
-        let finalScore = 0;
-        const questions = quizData[quizType].questions;
-        userAnswers.forEach((ans, idx) => {
-            if (questions[idx] && ans === questions[idx].correct) finalScore += questions[idx].points;
-        });
-        setScore(finalScore);
-        setStep('results');
-    };
-
-    const generatePDF = () => {
+    const generatePDF = (finalScore?: number) => {
         const doc = new jsPDF();
         const date = new Date().toLocaleDateString('fr-FR');
+        const currentScore = finalScore !== undefined ? finalScore : score;
 
         const addHeader = (pageNum: number) => {
             doc.setFont('helvetica', 'bold');
@@ -147,9 +139,9 @@ export default function AdmissionTest({ selectedFormation, onFinish, initialUser
         doc.text('Score obtenu :', 25, 110);
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(14);
-        doc.text(`${score} / 40`, 60, 110);
+        doc.text(`${currentScore} / 40`, 60, 110);
 
-        const percentage = Math.round((score / 40) * 100);
+        const percentage = Math.round((currentScore / 40) * 100);
         doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
         doc.text(`Taux de réussite : ${percentage}%`, 25, 120);
@@ -210,7 +202,7 @@ export default function AdmissionTest({ selectedFormation, onFinish, initialUser
             doc.setFontSize(8);
             if (isCorrect) {
                 doc.setTextColor(0, 128, 0); // Green
-                doc.text(`Réponse donnée : ${q.options[userAnswerIdx]} (Correct)`, 28, y);
+                doc.text(`Réponse donnée : ${q.options[userAnswerIdx as number]} (Correct)`, 28, y);
             } else {
                 doc.setTextColor(180, 0, 0); // Red
                 const given = userAnswerIdx !== null ? q.options[userAnswerIdx] : "Aucune";
@@ -224,7 +216,32 @@ export default function AdmissionTest({ selectedFormation, onFinish, initialUser
             y += 10;
         });
 
-        doc.save(`Compte_Rendu_Test_${userName.replace(/\s+/g, '_')}.pdf`);
+        return doc.output('blob');
+    };
+
+    const finishQuiz = async () => {
+        if (!quizData[quizType]) return;
+
+        let finalScore = 0;
+        const questions = quizData[quizType].questions;
+        userAnswers.forEach((ans, idx) => {
+            if (questions[idx] && ans === questions[idx].correct) finalScore += questions[idx].points;
+        });
+        setScore(finalScore);
+        setStep('results');
+        setIsUploading(true);
+        setUploadError(null);
+
+        try {
+            const pdfBlob = generatePDF(finalScore);
+            await api.submitAdmissionResult(userEmail, pdfBlob);
+            console.log("✅ PDF Result successfully sent to backend");
+        } catch (error) {
+            console.error("❌ Failed to send PDF result:", error);
+            setUploadError("Erreur lors de l'envoi des résultats au serveur.");
+        } finally {
+            setIsUploading(false);
+        }
     };
 
     const formatTime = (seconds: number) => {
@@ -493,23 +510,29 @@ export default function AdmissionTest({ selectedFormation, onFinish, initialUser
                             </div>
 
                             <div className="space-y-3 pt-6">
-                                <button
-                                    onClick={generatePDF}
-                                    className="w-full py-5 bg-white text-[#1b1121] font-bold rounded-2xl hover:bg-white/90 transition-all flex items-center justify-center gap-3"
-                                >
-                                    <Download size={20} /> Télécharger votre Bilan
-                                </button>
+                                {isUploading ? (
+                                    <div className="w-full py-5 bg-white/10 text-white font-bold rounded-2xl flex items-center justify-center gap-3">
+                                        <Loader2 size={24} className="animate-spin text-[#8a1ed2]" />
+                                        Envoi des résultats...
+                                    </div>
+                                ) : uploadError ? (
+                                    <div className="w-full py-4 bg-rose-500/20 text-rose-500 border border-rose-500/30 rounded-2xl text-sm font-bold">
+                                        {uploadError}
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center justify-center gap-2 text-emerald-400 text-sm font-bold bg-emerald-400/10 py-4 rounded-2xl border border-emerald-400/20">
+                                        <CheckCircle2 size={16} /> Résultats envoyés avec succès
+                                    </div>
+                                )}
+                                
                                 <Button
                                     variant="success"
-                                    className="w-full py-5 text-lg"
+                                    className="w-full py-5 text-lg mt-4"
                                     onClick={onFinish}
                                     leftIcon={<CheckCircle2 size={24} />}
                                 >
                                     Retour au dossier
                                 </Button>
-                                <div className="flex items-center justify-center gap-2 text-white/30 text-sm">
-                                    <CheckCircle2 size={16} /> Résultats envoyés avec succès
-                                </div>
                             </div>
                         </div>
                     </motion.div>

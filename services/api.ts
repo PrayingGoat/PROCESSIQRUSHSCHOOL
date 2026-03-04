@@ -1122,6 +1122,30 @@ export const api = {
       console.error('❌ Error saving evaluation:', error);
       throw error;
     }
+  },
+
+  async submitAdmissionResult(email: string, file: Blob): Promise<any> {
+    try {
+      console.log('📤 Submitting Admission Result PDF for:', email);
+      const formData = new FormData();
+      formData.append('email', email);
+      formData.append('file', file, `Admission_Result_${email.replace(/@/g, '_at_')}.pdf`);
+
+      const response = await fetch(`${BASE_API_URL}/admission/resultats-pdf`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || errorData.message || `Upload failed: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('❌ Error submitting admission result:', error);
+      throw error;
+    }
   }
 };
 
