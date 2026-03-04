@@ -37,6 +37,8 @@ import CompanyDetailsModal from './dashboard/CompanyDetailsModal';
 import HistoryTimeline from './dashboard/HistoryTimeline';
 import { useApi } from '../hooks/useApi';
 import { useCandidates, getC, isPlaced } from '../hooks/useCandidates';
+import { usePagination } from '../hooks/usePagination';
+import Pagination from './ui/Pagination';
 
 interface ClassNTCViewProps {
     onSelectStudent: (student: any, tab: AdmissionTab) => void;
@@ -52,6 +54,18 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
     const [globalHistory, setGlobalHistory] = useState<any[]>([]);
     const [loadingHistory, setLoadingHistory] = useState(false);
     const [filter, setFilter] = useState<'all' | 'withFiche' | 'withCerfa' | 'complete'>('all');
+    const [formationFilter, setFormationFilter] = useState<string>('all');
+
+    // Available formations
+    const availableFormations = [
+        'BTS MCO A',
+        'BTS MCO 2',
+        'BTS NDRC 1',
+        'BTS COM',
+        'Titre Pro NTC',
+        'Titre Pro NTC B (rentrée decalée)',
+        'Bachelor RDC'
+    ];
 
     // Modal State
     const [selectedCandidate, setSelectedCandidate] = useState<any>(null);
@@ -416,7 +430,7 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
         console.log(`🌀 Initializing signing link generation for document ID: ${documentId}`);
         try {
             const result = await api.generateSigningLink(documentId);
-            
+
             if (result && result.signing_link) {
                 console.log('✨ [SUCCESS] Signing link generated. Opening link in a new tab:', result.signing_link);
                 window.open(result.signing_link, '_blank');
@@ -487,7 +501,7 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
         if (studentInfo.alternance === 'Non') {
             showToast('Attention: Cet étudiant est marqué comme "Non" alternance.', 'warning');
         }
-        
+
         onSelectStudent(student, AdmissionTab.ENTREPRISE);
         navigate('/admission');
     };
@@ -652,25 +666,89 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
 
 
     const filteredStudents = students.filter(student => {
+        const studentInfo = getC(student);
         const searchLower = searchQuery.toLowerCase();
-        const fullName = `${student.nom} ${student.prenom}`.toLowerCase();
-        const email = (student.email || '').toLowerCase();
-        const formation = (student.formation || '').toLowerCase();
+        const fullName = `${studentInfo.nom} ${studentInfo.prenom}`.toLowerCase();
+        const email = (studentInfo.email || '').toLowerCase();
+        const formation = (studentInfo.formation || '').toLowerCase();
 
-        return fullName.includes(searchLower) ||
+        // Search match
+        const matchesSearch = fullName.includes(searchLower) ||
             email.includes(searchLower) ||
             formation.includes(searchLower);
+
+        if (!matchesSearch) return false;
+
+        // Formation filter match
+        if (formationFilter !== 'all' && studentInfo.formation !== formationFilter) {
+            return false;
+        }
+
+        // Status filter match
+        if (filter === 'all') return true;
+        if (filter === 'withFiche') return studentInfo.has_fiche_renseignement;
+        if (filter === 'withCerfa') return studentInfo.has_cerfa;
+        if (filter === 'complete') return student.dossier_complet;
+
+        return true;
     });
 
+    const {
+        currentPage,
+        setCurrentPage,
+        totalPages,
+        paginatedItems
+    } = usePagination(filteredStudents, 10);
+
+    // Reset pagination when filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery, filter, formationFilter, setCurrentPage]);
+
     const stats = {
-        total: students.length,
-        complete: students.filter(s => s.dossier_complet).length,
-        withCerfa: students.filter(s => s.has_cerfa).length,
-        withFiche: students.filter(s => s.has_fiche_renseignement).length
+        total: filteredStudents.length,
+        complete: filteredStudents.filter(s => s.dossier_complet).length,
+        withCerfa: filteredStudents.filter(s => {
+            const si = getC(s);
+            return si.has_cerfa;
+        }).length,
+        withFiche: filteredStudents.filter(s => {
+            const si = getC(s);
+            return si.has_fiche_renseignement;
+        }).length
+    };
+
+    const calculateDocCompletion = (c: any) => {
+        const docs = [
+            c.has_cv,
+            c.has_cni,
+            c.has_lettre_motivation,
+            c.has_vitale,
+            c.has_diplome,
+            c.has_fiche_renseignement,
+            c.has_cerfa,
+            c.has_convention,
+            c.has_atre,
+            c.has_compte_rendu
+        ];
+        const completed = docs.filter(Boolean).length;
+        return Math.round((completed / docs.length) * 100);
+    };
+
+    const getCompletionColor = (percent: number) => {
+        if (percent === 100) return 'text-emerald-500 bg-emerald-50 border-emerald-100';
+        if (percent >= 50) return 'text-amber-500 bg-amber-50 border-amber-100';
+        return 'text-rose-500 bg-rose-50 border-rose-100';
+    };
+
+    const getCompletionGradient = (percent: number) => {
+        if (percent === 100) return 'from-emerald-400 to-emerald-600';
+        if (percent >= 50) return 'from-amber-400 to-amber-600';
+        return 'from-rose-400 to-rose-600';
     };
 
     return (
-        <div className="animate-fade-in space-y-10 pb-20">
+        <div className="animate-fade-in space-y-8 pb-20">
             {/* Company Modal */}
             <CompanyDetailsModal
                 isOpen={isCompanyModalOpen}
@@ -789,7 +867,20 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                             />
                         </div>
 
-                        <div className="flex items-center gap-2 bg-white p-2 rounded-2xl border border-slate-200 shadow-sm overflow-x-auto no-scrollbar max-w-full">
+                        <div className="flex flex-wrap items-center gap-2 bg-white p-2 rounded-2xl border border-slate-200 shadow-sm overflow-x-auto no-scrollbar max-w-full">
+                            <div className="flex items-center gap-2">
+                                <select
+                                    value={formationFilter}
+                                    onChange={(e) => setFormationFilter(e.target.value)}
+                                    className="px-4 py-3 rounded-xl text-xs font-black uppercase tracking-widest bg-slate-50 border-none outline-none focus:ring-2 focus:ring-blue-500/20 transition-all cursor-pointer min-w-[150px]"
+                                >
+                                    <option value="all">Toutes Formations</option>
+                                    {availableFormations.map(f => (
+                                        <option key={f} value={f}>{f}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="w-px h-6 bg-slate-200 mx-2 hidden sm:block"></div>
                             {[
                                 { id: 'all', label: 'Tous' },
                                 { id: 'withFiche', label: 'Avec Fiche' },
@@ -835,6 +926,7 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                                             <th className="px-8 py-6 text-center text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Formulaire Étudiant</th>
                                             <th className="px-8 py-6 text-center text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Formulaire Entreprise</th>
                                             <th className="px-8 py-6 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Formation</th>
+                                            <th className="px-8 py-6 text-center text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Complétion</th>
                                             <th className="px-8 py-6 text-center text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Documents</th>
                                             <th className="px-8 py-6 text-center text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Actions</th>
                                         </tr>
@@ -852,9 +944,9 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                                                     </div>
                                                 </td>
                                             </tr>
-                                        ) : filteredStudents.length === 0 ? (
+                                        ) : paginatedItems.length === 0 ? (
                                             <tr>
-                                                <td colSpan={5} className="px-8 py-32 text-center">
+                                                <td colSpan={6} className="px-8 py-32 text-center">
                                                     <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
                                                         <Search size={32} className="text-slate-200" />
                                                     </div>
@@ -903,6 +995,26 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                                                         <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-xl bg-slate-50 text-slate-600 border border-slate-100 font-black text-[10px] uppercase tracking-widest shadow-sm">
                                                             <Briefcase size={12} />
                                                             {student.formation}
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-8 py-6">
+                                                        <div className="flex flex-col gap-1.5 min-w-[120px]">
+                                                            <div className="flex justify-between items-center px-0.5">
+                                                                <span className={`text-[10px] font-black uppercase tracking-widest ${calculateDocCompletion(student) === 100 ? 'text-emerald-500' : calculateDocCompletion(student) >= 50 ? 'text-amber-500' : 'text-rose-500'}`}>
+                                                                    {calculateDocCompletion(student)}%
+                                                                </span>
+                                                                <div className="flex gap-0.5">
+                                                                    {[1, 2, 3, 4, 5].map((s) => (
+                                                                        <div key={s} className={`w-1 h-1 rounded-full ${s <= Math.round(calculateDocCompletion(student) / 20) ? (calculateDocCompletion(student) === 100 ? 'bg-emerald-400' : calculateDocCompletion(student) >= 50 ? 'bg-amber-400' : 'bg-rose-400') : 'bg-slate-200'}`} />
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                            <div className="h-2 bg-slate-100 rounded-full overflow-hidden p-0.5 border border-slate-200/50 shadow-inner">
+                                                                <div
+                                                                    className={`h-full rounded-full transition-all duration-1000 ease-out bg-gradient-to-r ${getCompletionGradient(calculateDocCompletion(student))}`}
+                                                                    style={{ width: `${calculateDocCompletion(student)}%` }}
+                                                                ></div>
+                                                            </div>
                                                         </div>
                                                     </td>
                                                     <td className="px-8 py-6">
@@ -998,68 +1110,102 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                                     </tbody>
                                 </table>
                             </div>
+                            <div className="px-8 border-t border-slate-100 bg-slate-50/30">
+                                <Pagination
+                                    currentPage={currentPage}
+                                    totalPages={totalPages}
+                                    onPageChange={setCurrentPage}
+                                />
+                            </div>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-                            {loading ? (
-                                Array(6).fill(0).map((_, i) => (
-                                    <div key={i} className="bg-white rounded-[32px] p-8 border border-slate-100 animate-pulse h-64"></div>
-                                ))
-                            ) : filteredStudents.map((student) => (
-                                <div key={student.record_id || student.id} className="bg-white border border-slate-200 rounded-[32px] p-8 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 group relative overflow-hidden">
-                                    <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full -mr-16 -mt-16 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        <div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+                                {loading ? (
+                                    Array(6).fill(0).map((_, i) => (
+                                        <div key={i} className="bg-white rounded-[32px] p-8 border border-slate-100 animate-pulse h-64"></div>
+                                    ))
+                                ) : paginatedItems.map((rawStudent) => {
+                                    const student = getC(rawStudent);
+                                    return (
+                                        <div key={rawStudent.record_id || rawStudent.id} className="bg-white border border-slate-200 rounded-[32px] p-8 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 group relative overflow-hidden">
+                                            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full -mr-16 -mt-16 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
 
-                                    <div className="flex justify-between items-start mb-8 relative z-10">
-                                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center text-slate-400 font-black text-2xl group-hover:from-blue-600 group-hover:to-indigo-600 group-hover:text-white transition-all duration-300 shadow-inner">
-                                            {student.numero_inscription || `${student.prenom?.[0]}${student.nom?.[0]}`}
-                                        </div>
-                                        <div className="flex gap-2 items-center">
-                                            <div className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border ${student.dossier_complet ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'
-                                                }`}>
-                                                {student.dossier_complet ? 'Dossier Complet' : 'Dossier Incomplet'}
+                                            <div className="flex justify-between items-start mb-8 relative z-10">
+                                                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center text-slate-400 font-black text-2xl group-hover:from-blue-600 group-hover:to-indigo-600 group-hover:text-white transition-all duration-300 shadow-inner">
+                                                    {student.numero_inscription || `${student.prenom?.[0]}${student.nom?.[0]}`}
+                                                </div>
+                                                <div className="flex gap-2 items-center">
+                                                    <div className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border ${rawStudent.dossier_complet ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'
+                                                        }`}>
+                                                        {rawStudent.dossier_complet ? 'Dossier Complet' : 'Dossier Incomplet'}
+                                                    </div>
+                                                    <ActionsMenu student={rawStudent} />
+                                                </div>
                                             </div>
-                                            <ActionsMenu student={student} />
-                                        </div>
-                                    </div>
 
-                                    <div className="mb-8 relative z-10">
-                                        <h3 className="text-2xl font-black text-slate-900 tracking-tight group-hover:text-blue-600 transition-colors">{student.nom} {student.prenom}</h3>
-                                        <p className="text-sm font-bold text-slate-400 truncate mt-1">{student.email}</p>
-                                    </div>
-
-                                    <div className="flex items-center gap-3 mb-8 relative z-10">
-                                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 font-black text-[9px] uppercase tracking-widest">
-                                            <Briefcase size={12} />
-                                            {student.formation}
-                                        </div>
-                                        {student.alternance === 'Oui' && student.entreprise_raison_sociale && (
-                                            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900 text-white font-black text-[9px] uppercase tracking-widest">
-                                                <Building size={12} />
-                                                {student.entreprise_raison_sociale}
+                                            <div className="mb-8 relative z-10">
+                                                <h3 className="text-2xl font-black text-slate-900 tracking-tight group-hover:text-blue-600 transition-colors">{student.nom} {student.prenom}</h3>
+                                                <p className="text-sm font-bold text-slate-400 truncate mt-1">{student.email}</p>
                                             </div>
-                                        )}
-                                    </div>
 
-                                    <div className="grid grid-cols-2 gap-3 pt-6 border-t border-slate-100 relative z-10">
-                                        <Button
-                                            variant="secondary"
-                                            size="sm"
-                                            className="w-full text-[10px] font-black"
-                                            onClick={() => handleViewDetails(student.record_id || student.id)}
-                                        >
-                                            Fiche Étudiant
-                                        </Button>
-                                        <Button
-                                            variant="primary"
-                                            size="sm"
-                                            className={`w-full text-[10px] font-black ${!isPlaced(student) ? '!bg-amber-600 !border-amber-600' : ''}`}
-                                            onClick={() => isPlaced(student) ? handleViewCompanyDetails(student) : handleFillForm(student)}
-                                        >
-                                            {isPlaced(student) ? 'Voir Entreprise' : 'Lier Entreprise'}
-                                        </Button>
-                                    </div>
-                                </div>
-                            ))}
+                                            <div className="flex items-center gap-3 mb-4 relative z-10">
+                                                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 font-black text-[9px] uppercase tracking-widest">
+                                                    <Briefcase size={12} />
+                                                    {student.formation}
+                                                </div>
+                                                {student.alternance === 'Oui' && student.entreprise && student.entreprise !== 'En recherche' && (
+                                                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900 text-white font-black text-[9px] uppercase tracking-widest">
+                                                        <Building size={12} />
+                                                        {student.entreprise}
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <div className="mb-8 relative z-10">
+                                                <div className="flex justify-between items-center mb-2 px-1">
+                                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Dossier</span>
+                                                    <span className={`text-[10px] font-black uppercase tracking-widest ${calculateDocCompletion(student) === 100 ? 'text-emerald-500' : calculateDocCompletion(student) >= 50 ? 'text-amber-500' : 'text-rose-500'}`}>
+                                                        {calculateDocCompletion(student)}%
+                                                    </span>
+                                                </div>
+                                                <div className="h-2.5 bg-slate-50 rounded-full overflow-hidden p-0.5 border border-slate-100 shadow-inner">
+                                                    <div
+                                                        className={`h-full rounded-full transition-all duration-1000 ease-out bg-gradient-to-r ${getCompletionGradient(calculateDocCompletion(student))}`}
+                                                        style={{ width: `${calculateDocCompletion(student)}%` }}
+                                                    ></div>
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-3 pt-6 border-t border-slate-100 relative z-10">
+                                                <Button
+                                                    variant="secondary"
+                                                    size="sm"
+                                                    className="w-full text-[10px] font-black"
+                                                    onClick={() => handleViewDetails(rawStudent.record_id || rawStudent.id)}
+                                                >
+                                                    Fiche Étudiant
+                                                </Button>
+                                                <Button
+                                                    variant="primary"
+                                                    size="sm"
+                                                    className={`w-full text-[10px] font-black ${!isPlaced(rawStudent) ? '!bg-amber-600 !border-amber-600' : ''}`}
+                                                    onClick={() => isPlaced(rawStudent) ? handleViewCompanyDetails(rawStudent) : handleFillForm(rawStudent)}
+                                                >
+                                                    {isPlaced(rawStudent) ? 'Voir Entreprise' : 'Lier Entreprise'}
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                            <div className="mt-12">
+                                <Pagination
+                                    currentPage={currentPage}
+                                    totalPages={totalPages}
+                                    onPageChange={setCurrentPage}
+                                />
+                            </div>
                         </div>
                     )}
                 </>
