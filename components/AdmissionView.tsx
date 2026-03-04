@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
     Briefcase,
     CheckCircle2,
@@ -33,15 +33,10 @@ import QuestionnaireForm from './QuestionnaireForm';
 import EntrepriseForm from './EntrepriseForm';
 import { api } from '../services/api';
 import { useNavigate } from 'react-router-dom';
-
-interface AdmissionViewProps {
-    selectedStudent?: any;
-    selectedTab?: AdmissionTab | null;
-    onClearSelection?: () => void;
-}
+import jsPDF from 'jspdf';
 import { useAppStore } from '../store/useAppStore';
-
-
+import { useApi } from '../hooks/useApi';
+import { useCandidates, getC } from '../hooks/useCandidates';
 
 // --- CONSTANTS ---
 
@@ -77,6 +72,12 @@ const FORMATION_CARDS = [
     { id: 'bachelor', title: 'BACHELOR RDC', subtitle: 'Responsable Développement Commercial', color: 'purple', gradient: 'from-purple-500 to-purple-600' },
     { id: 'tpntc', title: 'TP NTC', subtitle: 'Titre Pro Négociateur Technico-Commercial', color: 'orange', gradient: 'from-orange-500 to-orange-600' }
 ];
+
+interface AdmissionViewProps {
+    selectedStudent?: any;
+    selectedTab?: AdmissionTab | null;
+    onClearSelection?: () => void;
+}
 
 // --- COMPONENTS ---
 
@@ -124,6 +125,7 @@ const EvaluationGrid = ({ studentData, onNext }: { studentData: any, onNext?: ()
     const { showToast } = useAppStore();
     const [evalData, setEvalData] = useState({
         candidatNom: '',
+        email: '',
         heureEntretien: '',
         chargeAdmission: '',
         dateEntretien: '',
@@ -136,10 +138,13 @@ const EvaluationGrid = ({ studentData, onNext }: { studentData: any, onNext?: ()
     });
 
     const [errors, setErrors] = useState<Record<string, boolean>>({});
+    const [pdfUploadStatus, setPdfUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
+    const [pdfUploadError, setPdfUploadError] = useState<string | null>(null);
 
     const validateForm = () => {
         const newErrors: Record<string, boolean> = {};
         if (!evalData.candidatNom) newErrors.candidatNom = true;
+        if (!evalData.email) newErrors.email = true;
         if (!evalData.dateEntretien) newErrors.dateEntretien = true;
         if (!evalData.heureEntretien) newErrors.heureEntretien = true;
         if (!evalData.chargeAdmission) newErrors.chargeAdmission = true;
@@ -166,6 +171,7 @@ const EvaluationGrid = ({ studentData, onNext }: { studentData: any, onNext?: ()
             setEvalData(prev => ({
                 ...prev,
                 candidatNom: `${data.prenom || ''} ${data.nom_naissance || ''}`.trim(),
+                email: data.email || data.fields?.email || data.fields?.['E-mail'] || data.informations_personnelles?.email || '',
                 formation: data.formation_souhaitee || '',
                 dateEntretien: new Date().toISOString().split('T')[0]
             }));
@@ -189,6 +195,7 @@ const EvaluationGrid = ({ studentData, onNext }: { studentData: any, onNext?: ()
         if (window.confirm("Voulez-vous vraiment réinitialiser la grille ?")) {
             setEvalData({
                 candidatNom: '',
+                email: '',
                 heureEntretien: '',
                 chargeAdmission: '',
                 dateEntretien: '',
@@ -204,382 +211,175 @@ const EvaluationGrid = ({ studentData, onNext }: { studentData: any, onNext?: ()
 
     const [isSaving, setIsSaving] = useState(false);
 
+    const generateEvaluationPDFBlob = () => {
+        const doc = new jsPDF();
+        const date = new Date().toLocaleDateString('fr-FR');
+        const year = new Date().getFullYear();
+
+        const addHeader = (pageNum: number) => {
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(14);
+            doc.setTextColor(0, 0, 0);
+            doc.text('RUSH SCHOOL - COMPTE RENDU D\'ENTRETIEN', 20, 15);
+
+            doc.setDrawColor(200, 200, 200);
+            doc.setLineWidth(0.5);
+            doc.line(20, 18, 190, 18);
+
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(100, 100, 100);
+            doc.text(`CFA Process IQ • Admissions ${year}`, 20, 23);
+            doc.text(`Page ${pageNum}`, 190, 23, { align: 'right' });
+        };
+
+        addHeader(1);
+
+        // Candidate Info
+        doc.setFillColor(248, 250, 252);
+        doc.roundedRect(20, 35, 170, 55, 3, 3, 'F');
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(100, 116, 139);
+        doc.text('CANDIDAT', 25, 45);
+        doc.setTextColor(30, 41, 59);
+        doc.text(evalData.candidatNom || 'Non renseigné', 25, 52);
+
+        doc.setTextColor(100, 116, 139);
+        doc.text('E-MAIL', 110, 45);
+        doc.setTextColor(30, 41, 59);
+        doc.text(evalData.email || 'Non renseigné', 110, 52);
+
+        doc.setTextColor(100, 116, 139);
+        doc.text('FORMATION VISÉE', 25, 65);
+        doc.setTextColor(30, 41, 59);
+        doc.text(evalData.formation || 'Non renseignée', 25, 72);
+
+        doc.setTextColor(100, 116, 139);
+        doc.text('CHARGÉ D\'ADMISSION', 110, 65);
+        doc.setTextColor(30, 41, 59);
+        doc.text(evalData.chargeAdmission || 'Non renseigné', 110, 72);
+
+        doc.setTextColor(100, 116, 139);
+        doc.text('DATE DE L\'ENTRETIEN', 25, 82);
+        doc.setTextColor(30, 41, 59);
+        doc.text(`${evalData.dateEntretien} à ${evalData.heureEntretien || '--:--'}`, 25, 88);
+
+        // Evaluation Criterias
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text('ÉVALUATION DES COMPÉTENCES', 20, 95);
+        doc.line(20, 97, 85, 97);
+
+        let y = 105;
+        const criterias = [
+            { id: 'critere1', title: 'Savoir-être et présentation', desc: 'Points forts, progression, curiosité, maturité.' },
+            { id: 'critere2', title: 'Cohérence du projet', desc: 'Logique du parcours, motivation pour le programme.' },
+            { id: 'critere3', title: 'Expériences et engagements', desc: 'Richesse des expériences, activités extra-scolaires.' },
+            { id: 'critere4', title: 'Expression en Anglais', desc: 'Spontanéité et fluidité des réponses en anglais.' }
+        ];
+
+        criterias.forEach(c => {
+            const score = Number(evalData[c.id as keyof typeof evalData]) || 0;
+
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'bold');
+            doc.text(c.title, 25, y);
+
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(100, 116, 139);
+            doc.text(c.desc, 25, y + 5);
+
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(0, 0, 0);
+            doc.text(`${score} / 5`, 170, y + 3, { align: 'right' });
+
+            y += 18;
+        });
+
+        // Observations
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(30, 41, 59);
+        doc.text('OBSERVATIONS & COMMENTAIRES', 20, y + 5);
+        doc.line(20, y + 7, 95, y + 7);
+
+        y += 15;
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        const comments = evalData.commentaires || "Aucune observation particulière n'a été signalée pour ce candidat.";
+        const splitComments = doc.splitTextToSize(comments, 170);
+        doc.text(splitComments, 20, y);
+
+        // Footer & Final Result
+        const finalY = 240;
+        doc.setDrawColor(241, 245, 249);
+        doc.line(20, finalY - 10, 190, finalY - 10);
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text('RÉSULTAT FINAL', 130, finalY);
+
+        doc.setFontSize(24);
+        doc.setTextColor(16, 185, 129); // Emerald-500
+        doc.text(`${totalScore}`, 140, finalY + 15, { align: 'right' });
+        doc.setFontSize(12);
+        doc.setTextColor(100, 116, 139);
+        doc.text('/ 20', 142, finalY + 15);
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(16, 185, 129);
+        doc.text(getAppreciation(totalScore).toUpperCase(), 130, finalY + 25);
+
+        // Signature Box
+        doc.setDrawColor(226, 232, 240);
+        doc.setLineDashPattern([2, 2], 0);
+        doc.roundedRect(20, finalY, 80, 30, 2, 2, 'D');
+        doc.setFontSize(8);
+        doc.setTextColor(148, 163, 184);
+        doc.text('Signature du chargé d\'admission', 60, finalY + 18, { align: 'center' });
+
+        return doc.output('blob');
+    };
+
     const saveEvaluation = async () => {
         if (!validateForm()) return;
 
-        // No restriction on studentId for interview evaluation anymore
-
         try {
             setIsSaving(true);
-            const payload = {
-                studentId: studentData?.id || studentData?.record_id,
-                ...evalData,
-                totalScore,
-                appreciation: getAppreciation(totalScore)
-            };
+            setPdfUploadStatus('uploading');
+            setPdfUploadError(null);
 
-            const response = await api.saveInterviewEvaluation(payload);
-            if (response.success) {
-                showToast(response.message || "Évaluation enregistrée avec succès !", "success");
-            } else {
-                throw new Error("Erreur lors de l'enregistrement");
+            // Automatic PDF generation and upload
+            const pdfBlob = generateEvaluationPDFBlob();
+            const studentEmail = evalData.email;
+
+            try {
+                const response = await api.submitInterviewResult(studentEmail, pdfBlob);
+                console.log("✅ Interview PDF sent to backend");
+                setPdfUploadStatus('success');
+                showToast("Évaluation et compte-rendu envoyés avec succès !", "success");
+            } catch (pdfError) {
+                console.error("❌ PDF upload failed:", pdfError);
+                setPdfUploadStatus('error');
+                setPdfUploadError("Erreur lors de l'envoi du PDF au serveur.");
+                showToast("Erreur lors de l'envoi du PDF.", "error");
             }
+
         } catch (error) {
-            console.error('Error saving evaluation:', error);
-            showToast("Erreur lors de l'enregistrement de l'évaluation.", "error");
+            console.error('Error in saveEvaluation:', error);
+            setPdfUploadStatus('error');
+            setPdfUploadError("Erreur lors du traitement de l'évaluation.");
+            showToast("Erreur lors du traitement de l'évaluation.", "error");
         } finally {
             setIsSaving(false);
         }
     };
 
-
-    const exportEvaluationPDF = () => {
-        if (!validateForm()) return;
-
-        const printWindow = window.open('', '_blank');
-        if (!printWindow) {
-            alert("Veuillez autoriser les pop-ups pour générer le PDF.");
-            return;
-        }
-
-        const content = `
-            <!DOCTYPE html>
-            <html lang="fr">
-            <head>
-                <meta charset="UTF-8">
-                <title>Compte Rendu d'Entretien - ${evalData.candidatNom}</title>
-                <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-                <style>
-                    @page { 
-                        size: A4; 
-                        margin: 0; 
-                    }
-                    * { 
-                        box-sizing: border-box; 
-                        -webkit-print-color-adjust: exact; 
-                        print-color-adjust: exact; 
-                    }
-                    body { 
-                        font-family: 'Plus Jakarta Sans', sans-serif; 
-                        color: #1e293b; 
-                        margin: 0; 
-                        padding: 0; 
-                        line-height: 1.5;
-                        background: white;
-                    }
-                    .page {
-                        position: relative;
-                        height: 297mm; /* Full A4 height */
-                        width: 210mm;  /* Full A4 width */
-                        padding: 15mm;
-                        margin: 0 auto;
-                    }
-                    .header { 
-                        display: flex; 
-                        justify-content: space-between; 
-                        align-items: center; 
-                        padding-bottom: 20px; 
-                        margin-bottom: 25px; 
-                        border-bottom: 2px solid #f1f5f9;
-                    }
-                    .brand {
-                        display: flex;
-                        align-items: center;
-                        gap: 12px;
-                    }
-                    .logo-placeholder {
-                        width: 40px;
-                        height: 40px;
-                        background: #4f46e5;
-                        border-radius: 12px;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        color: white;
-                        font-weight: 800;
-                        font-size: 20px;
-                    }
-                    .title-area h1 { 
-                        font-size: 24px; 
-                        font-weight: 800; 
-                        color: #0f172a; 
-                        margin: 0; 
-                        letter-spacing: -0.025em;
-                    }
-                    .title-area p { 
-                        font-size: 11px; 
-                        font-weight: 700; 
-                        color: #6366f1; 
-                        text-transform: uppercase; 
-                        letter-spacing: 0.1em; 
-                        margin: 4px 0 0 0; 
-                    }
-                    
-                    .info-grid { 
-                        display: grid; 
-                        grid-template-columns: repeat(2, 1fr); 
-                        gap: 20px; 
-                        margin-bottom: 30px; 
-                        background: #f8fafc;
-                        padding: 20px;
-                        border-radius: 16px;
-                        border: 1px solid #f1f5f9;
-                    }
-                    .info-item .label { 
-                        font-size: 10px; 
-                        font-weight: 700; 
-                        color: #64748b; 
-                        text-transform: uppercase; 
-                        letter-spacing: 0.05em; 
-                        margin-bottom: 4px; 
-                    }
-                    .info-item .value { 
-                        font-size: 14px; 
-                        font-weight: 700; 
-                        color: #1e293b; 
-                    }
-
-                    h3 { 
-                        font-size: 16px; 
-                        font-weight: 800; 
-                        color: #0f172a; 
-                        margin: 30px 0 15px 0; 
-                        display: flex;
-                        align-items: center;
-                        gap: 10px;
-                    }
-                    h3::after {
-                        content: '';
-                        flex: 1;
-                        height: 1px;
-                        background: #e2e8f0;
-                    }
-
-                    .criteria-list {
-                        display: flex;
-                        flex-direction: column;
-                        gap: 12px;
-                    }
-                    .criterion { 
-                        display: flex; 
-                        justify-content: space-between; 
-                        align-items: center; 
-                        padding: 12px 16px; 
-                        background: white;
-                        border: 1px solid #f1f5f9;
-                        border-radius: 12px;
-                        break-inside: avoid; 
-                    }
-                    .criterion-info { 
-                        max-width: 80%; 
-                    }
-                    .criterion-title { 
-                        font-weight: 700; 
-                        font-size: 13px; 
-                        color: #1e293b; 
-                    }
-                    .criterion-desc { 
-                        font-size: 11px; 
-                        color: #64748b; 
-                        margin-top: 2px;
-                    }
-                    .score-pill { 
-                        background: #0f172a; 
-                        color: white; 
-                        padding: 6px 14px;
-                        border-radius: 10px;
-                        font-weight: 800; 
-                        font-size: 16px; 
-                        min-width: 45px;
-                        text-align: center;
-                    }
-                    .score-pill.low { background: #ef4444; }
-                    .score-pill.medium { background: #f59e0b; }
-                    .score-pill.high { background: #10b981; }
-
-                    .observations { 
-                        background: #fff; 
-                        padding: 20px; 
-                        border-radius: 16px; 
-                        font-size: 13px; 
-                        line-height: 1.6; 
-                        color: #475569; 
-                        border: 1px solid #e2e8f0; 
-                        min-height: 100px; 
-                        white-space: pre-wrap;
-                    }
-
-                    .footer { 
-                        margin-top: 40px; 
-                        padding-top: 25px; 
-                        border-top: 2px solid #f1f5f9; 
-                        display: flex; 
-                        justify-content: space-between; 
-                        align-items: flex-end; 
-                    }
-                    .signature-area {
-                        flex: 1;
-                    }
-                    .signature-box { 
-                        border: 2px dashed #e2e8f0; 
-                        height: 100px; 
-                        width: 280px; 
-                        border-radius: 16px; 
-                        display: flex; 
-                        align-items: center; 
-                        justify-content: center; 
-                        color: #94a3b8; 
-                        font-size: 11px; 
-                        font-weight: 600;
-                        background: #f8fafc; 
-                        margin-top: 10px;
-                    }
-                    
-                    .result-card {
-                        background: #0f172a;
-                        color: white;
-                        padding: 20px 30px;
-                        border-radius: 20px;
-                        text-align: center;
-                        min-width: 200px;
-                        box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.2);
-                    }
-                    .result-label { 
-                        font-size: 10px; 
-                        font-weight: 700;
-                        text-transform: uppercase; 
-                        letter-spacing: 0.15em; 
-                        color: #94a3b8;
-                        margin-bottom: 8px; 
-                    }
-                    .result-value-container {
-                        display: flex;
-                        align-items: baseline;
-                        justify-content: center;
-                        gap: 4px;
-                        margin-bottom: 8px;
-                    }
-                    .result-value { 
-                        font-size: 42px; 
-                        font-weight: 900; 
-                        line-height: 1; 
-                        color: #10b981; 
-                    }
-                    .result-max { 
-                        font-size: 16px; 
-                        font-weight: 700; 
-                        color: #475569; 
-                    }
-                    .result-appreciation { 
-                        font-weight: 800; 
-                        font-size: 11px; 
-                        text-transform: uppercase; 
-                        letter-spacing: 0.05em; 
-                        color: #10b981; 
-                        background: rgba(16,185,129,0.1); 
-                        padding: 5px 12px; 
-                        border-radius: 100px; 
-                        display: inline-block; 
-                    }
-                </style>
-            </head>
-            <body>
-                <div class="page">
-                    <div class="header">
-                        <div class="title-area">
-                            <p>CFA Process IQ • Rush School</p>
-                            <h1>Compte Rendu d'Entretien</h1>
-                        </div>
-                        <div class="brand">
-                            <div class="logo-placeholder">P</div>
-                            <div style="text-align: right">
-                                <div style="font-weight: 800; font-size: 14px; color: #0f172a">PROCESS IQ</div>
-                                <div style="font-weight: 600; font-size: 10px; color: #64748b">ADMISSIONS ${new Date().getFullYear()}</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="info-grid">
-                        <div class="info-item">
-                            <div class="label">Candidat</div>
-                            <div class="value">${evalData.candidatNom || 'Non renseigné'}</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="label">Formation visée</div>
-                            <div class="value">${evalData.formation || 'Non renseignée'}</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="label">Chargé d'admission</div>
-                            <div class="value">${evalData.chargeAdmission || 'Non renseigné'}</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="label">Date de l'entretien</div>
-                            <div class="value">${evalData.dateEntretien} à ${evalData.heureEntretien || '--:--'}</div>
-                        </div>
-                    </div>
-
-                    <h3>Évaluation des Compétences</h3>
-                    <div class="criteria-list">
-                        ${[
-                { id: 'critere1', title: 'Savoir-être et présentation', desc: 'Points forts, progression, curiosité, maturité.' },
-                { id: 'critere2', title: 'Cohérence du projet', desc: 'Logique du parcours, motivation pour le programme.' },
-                { id: 'critere3', title: 'Expériences et engagements', desc: 'Richesse des expériences, activités extra-scolaires.' },
-                { id: 'critere4', title: 'Expression en Anglais', desc: 'Spontanéité et fluidité des réponses en anglais.' }
-            ].map(c => {
-                const score = Number(evalData[c.id as keyof typeof evalData]) || 0;
-                let scoreClass = '';
-                if (score > 4) scoreClass = 'high';
-                else if (score >= 3) scoreClass = 'medium';
-                else if (score > 0) scoreClass = 'low';
-
-                return `
-                                <div class="criterion">
-                                    <div class="criterion-info">
-                                        <div class="criterion-title">${c.title}</div>
-                                        <div class="criterion-desc">${c.desc}</div>
-                                    </div>
-                                    <div class="score-pill ${scoreClass}">${score || '-'}</div>
-                                </div>
-                            `;
-            }).join('')}
-                    </div>
-
-                    <h3>Observations & Commentaires</h3>
-                    <div class="observations">${evalData.commentaires || "Aucune observation particulière n'a été signalée pour ce candidat."}</div>
-
-                    <div class="footer">
-                        <div class="signature-area">
-                            <div class="label">Validation Session</div>
-                            <div class="signature-box">Signature du chargé d'admission</div>
-                        </div>
-                        
-                        <div class="result-card">
-                            <div class="result-label">Score Final</div>
-                            <div class="result-value-container">
-                                <span class="result-value">${totalScore}</span>
-                                <span class="result-max">/20</span>
-                            </div>
-                            <div class="result-appreciation">${getAppreciation(totalScore)}</div>
-                        </div>
-                    </div>
-                </div>
-
-                <script>
-                    window.onload = function() { 
-                        setTimeout(() => {
-                            window.print(); 
-                            window.onafterprint = function(){ window.close(); }
-                        }, 500);
-                    };
-                </script>
-            </body>
-            </html>
-        `;
-
-        printWindow.document.open();
-        printWindow.document.write(content);
-        printWindow.document.close();
-    };
 
     const handleScoreChange = (critere: string, value: number) => {
         setEvalData(prev => ({ ...prev, [critere]: value }));
@@ -602,6 +402,7 @@ const EvaluationGrid = ({ studentData, onNext }: { studentData: any, onNext?: ()
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-4">
                             <Input label="Nom et Prénom du candidat" required placeholder="Entrez le nom complet" value={evalData.candidatNom} error={errors.candidatNom ? "Le nom est requis" : ""} onChange={(e) => setEvalData({ ...evalData, candidatNom: e.target.value })} />
+                            <Input label="Email du candidat" required placeholder="email@exemple.com" type="email" value={evalData.email} error={errors.email ? "L'email est requis" : ""} onChange={(e) => setEvalData({ ...evalData, email: e.target.value })} />
                             <Input label="Heure d'entretien" required type="time" value={evalData.heureEntretien} error={errors.heureEntretien ? "L'heure est requise" : ""} onChange={(e) => setEvalData({ ...evalData, heureEntretien: e.target.value })} />
                         </div>
                         <div className="space-y-4">
@@ -704,27 +505,47 @@ const EvaluationGrid = ({ studentData, onNext }: { studentData: any, onNext?: ()
                         </div>
                     </div>
 
-                    <div className="flex flex-col md:flex-row gap-4 pt-8 border-t border-slate-100">
-                        <Button variant="secondary" className="flex-1" onClick={resetEvaluation} leftIcon={<RotateCcw size={18} />}>
-                            Réinitialiser
-                        </Button>
-                        <Button
-                            variant="success"
-                            className="flex-1"
-                            onClick={saveEvaluation}
-                            leftIcon={isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-                            disabled={isSaving}
-                        >
-                            {isSaving ? 'Enregistrement...' : 'Enregistrer'}
-                        </Button>
-                        <Button variant="primary" className="flex-1 !bg-slate-900" onClick={exportEvaluationPDF} leftIcon={<Printer size={18} />}>
-                            Exporter PDF
-                        </Button>
-                        {onNext && (
-                            <Button variant="outline" className="flex-1" onClick={onNext} rightIcon={<ArrowRight size={18} />}>
-                                Continuer
-                            </Button>
+                    <div className="space-y-4 pt-8 border-t border-slate-100">
+                        {pdfUploadStatus === 'uploading' && (
+                            <div className="w-full py-4 bg-blue-50 text-blue-600 font-bold rounded-2xl flex items-center justify-center gap-3 border border-blue-100 animate-pulse">
+                                <Loader2 size={20} className="animate-spin" />
+                                <span className="text-xs uppercase tracking-widest">Envoi du compte-rendu PDF...</span>
+                            </div>
                         )}
+
+                        {pdfUploadStatus === 'error' && (
+                            <div className="w-full py-4 bg-rose-50 text-rose-500 border border-rose-100 rounded-2xl flex items-center justify-center gap-3">
+                                <AlertCircle size={20} />
+                                <span className="text-xs font-bold uppercase tracking-widest">{pdfUploadError}</span>
+                            </div>
+                        )}
+
+                        {pdfUploadStatus === 'success' && (
+                            <div className="w-full py-4 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-2xl flex items-center justify-center gap-3">
+                                <CheckCircle2 size={20} />
+                                <span className="text-xs font-bold uppercase tracking-widest">Compte-rendu envoyé avec succès</span>
+                            </div>
+                        )}
+
+                        <div className="flex flex-col md:flex-row gap-4">
+                            <Button variant="secondary" className="flex-1" onClick={resetEvaluation} leftIcon={<RotateCcw size={18} />}>
+                                Réinitialiser
+                            </Button>
+                            <Button
+                                variant="success"
+                                className="flex-1"
+                                onClick={saveEvaluation}
+                                leftIcon={isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+                                disabled={isSaving}
+                            >
+                                {isSaving ? 'Enregistrement...' : 'Enregistrer'}
+                            </Button>
+                            {onNext && (
+                                <Button variant="outline" className="flex-1" onClick={onNext} rightIcon={<ArrowRight size={18} />}>
+                                    Continuer
+                                </Button>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -733,9 +554,6 @@ const EvaluationGrid = ({ studentData, onNext }: { studentData: any, onNext?: ()
 };
 
 // --- INTERVIEWS TRACKING COMPONENT ---
-
-import { useApi } from '../hooks/useApi';
-import { useCandidates, getC } from '../hooks/useCandidates';
 
 const InterviewsTrackingView = ({ onLaunchInterview }: { onLaunchInterview: (candidate: any) => void }) => {
     const { candidates, loading: isLoading } = useCandidates();
@@ -1037,10 +855,6 @@ const AdmissionView = ({ selectedStudent, selectedTab, onClearSelection }: Admis
 
     const uploadedCount = Object.keys(uploadedFiles).length;
     const progressPercent = (uploadedCount / REQUIRED_DOCUMENTS.length) * 100;
-
-    // --- RENDER LOGIC ---
-
-    // --- RENDER LOGIC ---
 
     return (
         <div className="animate-fade-in max-w-6xl mx-auto pb-20 relative">
