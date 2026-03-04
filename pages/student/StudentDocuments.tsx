@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import StudentNavbar from '../../components/StudentNavbar';
 import { api } from '../../services/api';
-import { getAuthUserId } from '../../services/session';
+import { getAuthEmail, getAuthUserId } from '../../services/session';
 
 type DocumentCategory = 'all' | 'administrative' | 'educational' | 'company' | 'certificate';
 type DocumentStatus = 'available' | 'pending' | 'signed' | 'in-progress';
@@ -25,6 +25,7 @@ interface StudentDoc {
   description: string;
   category: DocumentCategory;
   status: DocumentStatus;
+  signableByStudent: boolean;
   date: string;
   size?: string;
 }
@@ -43,6 +44,30 @@ const mapStatus = (status: string): DocumentStatus => {
   if (status === 'pending') return 'in-progress';
   if (status === 'valid') return 'available';
   return 'available';
+};
+
+const normalizeWorkflowText = (value: string): string => {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+};
+
+const STUDENT_SIGNATURE_KEYWORDS = [
+  'fiche atre',
+  'atre',
+  'reglement interieur',
+  'reglement',
+  'prise de connaissance',
+  'charte informatique',
+];
+
+const canStudentSignDocument = (title: string): boolean => {
+  const normalizedTitle = normalizeWorkflowText(title);
+  if (!normalizedTitle) return false;
+  return STUDENT_SIGNATURE_KEYWORDS.some((keyword) => normalizedTitle.includes(keyword));
 };
 
 const StudentDocuments: React.FC = () => {
@@ -64,6 +89,7 @@ const StudentDocuments: React.FC = () => {
         description: d.description || '',
         category: mapCategory(String(d.category || '')),
         status: mapStatus(String(d.status || '')),
+        signableByStudent: canStudentSignDocument(String(d.title || '')),
         date: d.createdAt ? new Date(d.createdAt).toLocaleDateString('fr-FR') : '-',
         size: d.size ? `${Math.round(Number(d.size) / 1024)} KB` : undefined
       }));
@@ -207,6 +233,50 @@ const StudentDocuments: React.FC = () => {
     }
   };
 
+  const signDoc = async (doc: StudentDoc): Promise<void> => {
+    if (!doc.signableByStudent) {
+      alert('Ce document doit etre signe par un autre role (RH/CFA/commercial).');
+      return;
+    }
+
+    try {
+      const signerEmail = (getAuthEmail() || '').trim();
+      const signerName = 'Etudiant';
+      let signingLink: { signingUrl: string; envelopeId?: string };
+
+      try {
+        signingLink = await api.getDocumentSigningLink(doc.id, {
+          signerRole: 'student',
+          signerEmail: signerEmail || undefined,
+          signerName
+        });
+      } catch {
+        await api.requestDocumentSignature(doc.id, {
+          participants: signerEmail
+            ? {
+                student: {
+                  email: signerEmail,
+                  name: signerName
+                }
+              }
+            : undefined
+        });
+        signingLink = await api.getDocumentSigningLink(doc.id, {
+          signerRole: 'student',
+          signerEmail: signerEmail || undefined,
+          signerName
+        });
+      }
+
+      if (!signingLink.signingUrl) {
+        throw new Error('Lien de signature indisponible.');
+      }
+      window.open(signingLink.signingUrl, '_blank', 'noopener,noreferrer');
+    } catch (error: any) {
+      alert(error.message || 'Impossible de lancer la signature');
+    }
+  };
+
   return (
     <div className="p-6 space-y-6">
       <StudentNavbar />
@@ -283,6 +353,15 @@ const StudentDocuments: React.FC = () => {
                 <Eye size={16} />
                 Preview
               </button>
+              {doc.status === 'pending' && doc.signableByStudent && (
+                <button
+                  onClick={() => signDoc(doc)}
+                  className="flex-1 py-2.5 bg-rose-500 text-white rounded-lg font-medium hover:bg-rose-600 transition-colors flex items-center justify-center gap-2"
+                >
+                  <FileSignature size={16} />
+                  Sign
+                </button>
+              )}
               <button onClick={() => downloadDoc(doc)} className={`flex-1 py-2.5 text-white rounded-lg font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2 ${cardColor(doc.category)}`}>
                 <Download size={16} />
                 Download

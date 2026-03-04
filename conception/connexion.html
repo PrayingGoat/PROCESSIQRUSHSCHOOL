@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ProcessIQ — Connexion</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════
+   DESIGN TOKENS
+═══════════════════════════════════════════ */
+:root {
+  --primary:       rgb(107, 60, 210);
+  --primary-deep:  rgb(58, 28, 138);
+  --primary-light: rgb(140, 92, 240);
+  --beige:         #F5E6C8;
+  --beige-light:   #FDF8F0;
+  --beige-mid:     #EDD9B0;
+  --gold:          #E8C97A;
+  --gold-deep:     #C9A84C;
+  --dark:          #0D0D1C;
+  --dark-mid:      rgb(32, 22, 80);
+  --text:          #18162A;
+  --text-muted:    #6E6880;
+
+  --font-display: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-body:    'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-ui:      'Plus Jakarta Sans', system-ui, sans-serif;
+
+  --ease-smooth:  cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --ease-bounce:  cubic-bezier(0.34, 1.56, 0.64, 1);
+  --radius:       4px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; height: 100%; }
+
+body {
+  min-height: 100vh;
+  display: flex;
+  font-family: var(--font-ui);
+  overflow: hidden;
+}
+
+/* ── Grain texture ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+  opacity: 0.03;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* ═══════════════════════════════════════════
+   LEFT PANEL — BRAND
+═══════════════════════════════════════════ */
+.panel-brand {
+  width: 48%;
+  min-height: 100vh;
+  background: var(--dark);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 3.5rem 4rem;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+/* Grid overlay */
+.panel-brand::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(107,60,210,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(107,60,210,0.05) 1px, transparent 1px);
+  background-size: 60px 60px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Ambient glow */
+.panel-brand::after {
+  content: '';
+  position: absolute;
+  top: -20%;
+  left: -10%;
+  width: 80%;
+  height: 70%;
+  background: radial-gradient(ellipse, rgba(107,60,210,0.25) 0%, transparent 65%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Secondary glow bottom */
+.brand-glow-btm {
+  position: absolute;
+  bottom: -10%;
+  right: -10%;
+  width: 60%;
+  height: 50%;
+  background: radial-gradient(ellipse, rgba(58,28,138,0.35) 0%, transparent 65%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Floating shapes */
+.bs {
+  position: absolute;
+  pointer-events: none;
+  z-index: 1;
+}
+.bs-1 {
+  top: 18%;
+  right: 8%;
+  width: 80px;
+  height: 80px;
+  border: 1px solid rgba(232,201,122,0.12);
+  border-radius: 3px;
+  animation: floatA 9s ease-in-out infinite;
+}
+.bs-2 {
+  bottom: 22%;
+  left: 6%;
+  width: 50px;
+  height: 50px;
+  border: 1px solid rgba(107,60,210,0.2);
+  border-radius: 50%;
+  animation: floatB 7s ease-in-out infinite;
+}
+.bs-3 {
+  top: 55%;
+  right: 12%;
+  width: 24px;
+  height: 24px;
+  border: 1.5px solid rgba(232,201,122,0.15);
+  transform: rotate(45deg);
+  animation: floatB 8s ease-in-out infinite reverse;
+}
+.bs-4 {
+  top: 35%;
+  left: -20px;
+  width: 40px;
+  height: 120px;
+  border: 1px solid rgba(107,60,210,0.12);
+  border-radius: 2px;
+  animation: floatA 11s ease-in-out infinite reverse;
+}
+
+@keyframes floatA {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50%       { transform: translateY(-14px) rotate(3deg); }
+}
+@keyframes floatB {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50%       { transform: translateY(-10px) scale(1.05); }
+}
+
+/* Brand content */
+.brand-inner {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Logo */
+.brand-logo-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: auto;
+}
+.brand-logo {
+  height: 40px;
+  width: auto;
+  mix-blend-mode: screen;
+}
+.brand-logo-name {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: rgba(253,248,240,0.9);
+  letter-spacing: 0.02em;
+}
+
+/* Main copy */
+.brand-copy {
+  margin-top: 4rem;
+  flex: 1;
+}
+
+.brand-eyebrow {
+  font-family: var(--font-ui);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 1.4rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.brand-eyebrow::before {
+  content: '';
+  display: inline-block;
+  width: 24px;
+  height: 1.5px;
+  background: var(--gold);
+}
+
+.brand-headline {
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem, 2.6vw, 2.4rem);
+  font-weight: 700;
+  color: rgba(253,248,240,0.95);
+  line-height: 1.18;
+  letter-spacing: -0.025em;
+  margin-bottom: 1.4rem;
+}
+.brand-headline strong {
+  color: var(--gold);
+  font-weight: 800;
+}
+
+.brand-desc {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 300;
+  color: rgba(253,248,240,0.5);
+  line-height: 1.7;
+  margin-bottom: 2.8rem;
+  max-width: 380px;
+}
+
+/* Stats row */
+.brand-stats {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 3rem;
+  padding-bottom: 2.4rem;
+  border-bottom: 1px solid rgba(232,201,122,0.1);
+}
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.stat-value {
+  font-family: var(--font-display);
+  font-size: 1.7rem;
+  font-weight: 800;
+  color: var(--gold);
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+.stat-label {
+  font-family: var(--font-ui);
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(253,248,240,0.35);
+}
+
+/* Feature list */
+.brand-features {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  margin-bottom: 3.5rem;
+}
+.feat-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.9rem;
+}
+.feat-icon {
+  width: 28px;
+  height: 28px;
+  background: rgba(107,60,210,0.18);
+  border: 1px solid rgba(107,60,210,0.3);
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.feat-icon svg {
+  width: 13px;
+  height: 13px;
+  color: var(--primary-light);
+}
+.feat-text {}
+.feat-title {
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: rgba(253,248,240,0.85);
+  margin-bottom: 0.1rem;
+}
+.feat-sub {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 300;
+  color: rgba(253,248,240,0.35);
+  line-height: 1.5;
+}
+
+/* Brand footer */
+.brand-footer-links {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: auto;
+}
+.brand-footer-links a {
+  font-family: var(--font-ui);
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: rgba(253,248,240,0.25);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.brand-footer-links a:hover { color: rgba(253,248,240,0.55); }
+
+/* ═══════════════════════════════════════════
+   RIGHT PANEL — FORM
+═══════════════════════════════════════════ */
+.panel-form {
+  flex: 1;
+  min-height: 100vh;
+  background: var(--beige-light);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2.5rem;
+  overflow-y: auto;
+}
+
+/* Subtle bg radial */
+.panel-form::before {
+  content: '';
+  position: absolute;
+  top: -10%;
+  right: -10%;
+  width: 60%;
+  height: 60%;
+  background: radial-gradient(ellipse, rgba(232,201,122,0.12) 0%, transparent 65%);
+  pointer-events: none;
+}
+.panel-form::after {
+  content: '';
+  position: absolute;
+  bottom: -10%;
+  left: -5%;
+  width: 50%;
+  height: 50%;
+  background: radial-gradient(ellipse, rgba(107,60,210,0.05) 0%, transparent 65%);
+  pointer-events: none;
+}
+
+/* Back link */
+.form-back {
+  position: absolute;
+  top: 2rem;
+  left: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color 0.2s;
+  z-index: 2;
+}
+.form-back svg { transition: transform 0.2s; }
+.form-back:hover { color: var(--primary); }
+.form-back:hover svg { transform: translateX(-3px); }
+
+/* Form wrapper */
+.form-inner {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 400px;
+  animation: formIn 0.65s var(--ease-smooth) both;
+}
+
+@keyframes formIn {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.form-heading {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--dark);
+  letter-spacing: -0.025em;
+  margin-bottom: 0.4rem;
+  line-height: 1.1;
+}
+.form-sub {
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  color: var(--text-muted);
+  font-weight: 300;
+  margin-bottom: 2.4rem;
+  line-height: 1.6;
+}
+
+/* Form fields */
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.field-label {
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.field-wrap {
+  position: relative;
+}
+.field-icon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 15px;
+  height: 15px;
+  color: var(--text-muted);
+  pointer-events: none;
+  transition: color 0.2s;
+}
+.field-input {
+  width: 100%;
+  padding: 0.88rem 1rem 0.88rem 2.8rem;
+  font-family: var(--font-ui);
+  font-size: 0.88rem;
+  color: var(--text);
+  background: rgba(255,255,255,0.7);
+  border: 1.5px solid rgba(107,60,210,0.14);
+  border-radius: var(--radius);
+  outline: none;
+  transition: border-color 0.25s, box-shadow 0.25s, background 0.25s;
+  -webkit-appearance: none;
+}
+.field-input::placeholder {
+  color: rgba(110,104,128,0.45);
+}
+.field-input:focus {
+  border-color: var(--primary);
+  background: rgba(255,255,255,0.95);
+  box-shadow: 0 0 0 3px rgba(107,60,210,0.1);
+}
+.field-wrap:focus-within .field-icon { color: var(--primary); }
+
+/* Password toggle */
+.field-toggle {
+  position: absolute;
+  right: 0.9rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  transition: color 0.2s;
+}
+.field-toggle:hover { color: var(--primary); }
+
+/* Forgot password */
+.forgot-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -0.3rem;
+}
+.forgot-link {
+  font-family: var(--font-ui);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--primary);
+  text-decoration: none;
+  letter-spacing: 0.02em;
+  transition: opacity 0.2s;
+  position: relative;
+}
+.forgot-link::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: var(--primary);
+  transition: width 0.25s var(--ease-smooth);
+}
+.forgot-link:hover { opacity: 0.75; }
+.forgot-link:hover::after { width: 100%; }
+
+/* Submit */
+.btn-submit {
+  width: 100%;
+  padding: 0.95rem 1.5rem;
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--beige-light);
+  background: var(--primary);
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.25s var(--ease-smooth), box-shadow 0.25s;
+  margin-top: 0.5rem;
+}
+.btn-submit::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--primary-light), var(--primary-deep));
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.btn-submit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(107,60,210,0.35);
+}
+.btn-submit:hover::before { opacity: 1; }
+.btn-submit:active { transform: translateY(0); }
+.btn-submit span { position: relative; z-index: 1; }
+
+/* Divider */
+.form-divider {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 1.4rem 0;
+}
+.form-divider::before,
+.form-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(107,60,210,0.1);
+}
+.form-divider span {
+  font-family: var(--font-ui);
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(110,104,128,0.45);
+}
+
+/* Secondary CTA — demo */
+.btn-demo {
+  display: block;
+  width: 100%;
+  padding: 0.9rem 1.5rem;
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-align: center;
+  color: var(--primary);
+  background: transparent;
+  border: 1.5px solid rgba(107,60,210,0.25);
+  border-radius: var(--radius);
+  text-decoration: none;
+  transition: border-color 0.25s, background 0.25s, color 0.25s, transform 0.2s;
+}
+.btn-demo:hover {
+  border-color: var(--primary);
+  background: rgba(107,60,210,0.05);
+  transform: translateY(-1px);
+}
+
+/* Footer register */
+.form-register {
+  text-align: center;
+  margin-top: 1.8rem;
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+.form-register a {
+  color: var(--primary);
+  font-weight: 600;
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+.form-register a:hover { opacity: 0.75; }
+
+/* Error states */
+.field-input.error {
+  border-color: #D64545;
+  box-shadow: 0 0 0 3px rgba(214,69,69,0.1);
+}
+.field-error {
+  font-family: var(--font-ui);
+  font-size: 0.68rem;
+  color: #D64545;
+  letter-spacing: 0.04em;
+  display: none;
+}
+.field-error.visible { display: block; }
+
+/* ═══════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════ */
+@media (max-width: 900px) {
+  body { flex-direction: column; overflow: auto; }
+
+  .panel-brand {
+    width: 100%;
+    min-height: auto;
+    padding: 2.5rem 2rem 2rem;
+  }
+  .brand-copy { margin-top: 2rem; }
+  .brand-stats { gap: 1.5rem; }
+  .brand-features { display: none; }
+  .brand-footer-links { display: none; }
+
+  .panel-form {
+    min-height: auto;
+    padding: 2.5rem 1.5rem 3rem;
+  }
+  .form-back {
+    position: static;
+    margin-bottom: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .panel-brand { padding: 2rem 1.5rem 1.8rem; }
+  .brand-headline { font-size: 1.6rem; }
+  .brand-stats { flex-wrap: wrap; gap: 1.2rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- ════════════ LEFT — BRAND PANEL ════════════ -->
+<aside class="panel-brand" aria-label="ProcessIQ — présentation">
+
+  <!-- Decorative shapes -->
+  <div class="brand-glow-btm" aria-hidden="true"></div>
+  <div class="bs bs-1" aria-hidden="true"></div>
+  <div class="bs bs-2" aria-hidden="true"></div>
+  <div class="bs bs-3" aria-hidden="true"></div>
+  <div class="bs bs-4" aria-hidden="true"></div>
+
+  <div class="brand-inner">
+
+    <!-- Logo -->
+    <div class="brand-logo-wrap">
+      <img src="logo (2).png" alt="ProcessIQ" class="brand-logo">
+      <span class="brand-logo-name">ProcessIQ</span>
+    </div>
+
+    <!-- Copy -->
+    <div class="brand-copy">
+
+      <p class="brand-eyebrow">Plateforme alternance</p>
+
+      <h2 class="brand-headline">
+        La plateforme qui <strong>libère l'alternance</strong>
+        de la paperasse
+      </h2>
+
+      <p class="brand-desc">
+        Gérez vos conventions, suivis pédagogiques et conformités
+        en un seul endroit. Moins d'administratif, plus de résultats.
+      </p>
+
+      <!-- Stats -->
+      <div class="brand-stats">
+        <div class="stat-item">
+          <span class="stat-value">1M+</span>
+          <span class="stat-label">Alternants en France</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value">15Md€</span>
+          <span class="stat-label">Marché adressable</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value">85%</span>
+          <span class="stat-label">Gain de temps admin</span>
+        </div>
+      </div>
+
+      <!-- Features -->
+      <div class="brand-features">
+
+        <div class="feat-item">
+          <div class="feat-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+              <path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/>
+              <polyline points="13 2 13 9 20 9"/>
+            </svg>
+          </div>
+          <div class="feat-text">
+            <p class="feat-title">Automatisation admin</p>
+            <p class="feat-sub">Conventions et livrables générés automatiquement</p>
+          </div>
+        </div>
+
+        <div class="feat-item">
+          <div class="feat-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+            </svg>
+          </div>
+          <div class="feat-text">
+            <p class="feat-title">Suivi pédagogique</p>
+            <p class="feat-sub">Tableau de bord temps réel pour tuteurs et RH</p>
+          </div>
+        </div>
+
+        <div class="feat-item">
+          <div class="feat-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+          </div>
+          <div class="feat-text">
+            <p class="feat-title">Conformité RGPD</p>
+            <p class="feat-sub">Données hébergées en France, certifié ISO 27001</p>
+          </div>
+        </div>
+
+        <div class="feat-item">
+          <div class="feat-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+              <rect x="2" y="3" width="20" height="14" rx="2"/>
+              <line x1="8" y1="21" x2="16" y2="21"/>
+              <line x1="12" y1="17" x2="12" y2="21"/>
+            </svg>
+          </div>
+          <div class="feat-text">
+            <p class="feat-title">Solution tout-en-un</p>
+            <p class="feat-sub">CFA, entreprise et alternant, sur une seule plateforme</p>
+          </div>
+        </div>
+
+      </div>
+
+    </div><!-- /brand-copy -->
+
+    <!-- Footer links -->
+    <nav class="brand-footer-links" aria-label="Liens utiles">
+      <a href="processiq.html">Accueil</a>
+      <a href="#">Politique de confidentialité</a>
+      <a href="#">Mentions légales</a>
+    </nav>
+
+  </div><!-- /brand-inner -->
+</aside>
+
+<!-- ════════════ RIGHT — FORM PANEL ════════════ -->
+<main class="panel-form" role="main">
+
+  <a href="processiq.html" class="form-back" aria-label="Retour à l'accueil">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <path d="M15 18l-6-6 6-6"/>
+    </svg>
+    Retour à l'accueil
+  </a>
+
+  <div class="form-inner">
+
+    <h1 class="form-heading">Bienvenue</h1>
+    <p class="form-sub">Connectez-vous à votre espace ProcessIQ</p>
+
+    <form class="auth-form" id="loginForm" novalidate>
+
+      <!-- Email -->
+      <div class="field-group">
+        <label class="field-label" for="email">Adresse email</label>
+        <div class="field-wrap">
+          <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+          </svg>
+          <input
+            class="field-input"
+            type="email"
+            id="email"
+            name="email"
+            placeholder="votre@email.fr"
+            autocomplete="email"
+            required
+            aria-describedby="email-error"
+          >
+        </div>
+        <span class="field-error" id="email-error" role="alert">Adresse e-mail invalide.</span>
+      </div>
+
+      <!-- Mot de passe -->
+      <div class="field-group">
+        <label class="field-label" for="password">Mot de passe</label>
+        <div class="field-wrap">
+          <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0110 0v4"/>
+          </svg>
+          <input
+            class="field-input"
+            type="password"
+            id="password"
+            name="password"
+            placeholder="••••••••"
+            autocomplete="current-password"
+            required
+            aria-describedby="password-error"
+          >
+          <button
+            class="field-toggle"
+            type="button"
+            id="togglePassword"
+            aria-label="Afficher le mot de passe"
+          >
+            <svg id="eyeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+        </div>
+        <span class="field-error" id="password-error" role="alert">Mot de passe requis.</span>
+      </div>
+
+      <!-- Mot de passe oublié -->
+      <div class="forgot-row">
+        <a href="#" class="forgot-link">Mot de passe oublié&nbsp;?</a>
+      </div>
+
+      <!-- Bouton connexion -->
+      <button type="submit" class="btn-submit">
+        <span>Se connecter</span>
+      </button>
+
+    </form>
+
+    <div class="form-divider"><span>ou</span></div>
+
+    <!-- Demo CTA -->
+    <a href="demander_demo.html" class="btn-demo">Demander une démo gratuite</a>
+
+    <!-- Inscription -->
+    <p class="form-register">
+      Pas encore de compte&nbsp;?
+      <a href="creer_compte.html">Créer un compte</a>
+    </p>
+
+  </div><!-- /form-inner -->
+
+</main>
+
+<script>
+(function() {
+  'use strict';
+
+  // ── Toggle password visibility ──
+  const toggleBtn     = document.getElementById('togglePassword');
+  const passwordInput = document.getElementById('password');
+  const eyeIcon       = document.getElementById('eyeIcon');
+
+  const eyeOpenPath   = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+  const eyeClosedPath = '<path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>';
+
+  toggleBtn.addEventListener('click', () => {
+    const isPassword = passwordInput.type === 'password';
+    passwordInput.type = isPassword ? 'text' : 'password';
+    eyeIcon.innerHTML  = isPassword ? eyeClosedPath : eyeOpenPath;
+    toggleBtn.setAttribute('aria-label', isPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe');
+  });
+
+  // ── Form validation ──
+  const form          = document.getElementById('loginForm');
+  const emailInput    = document.getElementById('email');
+  const emailError    = document.getElementById('email-error');
+  const passwordError = document.getElementById('password-error');
+
+  const showError  = (input, errorEl, msg) => {
+    input.classList.add('error');
+    errorEl.textContent = msg;
+    errorEl.classList.add('visible');
+  };
+  const clearError = (input, errorEl) => {
+    input.classList.remove('error');
+    errorEl.classList.remove('visible');
+  };
+
+  emailInput.addEventListener('input',    () => clearError(emailInput,    emailError));
+  passwordInput.addEventListener('input', () => clearError(passwordInput, passwordError));
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    let valid = true;
+
+    if (!emailInput.value || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput.value)) {
+      showError(emailInput, emailError, 'Adresse e-mail invalide.');
+      valid = false;
+    }
+    if (!passwordInput.value) {
+      showError(passwordInput, passwordError, 'Mot de passe requis.');
+      valid = false;
+    }
+
+    if (valid) {
+      const btn = form.querySelector('.btn-submit');
+      btn.querySelector('span').textContent = 'Connexion…';
+      btn.disabled = true;
+    }
+  });
+})();
+</script>
+</body>
+</html>

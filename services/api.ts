@@ -411,15 +411,28 @@ export const api = {
   },
 
   // --- AUTH ---
-  async login(email: string, pass: string): Promise<{ access_token: string }> {
+  async login(email: string, pass: string): Promise<{ access_token: string; role?: string; email?: string; name?: string }> {
     const response = await fetch(`${AUTH_API_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password: pass }),
     });
     if (!response.ok) {
-      const error = await response.json();
+      const error = await response.json().catch(() => ({}));
       throw new Error(error.message || 'Login failed');
+    }
+    return await response.json();
+  },
+
+  async register(userData: any): Promise<{ access_token: string }> {
+    const response = await fetch(`${AUTH_API_URL}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(userData),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.message || 'Register failed');
     }
     return await response.json();
   },
@@ -656,6 +669,48 @@ export const api = {
       throw new Error(error.error || error.message || 'Failed to download document');
     }
     return response;
+  },
+
+  async requestDocumentSignature(documentId: string, payload?: {
+    workflowKey?: string;
+    documentUrl?: string;
+    callbackUrl?: string;
+    participants?: Record<string, { email: string; name?: string }>;
+  }): Promise<any> {
+    const response = await fetch(`${DOCUMENTS_URL}/${documentId}/signature/request`, {
+      method: 'POST',
+      headers: withAuthHeaders({ 'Content-Type': 'application/json', 'Accept': 'application/json' }),
+      body: JSON.stringify(payload || {})
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || error.message || 'Failed to request signature');
+    }
+    const json = await response.json();
+    return json?.data || json;
+  },
+
+  async getDocumentSigningLink(documentId: string, payload?: {
+    signerRole?: 'student' | 'cfa' | 'maitre_apprentissage' | 'charge_admission' | 'charge_rh' | 'commercial';
+    signerEmail?: string;
+    signerName?: string;
+    returnUrl?: string;
+  }): Promise<{ signingUrl: string; envelopeId?: string }> {
+    const response = await fetch(`${DOCUMENTS_URL}/${documentId}/signature/signing-link`, {
+      method: 'POST',
+      headers: withAuthHeaders({ 'Content-Type': 'application/json', 'Accept': 'application/json' }),
+      body: JSON.stringify(payload || {})
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || error.message || 'Failed to generate signing link');
+    }
+    const json = await response.json();
+    const data = json?.data || json;
+    return {
+      signingUrl: data?.signingUrl,
+      envelopeId: data?.envelopeId
+    };
   },
 
   async updateAttendance(id: string, payload: any): Promise<any> {
@@ -1077,3 +1132,4 @@ export const api = {
     }
   }
 };
+

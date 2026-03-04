@@ -14,14 +14,22 @@ import {
     ShieldCheck,
     Star,
     ChevronRight,
-    MoreHorizontal,
-    LayoutGrid,
+    ClipboardList,
+    FileSignature,
+    Trash2,
+    RefreshCw,
+    Copy,
+    ExternalLink,
+    UserX,
+    Building2,
+    MoreVertical,
     List,
-    History,
-    ClipboardList
+    LayoutGrid,
+    History as HistoryIcon
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
+import { getAuthEmail } from '../services/session';
 import Button from './ui/Button';
 import { useAppStore } from '../store/useAppStore';
 import { AdmissionTab } from '../types';
@@ -34,6 +42,37 @@ import { useCandidates, getC } from '../hooks/useCandidates';
 interface ClassNTCViewProps {
     onSelectStudent: (student: any, tab: AdmissionTab) => void;
 }
+
+type AdmissionSignatureDoc = {
+    id: string;
+    title: string;
+    description: string;
+    status: string;
+    createdAt?: string;
+    studentId?: string;
+    signableByAdmission: boolean;
+};
+
+const normalizeWorkflowText = (value: string): string => {
+    return String(value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, ' ')
+        .trim();
+};
+
+const ADMISSION_SIGNATURE_KEYWORDS = [
+    'grille evaluation',
+    'grille d evaluation',
+    'modification du document'
+];
+
+const canAdmissionSignDocument = (title: string): boolean => {
+    const normalized = normalizeWorkflowText(title);
+    if (!normalized) return false;
+    return ADMISSION_SIGNATURE_KEYWORDS.some((keyword) => normalized.includes(keyword));
+};
 
 const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
     const { candidates, loading: hookLoading, refresh: refreshCandidates } = useCandidates();
@@ -57,6 +96,11 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
     const [isCompanyModalOpen, setIsCompanyModalOpen] = useState(false);
     const [isCompanyEditing, setIsCompanyEditing] = useState(false);
     const [companyEditForm, setCompanyEditForm] = useState<any>(null);
+    const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+    const [isRegenerating, setIsRegenerating] = useState<string | null>(null);
+    const [admissionSignatureDocs, setAdmissionSignatureDocs] = useState<AdmissionSignatureDoc[]>([]);
+    const [loadingAdmissionSignatureDocs, setLoadingAdmissionSignatureDocs] = useState(false);
+    const [signingAdmissionDocId, setSigningAdmissionDocId] = useState<string | null>(null);
 
     const { showToast } = useAppStore();
     const navigate = useNavigate();
@@ -246,6 +290,84 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
         }
     };
 
+    const fetchAdmissionSignatureDocs = async () => {
+        setLoadingAdmissionSignatureDocs(true);
+        try {
+            const docs = await api.getDocuments();
+            const mapped = (Array.isArray(docs) ? docs : []).map((doc: any) => ({
+                id: String(doc._id || doc.id || ''),
+                title: String(doc.title || 'Document'),
+                description: String(doc.description || ''),
+                status: String(doc.status || ''),
+                createdAt: doc.createdAt ? String(doc.createdAt) : undefined,
+                studentId: doc.studentId ? String(doc.studentId) : undefined,
+                signableByAdmission: canAdmissionSignDocument(String(doc.title || ''))
+            }));
+
+            const filtered = mapped
+                .filter((doc: AdmissionSignatureDoc) =>
+                    doc.signableByAdmission && ['to_sign', 'pending'].includes(doc.status)
+                )
+                .sort((a: AdmissionSignatureDoc, b: AdmissionSignatureDoc) => {
+                    const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+                    const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+                    return bTime - aTime;
+                });
+
+            setAdmissionSignatureDocs(filtered);
+        } catch (error: any) {
+            showToast(error?.message || 'Impossible de charger les documents a signer (admission).', 'error');
+        } finally {
+            setLoadingAdmissionSignatureDocs(false);
+        }
+    };
+
+    const signAdmissionDocument = async (doc: AdmissionSignatureDoc) => {
+        const signerEmail = (getAuthEmail() || '').trim().toLowerCase();
+        if (!signerEmail) {
+            showToast('Session invalide: email admission introuvable.', 'error');
+            return;
+        }
+
+        setSigningAdmissionDocId(doc.id);
+        try {
+            let signingLink: { signingUrl: string; envelopeId?: string };
+
+            try {
+                signingLink = await api.getDocumentSigningLink(doc.id, {
+                    signerRole: 'charge_admission',
+                    signerEmail,
+                    signerName: "Charge d'admission"
+                });
+            } catch {
+                await api.requestDocumentSignature(doc.id, {
+                    participants: {
+                        charge_admission: {
+                            email: signerEmail,
+                            name: "Charge d'admission"
+                        }
+                    }
+                });
+                signingLink = await api.getDocumentSigningLink(doc.id, {
+                    signerRole: 'charge_admission',
+                    signerEmail,
+                    signerName: "Charge d'admission"
+                });
+            }
+
+            if (!signingLink.signingUrl) {
+                throw new Error('Lien de signature indisponible.');
+            }
+
+            window.open(signingLink.signingUrl, '_blank', 'noopener,noreferrer');
+            await fetchAdmissionSignatureDocs();
+        } catch (error: any) {
+            showToast(error?.message || 'Impossible de lancer la signature admission.', 'error');
+        } finally {
+            setSigningAdmissionDocId(null);
+        }
+    };
+
     // --- STATS CALCULATION ---
     const calculateAge = (birthDate: string) => {
         if (!birthDate) return 0;
@@ -321,53 +443,109 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
     };
 
     const handleViewCompanyDetails = async (student: any) => {
-        setIsCompanyEditing(false); // Default to view mode
-
-        // Strategy 1: Try fetching by Student ID (Backend Link)
+        setIsCompanyEditing(false);
+        const studentId = student.record_id || student.id;
         try {
-            const studentId = student.record_id || student.id;
-            const company = await api.getCompanyByStudentId(studentId);
-            if (company) {
-                setIsCompanyModalOpen(true);
-                setSelectedCompany(company);
-                initializeCompanyForm(company);
-                return;
-            }
-        } catch (e) {
-            console.log("No company found via student ID link");
-        }
-
-        // Strategy 2: Try ID Enterprise if present (Fallback)
-        const companyId = student.id_entreprise || student.record_id_entreprise;
-        if (companyId) {
+            const data = await api.getCompanyByStudentId(studentId);
+            setSelectedCompany(data);
             setIsCompanyModalOpen(true);
-            await fetchCompanyDetails(companyId);
+            initializeCompanyForm(data);
+        } catch (error) {
+            // Fallback to ID enterprise if student link fails
+            const companyId = student.id_entreprise || student.record_id_entreprise;
+            if (companyId) {
+                setIsCompanyModalOpen(true);
+                await fetchCompanyDetails(companyId);
+            } else {
+                showToast("Aucune entreprise liée à cet étudiant", "error");
+            }
+        }
+    };
+
+    const handleDeleteStudent = async (id: string, name: string) => {
+        if (!window.confirm(`Êtes-vous sûr de vouloir supprimer l'étudiant ${name} ? Cette action est irréversible.`)) {
             return;
         }
 
-        // Strategy 3: Try to find company by name if ID is missing
-        if (student.entreprise_raison_sociale) {
-            showToast("Récupération de l'entreprise...", "info");
-            try {
-                const companies = await api.getAllCompanies();
-                const company = companies.find((c: any) => c.fields?.["Raison sociale"] === student.entreprise_raison_sociale);
-                if (company) {
-                    setIsCompanyModalOpen(true);
-                    setSelectedCompany(company);
-                    initializeCompanyForm(company);
-                } else {
-                    onSelectStudent(student, AdmissionTab.ENTREPRISE);
-                    navigate('/admission');
-                }
-            } catch (error) {
-                onSelectStudent(student, AdmissionTab.ENTREPRISE);
-                navigate('/admission');
+        try {
+            // Automatically delete associated company if it exists
+            const studentData = getC(students.find(s => (s.record_id || s.id) === id));
+            if (studentData.id_entreprise) {
+                console.log(`🗑️ Cascading delete: removing company for student ${name}`);
+                await api.deleteCompany(id);
             }
-        } else {
-            // No info at all -> Go to create mode
-            onSelectStudent(student, AdmissionTab.ENTREPRISE);
-            navigate('/admission');
+
+            const success = await api.deleteCandidate(id);
+            if (success) {
+                showToast("Étudiant supprimé avec succès", "success");
+                refreshCandidates();
+            } else {
+                showToast("Erreur lors de la suppression", "error");
+            }
+        } catch (error) {
+            showToast("Erreur lors de la suppression", "error");
         }
+    };
+
+    const handleDeleteCompany = async (studentId: string, companyName: string) => {
+        if (!window.confirm(`Êtes-vous sûr de vouloir supprimer l'entreprise ${companyName} pour cet étudiant ?`)) {
+            return;
+        }
+
+        try {
+            const success = await api.deleteCompany(studentId);
+            if (success) {
+                showToast("Entreprise supprimée avec succès", "success");
+                refreshCandidates();
+            } else {
+                showToast("Erreur lors de la suppression de l'entreprise", "error");
+            }
+        } catch (error) {
+            showToast("Erreur lors de la suppression de l'entreprise", "error");
+        }
+    };
+
+    const handleRegenerateDoc = async (studentId: string, type: string) => {
+        setIsRegenerating(`${studentId}-${type}`);
+        try {
+            let result;
+            switch (type) {
+                case 'fiche': result = await api.generateFicheRenseignement(studentId); break;
+                case 'cerfa': result = await api.generateCerfa(studentId); break;
+                case 'atre': result = await api.generateAtre(studentId); break;
+                case 'cr': result = await api.generateCompteRendu(studentId); break;
+                case 'convention': result = await api.generateConventionApprentissage(studentId); break;
+            }
+            showToast("Document régénéré avec succès", "success");
+            refreshCandidates();
+        } catch (error: any) {
+            showToast(error.message || "Erreur lors de la régénération", "error");
+        } finally {
+            setIsRegenerating(null);
+        }
+    };
+
+    const handleCopyEmail = (email: string) => {
+        navigator.clipboard.writeText(email);
+        showToast("Email copié dans le presse-papier", "success");
+    };
+
+    // Close menu when clicking outside
+    useEffect(() => {
+        const handleClickOutside = () => setActiveMenuId(null);
+        document.addEventListener('click', handleClickOutside);
+        return () => document.removeEventListener('click', handleClickOutside);
+    }, []);
+
+    useEffect(() => {
+        if (currentTab === 'students') {
+            fetchAdmissionSignatureDocs();
+        }
+    }, [currentTab]);
+
+    const toggleMenu = (e: React.MouseEvent, id: string) => {
+        e.stopPropagation();
+        setActiveMenuId(activeMenuId === id ? null : id);
     };
 
     const handleSaveEdit = async () => {
@@ -409,6 +587,141 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
             showToast('Fiche entreprise déjà complétée', 'info');
         }
     };
+
+    const ActionsMenu = ({ student }: { student: any }) => {
+        const isOpen = activeMenuId === student.id;
+        const studentInfo = getC(student);
+        const fullName = `${studentInfo.nom} ${studentInfo.prenom}`;
+
+        return (
+            <div className="relative">
+                <button
+                    onClick={(e) => toggleMenu(e, student.id)}
+                    className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
+                >
+                    <MoreVertical size={18} />
+                </button>
+
+                {isOpen && (
+                    <div className="absolute right-0 mt-2 w-56 rounded-xl bg-white shadow-2xl border border-slate-100 z-[100] overflow-hidden animate-in fade-in zoom-in duration-200 origin-top-right">
+                        <div className="p-1 px-2 border-b border-slate-50 bg-slate-50/50">
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1 py-1 block">Actions pour {studentInfo.prenom}</span>
+                        </div>
+
+                        <div className="p-1">
+                            <button
+                                onClick={() => handleCopyEmail(studentInfo.email)}
+                                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
+                            >
+                                <Copy size={15} className="text-slate-400" />
+                                <span>Copier l'email</span>
+                            </button>
+
+                            <button
+                                onClick={() => handleViewDetails(student.id)}
+                                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
+                            >
+                                <FileText size={15} className="text-blue-400" />
+                                <span>Voir les détails</span>
+                            </button>
+
+                            <button
+                                onClick={() => {
+                                    handleViewDetails(student.id);
+                                    setTimeout(() => setIsEditing(true), 100);
+                                }}
+                                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
+                            >
+                                <RefreshCw size={15} className="text-indigo-400" />
+                                <span>Modifier l'étudiant</span>
+                            </button>
+
+                            <button
+                                onClick={() => {
+                                    onSelectStudent(student, AdmissionTab.ADMINISTRATIF);
+                                    navigate('/admission');
+                                }}
+                                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
+                            >
+                                <HistoryIcon size={15} className="text-rose-400" />
+                                <span>Voir l'historique</span>
+                            </button>
+
+                            <div className="h-px bg-slate-50 my-1 mx-2" />
+
+                            <span className="text-[10px] font-bold text-slate-300 uppercase tracking-tighter pl-3 py-1 block">Documents</span>
+
+                            <button
+                                onClick={() => handleRegenerateDoc(student.id, 'fiche')}
+                                disabled={isRegenerating === `${student.id}-fiche`}
+                                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg transition-colors disabled:opacity-50"
+                            >
+                                <RefreshCw size={15} className={`text-slate-400 ${isRegenerating === `${student.id}-fiche` ? 'animate-spin' : ''}`} />
+                                <span>Régénérer Fiche Rens.</span>
+                            </button>
+
+                            <button
+                                onClick={() => handleRegenerateDoc(student.id, 'cerfa')}
+                                disabled={isRegenerating === `${student.id}-cerfa`}
+                                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg transition-colors disabled:opacity-50"
+                            >
+                                <RefreshCw size={15} className={`text-blue-400 ${isRegenerating === `${student.id}-cerfa` ? 'animate-spin' : ''}`} />
+                                <span>Régénérer CERFA</span>
+                            </button>
+
+                            <button
+                                onClick={() => handleRegenerateDoc(student.id, 'convention')}
+                                disabled={isRegenerating === `${student.id}-convention`}
+                                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg transition-colors disabled:opacity-50"
+                            >
+                                <RefreshCw size={15} className={`text-emerald-400 ${isRegenerating === `${student.id}-convention` ? 'animate-spin' : ''}`} />
+                                <span>Régénérer Convention</span>
+                            </button>
+
+                            <button
+                                onClick={() => handleRegenerateDoc(student.id, 'atre')}
+                                disabled={isRegenerating === `${student.id}-atre`}
+                                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg transition-colors disabled:opacity-50"
+                            >
+                                <RefreshCw size={15} className={`text-orange-400 ${isRegenerating === `${student.id}-atre` ? 'animate-spin' : ''}`} />
+                                <span>Régénérer ATRE</span>
+                            </button>
+
+                            <button
+                                onClick={() => handleRegenerateDoc(student.id, 'cr')}
+                                disabled={isRegenerating === `${student.id}-cr`}
+                                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg transition-colors disabled:opacity-50"
+                            >
+                                <RefreshCw size={15} className={`text-pink-400 ${isRegenerating === `${student.id}-cr` ? 'animate-spin' : ''}`} />
+                                <span>Régénérer Compte Rendu</span>
+                            </button>
+
+                            <div className="h-px bg-slate-50 my-1 mx-2" />
+
+                            <span className="text-[10px] font-bold text-slate-300 uppercase tracking-tighter pl-3 py-1 block">Administration</span>
+
+                            <button
+                                onClick={() => handleDeleteCompany(student.id, student.entreprise_raison_sociale || 'Entreprise')}
+                                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                            >
+                                <Building2 size={15} className="text-rose-400" />
+                                <span>Supprimer entreprise</span>
+                            </button>
+
+                            <button
+                                onClick={() => handleDeleteStudent(student.id, fullName)}
+                                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                            >
+                                <UserX size={15} className="text-rose-400" />
+                                <span className="font-semibold">Supprimer l'étudiant</span>
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
 
     const filteredStudents = students.filter(student => {
         const searchLower = searchQuery.toLowerCase();
@@ -583,6 +896,57 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                         </div>
                     </div>
 
+                    <div className="mt-6 bg-white border border-slate-200 rounded-[28px] p-6 shadow-premium">
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5">
+                            <div>
+                                <h4 className="text-lg font-black text-slate-800 tracking-tight">Documents a signer (Admission)</h4>
+                                <p className="text-sm text-slate-500">
+                                    Documents assignes a l'admission dans la classe NTC.
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={fetchAdmissionSignatureDocs}
+                                disabled={loadingAdmissionSignatureDocs}
+                                className="px-4 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:border-blue-500 hover:text-blue-600 disabled:opacity-50"
+                            >
+                                {loadingAdmissionSignatureDocs ? 'Chargement...' : 'Rafraichir'}
+                            </button>
+                        </div>
+
+                        {loadingAdmissionSignatureDocs ? (
+                            <div className="text-sm text-slate-500">Chargement des documents a signer...</div>
+                        ) : admissionSignatureDocs.length === 0 ? (
+                            <div className="text-sm text-slate-500">
+                                Aucun document admission en attente de signature.
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                {admissionSignatureDocs.map((doc) => (
+                                    <div
+                                        key={doc.id}
+                                        className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 p-4 rounded-2xl border border-slate-100 bg-slate-50/70"
+                                    >
+                                        <div className="min-w-0">
+                                            <div className="font-bold text-slate-800 truncate">{doc.title}</div>
+                                            <div className="text-xs text-slate-500">
+                                                Statut: {doc.status} {doc.createdAt ? ` - ${new Date(doc.createdAt).toLocaleDateString('fr-FR')}` : ''}
+                                            </div>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => signAdmissionDocument(doc)}
+                                            disabled={signingAdmissionDocId === doc.id}
+                                            className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50"
+                                        >
+                                            {signingAdmissionDocId === doc.id ? 'Ouverture...' : 'Signer'}
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
                     {/* Content View */}
                     {viewMode === 'table' ? (
                         <div className="bg-white border border-slate-200 rounded-[32px] overflow-hidden shadow-premium">
@@ -595,6 +959,7 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                                             <th className="px-8 py-6 text-center text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Formulaire Entreprise</th>
                                             <th className="px-8 py-6 text-left text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Formation</th>
                                             <th className="px-8 py-6 text-center text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Documents</th>
+                                            <th className="px-8 py-6 text-center text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-50">
@@ -729,7 +1094,26 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                                                                     </div>
                                                                 )}
                                                             </div>
+                                                            <div className="flex flex-col items-center gap-1.5">
+                                                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Conv.</span>
+                                                                {student.has_convention ? (
+                                                                    <button
+                                                                        onClick={() => handleDownload(student.convention_url || (rawStudent.fields || rawStudent)?.["Convention Apprentissage"]?.[0]?.url, student.convention_name || (rawStudent.fields || rawStudent)?.["Convention Apprentissage"]?.[0]?.filename)}
+                                                                        className="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center hover:bg-emerald-600 hover:text-white transition-all shadow-sm border border-emerald-100/50"
+                                                                        title="Télécharger Convention"
+                                                                    >
+                                                                        <FileSignature size={16} />
+                                                                    </button>
+                                                                ) : (
+                                                                    <div className="w-9 h-9 rounded-lg bg-slate-50 text-slate-200 flex items-center justify-center border border-slate-100">
+                                                                        <FileSignature size={16} />
+                                                                    </div>
+                                                                )}
+                                                            </div>
                                                         </div>
+                                                    </td>
+                                                    <td className="px-8 py-6 text-center">
+                                                        <ActionsMenu student={rawStudent} />
                                                     </td>
                                                 </tr>
                                             )
@@ -752,9 +1136,12 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                                         <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center text-slate-500 font-black text-lg group-hover:from-blue-600 group-hover:to-indigo-600 group-hover:text-white transition-all duration-300 shadow-inner">
                                             {student.prenom?.[0]}{student.nom?.[0]}
                                         </div>
-                                        <div className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border ${student.dossier_complet ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'
-                                            }`}>
-                                            {student.dossier_complet ? 'Dossier Complet' : 'Dossier Incomplet'}
+                                        <div className="flex gap-2 items-center">
+                                            <div className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border ${student.dossier_complet ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'
+                                                }`}>
+                                                {student.dossier_complet ? 'Dossier Complet' : 'Dossier Incomplet'}
+                                            </div>
+                                            <ActionsMenu student={student} />
                                         </div>
                                     </div>
 
@@ -914,7 +1301,7 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                 <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-xl shadow-slate-200/50 min-h-[500px]">
                     <div className="flex items-center gap-4 mb-8">
                         <div className="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center">
-                            <History size={24} />
+                            <HistoryIcon size={24} />
                         </div>
                         <div>
                             <h2 className="text-xl font-black text-slate-800">Historique des actions</h2>

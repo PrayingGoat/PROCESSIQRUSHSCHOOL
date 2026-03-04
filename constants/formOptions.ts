@@ -1,6 +1,7 @@
 export interface SelectOption {
     value: string;
     label: string;
+    disabled?: boolean;
 }
 
 const toOptions = (arr: string[]): SelectOption[] => arr.map(v => ({ value: v, label: v }));
@@ -294,7 +295,7 @@ export const MAITRE_DIPLOMA_OPTIONS: SelectOption[] = [
 
 export const OPCO_OPTIONS: SelectOption[] = [
     { value: "AFDAS - Culture, médias, loisirs", label: "AFDAS (Culture, médias, loisirs, sport)" },
-    { value: "AKTO - Services à forte intensité de main-d œuvre", label: "AKTO (Services à forte intensité de main-d'œuvre)" },
+    { value: "AKTO - Services a forte intensité de main-d œuvre", label: "AKTO (Services à forte intensité de main-d'œuvre)" },
     { value: "ATLAS - Services financiers et conseil", label: "ATLAS (Services financiers et conseil)" },
     { value: "CONSTRUCTYS - Construction", label: "CONSTRUCTYS (Construction)" },
     { value: "OCAPIAT - Agriculture, pêche, agroalimentaire", label: "OCAPIAT (Agricole, pêche, agroalimentaire)" },

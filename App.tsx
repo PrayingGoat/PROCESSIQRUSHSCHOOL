@@ -6,6 +6,8 @@ import DashboardView from './components/DashboardView';
 import AdmissionView from './components/AdmissionView';
 import RHView from './components/RHView';
 import LoginPage from './components/LoginPage';
+import LandingPage from './components/LandingPage';
+import RegisterPage from './components/RegisterPage';
 import Toast from './components/ui/Toast';
 import ClassNTCView from './components/ClassNTCView';
 import { AdmissionTab } from './types';
@@ -33,7 +35,7 @@ const getEffectiveRole = (): string | null => {
 const RequireAuth = ({ children, allowedRoles }: { children: React.ReactNode; allowedRoles?: string[] }) => {
   const location = useLocation();
   if (!isAuthenticated()) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to="/landing" state={{ from: location }} replace />;
   }
 
   if (allowedRoles) {
@@ -64,6 +66,8 @@ const App = () => {
   const location = useLocation();
   const isStandalonePage =
     location.pathname === '/login' ||
+    location.pathname === '/register' ||
+    location.pathname === '/landing' ||
     location.pathname === '/admin/login' ||
     location.pathname.startsWith('/admin') ||
     location.pathname === '/test';
@@ -91,7 +95,9 @@ const App = () => {
 
         <main className={`${!isStandalonePage ? 'flex-1 p-8 md:p-10 overflow-y-auto' : 'h-screen'}`}>
           <Routes>
+            <Route path="/landing" element={<LandingPage />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
 
             <Route path="/admin/login" element={<AdminLoginPage />} />
             <Route path="/admin" element={<RequireAdminAuth><AdminDashboard /></RequireAdminAuth>} />
