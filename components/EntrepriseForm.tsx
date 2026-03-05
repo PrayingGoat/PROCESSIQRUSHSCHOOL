@@ -135,16 +135,6 @@ const companySchema = z.object({
         date_fin_2periode_4eme_annee: z.string().optional().or(z.literal(""))
     }).superRefine((data, ctx) => {
         const conclusion = data.date_conclusion ? new Date(data.date_conclusion) : null;
-        const execution = data.date_debut_execution ? new Date(data.date_debut_execution) : null;
-
-        // Date debut execution doit etre avant date de conclusion
-        if (conclusion && execution && execution >= conclusion) {
-            ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: "La date de début d'exécution doit être avant la date de conclusion",
-                path: ["date_debut_execution"]
-            });
-        }
 
         // Vérification des périodes
         const checkPeriod = (startKey: string, endKey: string, label: string, checkConclusion: boolean = true) => {
@@ -740,10 +730,10 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
                                 <Input label="N° DECA ancien contrat" placeholder="Si applicable" {...register('contrat.numero_deca_ancien_contrat')} />
                             </div>
                             <div className="col-span-12 md:col-span-6">
-                                <Input label="Date de conclusion" type="date" error={errors.contrat?.date_conclusion?.message} {...register('contrat.date_conclusion')} />
+                                <Input label="Date début exécution" type="date" error={errors.contrat?.date_debut_execution?.message} {...register('contrat.date_debut_execution')} />
                             </div>
                             <div className="col-span-12 md:col-span-6">
-                                <Input label="Date début exécution" type="date" error={errors.contrat?.date_debut_execution?.message} {...register('contrat.date_debut_execution')} />
+                                <Input label="Date de conclusion" type="date" error={errors.contrat?.date_conclusion?.message} {...register('contrat.date_conclusion')} />
                             </div>
                             <div className="col-span-12 md:col-span-6">
                                 <Input label="Date avenant" type="date" {...register('contrat.date_avenant')} />
