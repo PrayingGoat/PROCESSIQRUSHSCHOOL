@@ -123,6 +123,9 @@ const mapBackendToStudent = (backendData: any): any => {
     has_cerfa: !!(fields["cerfa"] && fields["cerfa"].length > 0),
     fiche_entreprise: fields["Fiche entreprise"]?.[0] || null,
     has_fiche_renseignement: !!(fields["Fiche entreprise"] && fields["Fiche entreprise"].length > 0),
+    livret_apprentissage_url: (fields["livret dapprentissage"] || fields["Livret Apprentissage"])?.[0]?.url || "",
+    livret_apprentissage_name: (fields["livret dapprentissage"] || fields["Livret Apprentissage"])?.[0]?.filename || "",
+    has_livret_apprentissage: !!((fields["livret dapprentissage"] && fields["livret dapprentissage"].length > 0) || (fields["Livret Apprentissage"] && fields["Livret Apprentissage"].length > 0)),
   };
 };
 
@@ -914,6 +917,30 @@ export const api = {
         return json;
       } catch (e) {
         console.log('📥 Convention Apprentissage Generation Success (Non-JSON):', text);
+        return { success: true, message: text };
+      }
+    } catch (error) { throw error; }
+  },
+
+  async generateLivretApprentissage(recordId: string): Promise<any> {
+    try {
+      console.log('📤 Generating Livret Apprentissage:', recordId);
+      const response = await fetch(`${BASE_URL}/candidats/${recordId}/livret-apprentissage`, {
+        method: 'POST',
+        headers: { 'Accept': 'application/json' }
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('❌ Livret Apprentissage Generation Failed:', errorData);
+        throw new Error(errorData.detail || errorData.message || 'Generation failed');
+      }
+      const text = await response.text();
+      try {
+        const json = JSON.parse(text);
+        console.log('📥 Livret Apprentissage Generation Success:', json);
+        return json;
+      } catch (e) {
+        console.log('📥 Livret Apprentissage Generation Success (Non-JSON):', text);
         return { success: true, message: text };
       }
     } catch (error) { throw error; }

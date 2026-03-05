@@ -803,6 +803,11 @@ const AdmissionView = ({ selectedStudent, selectedTab, onClearSelection }: Admis
         errorMessage: "Erreur lors de la génération de la convention."
     });
 
+    const { execute: generateLivretApi, loading: isGeneratingLivret } = useApi(api.generateLivretApprentissage, {
+        onSuccess: () => setShowSuccessModal(true),
+        errorMessage: "Erreur lors de la génération du livret d'apprentissage."
+    });
+
     const handleFinishTest = () => {
         setTestCompleted(true);
         setActiveTab(AdmissionTab.ENTRETIEN);
@@ -848,6 +853,8 @@ const AdmissionView = ({ selectedStudent, selectedTab, onClearSelection }: Admis
             await generateCompteRenduApi(recordId);
         } else if (doc.id === 'convention-apprentissage') {
             await generateConventionApprentissageApi(recordId);
+        } else if (doc.id === 'livret') {
+            await generateLivretApi(recordId);
         } else {
             console.log("Action pour le document:", doc.title);
         }
@@ -1114,7 +1121,8 @@ const AdmissionView = ({ selectedStudent, selectedTab, onClearSelection }: Admis
                                                 (doc.id === 'cerfa' && isGeneratingCerfa) ||
                                                 (doc.id === 'atre' && isGeneratingAtre) ||
                                                 (doc.id === 'compte-rendu' && isGeneratingCompteRendu) ||
-                                                (doc.id === 'convention-apprentissage' && isGeneratingConventionApprentissage);
+                                                (doc.id === 'convention-apprentissage' && isGeneratingConventionApprentissage) ||
+                                                (doc.id === 'livret' && isGeneratingLivret);
                                             return (
                                                 <button
                                                     disabled={isGenerating}
