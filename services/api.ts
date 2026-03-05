@@ -46,17 +46,6 @@ const formatString = (str: string) => {
   return str.replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase());
 };
 
-<<<<<<< HEAD
-const mapToBackendFormat = (data: any): any => {
-  if (typeof data !== 'object' || data === null) return data;
-  if (Array.isArray(data)) return data.map(mapToBackendFormat);
-  return Object.keys(data).reduce((acc, key) => {
-    // Convert camelCase to snake_case for backend
-    const snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
-    acc[snakeKey] = mapToBackendFormat(data[key]);
-    return acc;
-  }, {} as any);
-=======
 // Helper to safely access nested fields from Airtable-style response
 const getField = (data: any, fieldName: string, defaultValue: any = "") => {
   if (!data || !data.fields) return defaultValue;
@@ -286,7 +275,6 @@ const mapBackendToCompany = (backendData: any): any => {
     },
     record_id_etudiant: fields["recordIdetudiant"] || ""
   };
->>>>>>> b28a87303c60b11d4a67eb9b85007063f750ee43
 };
 
 // Helper to map student data to backend format (STRICT)
@@ -643,7 +631,6 @@ export const api = {
   },
 
   // --- AUTH ---
-<<<<<<< HEAD
   async login(email: string, pass: string): Promise<{ access_token: string; role?: string; email?: string; name?: string }> {
     const response = await fetch(`${AUTH_API_URL}/auth/login`, {
       method: 'POST',
@@ -668,58 +655,6 @@ export const api = {
       throw new Error(error.message || 'Register failed');
     }
     return await response.json();
-=======
-  async login(email: string, pass: string): Promise<{ access_token: string, role: string, email: string, name: string }> {
-    console.log('📤 Mock Login Attempt:', email);
-
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 800));
-
-    let role = 'admission';
-    let name = 'Admin User';
-
-    const emailLower = email.toLowerCase();
-    if (emailLower.includes('superadmin')) {
-      role = 'super_admin';
-      name = 'Super Administrateur';
-    } else if (emailLower.includes('rh')) {
-      role = 'rh';
-      name = 'Responsable RH';
-    } else if (emailLower.includes('commercial')) {
-      role = 'commercial';
-      name = 'Conseiller Commercial';
-    } else if (emailLower.includes('etudiant') || emailLower.includes('eleve')) {
-      role = 'eleve';
-      name = 'Étudiant Démo';
-    } else if (emailLower.includes('admission')) {
-      role = 'admission';
-      name = 'Chargé d\'Admission';
-    }
-
-    const mockData = {
-      access_token: 'mock-jwt-token-' + Date.now(),
-      role: role,
-      email: email,
-      name: name
-    };
-
-    console.log('📥 Mock Login Success:', mockData);
-    return mockData;
-  },
-
-  async register(userData: any): Promise<{ access_token: string }> {
-    console.log('📤 Mock Register Attempt:', userData.email);
-
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    const mockData = {
-      access_token: 'mock-jwt-token-reg-' + Date.now()
-    };
-
-    console.log('📥 Mock Register Success:', mockData);
-    return mockData;
->>>>>>> b28a87303c60b11d4a67eb9b85007063f750ee43
   },
 
   // --- HEALTH ---
@@ -1125,12 +1060,7 @@ export const api = {
   async updateCandidate(id: string, data: Partial<StudentFormData>): Promise<any> {
     try {
       const payload = mapStudentToBackend(data);
-<<<<<<< HEAD
       const request: RequestInit = {
-=======
-      console.log('📤 Update Candidate Payload:', payload);
-      const response = await fetch(`${BASE_API_URL}/candidates/${id}`, {
->>>>>>> b28a87303c60b11d4a67eb9b85007063f750ee43
         method: 'PUT',
         headers: withAuthHeaders({ 'Content-Type': 'application/json', 'Accept': 'application/json' }),
         body: JSON.stringify(payload),
@@ -1323,9 +1253,9 @@ export const api = {
       const json = await response.json();
       console.log('✅ [API] Signing Link Received:', json);
       return json;
-    } catch (error) { 
+    } catch (error) {
       console.error('💥 [API] Signing Link Error:', error);
-      throw error; 
+      throw error;
     }
   },
 
@@ -1543,3 +1473,13 @@ export const api = {
   }
 };
 
+const diffObjects = (orig: any, current: any) => {
+  const diff: any = {};
+  if (!orig || !current) return current || {};
+  Object.keys(current).forEach(key => {
+    if (JSON.stringify(orig[key]) !== JSON.stringify(current[key])) {
+      diff[key] = current[key];
+    }
+  });
+  return diff;
+};

@@ -1,15 +1,9 @@
-<<<<<<< HEAD
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, CheckCircle, ArrowRight, Loader2, Eye, EyeOff, Briefcase, GraduationCap, Users, BookOpen } from 'lucide-react';
 import { api } from '../services/api';
 import { decodeJwtPayload, setAuthToken } from '../services/session';
-=======
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { api } from '../services/api';
 import './LoginPage.css';
->>>>>>> b28a87303c60b11d4a67eb9b85007063f750ee43
 
 const LoginPage: React.FC = () => {
     const navigate = useNavigate();
@@ -17,16 +11,18 @@ const LoginPage: React.FC = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
-    const [loading, setLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [activeRole, setActiveRole] = useState('commercial');
 
-<<<<<<< HEAD
     const roles = [
         { id: 'commercial', label: 'Commercial', icon: Briefcase },
         { id: 'admission', label: 'Admission', icon: GraduationCap },
         { id: 'rh', label: 'RH', icon: Users },
         { id: 'eleve', label: 'Eleve', icon: BookOpen },
     ];
-=======
+
+    const currentRoleLabel = roles.find(r => r.id === activeRole)?.label;
+
     useEffect(() => {
         // Clear background scroll lock just in case
         document.body.style.overflow = '';
@@ -55,82 +51,56 @@ const LoginPage: React.FC = () => {
         setFieldErrors(errors);
         return Object.keys(errors).length === 0;
     };
->>>>>>> b28a87303c60b11d4a67eb9b85007063f750ee43
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!validate()) return;
 
-<<<<<<< HEAD
-        try {
-            const result = await api.login(formData.email, formData.password);
-            setAuthToken(result.access_token);
-
-            const payload = decodeJwtPayload(result.access_token);
-            const isStudentToken = payload?.role === 'student';
-
-            if (activeRole === 'eleve' && !isStudentToken) {
-                throw new Error("Ce compte n'est pas un compte etudiant.");
-            }
-
-            const finalRole = isStudentToken ? 'eleve' : activeRole;
-            localStorage.setItem('userRole', finalRole);
-
-            if (finalRole === 'commercial') navigate('/commercial/dashboard');
-            else if (finalRole === 'admission') navigate('/admission');
-            else if (finalRole === 'rh') navigate('/rh/dashboard');
-            else if (finalRole === 'eleve') navigate('/etudiant/dashboard');
-            else navigate('/');
-        } catch (error: any) {
-            console.error('Login failed', error);
-            alert(error?.message || 'Identifiants invalides');
-        } finally {
-            setIsLoading(false);
-=======
-        setLoading(true);
+        setIsLoading(true);
         setError(null);
 
         try {
             const data = await api.login(formData.email, formData.password);
-            localStorage.setItem('token', data.access_token);
-            localStorage.setItem('userRole', data.role);
+            setAuthToken(data.access_token);
+
+            const payload = decodeJwtPayload(data.access_token);
+            const isStudentToken = payload?.role === 'student';
+
+            // Priority to super_admin and token role
+            const finalRole = data.role === 'super_admin' ? 'super_admin' : (isStudentToken ? 'eleve' : (data.role || activeRole));
+
+            localStorage.setItem('userRole', finalRole);
             localStorage.setItem('userEmail', data.email);
             localStorage.setItem('userName', data.name);
+            localStorage.setItem('token', data.access_token); // Explicitly keep sync with setAuthToken
 
-            // Redirect to appropriate dashboard based on role
-            if (data.role === 'super_admin') navigate('/admission');
-            else if (data.role === 'commercial') navigate('/commercial/dashboard');
-            else if (data.role === 'admission') navigate('/admission');
-            else if (data.role === 'rh') navigate('/rh/dashboard');
-            else if (data.role === 'eleve') navigate('/etudiant');
-            else navigate('/admission');
+            if (finalRole === 'super_admin' || finalRole === 'admission') navigate('/admission');
+            else if (finalRole === 'commercial') navigate('/commercial/dashboard');
+            else if (finalRole === 'rh') navigate('/rh/dashboard');
+            else if (finalRole === 'eleve') navigate('/etudiant/dashboard');
+            else navigate('/');
         } catch (err: any) {
+            console.error('Login failed', err);
             setError(err.message || "Identifiants invalides");
         } finally {
-            setLoading(false);
->>>>>>> b28a87303c60b11d4a67eb9b85007063f750ee43
+            setIsLoading(false);
         }
     };
 
     return (
         <div className="login-page">
             {/* ════════════ LEFT — BRAND PANEL ════════════ */}
-            <aside className="panel-brand" aria-label="ProcessIQ — présentation">
-                {/* Decorative shapes */}
-                <div className="brand-glow-btm" aria-hidden="true"></div>
-                <div className="bs bs-1" aria-hidden="true"></div>
-                <div className="bs bs-2" aria-hidden="true"></div>
-                <div className="bs bs-3" aria-hidden="true"></div>
-                <div className="bs bs-4" aria-hidden="true"></div>
+            <div className="hidden lg:flex lg:w-1/2 p-12 flex-col justify-between bg-white relative overflow-hidden border-r border-slate-100">
+                {/* Visual elements */}
+                <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-blue-50/30 rounded-full blur-[120px] -mr-96 -mt-96 animate-pulse-soft"></div>
+                <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-indigo-50/20 rounded-full blur-[100px] -ml-72 -mb-72"></div>
 
-                <div className="brand-inner">
-                    {/* Logo */}
-                    <Link to="/" className="brand-logo-wrap">
-                        <img src="/images/logo-process-iq.png" alt="ProcessIQ" className="brand-logo" />
-                        <span className="brand-logo-name">ProcessIQ</span>
-                    </Link>
+                <div className="relative z-10 flex items-center gap-3 scale-in duration-700">
+                    <img src="/images/logo-process-iq.png" alt="Process IQ" className="h-10 w-auto" />
+                    <span className="text-xl font-black text-slate-900 tracking-tighter">Process IQ</span>
+                </div>
 
-<<<<<<< HEAD
+                <div className="relative z-10">
                     <div className="inline-block px-4 py-1.5 rounded-full bg-blue-100/80 text-blue-700 text-xs font-bold uppercase tracking-wider mb-6 stagger-2">
                         Portail de Gestion
                     </div>
@@ -138,19 +108,19 @@ const LoginPage: React.FC = () => {
                     <h1 className="text-5xl font-black text-slate-900 leading-[1.1] mb-6 tracking-tight stagger-3">
                         Optimisez vos <br />
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 animate-pulse-soft">
-                            processus metiers
+                            processus métiers
                         </span>
                     </h1>
 
                     <p className="text-lg text-slate-500 max-w-md leading-relaxed mb-10 stagger-4">
-                        Accedez a une plateforme centralisee pour gerer les admissions, le suivi commercial et les ressources humaines en toute simplicite.
+                        Accédez à une plateforme centralisée pour gérer les admissions, le suivi commercial et les ressources humaines en toute simplicité.
                     </p>
 
                     <div className="space-y-4 stagger-5">
                         {[
-                            "Suivi des candidats en temps reel",
-                            "Generation automatique des documents",
-                            "Tableaux de bord statistiques avances",
+                            "Suivi des candidats en temps réel",
+                            "Génération automatique des documents",
+                            "Tableaux de bord statistiques avancés",
                             "Gestion collaborative des dossiers"
                         ].map((item, i) => (
                             <div key={i} className="flex items-center gap-3 text-slate-600 font-medium group cursor-default">
@@ -164,7 +134,7 @@ const LoginPage: React.FC = () => {
                 </div>
 
                 <div className="relative z-10 text-xs text-slate-400 font-medium stagger-5" style={{ animationDelay: '0.8s' }}>
-                    (c) 2026 Process IQ - Rush School. Tous droits reserves.
+                    (c) 2026 Process IQ - Rush School. Tous droits réservés.
                 </div>
             </div>
 
@@ -193,8 +163,8 @@ const LoginPage: React.FC = () => {
                                         key={role.id}
                                         onClick={() => setActiveRole(role.id)}
                                         className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-[1.5rem] text-xs font-black uppercase tracking-widest transition-all duration-300 whitespace-nowrap ${isActive
-                                                ? 'bg-white text-blue-600 shadow-md ring-1 ring-slate-100 scale-100'
-                                                : 'text-slate-400 hover:text-slate-700 hover:bg-white/40 scale-95'
+                                            ? 'bg-white text-blue-600 shadow-md ring-1 ring-slate-100 scale-100'
+                                            : 'text-slate-400 hover:text-slate-700 hover:bg-white/40 scale-95'
                                             }`}
                                     >
                                         <Icon size={14} className={isActive ? 'text-blue-600 animate-in zoom-in-50 duration-500' : ''} />
@@ -223,18 +193,20 @@ const LoginPage: React.FC = () => {
                                         </div>
                                         <input
                                             type="email"
+                                            name="email"
                                             placeholder="nom@process-iq.fr"
                                             required
-                                            className="w-full pl-12 pr-6 py-4 bg-slate-50/50 border border-slate-200/60 rounded-2xl text-slate-900 placeholder:text-slate-300 font-bold outline-none focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all duration-300 shadow-sm"
+                                            className={`w-full pl-12 pr-6 py-4 bg-slate-50/50 border ${fieldErrors.email ? 'border-rose-500 ring-rose-500/10' : 'border-slate-200/60'} rounded-2xl text-slate-900 placeholder:text-slate-300 font-bold outline-none focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all duration-300 shadow-sm`}
                                             value={formData.email}
-                                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                            onChange={handleChange}
                                         />
                                     </div>
+                                    {fieldErrors.email && <p className="text-[10px] text-rose-500 font-black uppercase tracking-wider ml-4">{fieldErrors.email}</p>}
                                 </div>
 
                                 <div className="space-y-2 group">
                                     <div className="flex justify-between items-center px-2">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] group-focus-within:text-blue-600 transition-colors text-right">Cle d'acces</label>
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] group-focus-within:text-blue-600 transition-colors">Clé d'accès</label>
                                         <a href="#" className="text-[10px] font-black text-blue-500 hover:text-blue-700 uppercase tracking-wider hover:translate-x-1 transition-all">Soutien technique</a>
                                     </div>
                                     <div className="relative">
@@ -243,11 +215,12 @@ const LoginPage: React.FC = () => {
                                         </div>
                                         <input
                                             type={showPassword ? "text" : "password"}
+                                            name="password"
                                             placeholder="........"
                                             required
-                                            className="w-full pl-12 pr-14 py-4 bg-slate-50/50 border border-slate-200/60 rounded-2xl text-slate-900 placeholder:text-slate-300 font-bold outline-none focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all duration-300 shadow-sm"
+                                            className={`w-full pl-12 pr-14 py-4 bg-slate-50/50 border ${fieldErrors.password ? 'border-rose-500 ring-rose-500/10' : 'border-slate-200/60'} rounded-2xl text-slate-900 placeholder:text-slate-300 font-bold outline-none focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all duration-300 shadow-sm`}
                                             value={formData.password}
-                                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                            onChange={handleChange}
                                         />
                                         <button
                                             type="button"
@@ -257,7 +230,17 @@ const LoginPage: React.FC = () => {
                                             {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                         </button>
                                     </div>
+                                    {fieldErrors.password && <p className="text-[10px] text-rose-500 font-black uppercase tracking-wider ml-4">{fieldErrors.password}</p>}
                                 </div>
+
+                                {error && (
+                                    <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
+                                        <div className="w-8 h-8 rounded-full bg-rose-100 flex items-center justify-center text-rose-500">
+                                            <Lock size={14} />
+                                        </div>
+                                        <p className="text-sm font-black text-rose-600 uppercase tracking-tight">{error}</p>
+                                    </div>
+                                )}
 
                                 <button
                                     type="submit"
@@ -283,201 +266,11 @@ const LoginPage: React.FC = () => {
 
                     <div className="mt-10 text-center animate-in fade-in duration-1000 delay-500">
                         <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest p-4 rounded-xl hover:bg-slate-50 transition-colors inline-block cursor-pointer">
-                            Version 2.4.0 - <span className="text-slate-500">Infrastructure Cloud Securisee</span>
-=======
-                    {/* Copy */}
-                    <div className="brand-copy">
-                        <p className="brand-eyebrow">Plateforme alternance</p>
-                        <h2 className="brand-headline">
-                            La plateforme qui <strong>libère l'alternance</strong> de la paperasse
-                        </h2>
-                        <p className="brand-desc">
-                            Gerez vos conventions, suivis pédagogiques et conformités en un seul endroit. Moins d'administratif, plus de résultats.
->>>>>>> b28a87303c60b11d4a67eb9b85007063f750ee43
+                            Version 2.4.0 - <span className="text-slate-500">Infrastructure Cloud Sécurisée</span>
                         </p>
-
-                        {/* Stats */}
-                        <div className="brand-stats">
-                            <div className="stat-item">
-                                <span className="stat-value">1M+</span>
-                                <span className="stat-label">Alternants en France</span>
-                            </div>
-                            <div className="stat-item">
-                                <span className="stat-value">15Md€</span>
-                                <span className="stat-label">Marché adressable</span>
-                            </div>
-                            <div className="stat-item">
-                                <span className="stat-value">85%</span>
-                                <span className="stat-label">Gain de temps admin</span>
-                            </div>
-                        </div>
-
-                        {/* Features */}
-                        <div className="brand-features">
-                            <div className="feat-item">
-                                <div className="feat-icon">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-                                        <path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z" />
-                                        <polyline points="13 2 13 9 20 9" />
-                                    </svg>
-                                </div>
-                                <div className="feat-text">
-                                    <p className="feat-title">Automatisation admin</p>
-                                    <p className="feat-sub">Conventions et livrables générés automatiquement</p>
-                                </div>
-                            </div>
-                            <div className="feat-item">
-                                <div className="feat-icon">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-                                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-                                    </svg>
-                                </div>
-                                <div className="feat-text">
-                                    <p className="feat-title">Suivi pédagogique</p>
-                                    <p className="feat-sub">Tableau de bord temps réel pour tuteurs et RH</p>
-                                </div>
-                            </div>
-                            <div className="feat-item">
-                                <div className="feat-icon">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-                                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                                    </svg>
-                                </div>
-                                <div className="feat-text">
-                                    <p className="feat-title">Conformité RGPD</p>
-                                    <p className="feat-sub">Données hébergées en France, certifié ISO 27001</p>
-                                </div>
-                            </div>
-                            <div className="feat-item">
-                                <div className="feat-icon">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-                                        <rect x="2" y="3" width="20" height="14" rx="2" />
-                                        <line x1="8" y1="21" x2="16" y2="21" />
-                                        <line x1="12" y1="17" x2="12" y2="21" />
-                                    </svg>
-                                </div>
-                                <div className="feat-text">
-                                    <p className="feat-title">Solution tout-en-un</p>
-                                    <p className="feat-sub">CFA, entreprise et alternant, sur une seule plateforme</p>
-                                </div>
-                            </div>
-                        </div>
                     </div>
-
-                    {/* Brand footer */}
-                    <nav className="brand-footer-links" aria-label="Liens utiles">
-                        <Link to="/">Accueil</Link>
-                        <a href="#">Politique de confidentialité</a>
-                        <a href="#">Mentions légales</a>
-                    </nav>
                 </div>
-            </aside>
-
-            {/* ════════════ RIGHT — FORM PANEL ════════════ */}
-            <main className="panel-form" role="main">
-                <Link to="/" className="form-back" aria-label="Retour à l'accueil">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                        <path d="M15 18l-6-6 6-6" />
-                    </svg>
-                    Retour à l'accueil
-                </Link>
-
-                <div className="form-inner">
-                    <h1 className="form-heading">Bienvenue</h1>
-                    <p className="form-sub">Connectez-vous à votre espace ProcessIQ</p>
-
-                    {error && <div className="server-error" role="alert">{error}</div>}
-
-                    <form className="auth-form" onSubmit={handleSubmit} noValidate>
-                        {/* Email */}
-                        <div className="field-group">
-                            <label className="field-label" htmlFor="email">Adresse email</label>
-                            <div className="field-wrap">
-                                <svg className="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
-                                    <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                </svg>
-                                <input
-                                    className={`field-input ${fieldErrors.email ? 'error' : ''}`}
-                                    type="email"
-                                    id="email"
-                                    name="email"
-                                    placeholder="votre@email.fr"
-                                    autoComplete="email"
-                                    required
-                                    value={formData.email}
-                                    onChange={handleChange}
-                                />
-                            </div>
-                            {fieldErrors.email && <span className="field-error" role="alert">{fieldErrors.email}</span>}
-                        </div>
-
-                        {/* Mot de passe */}
-                        <div className="field-group">
-                            <label className="field-label" htmlFor="password">Mot de passe</label>
-                            <div className="field-wrap">
-                                <svg className="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
-                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                                    <path d="M7 11V7a5 5 0 0110 0v4" />
-                                </svg>
-                                <input
-                                    className={`field-input ${fieldErrors.password ? 'error' : ''}`}
-                                    type={showPassword ? 'text' : 'password'}
-                                    id="password"
-                                    name="password"
-                                    placeholder="••••••••"
-                                    autoComplete="current-password"
-                                    required
-                                    value={formData.password}
-                                    onChange={handleChange}
-                                />
-                                <button
-                                    className="field-toggle"
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
-                                >
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
-                                        {showPassword ? (
-                                            <>
-                                                <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94" />
-                                                <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19" />
-                                                <line x1="1" y1="1" x2="23" y2="23" />
-                                            </>
-                                        ) : (
-                                            <>
-                                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                                                <circle cx="12" cy="12" r="3" />
-                                            </>
-                                        )}
-                                    </svg>
-                                </button>
-                            </div>
-                            {fieldErrors.password && <span className="field-error" role="alert">{fieldErrors.password}</span>}
-                        </div>
-
-                        {/* Mot de passe oublié */}
-                        <div className="forgot-row">
-                            <a href="#" className="forgot-link">Mot de passe oublié&nbsp;?</a>
-                        </div>
-
-                        {/* Bouton connexion */}
-                        <button type="submit" className="btn-submit" disabled={loading}>
-                            <span>{loading ? 'Connexion…' : 'Se connecter'}</span>
-                        </button>
-                    </form>
-
-                    <div className="form-divider"><span>ou</span></div>
-
-                    {/* Demo CTA */}
-                    <Link to="/register" className="btn-demo">Demander une démo gratuite</Link>
-
-                    {/* Inscription */}
-                    <p className="form-register">
-                        Pas encore de compte&nbsp;?
-                        <Link to="/register"> Créer un compte</Link>
-                    </p>
-                </div>
-            </main>
+            </div>
         </div>
     );
 };

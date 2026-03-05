@@ -112,12 +112,9 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
     const [companyEditForm, setCompanyEditForm] = useState<any>(null);
     const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
     const [isRegenerating, setIsRegenerating] = useState<string | null>(null);
-<<<<<<< HEAD
     const [admissionSignatureDocs, setAdmissionSignatureDocs] = useState<AdmissionSignatureDoc[]>([]);
     const [loadingAdmissionSignatureDocs, setLoadingAdmissionSignatureDocs] = useState(false);
     const [signingAdmissionDocId, setSigningAdmissionDocId] = useState<string | null>(null);
-=======
->>>>>>> b28a87303c60b11d4a67eb9b85007063f750ee43
 
     const { showToast } = useAppStore();
     const navigate = useNavigate();
@@ -542,28 +539,6 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
         }
     };
 
-<<<<<<< HEAD
-=======
-    const handleGenerateSigningLink = async (documentId: string) => {
-        console.log(`🌀 Initializing signing link generation for document ID: ${documentId}`);
-        try {
-            const result = await api.generateSigningLink(documentId);
-
-            if (result && result.signing_link) {
-                console.log('✨ [SUCCESS] Signing link generated. Opening link in a new tab:', result.signing_link);
-                window.open(result.signing_link, '_blank');
-                showToast("Lien de signature généré", "success");
-            } else {
-                console.warn('⚠️ [WARNING] No signing link found in the API response:', result);
-                showToast("Erreur lors de la génération du lien", "error");
-            }
-        } catch (error: any) {
-            console.error('🛑 [CRITICAL] Exception caught during signing link generation:', error);
-            showToast(error.message || "Erreur lors de la génération du lien", "error");
-        }
-    };
-
->>>>>>> b28a87303c60b11d4a67eb9b85007063f750ee43
     const handleCopyEmail = (email: string) => {
         navigator.clipboard.writeText(email);
         showToast("Email copié dans le presse-papier", "success");
@@ -576,15 +551,12 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
         return () => document.removeEventListener('click', handleClickOutside);
     }, []);
 
-<<<<<<< HEAD
     useEffect(() => {
         if (currentTab === 'students') {
             fetchAdmissionSignatureDocs();
         }
     }, [currentTab]);
 
-=======
->>>>>>> b28a87303c60b11d4a67eb9b85007063f750ee43
     const toggleMenu = (e: React.MouseEvent, id: string) => {
         e.stopPropagation();
         setActiveMenuId(activeMenuId === id ? null : id);
@@ -638,7 +610,6 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
         const isOpen = activeMenuId === student.id;
         const studentInfo = getC(student);
         const fullName = `${studentInfo.nom} ${studentInfo.prenom}`;
-<<<<<<< HEAD
 
         return (
             <div className="relative">
@@ -742,168 +713,6 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                                 <RefreshCw size={15} className={`text-pink-400 ${isRegenerating === `${student.id}-cr` ? 'animate-spin' : ''}`} />
                                 <span>Régénérer Compte Rendu</span>
                             </button>
-
-                            <div className="h-px bg-slate-50 my-1 mx-2" />
-
-                            <span className="text-[10px] font-bold text-slate-300 uppercase tracking-tighter pl-3 py-1 block">Administration</span>
-
-                            <button
-                                onClick={() => handleDeleteCompany(student.id, student.entreprise_raison_sociale || 'Entreprise')}
-                                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                            >
-                                <Building2 size={15} className="text-rose-400" />
-                                <span>Supprimer entreprise</span>
-                            </button>
-
-                            <button
-                                onClick={() => handleDeleteStudent(student.id, fullName)}
-                                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                            >
-                                <UserX size={15} className="text-rose-400" />
-                                <span className="font-semibold">Supprimer l'étudiant</span>
-                            </button>
-                        </div>
-                    </div>
-                )}
-            </div>
-        );
-    };
-
-
-    const filteredStudents = students.filter(student => {
-        const searchLower = searchQuery.toLowerCase();
-        const fullName = `${student.nom} ${student.prenom}`.toLowerCase();
-        const email = (student.email || '').toLowerCase();
-        const formation = (student.formation || '').toLowerCase();
-=======
->>>>>>> b28a87303c60b11d4a67eb9b85007063f750ee43
-
-        return (
-            <div className="relative">
-                <button
-                    onClick={(e) => toggleMenu(e, student.id)}
-                    className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
-                >
-                    <MoreVertical size={18} />
-                </button>
-
-                {isOpen && (
-                    <div className="absolute right-0 mt-2 w-56 rounded-xl bg-white shadow-2xl border border-slate-100 z-[100] overflow-hidden animate-in fade-in zoom-in duration-200 origin-top-right">
-                        <div className="p-1 px-2 border-b border-slate-50 bg-slate-50/50">
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1 py-1 block">Actions pour {studentInfo.prenom}</span>
-                        </div>
-
-                        <div className="p-1">
-                            <button
-                                onClick={() => handleCopyEmail(studentInfo.email)}
-                                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
-                            >
-                                <Copy size={15} className="text-slate-400" />
-                                <span>Copier l'email</span>
-                            </button>
-
-                            <button
-                                onClick={() => handleViewDetails(student.id)}
-                                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
-                            >
-                                <FileText size={15} className="text-blue-400" />
-                                <span>Voir les détails</span>
-                            </button>
-
-                            <button
-                                onClick={() => {
-                                    handleViewDetails(student.id);
-                                    setTimeout(() => setIsEditing(true), 100);
-                                }}
-                                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
-                            >
-                                <RefreshCw size={15} className="text-indigo-400" />
-                                <span>Modifier l'étudiant</span>
-                            </button>
-
-                            <button
-                                onClick={() => {
-                                    onSelectStudent(student, AdmissionTab.ADMINISTRATIF);
-                                    navigate('/admission');
-                                }}
-                                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
-                            >
-                                <HistoryIcon size={15} className="text-rose-400" />
-                                <span>Voir l'historique</span>
-                            </button>
-
-                            <div className="h-px bg-slate-50 my-1 mx-2" />
-
-                            <span className="text-[10px] font-bold text-slate-300 uppercase tracking-tighter pl-3 py-1 block">Documents</span>
-
-                            <button
-                                onClick={() => handleRegenerateDoc(student.id, 'fiche')}
-                                disabled={isRegenerating === `${student.id}-fiche`}
-                                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg transition-colors disabled:opacity-50"
-                            >
-                                <RefreshCw size={15} className={`text-slate-400 ${isRegenerating === `${student.id}-fiche` ? 'animate-spin' : ''}`} />
-                                <span>Régénérer Fiche Rens.</span>
-                            </button>
-
-                            <button
-                                onClick={() => handleRegenerateDoc(student.id, 'cerfa')}
-                                disabled={isRegenerating === `${student.id}-cerfa`}
-                                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg transition-colors disabled:opacity-50"
-                            >
-                                <RefreshCw size={15} className={`text-blue-400 ${isRegenerating === `${student.id}-cerfa` ? 'animate-spin' : ''}`} />
-                                <span>Régénérer CERFA</span>
-                            </button>
-
-                            <button
-                                onClick={() => handleRegenerateDoc(student.id, 'convention')}
-                                disabled={isRegenerating === `${student.id}-convention`}
-                                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg transition-colors disabled:opacity-50"
-                            >
-                                <RefreshCw size={15} className={`text-emerald-400 ${isRegenerating === `${student.id}-convention` ? 'animate-spin' : ''}`} />
-                                <span>Régénérer Convention</span>
-                            </button>
-
-                            <button
-                                onClick={() => handleRegenerateDoc(student.id, 'atre')}
-                                disabled={isRegenerating === `${student.id}-atre`}
-                                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg transition-colors disabled:opacity-50"
-                            >
-                                <RefreshCw size={15} className={`text-orange-400 ${isRegenerating === `${student.id}-atre` ? 'animate-spin' : ''}`} />
-                                <span>Régénérer ATRE</span>
-                            </button>
-
-                            <button
-                                onClick={() => handleRegenerateDoc(student.id, 'cr')}
-                                disabled={isRegenerating === `${student.id}-cr`}
-                                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg transition-colors disabled:opacity-50"
-                            >
-                                <RefreshCw size={15} className={`text-pink-400 ${isRegenerating === `${student.id}-cr` ? 'animate-spin' : ''}`} />
-                                <span>Régénérer Compte Rendu</span>
-                            </button>
-
-                            <div className="h-px bg-slate-50 my-1 mx-2" />
-
-                            <span className="text-[10px] font-bold text-slate-300 uppercase tracking-tighter pl-3 py-1 block">Signatures</span>
-
-                            {studentInfo.cerfa?.id && (
-                                <button
-                                    onClick={() => handleGenerateSigningLink(studentInfo.cerfa.id)}
-                                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                                >
-                                    <FileSignature size={15} className="text-indigo-400" />
-                                    <span>Signer CERFA</span>
-                                </button>
-                            )}
-
-                            {studentInfo.convention?.id && (
-                                <button
-                                    onClick={() => handleGenerateSigningLink(studentInfo.convention.id)}
-                                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
-                                >
-                                    <FileSignature size={15} className="text-emerald-400" />
-                                    <span>Signer Convention</span>
-                                </button>
-                            )}
 
                             <div className="h-px bg-slate-50 my-1 mx-2" />
 
@@ -1449,35 +1258,6 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                                         <div key={rawStudent.record_id || rawStudent.id} className="bg-white border border-slate-200 rounded-[32px] p-8 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 group relative overflow-hidden">
                                             <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full -mr-16 -mt-16 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
 
-<<<<<<< HEAD
-                                    <div className="flex justify-between items-start mb-8 relative z-10">
-                                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center text-slate-500 font-black text-lg group-hover:from-blue-600 group-hover:to-indigo-600 group-hover:text-white transition-all duration-300 shadow-inner">
-                                            {student.prenom?.[0]}{student.nom?.[0]}
-                                        </div>
-                                        <div className="flex gap-2 items-center">
-                                            <div className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border ${student.dossier_complet ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-amber-50 text-amber-600 border-amber-100'
-                                                }`}>
-                                                {student.dossier_complet ? 'Dossier Complet' : 'Dossier Incomplet'}
-                                            </div>
-                                            <ActionsMenu student={student} />
-                                        </div>
-                                    </div>
-
-                                    <div className="mb-8 relative z-10">
-                                        <h3 className="text-2xl font-black text-slate-900 tracking-tight group-hover:text-blue-600 transition-colors">{student.nom} {student.prenom}</h3>
-                                        <p className="text-sm font-bold text-slate-400 truncate mt-1">{student.email}</p>
-                                    </div>
-
-                                    <div className="flex items-center gap-3 mb-8 relative z-10">
-                                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 font-black text-[9px] uppercase tracking-widest">
-                                            <Briefcase size={12} />
-                                            {student.formation}
-                                        </div>
-                                        {student.alternance === 'Oui' && student.entreprise_raison_sociale && (
-                                            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900 text-white font-black text-[9px] uppercase tracking-widest">
-                                                <Building size={12} />
-                                                {student.entreprise_raison_sociale}
-=======
                                             <div className="flex justify-between items-start mb-8 relative z-10">
                                                 <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center text-slate-400 font-black text-2xl group-hover:from-blue-600 group-hover:to-indigo-600 group-hover:text-white transition-all duration-300 shadow-inner">
                                                     {student.numero_inscription || `${student.prenom?.[0]}${student.nom?.[0]}`}
@@ -1489,7 +1269,6 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                                                     </div>
                                                     <ActionsMenu student={rawStudent} />
                                                 </div>
->>>>>>> b28a87303c60b11d4a67eb9b85007063f750ee43
                                             </div>
 
                                             <div className="mb-8 relative z-10">

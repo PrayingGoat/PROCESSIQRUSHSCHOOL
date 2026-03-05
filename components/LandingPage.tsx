@@ -8,8 +8,6 @@ const LandingPage: React.FC = () => {
     const [advCurrent, setAdvCurrent] = useState(0);
     const advTotal = 3;
     const timerRef = useRef<NodeJS.Timeout | null>(null);
-<<<<<<< HEAD
-=======
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [userRole, setUserRole] = useState<string | null>(null);
 
@@ -29,7 +27,6 @@ const LandingPage: React.FC = () => {
         return "/admission";
     };
 
->>>>>>> b28a87303c60b11d4a67eb9b85007063f750ee43
 
     useEffect(() => {
         // Nav scroll effect
@@ -122,17 +119,12 @@ const LandingPage: React.FC = () => {
                                 <span className="nav-separator">/</span>
                                 <span>EN</span>
                             </div>
-<<<<<<< HEAD
-                            <Link to="/login" className="nav-connexion">Connexion</Link>
-                            <Link to="/register" className="nav-cta">Demander une démo</Link>
-=======
                             {isLoggedIn ? (
                                 <Link to={getDashboardLink()} className="nav-connexion">Tableau de bord</Link>
                             ) : (
                                 <Link to="/login" className="nav-connexion">Connexion</Link>
                             )}
                             <Link to="/contact" className="nav-cta">Demander une démo</Link>
->>>>>>> b28a87303c60b11d4a67eb9b85007063f750ee43
                         </div>
 
                         <button
@@ -154,17 +146,12 @@ const LandingPage: React.FC = () => {
                 <a href="#advantages" onClick={toggleMobileMenu}>Avantages</a>
                 <a href="#footer" onClick={toggleMobileMenu}>Contact</a>
                 <div className="mobile-menu-actions">
-<<<<<<< HEAD
-                    <Link to="/login" className="btn btn-secondary" onClick={toggleMobileMenu}>Connexion</Link>
-                    <Link to="/register" className="btn btn-primary" onClick={toggleMobileMenu}>Demander une démo</Link>
-=======
                     {isLoggedIn ? (
                         <Link to={getDashboardLink()} className="btn btn-secondary" onClick={toggleMobileMenu}>Tableau de bord</Link>
                     ) : (
                         <Link to="/login" className="btn btn-secondary" onClick={toggleMobileMenu}>Connexion</Link>
                     )}
                     <Link to="/contact" className="btn btn-primary" onClick={toggleMobileMenu}>Demander une démo</Link>
->>>>>>> b28a87303c60b11d4a67eb9b85007063f750ee43
                 </div>
             </div>
 
@@ -195,11 +182,7 @@ const LandingPage: React.FC = () => {
                             <a href="#solution" className="btn btn-primary">
                                 Découvrir la solution <span className="btn-arrow">→</span>
                             </a>
-<<<<<<< HEAD
-                            <Link to="/register" className="btn btn-secondary">
-=======
                             <Link to="/contact" className="btn btn-secondary">
->>>>>>> b28a87303c60b11d4a67eb9b85007063f750ee43
                                 Demander une démo
                             </Link>
                         </div>
@@ -549,17 +532,12 @@ const LandingPage: React.FC = () => {
                     <h2 className="cta-title reveal delay-1">Prêt à Révolutionner la Gestion<br />de l'<em>Alternance</em> ?</h2>
                     <p className="cta-sub reveal delay-2">Rejoignez les établissements qui font confiance à ProcessIQ pour simplifier et optimiser leur gestion de l'alternance et du stage.</p>
                     <div className="cta-actions reveal delay-3">
-<<<<<<< HEAD
-                        <Link to="/register" className="btn btn-gold">Demander une démo <span className="btn-arrow">→</span></Link>
-                        <Link to="/login" className="btn btn-outline-beige">Connexion</Link>
-=======
                         <Link to="/contact" className="btn btn-gold">Demander une démo <span className="btn-arrow">→</span></Link>
                         {isLoggedIn ? (
                             <Link to={getDashboardLink()} className="btn btn-outline-beige">Tableau de bord</Link>
                         ) : (
                             <Link to="/login" className="btn btn-outline-beige">Connexion</Link>
                         )}
->>>>>>> b28a87303c60b11d4a67eb9b85007063f750ee43
                     </div>
                 </div>
             </section>

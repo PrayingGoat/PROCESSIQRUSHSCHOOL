@@ -8,13 +8,13 @@ import RHView from './components/RHView';
 import LoginPage from './components/LoginPage';
 import LandingPage from './components/LandingPage';
 import RegisterPage from './components/RegisterPage';
+import ContactPage from './components/ContactPage';
 import Toast from './components/ui/Toast';
 import ClassNTCView from './components/ClassNTCView';
 import { AdmissionTab } from './types';
 import AdminLoginPage from './components/AdminLoginPage';
 import AdminDashboard from './components/AdminDashboard';
 import TestPage from './components/TestPage';
-<<<<<<< HEAD
 import StudentDashboard from './pages/student/StudentDashboard.tsx';
 import StudentNotes from './pages/student/StudentNotes.tsx';
 import StudentDocuments from './pages/student/StudentDocuments.tsx';
@@ -41,26 +41,9 @@ const RequireAuth = ({ children, allowedRoles }: { children: React.ReactNode; al
 
   if (allowedRoles) {
     const role = getEffectiveRole();
-    if (!role || !allowedRoles.includes(role)) {
+    if (!role || (role !== 'super_admin' && !allowedRoles.includes(role))) {
       return <Navigate to="/" replace />;
     }
-=======
-import LandingPage from './components/LandingPage';
-import RegisterPage from './components/RegisterPage';
-import ContactPage from './components/ContactPage';
-
-const RequireAuth = ({ children, allowedRoles }: { children: React.ReactNode, allowedRoles?: string[] }) => {
-  const isAuthenticated = localStorage.getItem('token'); // Changed from authToken to token
-  const userRole = localStorage.getItem('userRole');
-  const location = useLocation();
-
-  if (!isAuthenticated) {
-    return <Navigate to="/landing" state={{ from: location }} replace />;
-  }
-
-  if (allowedRoles && userRole && userRole !== 'super_admin' && !allowedRoles.includes(userRole)) {
-    return <Navigate to="/" replace />;
->>>>>>> b28a87303c60b11d4a67eb9b85007063f750ee43
   }
 
   return <>{children}</>;
@@ -82,15 +65,7 @@ const App = () => {
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
   const [selectedTab, setSelectedTab] = useState<AdmissionTab | null>(null);
   const location = useLocation();
-<<<<<<< HEAD
-  const isStandalonePage =
-    location.pathname === '/login' ||
-    location.pathname === '/register' ||
-    location.pathname === '/landing' ||
-    location.pathname === '/admin/login' ||
-    location.pathname.startsWith('/admin') ||
-    location.pathname === '/test';
-=======
+
   const isStandalonePage = [
     '/',
     '/login',
@@ -100,7 +75,6 @@ const App = () => {
     '/admin/login',
     '/test'
   ].includes(location.pathname) || location.pathname.startsWith('/admin');
->>>>>>> b28a87303c60b11d4a67eb9b85007063f750ee43
 
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
@@ -121,20 +95,7 @@ const App = () => {
       )}
 
       <div className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${!isStandalonePage ? 'md:ml-[260px]' : ''}`}>
-<<<<<<< HEAD
         {!isStandalonePage && <Header toggleSidebar={toggleSidebar} />}
-
-        <main className={`${!isStandalonePage ? 'flex-1 p-8 md:p-10 overflow-y-auto' : 'h-screen'}`}>
-          <Routes>
-            <Route path="/landing" element={<LandingPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-=======
-        {!isStandalonePage && (
-          <Header
-            toggleSidebar={toggleSidebar}
-          />
-        )}
 
         <main className={`${!isStandalonePage ? 'flex-1 p-8 md:p-10 overflow-y-auto' : 'h-screen'}`}>
           <Routes>
@@ -143,13 +104,11 @@ const App = () => {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/contact" element={<ContactPage />} />
->>>>>>> b28a87303c60b11d4a67eb9b85007063f750ee43
 
             <Route path="/admin/login" element={<AdminLoginPage />} />
             <Route path="/admin" element={<RequireAdminAuth><AdminDashboard /></RequireAdminAuth>} />
 
             <Route element={<RequireAuth><Outlet /></RequireAuth>}>
-<<<<<<< HEAD
               <Route
                 path="/"
                 element={
@@ -163,9 +122,6 @@ const App = () => {
                   })()
                 }
               />
-=======
-              {/* Role-based dashboard access now handled via LandingPage or specific /login post-auth logic */}
->>>>>>> b28a87303c60b11d4a67eb9b85007063f750ee43
 
               <Route path="/commercial" element={<RequireAuth allowedRoles={['commercial']}><Outlet /></RequireAuth>}>
                 <Route path="dashboard" element={<DashboardView activeSubView="commercial-dashboard" />} />
@@ -236,7 +192,7 @@ const App = () => {
                 element={
                   <div className="p-8">
                     <div className="bg-white border border-slate-200 rounded-2xl p-6">
-                      <h2 className="text-xl font-bold mb-4">Parametres</h2>
+                      <h2 className="text-xl font-bold mb-4">Paramètres</h2>
                       <p className="text-slate-500">Configuration de l'application (Section en construction)</p>
                     </div>
                   </div>
