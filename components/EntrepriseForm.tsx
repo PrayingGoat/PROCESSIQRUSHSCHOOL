@@ -57,7 +57,7 @@ const companySchema = z.object({
         diplome: z.string().min(1, "Veuillez sélectionner le diplôme"),
         experience: z.string().optional().or(z.literal("")),
         telephone: z.string().regex(/^(?:(?:\+|00)33|0)\s*[1-9](?:[\s.-]*\d{2}){4}$/, "Téléphone invalide").optional().or(z.literal("")),
-        email: z.string().email("L'adresse e-mail est invalide")
+        email: z.string().email("L'adresse e-mail est invalide").optional().or(z.literal(""))
     }),
     opco: z.object({
         nom: z.string().min(1, "Veuillez sélectionner votre OPCO")
@@ -164,7 +164,7 @@ const companySchema = z.object({
         };
 
         // 1ère année - 2ème période
-        checkPeriod('date_debut_2periode_1er_annee', 'date_fin_2periode_1er_annee', '2ème période 1ère année');
+        checkPeriod('date_debut_2periode_1er_annee', 'date_fin_2periode_1er_annee', '2ème période 1ère année', false);
 
         // Autres années
         for (let year = 2; year <= 4; year++) {
@@ -540,7 +540,7 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
                                 })} />
                             </div>
                             <div className="col-span-12 md:col-span-4">
-                                <Input label="Email" required type="email" placeholder="Email" error={errors.maitre_apprentissage?.email?.message} {...register('maitre_apprentissage.email')} />
+                                <Input label="Email" type="email" placeholder="Email" error={errors.maitre_apprentissage?.email?.message} {...register('maitre_apprentissage.email')} />
                             </div>
                         </div>
                     </Card>
