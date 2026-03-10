@@ -6,8 +6,8 @@
     --primary: rgb(107, 60, 210);
     --primary-deep: rgb(58, 28, 138);
     --primary-light: rgb(140, 92, 240);
-    --beige: #F5E6C8;
-    --beige-light: #FDF8F0;
+    --beige: #ffffff;
+    --beige-light: #ffffff;
     --beige-mid: #EDD9B0;
     --gold: #E8C97A;
     --gold-deep: #C9A84C;
@@ -167,7 +167,7 @@
 }
 
 #nav.scrolled {
-    background: rgba(253, 248, 240, 0.88);
+    background: rgba(255, 255, 255, 0.88);
     backdrop-filter: blur(20px) saturate(1.4);
     -webkit-backdrop-filter: blur(20px) saturate(1.4);
     box-shadow: 0 1px 0 rgba(107, 60, 210, 0.12), 0 4px 24px rgba(13, 13, 28, 0.06);
@@ -525,7 +525,7 @@
     background:
         radial-gradient(ellipse 80% 60% at 75% 40%, rgba(232, 201, 122, 0.16) 0%, transparent 60%),
         radial-gradient(ellipse 60% 80% at 20% 70%, rgba(107, 60, 210, 0.07) 0%, transparent 50%),
-        radial-gradient(ellipse 100% 80% at 50% 0%, rgba(245, 230, 200, 0.9) 0%, var(--beige-light) 70%);
+        radial-gradient(ellipse 100% 80% at 50% 0%, rgba(255, 255, 255, 0.9) 0%, var(--beige-light) 70%);
 }
 
 .hero-line {

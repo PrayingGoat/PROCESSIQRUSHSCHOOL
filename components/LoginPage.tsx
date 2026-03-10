@@ -10,8 +10,16 @@ const LoginPage: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
     const [loading, setLoading] = useState(false);
+    const [previousUser, setPreviousUser] = useState<{ name: string; email: string } | null>(null);
+    const [showPreviousAccount, setShowPreviousAccount] = useState(true);
 
     useEffect(() => {
+        const savedName = localStorage.getItem('userName');
+        const savedEmail = localStorage.getItem('userEmail');
+        if (savedName && savedEmail) {
+            setPreviousUser({ name: savedName, email: savedEmail });
+            setFormData(prev => ({ ...prev, email: savedEmail }));
+        }
         // Clear background scroll lock just in case
         document.body.style.overflow = '';
     }, []);
@@ -183,88 +191,171 @@ const LoginPage: React.FC = () => {
                 </Link>
 
                 <div className="form-inner">
-                    <h1 className="form-heading">Bienvenue</h1>
-                    <p className="form-sub">Connectez-vous à votre espace ProcessIQ</p>
+                    {previousUser && showPreviousAccount ? (
+                        <div className="previous-account-card">
+                            <h1 className="form-heading">Bon retour !</h1>
+                            <p className="form-sub">Connectez-vous à votre espace ProcessIQ</p>
 
-                    {error && <div className="server-error" role="alert">{error}</div>}
-
-                    <form className="auth-form" onSubmit={handleSubmit} noValidate>
-                        {/* Email */}
-                        <div className="field-group">
-                            <label className="field-label" htmlFor="email">Adresse email</label>
-                            <div className="field-wrap">
-                                <svg className="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
-                                    <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                </svg>
-                                <input
-                                    className={`field-input ${fieldErrors.email ? 'error' : ''}`}
-                                    type="email"
-                                    id="email"
-                                    name="email"
-                                    placeholder="votre@email.fr"
-                                    autoComplete="email"
-                                    required
-                                    value={formData.email}
-                                    onChange={handleChange}
-                                />
+                            <div className="user-profile-preview">
+                                <div className="user-avatar">
+                                    {previousUser.name.charAt(0).toUpperCase()}
+                                </div>
+                                <div className="user-info">
+                                    <span className="user-name">{previousUser.name}</span>
+                                    <span className="user-email">{previousUser.email}</span>
+                                </div>
                             </div>
-                            {fieldErrors.email && <span className="field-error" role="alert">{fieldErrors.email}</span>}
-                        </div>
 
-                        {/* Mot de passe */}
-                        <div className="field-group">
-                            <label className="field-label" htmlFor="password">Mot de passe</label>
-                            <div className="field-wrap">
-                                <svg className="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
-                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                                    <path d="M7 11V7a5 5 0 0110 0v4" />
-                                </svg>
-                                <input
-                                    className={`field-input ${fieldErrors.password ? 'error' : ''}`}
-                                    type={showPassword ? 'text' : 'password'}
-                                    id="password"
-                                    name="password"
-                                    placeholder="••••••••"
-                                    autoComplete="current-password"
-                                    required
-                                    value={formData.password}
-                                    onChange={handleChange}
-                                />
-                                <button
-                                    className="field-toggle"
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
-                                >
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
-                                        {showPassword ? (
-                                            <>
-                                                <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94" />
-                                                <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19" />
-                                                <line x1="1" y1="1" x2="23" y2="23" />
-                                            </>
-                                        ) : (
-                                            <>
-                                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                                                <circle cx="12" cy="12" r="3" />
-                                            </>
-                                        )}
-                                    </svg>
+                            <form className="auth-form" onSubmit={handleSubmit} noValidate>
+                                <div className="field-group">
+                                    <label className="field-label" htmlFor="password">Mot de passe</label>
+                                    <div className="field-wrap">
+                                        <svg className="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+                                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                                            <path d="M7 11V7a5 5 0 0110 0v4" />
+                                        </svg>
+                                        <input
+                                            className={`field-input ${fieldErrors.password ? 'error' : ''}`}
+                                            type={showPassword ? 'text' : 'password'}
+                                            id="password"
+                                            name="password"
+                                            placeholder="••••••••"
+                                            autoComplete="current-password"
+                                            required
+                                            value={formData.password}
+                                            onChange={handleChange}
+                                        />
+                                        <button
+                                            className="field-toggle"
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                                        >
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+                                                {showPassword ? (
+                                                    <><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94" /><path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19" /><line x1="1" y1="1" x2="23" y2="23" /></>
+                                                ) : (
+                                                    <><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></>
+                                                )}
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    {fieldErrors.password && <span className="field-error" role="alert">{fieldErrors.password}</span>}
+                                </div>
+
+                                <button type="submit" className="btn-submit" disabled={loading}>
+                                    <span>{loading ? 'Connexion…' : `Se connecter en tant que ${previousUser.name}`}</span>
                                 </button>
-                            </div>
-                            {fieldErrors.password && <span className="field-error" role="alert">{fieldErrors.password}</span>}
-                        </div>
+                            </form>
 
-                        {/* Mot de passe oublié */}
-                        <div className="forgot-row">
-                            <a href="#" className="forgot-link">Mot de passe oublié&nbsp;?</a>
+                            <button
+                                className="btn-use-another"
+                                onClick={() => {
+                                    setShowPreviousAccount(false);
+                                    setFormData({ email: '', password: '' });
+                                }}
+                            >
+                                Utiliser un autre compte
+                            </button>
                         </div>
+                    ) : (
+                        <>
+                            <h1 className="form-heading">Bienvenue</h1>
+                            <p className="form-sub">Connectez-vous à votre espace ProcessIQ</p>
 
-                        {/* Bouton connexion */}
-                        <button type="submit" className="btn-submit" disabled={loading}>
-                            <span>{loading ? 'Connexion…' : 'Se connecter'}</span>
-                        </button>
-                    </form>
+                            {error && <div className="server-error" role="alert">{error}</div>}
+
+                            <form className="auth-form" onSubmit={handleSubmit} noValidate>
+                                {/* Email */}
+                                <div className="field-group">
+                                    <label className="field-label" htmlFor="email">Adresse email</label>
+                                    <div className="field-wrap">
+                                        <svg className="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+                                            <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                        </svg>
+                                        <input
+                                            className={`field-input ${fieldErrors.email ? 'error' : ''}`}
+                                            type="email"
+                                            id="email"
+                                            name="email"
+                                            placeholder="votre@email.fr"
+                                            autoComplete="email"
+                                            required
+                                            value={formData.email}
+                                            onChange={handleChange}
+                                        />
+                                    </div>
+                                    {fieldErrors.email && <span className="field-error" role="alert">{fieldErrors.email}</span>}
+                                </div>
+
+                                {/* Mot de passe */}
+                                <div className="field-group">
+                                    <label className="field-label" htmlFor="password">Mot de passe</label>
+                                    <div className="field-wrap">
+                                        <svg className="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+                                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                                            <path d="M7 11V7a5 5 0 0110 0v4" />
+                                        </svg>
+                                        <input
+                                            className={`field-input ${fieldErrors.password ? 'error' : ''}`}
+                                            type={showPassword ? 'text' : 'password'}
+                                            id="password"
+                                            name="password"
+                                            placeholder="••••••••"
+                                            autoComplete="current-password"
+                                            required
+                                            value={formData.password}
+                                            onChange={handleChange}
+                                        />
+                                        <button
+                                            className="field-toggle"
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                                        >
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+                                                {showPassword ? (
+                                                    <>
+                                                        <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94" />
+                                                        <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19" />
+                                                        <line x1="1" y1="1" x2="23" y2="23" />
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                                        <circle cx="12" cy="12" r="3" />
+                                                    </>
+                                                )}
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    {fieldErrors.password && <span className="field-error" role="alert">{fieldErrors.password}</span>}
+                                </div>
+
+                                {/* Mot de passe oublié */}
+                                <div className="forgot-row">
+                                    <a href="#" className="forgot-link">Mot de passe oublié&nbsp;?</a>
+                                </div>
+
+                                {/* Bouton connexion */}
+                                <button type="submit" className="btn-submit" disabled={loading}>
+                                    <span>{loading ? 'Connexion…' : 'Se connecter'}</span>
+                                </button>
+                            </form>
+
+                            {previousUser && !showPreviousAccount && (
+                                <button
+                                    className="btn-back-to-previous"
+                                    onClick={() => {
+                                        setShowPreviousAccount(true);
+                                        setFormData(prev => ({ ...prev, email: previousUser.email }));
+                                    }}
+                                >
+                                    Retour au compte de {previousUser.name}
+                                </button>
+                            )}
+                        </>
+                    )}
 
                     <div className="form-divider"><span>ou</span></div>
 

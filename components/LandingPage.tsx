@@ -119,11 +119,7 @@ const LandingPage: React.FC = () => {
                                 <span className="nav-separator">/</span>
                                 <span>EN</span>
                             </div>
-                            {isLoggedIn ? (
-                                <Link to={getDashboardLink()} className="nav-connexion">Tableau de bord</Link>
-                            ) : (
-                                <Link to="/login" className="nav-connexion">Connexion</Link>
-                            )}
+                            <Link to="/login" className="nav-connexion">Connexion</Link>
                             <Link to="/contact" className="nav-cta">Demander une démo</Link>
                         </div>
 
@@ -146,11 +142,7 @@ const LandingPage: React.FC = () => {
                 <a href="#advantages" onClick={toggleMobileMenu}>Avantages</a>
                 <a href="#footer" onClick={toggleMobileMenu}>Contact</a>
                 <div className="mobile-menu-actions">
-                    {isLoggedIn ? (
-                        <Link to={getDashboardLink()} className="btn btn-secondary" onClick={toggleMobileMenu}>Tableau de bord</Link>
-                    ) : (
-                        <Link to="/login" className="btn btn-secondary" onClick={toggleMobileMenu}>Connexion</Link>
-                    )}
+                    <Link to="/login" className="btn btn-secondary" onClick={toggleMobileMenu}>Connexion</Link>
                     <Link to="/contact" className="btn btn-primary" onClick={toggleMobileMenu}>Demander une démo</Link>
                 </div>
             </div>
@@ -533,11 +525,7 @@ const LandingPage: React.FC = () => {
                     <p className="cta-sub reveal delay-2">Rejoignez les établissements qui font confiance à ProcessIQ pour simplifier et optimiser leur gestion de l'alternance et du stage.</p>
                     <div className="cta-actions reveal delay-3">
                         <Link to="/contact" className="btn btn-gold">Demander une démo <span className="btn-arrow">→</span></Link>
-                        {isLoggedIn ? (
-                            <Link to={getDashboardLink()} className="btn btn-outline-beige">Tableau de bord</Link>
-                        ) : (
-                            <Link to="/login" className="btn btn-outline-beige">Connexion</Link>
-                        )}
+                        <Link to="/login" className="btn btn-outline-beige">Connexion</Link>
                     </div>
                 </div>
             </section>
