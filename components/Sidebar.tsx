@@ -83,7 +83,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                 <div className="w-[18px] h-[18px] flex items-center justify-center">
                   <div className="w-1.5 h-1.5 rounded-full bg-current opacity-70"></div>
                 </div>
-                <span>Tableau de bord</span>
+                <span>Inscription des élèves</span>
               </NavLink>
               <NavLink
                 to="/classe-ntc"
@@ -93,7 +93,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                 <div className="w-[18px] h-[18px] flex items-center justify-center">
                   <div className="w-1.5 h-1.5 rounded-full bg-current opacity-70"></div>
                 </div>
-                <span>Classe NTC</span>
+                <span>Tableau de bord</span>
               </NavLink>
             </div>
           </div>
