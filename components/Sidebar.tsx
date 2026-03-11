@@ -53,7 +53,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
       {/* Logo */}
       <div className="p-6 flex items-center gap-3">
-        <img src="/images/logo-process-iq.png" alt="Process IQ" className="h-8 w-auto brightness-0 invert" />
+        <img src="/images/logo-process-iq.png" alt="Process IQ" className="h-9 w-auto" />
+        <span className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">
+          ProcessIQ
+        </span>
       </div>
 
       <nav className="flex-1 overflow-y-auto px-4 py-2 space-y-1">
