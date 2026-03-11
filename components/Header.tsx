@@ -41,18 +41,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
       </div>
 
       <div className="flex items-center gap-5">
-        <div className="hidden lg:flex items-center bg-slate-100/40 rounded-full px-5 py-2.5 border border-slate-200/40 group transition-all duration-300 focus-within:bg-white focus-within:border-indigo-200 focus-within:shadow-lg focus-within:shadow-indigo-500/5 focus-within:w-72 w-56">
-          <Search size={16} className="text-slate-400 group-focus-within:text-indigo-500 transition-colors shrink-0" />
-          <input
-            type="text"
-            placeholder="Recherche rapide..."
-            className="bg-transparent border-none focus:ring-0 outline-none text-xs font-bold text-slate-600 w-full placeholder:text-slate-400 px-3 tracking-wide"
-          />
-          <div className="flex items-center gap-1 px-1.5 py-1 rounded-lg bg-slate-200/50 border border-slate-300/30 shrink-0 group-focus-within:opacity-0 transition-opacity">
-            <span className="text-[9px] font-black text-slate-500 tracking-tighter">⌘</span>
-            <span className="text-[9px] font-black text-slate-500 tracking-tighter uppercase">K</span>
-          </div>
-        </div>
+
 
         <div className="flex items-center gap-2">
           <button className="relative w-11 h-11 rounded-xl flex items-center justify-center text-slate-500 hover:bg-slate-100/80 hover:text-indigo-600 transition-all active:scale-95">
