@@ -26,10 +26,14 @@ import { decodeJwtPayload, getAuthToken, isAuthenticated } from './services/sess
 
 const getEffectiveRole = (): string | null => {
   const storedRole = localStorage.getItem('userRole');
-  if (storedRole) return storedRole;
+  if (storedRole) {
+    if (storedRole === 'student') return 'eleve';
+    return storedRole;
+  }
 
   const payload = decodeJwtPayload(getAuthToken());
   if (payload?.role === 'student') return 'eleve';
+  if (payload?.role) return payload.role;
   return null;
 };
 

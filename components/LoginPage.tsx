@@ -83,18 +83,21 @@ const LoginPage: React.FC = () => {
                 data = await api.login(formData.email, formData.password);
             }
 
+            // Normalize role: backend might return 'student', frontend needs 'eleve'
+            const normalizedRole = data.role === 'student' ? 'eleve' : (data.role || 'eleve');
+
             // USE 'authToken' to match session.ts
             localStorage.setItem('authToken', data.access_token);
-            localStorage.setItem('userRole', data.role);
-            localStorage.setItem('userEmail', data.email);
-            localStorage.setItem('userName', data.name);
+            localStorage.setItem('userRole', normalizedRole);
+            localStorage.setItem('userEmail', data.email || formData.email);
+            localStorage.setItem('userName', data.name || previousUser?.name || 'Étudiant');
 
             // Redirect to appropriate dashboard based on role
-            if (data.role === 'super_admin') navigate('/admission');
-            else if (data.role === 'commercial') navigate('/commercial/dashboard');
-            else if (data.role === 'admission') navigate('/admission');
-            else if (data.role === 'rh') navigate('/rh/dashboard');
-            else if (data.role === 'eleve') navigate('/etudiant/dashboard');
+            if (normalizedRole === 'super_admin') navigate('/admission');
+            else if (normalizedRole === 'commercial') navigate('/commercial/dashboard');
+            else if (normalizedRole === 'admission') navigate('/admission');
+            else if (normalizedRole === 'rh') navigate('/rh/dashboard');
+            else if (normalizedRole === 'eleve') navigate('/etudiant/dashboard');
             else navigate('/admission');
         } catch (err: any) {
             setError(err.message || "Identifiants invalides");
