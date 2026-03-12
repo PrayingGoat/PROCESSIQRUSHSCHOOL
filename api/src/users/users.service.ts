@@ -1,5 +1,4 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { InjectModel } from '@nestjs/model'; // Check if this should be @nestjs/mongoose, previous view_file had @nestjs/mongoose
 import { InjectModel as InjectMongooseModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User } from './user.schema';
@@ -12,35 +11,46 @@ export class UsersService implements OnModuleInit {
     async onModuleInit() {
         console.log('[UsersService] Checking for users in MongoDB...');
         try {
-            // Check for Super Admin specifically
-            const superAdmin = await this.userModel.findOne({ role: 'super_admin' });
-            if (!superAdmin) {
-                console.log('[UsersService] No super_admin found. Seeding super_admin...');
-                await this.create({
-                    email: 'superadmin@rush-school.fr',
+            const defaultUsers = [
+                {
+                    email: 'superadmin@processiq.fr',
                     password: 'superadmin',
                     name: 'Super Administrateur',
                     role: 'super_admin'
-                });
-            }
+                },
+                {
+                    email: 'rh@processiq.fr',
+                    password: 'rh',
+                    name: 'Responsable RH',
+                    role: 'rh'
+                },
+                {
+                    email: 'commercial@processiq.fr',
+                    password: 'commercial',
+                    name: 'Commercial',
+                    role: 'commercial'
+                },
+                {
+                    email: 'admission@processiq.fr',
+                    password: 'admission',
+                    name: 'Administrateur Admission',
+                    role: 'admission'
+                }
+            ];
 
-            const count = await this.userModel.countDocuments();
-            if (count <= 1) { // Only if we only have the super_admin we just created or nothing
-                console.log('[UsersService] Seeding default admission admin...');
-
-                const admin = await this.userModel.findOne({ role: 'admission' });
-                if (!admin) {
+            for (const userData of defaultUsers) {
+                const existing = await this.userModel.findOne({ email: userData.email });
+                if (!existing) {
+                    console.log(`[UsersService] Seeding default user: ${userData.email}`);
                     await this.create({
-                        email: 'admin@rush-school.fr',
-                        password: 'admin',
-                        name: 'Administrateur Admission',
-                        role: 'admission'
+                        ...userData,
+                        password: hashPassword(userData.password)
                     });
                 }
-                console.log('[UsersService] Default users seeded successfully.');
-            } else {
-                console.log(`[UsersService] Found ${count} users in database.`);
             }
+            
+            const count = await this.userModel.countDocuments();
+            console.log(`[UsersService] Total users in database: ${count}.`);
         } catch (error) {
             console.error('[UsersService] Error during database seeding:', error);
         }

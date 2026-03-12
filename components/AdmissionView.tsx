@@ -394,7 +394,10 @@ const EvaluationGrid = ({ studentData, onNext }: { studentData: any, onNext?: ()
                         <p className="text-slate-400 text-sm">Évaluation des compétences et du savoir-être</p>
                     </div>
                     <div className="flex flex-col items-end">
-                        <img src="/images/logo-process-iq.png" alt="Process IQ" className="h-8 brightness-0 invert" />
+                    <div className="flex items-center gap-3">
+                        <img src="/images/logo-process-iq.png" alt="Process IQ" className="h-8 w-auto" />
+                        <span className="text-lg font-bold text-white tracking-tight">ProcessIQ</span>
+                    </div>
                     </div>
                 </div>
 
@@ -803,6 +806,11 @@ const AdmissionView = ({ selectedStudent, selectedTab, onClearSelection }: Admis
         errorMessage: "Erreur lors de la génération de la convention."
     });
 
+    const { execute: generateLivretApi, loading: isGeneratingLivret } = useApi(api.generateLivretApprentissage, {
+        onSuccess: () => setShowSuccessModal(true),
+        errorMessage: "Erreur lors de la génération du livret d'apprentissage."
+    });
+
     const handleFinishTest = () => {
         setTestCompleted(true);
         setActiveTab(AdmissionTab.ENTRETIEN);
@@ -848,6 +856,8 @@ const AdmissionView = ({ selectedStudent, selectedTab, onClearSelection }: Admis
             await generateCompteRenduApi(recordId);
         } else if (doc.id === 'convention-apprentissage') {
             await generateConventionApprentissageApi(recordId);
+        } else if (doc.id === 'livret') {
+            await generateLivretApi(recordId);
         } else {
             console.log("Action pour le document:", doc.title);
         }
@@ -866,7 +876,10 @@ const AdmissionView = ({ selectedStudent, selectedTab, onClearSelection }: Admis
                         <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 w-full max-w-[60%]">
                             <div className="flex-1">
                                 <div className="flex flex-col md:flex-row md:items-center gap-4 mb-4">
-                                    <img src="/images/logo-process-iq.png" alt="Process IQ" className="h-10 w-fit brightness-0 invert" />
+                                    <div className="flex items-center gap-3">
+                                        <img src="/images/logo-process-iq.png" alt="Process IQ" className="h-10 w-fit" />
+                                        <span className="text-2xl font-bold text-white tracking-tight">ProcessIQ</span>
+                                    </div>
                                     <div className="hidden md:block w-px h-8 bg-white/20"></div>
                                     <div className="inline-flex items-center gap-2 bg-white/20 px-4 py-1.5 rounded-full text-sm font-medium backdrop-blur-sm border border-white/10">
                                         <Briefcase size={14} /> Processus d'admission
@@ -1114,7 +1127,8 @@ const AdmissionView = ({ selectedStudent, selectedTab, onClearSelection }: Admis
                                                 (doc.id === 'cerfa' && isGeneratingCerfa) ||
                                                 (doc.id === 'atre' && isGeneratingAtre) ||
                                                 (doc.id === 'compte-rendu' && isGeneratingCompteRendu) ||
-                                                (doc.id === 'convention-apprentissage' && isGeneratingConventionApprentissage);
+                                                (doc.id === 'convention-apprentissage' && isGeneratingConventionApprentissage) ||
+                                                (doc.id === 'livret' && isGeneratingLivret);
                                             return (
                                                 <button
                                                     disabled={isGenerating}

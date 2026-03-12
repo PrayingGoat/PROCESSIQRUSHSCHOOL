@@ -57,7 +57,7 @@ const companySchema = z.object({
         diplome: z.string().min(1, "Veuillez sélectionner le diplôme"),
         experience: z.string().optional().or(z.literal("")),
         telephone: z.string().regex(/^(?:(?:\+|00)33|0)\s*[1-9](?:[\s.-]*\d{2}){4}$/, "Téléphone invalide").optional().or(z.literal("")),
-        email: z.string().email("L'adresse e-mail est invalide")
+        email: z.string().email("L'adresse e-mail est invalide").optional().or(z.literal(""))
     }),
     opco: z.object({
         nom: z.string().min(1, "Veuillez sélectionner votre OPCO")
@@ -135,16 +135,6 @@ const companySchema = z.object({
         date_fin_2periode_4eme_annee: z.string().optional().or(z.literal(""))
     }).superRefine((data, ctx) => {
         const conclusion = data.date_conclusion ? new Date(data.date_conclusion) : null;
-        const execution = data.date_debut_execution ? new Date(data.date_debut_execution) : null;
-
-        // Date debut execution doit etre avant date de conclusion
-        if (conclusion && execution && execution >= conclusion) {
-            ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: "La date de début d'exécution doit être avant la date de conclusion",
-                path: ["date_debut_execution"]
-            });
-        }
 
         // Vérification des périodes
         const checkPeriod = (startKey: string, endKey: string, label: string, checkConclusion: boolean = true) => {
@@ -174,7 +164,7 @@ const companySchema = z.object({
         };
 
         // 1ère année - 2ème période
-        checkPeriod('date_debut_2periode_1er_annee', 'date_fin_2periode_1er_annee', '2ème période 1ère année');
+        checkPeriod('date_debut_2periode_1er_annee', 'date_fin_2periode_1er_annee', '2ème période 1ère année', false);
 
         // Autres années
         for (let year = 2; year <= 4; year++) {
@@ -550,7 +540,7 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
                                 })} />
                             </div>
                             <div className="col-span-12 md:col-span-4">
-                                <Input label="Email" required type="email" placeholder="Email" error={errors.maitre_apprentissage?.email?.message} {...register('maitre_apprentissage.email')} />
+                                <Input label="Email" type="email" placeholder="Email" error={errors.maitre_apprentissage?.email?.message} {...register('maitre_apprentissage.email')} />
                             </div>
                         </div>
                     </Card>
@@ -740,10 +730,10 @@ const EntrepriseForm: React.FC<EntrepriseFormProps> = ({ onNext, studentRecordId
                                 <Input label="N° DECA ancien contrat" placeholder="Si applicable" {...register('contrat.numero_deca_ancien_contrat')} />
                             </div>
                             <div className="col-span-12 md:col-span-6">
-                                <Input label="Date de conclusion" type="date" error={errors.contrat?.date_conclusion?.message} {...register('contrat.date_conclusion')} />
+                                <Input label="Date début exécution" type="date" error={errors.contrat?.date_debut_execution?.message} {...register('contrat.date_debut_execution')} />
                             </div>
                             <div className="col-span-12 md:col-span-6">
-                                <Input label="Date début exécution" type="date" error={errors.contrat?.date_debut_execution?.message} {...register('contrat.date_debut_execution')} />
+                                <Input label="Date de conclusion" type="date" error={errors.contrat?.date_conclusion?.message} {...register('contrat.date_conclusion')} />
                             </div>
                             <div className="col-span-12 md:col-span-6">
                                 <Input label="Date avenant" type="date" {...register('contrat.date_avenant')} />

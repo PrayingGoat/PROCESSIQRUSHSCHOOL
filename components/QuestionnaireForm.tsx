@@ -275,7 +275,10 @@ const QuestionnaireForm: React.FC<QuestionnaireFormProps> = ({ onNext, initialDa
                         <User size={32} />
                     </div>
                     <div className="w-px h-12 bg-slate-200 hidden md:block"></div>
-                    <img src="/images/logo-process-iq.png" alt="Process IQ" className="h-10 w-auto" />
+                    <div className="flex items-center gap-3">
+                        <img src="/images/logo-process-iq.png" alt="Process IQ" className="h-10 w-auto" />
+                        <span className="text-xl font-bold text-slate-900 tracking-tight">ProcessIQ</span>
+                    </div>
                 </div>
                 <div>
                     <h2 className="text-2xl font-bold text-slate-900 mb-1">Fiche d'inscription étudiant</h2>

@@ -46,7 +46,7 @@ const mapStatus = (value?: string): QuestionnaireStatus => {
   return 'pending';
 };
 
-const statusBadge = (status: QuestionnaireStatus): JSX.Element => {
+const statusBadge = (status: QuestionnaireStatus): React.ReactNode => {
   if (status === 'completed') {
     return <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-semibold">Completed</span>;
   }

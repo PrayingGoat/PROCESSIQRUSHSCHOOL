@@ -149,13 +149,13 @@ const StudentAttendance: React.FC = () => {
     { id: 'this-year', label: 'This year' }
   ];
 
-  const getStatusBadge = (status: AttendanceStatus): JSX.Element => {
+  const getStatusBadge = (status: AttendanceStatus): React.ReactNode => {
     if (status === 'pending') return <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium">Pending</span>;
     if (status === 'justified') return <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">Justified</span>;
     return <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-medium">Unjustified</span>;
   };
 
-  const getTypeBadge = (type: AttendanceType): JSX.Element => {
+  const getTypeBadge = (type: AttendanceType): React.ReactNode => {
     if (type === 'absence') return <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-xs font-medium">Absence</span>;
     if (type === 'delay') return <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium">Delay</span>;
     return <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">Present</span>;

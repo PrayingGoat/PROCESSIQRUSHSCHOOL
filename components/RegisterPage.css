@@ -4,8 +4,8 @@
     --primary: rgb(107, 60, 210);
     --primary-deep: rgb(58, 28, 138);
     --primary-light: rgb(140, 92, 240);
-    --beige: #F5E6C8;
-    --beige-light: #FDF8F0;
+    --beige: #ffffff;
+    --beige-light: #ffffff;
     --beige-mid: #EDD9B0;
     --gold: #E8C97A;
     --gold-deep: #C9A84C;
@@ -61,7 +61,7 @@
     background:
         radial-gradient(ellipse 60% 55% at 90% 10%, rgba(232, 201, 122, 0.13) 0%, transparent 55%),
         radial-gradient(ellipse 50% 60% at 5% 80%, rgba(107, 60, 210, 0.06) 0%, transparent 50%),
-        radial-gradient(ellipse 80% 80% at 50% 50%, rgba(245, 230, 200, 0.95) 0%, var(--beige-light) 100%);
+        radial-gradient(ellipse 80% 80% at 50% 50%, rgba(255, 255, 255, 0.95) 0%, var(--beige-light) 100%);
 }
 
 /* Shapes */
@@ -170,7 +170,7 @@
 }
 
 .auth-card {
-    background: rgba(253, 248, 240, 0.76);
+    background: rgba(255, 255, 255, 0.76);
     backdrop-filter: blur(24px) saturate(1.5);
     -webkit-backdrop-filter: blur(24px) saturate(1.5);
     border: 1px solid rgba(232, 201, 122, 0.22);
@@ -357,11 +357,12 @@
     font-family: var(--font-ui);
     font-size: 0.88rem;
     color: var(--text);
-    background: rgba(253, 248, 240, 0.85);
+    background: rgba(255, 255, 255, 0.85);
     border: 1.5px solid rgba(107, 60, 210, 0.14);
     border-radius: var(--radius);
     outline: none;
     transition: border-color 0.25s, box-shadow 0.25s, background 0.25s;
+    appearance: none;
     -webkit-appearance: none;
 }
 
@@ -385,7 +386,7 @@
 }
 
 .field-select option {
-    background: #FDF8F0;
+    background: #ffffff;
     color: var(--text);
 }
 
@@ -475,7 +476,7 @@
     -webkit-appearance: none;
     border: 1.5px solid rgba(107, 60, 210, 0.3);
     border-radius: 3px;
-    background: rgba(253, 248, 240, 0.85);
+    background: rgba(255, 255, 255, 0.85);
     cursor: pointer;
     transition: all 0.2s;
     position: relative;

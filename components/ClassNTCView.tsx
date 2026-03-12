@@ -25,7 +25,8 @@ import {
     MoreVertical,
     List,
     LayoutGrid,
-    History as HistoryIcon
+    History as HistoryIcon,
+    BookOpen
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
@@ -529,6 +530,7 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                 case 'atre': result = await api.generateAtre(studentId); break;
                 case 'cr': result = await api.generateCompteRendu(studentId); break;
                 case 'convention': result = await api.generateConventionApprentissage(studentId); break;
+                case 'livret': result = await api.generateLivretApprentissage(studentId); break;
             }
             showToast("Document régénéré avec succès", "success");
             refreshCandidates();
@@ -599,7 +601,7 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
         }
 
         if (studentInfo.alternance === 'Non') {
-            showToast('Attention: Cet étudiant est marqué comme "Non" alternance.', 'warning');
+            showToast('Attention: Cet étudiant est marqué comme "Non" alternance.', 'info');
         }
 
         onSelectStudent(student, AdmissionTab.ENTREPRISE);
@@ -714,6 +716,15 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                                 <span>Régénérer Compte Rendu</span>
                             </button>
 
+                            <button
+                                onClick={() => handleRegenerateDoc(student.id, 'livret')}
+                                disabled={isRegenerating === `${student.id}-livret`}
+                                className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg transition-colors disabled:opacity-50"
+                            >
+                                <RefreshCw size={15} className={`text-purple-400 ${isRegenerating === `${student.id}-livret` ? 'animate-spin' : ''}`} />
+                                <span>Régénérer Livret Appr.</span>
+                            </button>
+
                             <div className="h-px bg-slate-50 my-1 mx-2" />
 
                             <span className="text-[10px] font-bold text-slate-300 uppercase tracking-tighter pl-3 py-1 block">Administration</span>
@@ -805,7 +816,8 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
             c.has_cerfa,
             c.has_convention,
             c.has_atre,
-            c.has_compte_rendu
+            c.has_compte_rendu,
+            c.has_livret_apprentissage
         ];
         const completed = docs.filter(Boolean).length;
         return Math.round((completed / docs.length) * 100);
@@ -1223,6 +1235,22 @@ const ClassNTCView = ({ onSelectStudent }: ClassNTCViewProps) => {
                                                                 ) : (
                                                                     <div className="w-9 h-9 rounded-lg bg-slate-50 text-slate-200 flex items-center justify-center border border-slate-100">
                                                                         <FileSignature size={16} />
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                            <div className="flex flex-col items-center gap-1.5">
+                                                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Livret</span>
+                                                                {student.has_livret_apprentissage ? (
+                                                                    <button
+                                                                        onClick={() => handleDownload(student.livret_apprentissage_url || (rawStudent.fields || rawStudent)?.["Livret Apprentissage"]?.[0]?.url, student.livret_apprentissage_name || (rawStudent.fields || rawStudent)?.["Livret Apprentissage"]?.[0]?.filename)}
+                                                                        className="w-9 h-9 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center hover:bg-purple-600 hover:text-white transition-all shadow-sm border border-purple-100/50"
+                                                                        title="Télécharger Livret d'Apprentissage"
+                                                                    >
+                                                                        <BookOpen size={16} />
+                                                                    </button>
+                                                                ) : (
+                                                                    <div className="w-9 h-9 rounded-lg bg-slate-50 text-slate-200 flex items-center justify-center border border-slate-100">
+                                                                        <BookOpen size={16} />
                                                                     </div>
                                                                 )}
                                                             </div>

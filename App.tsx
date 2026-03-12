@@ -114,6 +114,7 @@ const App = () => {
                 element={
                   (() => {
                     const role = getEffectiveRole();
+                    if (role === 'super_admin') return <Navigate to="/admission" replace />;
                     if (role === 'commercial') return <Navigate to="/commercial/dashboard" replace />;
                     if (role === 'admission') return <Navigate to="/admission" replace />;
                     if (role === 'rh') return <Navigate to="/rh/dashboard" replace />;

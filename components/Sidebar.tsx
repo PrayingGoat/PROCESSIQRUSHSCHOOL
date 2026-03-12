@@ -68,7 +68,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
       {/* Logo */}
       <div className="p-6 flex items-center gap-3">
-        <img src="/images/logo-process-iq.png" alt="Process IQ" className="h-8 w-auto brightness-0 invert" />
+        <img src="/images/logo-process-iq.png" alt="Process IQ" className="h-9 w-auto" />
+        <span className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">
+          ProcessIQ
+        </span>
       </div>
 
       <nav className="flex-1 overflow-y-auto px-4 py-2 space-y-1">
@@ -89,13 +92,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                 <div className="w-[18px] h-[18px] flex items-center justify-center">
                   <div className="w-1.5 h-1.5 rounded-full bg-current opacity-70"></div>
                 </div>
-                <span>Tableau de bord</span>
+                <span>Inscription des élèves</span>
               </NavLink>
               <NavLink to="/classe-ntc" onClick={handleLinkClick} className={({ isActive }) => `nav-subitem ${isActive ? 'active' : ''}`}>
                 <div className="w-[18px] h-[18px] flex items-center justify-center">
                   <div className="w-1.5 h-1.5 rounded-full bg-current opacity-70"></div>
                 </div>
-                <span>Classe NTC</span>
+                <span>Tableau de bord</span>
               </NavLink>
             </div>
           </div>
