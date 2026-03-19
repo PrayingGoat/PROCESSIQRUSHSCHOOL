@@ -1,23 +1,36 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Shield, Lock, Terminal, Loader2, ArrowRight, Eye, EyeOff } from 'lucide-react';
+import { api } from '../services/api';
 
 const AdminLoginPage: React.FC = () => {
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
-    const [formData, setFormData] = useState({ token: '' });
+    const [error, setError] = useState<string | null>(null);
+    const [formData, setFormData] = useState({ email: '', token: '' });
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
+        setError(null);
 
-        // MOCK ADMIN LOGIN
-        setTimeout(() => {
-            localStorage.setItem('adminAuthToken', 'admin-pulse-' + Date.now());
-            setIsLoading(false);
+        try {
+            const data = await api.login(formData.email, formData.token);
+            if (data.role !== 'super_admin') {
+                setError('Accès refusé : droits administrateur requis.');
+                return;
+            }
+            localStorage.setItem('adminAuthToken', data.access_token);
+            localStorage.setItem('userRole', data.role);
+            localStorage.setItem('userEmail', data.email || formData.email);
+            localStorage.setItem('userName', data.name || 'Admin');
             navigate('/admin');
-        }, 1500);
+        } catch (err: any) {
+            setError(err.message || 'Identifiants invalides.');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -47,21 +60,40 @@ const AdminLoginPage: React.FC = () => {
                 </div>
 
                 <div className="bg-[#0f172a]/80 backdrop-blur-xl rounded-3xl border border-slate-800 p-8 shadow-2xl">
+                    {error && (
+                        <div className="mb-4 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs">
+                            {error}
+                        </div>
+                    )}
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div className="space-y-3">
                             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
                                 <Terminal size={12} className="text-emerald-500" />
-                                Jeton d'administration
+                                Adresse e-mail
                             </label>
                             <div className="relative group">
-                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-600 transition-colors group-focus-within:text-blue-500">
-                                    <Lock size={16} />
-                                </div>
+                                <input
+                                    type="email"
+                                    placeholder="superadmin@processiq.fr"
+                                    required
+                                    className="w-full bg-[#1e293b]/50 border border-slate-700 rounded-xl px-4 py-3.5 text-sm text-white placeholder:text-slate-700 outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/5 transition-all"
+                                    value={formData.email}
+                                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-3">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                <Lock size={12} className="text-emerald-500" />
+                                Mot de passe
+                            </label>
+                            <div className="relative group">
                                 <input
                                     type={showPassword ? "text" : "password"}
                                     placeholder="••••••••••••••••"
                                     required
-                                    className="w-full bg-[#1e293b]/50 border border-slate-700 rounded-xl pl-11 pr-12 py-3.5 text-sm text-white placeholder:text-slate-700 outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/5 transition-all"
+                                    className="w-full bg-[#1e293b]/50 border border-slate-700 rounded-xl pl-4 pr-12 py-3.5 text-sm text-white placeholder:text-slate-700 outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/5 transition-all"
                                     value={formData.token}
                                     onChange={(e) => setFormData({ ...formData, token: e.target.value })}
                                 />

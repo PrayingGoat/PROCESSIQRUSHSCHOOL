@@ -3,13 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import './LoginPage.css';
 
-const STATIC_USERS = [
-    { email: 'superadmin@processiq.fr', password: 'superadmin', role: 'super_admin', name: 'Super Administrateur' },
-    { email: 'rh@processiq.fr', password: 'rh', role: 'rh', name: 'Responsable RH' },
-    { email: 'commercial@processiq.fr', password: 'commercial', role: 'commercial', name: 'Commercial' },
-    { email: 'admission@processiq.fr', password: 'admission', role: 'admission', name: 'Administrateur Admission' },
-];
-
 const LoginPage: React.FC = () => {
     const navigate = useNavigate();
     const [formData, setFormData] = useState({ email: '', password: '' });
@@ -63,25 +56,7 @@ const LoginPage: React.FC = () => {
         setError(null);
 
         try {
-            // Check for static users first
-            const staticUser = STATIC_USERS.find(
-                u => u.email.toLowerCase() === formData.email.toLowerCase() && u.password === formData.password
-            );
-
-            let data;
-            if (staticUser) {
-                // Mock backend response for static users with a valid JWT format (3 parts separated by dots)
-                // 'static.e30.static' is a valid format that decodeJwtPayload can parse (middle is '{' in base64url)
-                data = {
-                    access_token: 'static.eyJSb2xlIjoic3RhdGljIiwidXNlcm5hbWUiOiJzdGF0aWMifQ.static',
-                    role: staticUser.role,
-                    email: staticUser.email,
-                    name: staticUser.name
-                };
-            } else {
-                // Call backend for students
-                data = await api.login(formData.email, formData.password);
-            }
+            const data = await api.login(formData.email, formData.password);
 
             // Normalize role: backend might return 'student', frontend needs 'eleve'
             const normalizedRole = data.role === 'student' ? 'eleve' : (data.role || 'eleve');
