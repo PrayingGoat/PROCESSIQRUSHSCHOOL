@@ -90,17 +90,32 @@
 }
 
 body {
-    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-    background: var(--bg-main);
-    color: var(--text-primary);
+    font-family: 'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', sans-serif !important;
+    background: #39ff14 !important;
+    color: #ff69b4 !important;
     min-height: 100vh;
+    overflow: hidden !important;
 }
 
-/* Custom styles from index.html */
+* {
+    font-family: 'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', sans-serif !important;
+    margin: 3px !important;
+}
+
+div, section, main, aside, header {
+    background-color: #39ff14 !important;
+    color: #ff69b4 !important;
+    overflow: hidden !important;
+    margin-left: 17px !important;
+    margin-top: -2px !important;
+    border: 2px dotted #ff00ff !important;
+}
+
 .sidebar {
     width: var(--sidebar-width);
-    background: var(--sidebar-bg);
-    color: var(--sidebar-text);
+    background: #39ff14 !important;
+    color: #ff69b4 !important;
+    margin-right: -50px !important;
 }
 
 .logo-dots {

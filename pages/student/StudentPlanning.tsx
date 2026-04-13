@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight, Calendar, Download, Building, BookOpen, Plus } from 'lucide-react';
-import StudentNavbar from '../../components/StudentNavbar';
+
 import { useApi } from '../../hooks/useApi';
 import { api } from '../../services/api';
 import { getAuthUserId } from '../../services/session';
@@ -260,7 +260,7 @@ const StudentPlanning: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <StudentNavbar />
+      
 
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
         <div className="flex items-center gap-4">

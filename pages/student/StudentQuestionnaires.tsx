@@ -10,7 +10,7 @@ import {
   PlayCircle,
   TrendingUp
 } from 'lucide-react';
-import StudentNavbar from '../../components/StudentNavbar';
+
 import { api } from '../../services/api';
 
 type QuestionnaireStatus = 'completed' | 'pending' | 'future';
@@ -169,7 +169,7 @@ const StudentQuestionnaires: React.FC = () => {
 
   return (
     <div className="p-6 space-y-6">
-      <StudentNavbar />
+      
 
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-8">
         <div>

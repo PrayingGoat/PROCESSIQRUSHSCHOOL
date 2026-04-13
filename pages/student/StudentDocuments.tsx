@@ -12,7 +12,7 @@ import {
   Folder,
   FileSignature
 } from 'lucide-react';
-import StudentNavbar from '../../components/StudentNavbar';
+
 import { api } from '../../services/api';
 import { getAuthEmail, getAuthUserId } from '../../services/session';
 
@@ -279,7 +279,7 @@ const StudentDocuments: React.FC = () => {
 
   return (
     <div className="p-6 space-y-6">
-      <StudentNavbar />
+      
 
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
         <div>

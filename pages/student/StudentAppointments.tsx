@@ -12,7 +12,7 @@ import {
   Users,
   XCircle
 } from 'lucide-react';
-import StudentNavbar from '../../components/StudentNavbar';
+
 import { api } from '../../services/api';
 import { getAuthUserId } from '../../services/session';
 
@@ -220,7 +220,7 @@ const StudentAppointments: React.FC = () => {
 
   return (
     <div className="p-6 space-y-6">
-      <StudentNavbar />
+      
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white border border-gray-200 rounded-2xl p-6">

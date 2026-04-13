@@ -776,6 +776,51 @@ const AdmissionView = ({ selectedStudent, selectedTab, onClearSelection }: Admis
 
     const [showSuccessModal, setShowSuccessModal] = useState(false);
 
+    // --- Documents générés (stockés en BDD) ---
+    const [generatedDocs, setGeneratedDocs] = useState<any[]>([]);
+    const [loadingDocs, setLoadingDocs] = useState(false);
+
+    const fetchGeneratedDocs = useCallback(async () => {
+        const recordId = studentData?.record_id || studentData?.id || localStorage.getItem('candidateRecordId');
+        if (!recordId) return;
+        setLoadingDocs(true);
+        try {
+            const docs = await api.getDocuments(recordId);
+            setGeneratedDocs(Array.isArray(docs) ? docs : []);
+        } catch (err) {
+            console.error('Failed to fetch generated docs', err);
+        } finally {
+            setLoadingDocs(false);
+        }
+    }, [studentData]);
+
+    useEffect(() => {
+        if (studentData?.record_id || studentData?.id) {
+            fetchGeneratedDocs();
+        }
+    }, [studentData, fetchGeneratedDocs]);
+
+    const saveDocumentToDB = async (docMeta: { id: string; title: string; subtitle?: string }, recordId: string) => {
+        try {
+            await api.createDocument({
+                studentId: recordId,
+                title: docMeta.title,
+                description: docMeta.subtitle || docMeta.title,
+                category: 'contract',
+                status: docMeta.id === 'reglement' || docMeta.id === 'connaissance' ? 'to_sign' : 'valid',
+                size: 0,
+                mimeType: 'application/pdf',
+                storageRef: `admission/${recordId}/${docMeta.id}-${Date.now()}.pdf`,
+                createdBy: 'admission',
+                generatedAt: new Date().toISOString(),
+                docType: docMeta.id
+            });
+            await fetchGeneratedDocs();
+        } catch (err) {
+            console.error('Failed to save document to DB:', err);
+        }
+    };
+
     // API Hooks
     const { execute: uploadApi, loading: isUploading } = useApi(api.uploadDocument, {
         errorMessage: "Erreur lors du téléversement du document. Veuillez réessayer."
@@ -846,20 +891,38 @@ const AdmissionView = ({ selectedStudent, selectedTab, onClearSelection }: Admis
             return;
         }
 
-        if (doc.id === 'renseignements') {
-            await generateFicheApi(recordId);
-        } else if (doc.id === 'cerfa') {
-            await generateCerfaApi(recordId);
-        } else if (doc.id === 'atre') {
-            await generateAtreApi(recordId);
-        } else if (doc.id === 'compte-rendu') {
-            await generateCompteRenduApi(recordId);
-        } else if (doc.id === 'convention-apprentissage') {
-            await generateConventionApprentissageApi(recordId);
-        } else if (doc.id === 'livret') {
-            await generateLivretApi(recordId);
-        } else {
-            console.log("Action pour le document:", doc.title);
+        let success = false;
+
+        try {
+            if (doc.id === 'renseignements') {
+                await generateFicheApi(recordId);
+                success = true;
+            } else if (doc.id === 'cerfa') {
+                await generateCerfaApi(recordId);
+                success = true;
+            } else if (doc.id === 'atre') {
+                await generateAtreApi(recordId);
+                success = true;
+            } else if (doc.id === 'compte-rendu') {
+                await generateCompteRenduApi(recordId);
+                success = true;
+            } else if (doc.id === 'convention-apprentissage') {
+                await generateConventionApprentissageApi(recordId);
+                success = true;
+            } else if (doc.id === 'livret') {
+                await generateLivretApi(recordId);
+                success = true;
+            } else {
+                console.log("Action pour le document:", doc.title);
+            }
+        } catch {
+            // Error already handled by useApi toast
+            return;
+        }
+
+        // Auto-save document to BDD after successful generation
+        if (success && recordId) {
+            await saveDocumentToDB(doc, recordId);
         }
     };
 
@@ -1141,6 +1204,123 @@ const AdmissionView = ({ selectedStudent, selectedTab, onClearSelection }: Admis
                                         })()}
                                     </div>
                                 ))}
+                            </div>
+
+                            {/* Tableau des documents générés (stockés en BDD) */}
+                            <div className="bg-white border border-slate-200 rounded-3xl p-8 mt-8 shadow-sm">
+                                <div className="flex items-center gap-4 mb-6">
+                                    <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 text-white rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                                        <FileCheck size={24} />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-lg font-black text-slate-800 tracking-tight">Documents générés</h3>
+                                        <p className="text-slate-500 text-sm font-medium">Historique des documents stockés en base de données</p>
+                                    </div>
+                                    <button
+                                        onClick={fetchGeneratedDocs}
+                                        className="ml-auto p-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 transition-colors"
+                                        title="Rafraîchir"
+                                    >
+                                        <RotateCcw size={16} className={loadingDocs ? 'animate-spin' : ''} />
+                                    </button>
+                                </div>
+
+                                {loadingDocs ? (
+                                    <div className="flex items-center justify-center py-8 text-slate-400">
+                                        <Loader2 className="animate-spin mr-2" size={20} />
+                                        Chargement...
+                                    </div>
+                                ) : generatedDocs.length === 0 ? (
+                                    <div className="text-center py-8 text-slate-400">
+                                        <FileText size={40} className="mx-auto mb-3 opacity-50" />
+                                        <p className="font-medium">Aucun document généré pour cet étudiant</p>
+                                        <p className="text-sm mt-1">Les documents apparaîtront ici après génération</p>
+                                    </div>
+                                ) : (
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full">
+                                            <thead>
+                                                <tr className="border-b border-slate-100">
+                                                    <th className="text-left py-3 px-4 text-xs font-black uppercase tracking-widest text-slate-400">Document</th>
+                                                    <th className="text-left py-3 px-4 text-xs font-black uppercase tracking-widest text-slate-400">Statut</th>
+                                                    <th className="text-left py-3 px-4 text-xs font-black uppercase tracking-widest text-slate-400">Date</th>
+                                                    <th className="text-right py-3 px-4 text-xs font-black uppercase tracking-widest text-slate-400">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {generatedDocs.map((doc: any) => {
+                                                    const status = doc.status || 'valid';
+                                                    const statusLabel = status === 'to_sign' ? 'À signer' : status === 'signed' ? 'Signé' : status === 'pending' ? 'En cours' : 'Disponible';
+                                                    const statusColor = status === 'to_sign' ? 'bg-amber-100 text-amber-700' : status === 'signed' ? 'bg-emerald-100 text-emerald-700' : status === 'pending' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600';
+                                                    return (
+                                                        <tr key={doc._id || doc.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
+                                                            <td className="py-3 px-4">
+                                                                <div className="flex items-center gap-3">
+                                                                    <FileText size={18} className="text-slate-400" />
+                                                                    <div>
+                                                                        <p className="font-semibold text-slate-700 text-sm">{doc.title}</p>
+                                                                        <p className="text-xs text-slate-400">{doc.description || ''}</p>
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+                                                            <td className="py-3 px-4">
+                                                                <span className={`px-3 py-1 rounded-full text-xs font-bold ${statusColor}`}>
+                                                                    {statusLabel}
+                                                                </span>
+                                                            </td>
+                                                            <td className="py-3 px-4 text-sm text-slate-500">
+                                                                {doc.createdAt ? new Date(doc.createdAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'}
+                                                            </td>
+                                                            <td className="py-3 px-4 text-right">
+                                                                <div className="flex items-center justify-end gap-2">
+                                                                    <button
+                                                                        onClick={async () => {
+                                                                            try {
+                                                                                const resp = await api.downloadStudentDocument(doc._id || doc.id);
+                                                                                const ct = resp.headers.get('content-type') || '';
+                                                                                if (ct.includes('application/json')) {
+                                                                                    const payload = await resp.json();
+                                                                                    if (payload?.url) { window.open(payload.url, '_blank', 'noopener,noreferrer'); return; }
+                                                                                }
+                                                                                const blob = await resp.blob();
+                                                                                const url = URL.createObjectURL(blob);
+                                                                                window.open(url, '_blank', 'noopener,noreferrer');
+                                                                                setTimeout(() => URL.revokeObjectURL(url), 5000);
+                                                                            } catch (e: any) {
+                                                                                showToast(e.message || 'Erreur de téléchargement', 'error');
+                                                                            }
+                                                                        }}
+                                                                        className="p-2 rounded-lg border border-slate-200 hover:bg-slate-100 transition-colors"
+                                                                        title="Télécharger"
+                                                                    >
+                                                                        <Download size={14} />
+                                                                    </button>
+                                                                    {status === 'to_sign' && (
+                                                                        <button
+                                                                            onClick={async () => {
+                                                                                try {
+                                                                                    const link = await api.generateSigningLink(doc._id || doc.id);
+                                                                                    if (link?.signingUrl) window.open(link.signingUrl, '_blank', 'noopener,noreferrer');
+                                                                                    else showToast('Lien de signature indisponible', 'error');
+                                                                                } catch (e: any) {
+                                                                                    showToast(e.message || 'Erreur signature', 'error');
+                                                                                }
+                                                                            }}
+                                                                            className="p-2 rounded-lg border border-amber-200 bg-amber-50 hover:bg-amber-100 text-amber-600 transition-colors"
+                                                                            title="Signer"
+                                                                        >
+                                                                            <PenTool size={14} />
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="flex justify-end mt-10">

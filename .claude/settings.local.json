@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find C:WORKprocess-IQ-rush-school -maxdepth 2 -type f -name .env* -o -name *.mongo* -o -name mongoose* -o -name prisma*)",
+      "Bash(git stash:*)",
+      "Bash(git checkout:*)"
+    ]
+  }
+}

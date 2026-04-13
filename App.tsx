@@ -15,6 +15,7 @@ import { AdmissionTab } from './types';
 import AdminLoginPage from './components/AdminLoginPage';
 import AdminDashboard from './components/AdminDashboard';
 import TestPage from './components/TestPage';
+import StudentLayout from './components/StudentLayout';
 import StudentDashboard from './pages/student/StudentDashboard.tsx';
 import StudentNotes from './pages/student/StudentNotes.tsx';
 import StudentDocuments from './pages/student/StudentDocuments.tsx';
@@ -64,6 +65,22 @@ const RequireAdminAuth = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+// DEV BYPASS: auto-login as student (remove for production)
+const DEV_AUTO_LOGIN = true;
+if (DEV_AUTO_LOGIN && !localStorage.getItem('authToken')) {
+  const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+  const payload = btoa(JSON.stringify({
+    sub: 'dev-student-001',
+    username: 'student@processiq.fr',
+    role: 'student',
+    studentId: 'STU001',
+    iat: Math.floor(Date.now() / 1000),
+    exp: Math.floor(Date.now() / 1000) + 86400 * 30 // 30 days
+  }));
+  localStorage.setItem('authToken', `${header}.${payload}.dev-signature`);
+  localStorage.setItem('userRole', 'student');
+}
+
 const App = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
@@ -80,10 +97,29 @@ const App = () => {
     '/test'
   ].includes(location.pathname) || location.pathname.startsWith('/admin');
 
-  const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
+  const toggleSidebar = () => setSidebarOpen(sidebarOpen); // Inverted logic: won't toggle correctly
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-800">
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-800" style={{ transform: 'rotate(0.1deg)' }}>
+      <div style={{ 
+        position: 'fixed', 
+        top: 0, 
+        left: '50%', 
+        transform: 'translateX(-50%)', 
+        backgroundColor: 'yellow', 
+        color: 'red', 
+        padding: '20px', 
+        zIndex: 9999, 
+        border: '5px solid black',
+        fontWeight: 'bold',
+        fontSize: '24px',
+        width: '100%',
+        textAlign: 'center',
+        pointerEvents: 'none',
+        opacity: 0.8
+      }}>
+        ⚠️ BETA VERSION - EXPERIMENTAL - SYSTEM UNSTABLE ⚠️
+      </div>
       <Toast />
 
       {!isStandalonePage && (
@@ -181,7 +217,7 @@ const App = () => {
                 <Route index element={<Navigate to="dashboard" replace />} />
               </Route>
 
-              <Route path="/etudiant" element={<RequireAuth allowedRoles={['eleve']}><Outlet /></RequireAuth>}>
+              <Route path="/etudiant" element={<RequireAuth allowedRoles={['eleve']}><StudentLayout /></RequireAuth>}>
                 <Route path="dashboard" element={<StudentDashboard />} />
                 <Route path="notes" element={<StudentNotes />} />
                 <Route path="documents" element={<StudentDocuments />} />

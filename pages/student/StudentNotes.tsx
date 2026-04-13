@@ -3,7 +3,7 @@ import {
   TrendingUp, Download, Calculator, BarChart3, 
   Trophy, Activity, Eye, Filter
 } from 'lucide-react';
-import StudentNavbar from '../../components/StudentNavbar';
+
 import { api } from '../../services/api';
 
 interface Grade {
@@ -164,7 +164,7 @@ const StudentNotes: React.FC = () => {
 
   return (
     <div className="p-6 space-y-6">
-      <StudentNavbar />
+      
       
       {/* Header avec moyenne et actions */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-start gap-6 mb-8">
